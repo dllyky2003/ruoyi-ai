@@ -7,8 +7,8 @@
 
 -- 搜索节点模板配置
 INSERT INTO sys_config (config_name, config_key, config_value, config_type, remark, create_by, create_time, update_by, update_time)
-VALUES ('搜索节点模板', 'node.googleSearch.template', '正在搜索相关内容...', 'Y', '搜索节点的响应模板，用于网络搜索功能', 'admin', NOW(), 'admin', NOW())
-ON DUPLICATE KEY UPDATE config_value = '正在搜索相关内容...', update_time = NOW();
+VALUES ('文生图节点响应模板', 'node.image.template', '正在生成图片...', 'Y', '生成图像节点的响应模板，用于生成图像功能', 'admin', NOW(), 'admin', NOW())
+ON DUPLICATE KEY UPDATE config_value = '正在生成图片...', update_time = NOW();
 
 -- =============================================
 -- 验证配置是否添加成功
