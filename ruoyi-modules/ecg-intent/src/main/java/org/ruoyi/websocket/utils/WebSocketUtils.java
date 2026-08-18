@@ -1,11 +1,11 @@
 // com.ruoyi.websocket.utils.WebSocketUtils
-package org.ruoyi.ecg.websocket.utils;
+package org.ruoyi.websocket.utils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.ruoyi.ecg.websocket.model.WebSocketMessage;
-import org.ruoyi.ecg.websocket.server.WebSocketSessionManager;
+import org.ruoyi.websocket.model.WebSocketMessage;
+import org.ruoyi.websocket.server.WebSocketSessionManager;
 import org.springframework.boot.configurationprocessor.json.JSONObject;
 
 /**

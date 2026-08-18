@@ -26,7 +26,9 @@ public enum WfComponentNameEnum {
 
     MAIL_SEND("MailSend"),
 
-    HTTP_REQUEST("HttpRequest");
+    HTTP_REQUEST("HttpRequest"),
+    PRINT("Print"),
+    ECGACTION("EcgAction");
 
     private final String name;
 

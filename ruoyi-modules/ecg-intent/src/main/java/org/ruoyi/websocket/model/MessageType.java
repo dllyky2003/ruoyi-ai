@@ -1,5 +1,5 @@
 // com.ruoyi.websocket.model.MessageType
-package org.ruoyi.ecg.websocket.model;
+package org.ruoyi.websocket.model;
 
 /**
  * WebSocket 消息类型枚举

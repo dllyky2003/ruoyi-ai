@@ -1,11 +1,11 @@
 // com.ruoyi.websocket.model.WebSocketMessage
-package org.ruoyi.ecg.websocket.model;
+package org.ruoyi.websocket.model;
 
 import cn.hutool.json.JSON;
 import lombok.Getter;
 import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.boot.configurationprocessor.json.JSONObject;
-import org.ruoyi.ecg.websocket.model.MessageType;
+
 import java.io.Serializable;
 
 
@@ -89,7 +89,7 @@ public class WebSocketMessage<T> implements Serializable {
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
-        return new WebSocketMessage<>(org.ruoyi.ecg.websocket.model.MessageType.STATE_UPDATE.getValue(), data, themeId);
+        return new WebSocketMessage<>(MessageType.STATE_UPDATE.getValue(), data, themeId);
     }
 
     public static WebSocketMessage<JSONObject> eventTrigger(String themeId, String eventId, String eventName) {

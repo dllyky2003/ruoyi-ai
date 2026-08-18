@@ -9,9 +9,11 @@ import org.ruoyi.workflow.workflow.node.httpRequest.HttpRequestNode;
 import org.ruoyi.workflow.workflow.node.image.ImageNode;
 import org.ruoyi.workflow.workflow.node.knowledgeRetrieval.KnowledgeRetrievalNode;
 import org.ruoyi.workflow.workflow.node.mailSend.MailSendNode;
+import org.ruoyi.workflow.workflow.node.print.PrintNode;
 import org.ruoyi.workflow.workflow.node.start.StartNode;
 import org.ruoyi.workflow.workflow.node.switcher.SwitcherNode;
 import org.ruoyi.workflow.workflow.node.googleSearch.GoogleSearchNode;
+import org.ruoyi.workflow.workflow.node.ecgAction.EcgAction;
 
 public class WfNodeFactory {
     public static AbstractWfNode create(WorkflowComponent wfComponent, WorkflowNode nodeDefinition,
@@ -27,6 +29,8 @@ public class WfNodeFactory {
             case HTTP_REQUEST -> wfNode = new HttpRequestNode(wfComponent, nodeDefinition, wfState, nodeState);
             case SWITCHER -> wfNode = new SwitcherNode(wfComponent, nodeDefinition, wfState, nodeState);
             case GOOGLE_SEARCH -> wfNode = new GoogleSearchNode(wfComponent, nodeDefinition, wfState, nodeState);
+            case ECGACTION -> wfNode = new EcgAction(wfComponent, nodeDefinition, wfState, nodeState);
+            case PRINT-> wfNode = new PrintNode(wfComponent, nodeDefinition, wfState, nodeState);
             default -> {
             }
         }

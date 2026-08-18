@@ -15,6 +15,8 @@ public enum NodeMessageTemplateEnum {
     LLM_RESPONSE("node.llmAnswer.template", "🤖 LLM 节点 生成回答："),
     GOOGLE_SEARCH("node.googleSearch.template", "🔍 网络搜索节点处理完成："),
     EXCEPTION("node.exception.template", "🛑 工作流发生异常："),
+    ECGACTION("node.ecgAction.template", "🛑 急救智能体："),
+    PRINT("node.print.template", "🛑 打印输入参数"),
     END("node.end.template", "🔚 流程已执行完毕，如果您有其他需求，请随时重新发起请求。");
 
     private final String value;

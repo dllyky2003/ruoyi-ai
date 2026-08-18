@@ -104,6 +104,10 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.ruoyi</groupId>
+            <artifactId>emergency</artifactId>
+        </dependency>
 
         <!-- skywalking 整合 logback -->
 <!--        <dependency>-->

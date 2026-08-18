@@ -1,10 +1,9 @@
 // com.ruoyi.websocket.server.WebSocketSessionManager
-package org.ruoyi.ecg.websocket.server;
+package org.ruoyi.websocket.server;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -15,7 +14,7 @@ import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.stereotype.Component;
 
 
-import org.ruoyi.ecg.websocket.model.WebSocketMessage;
+import org.ruoyi.websocket.model.WebSocketMessage;
 
 import jakarta.websocket.Session;
 

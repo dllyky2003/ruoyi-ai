@@ -387,6 +387,13 @@
                 <version>${revision}</version>
             </dependency>
 
+            <!--  工作流模块  -->
+            <dependency>
+                <groupId>org.ruoyi</groupId>
+                <artifactId>emergency</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
             <!--  AI流程编排模块  -->
             <dependency>
                 <groupId>org.ruoyi</groupId>
@@ -416,6 +423,8 @@
         <module>ruoyi-common</module>
         <module>ruoyi-extend</module>
         <module>ruoyi-modules</module>
+        <module>ruoyi-modules/ecg-intent</module>
+        <module>ruoyi-modules/emergency</module>
     </modules>
     <packaging>pom</packaging>
 

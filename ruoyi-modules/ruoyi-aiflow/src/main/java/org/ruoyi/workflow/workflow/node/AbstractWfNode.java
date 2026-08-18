@@ -219,6 +219,7 @@ public abstract class AbstractWfNode {
             log.warn("节点配置错误,node uuid:{}", state.getUuid());
             throw new BaseException(A_WF_NODE_CONFIG_ERROR.getInfo());
         }
+
         return nodeConfig;
     }
 
