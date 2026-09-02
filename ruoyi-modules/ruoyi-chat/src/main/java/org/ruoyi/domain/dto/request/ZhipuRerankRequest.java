@@ -31,7 +31,7 @@ public record ZhipuRerankRequest(
                 query,
                 documents,
                 topN != null ? topN : documents.size(),
-                returnDocuments != null ? returnDocuments : true
+            returnDocuments == null || returnDocuments
         );
     }
 

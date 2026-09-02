@@ -1,0 +1,30 @@
+{
+  "intent_code": "G1-1",
+  "act_type": "发令性指令",
+  "name_cn": "安全清场指令",
+  "description_cn": "在执行电击/放电前，要求所有人员离开病床及患者身体，避免触电风险",
+  "keywords": ["手离开", "让开", "离远点"],
+  "pattern_hints": ["大家让开", "别碰病人"],
+  "examples": [
+    "大家手离开床",
+    "Clear所有人都让开",
+    "准备放电大家离远点",
+    "别碰病人离开"
+  ],
+  "standard_script": "大家手离开床，准备放电，确认所有人员离开患者！",
+  "extraction": {
+    "target_params": [],
+    "rules": {}
+  },
+  "execution": {
+    "type": "atomic",
+    "response_template": "✅ 已确认所有人员离开，安全清场完成。",
+    "requires_state_transition": false
+  },
+  "pragmatic_handlers": {
+    "发令性指令": {
+      "action": "execute_action",
+      "response_template": "✅ 已确认所有人员离开，安全清场完成。"
+    }
+  }
+}

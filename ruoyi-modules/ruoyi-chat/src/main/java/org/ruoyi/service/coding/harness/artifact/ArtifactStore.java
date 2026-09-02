@@ -359,7 +359,7 @@ public final class ArtifactStore {
                             boolean capturePreviews) {
         BasicFileAttributes attributes = validateRegularFile(target, expectedHash);
         int capturedBytes = capturePreviews
-            ? (int) Math.min((long) previewBytes, attributes.size()) : 0;
+            ? (int) Math.min(previewBytes, attributes.size()) : 0;
         byte[] head = new byte[capturedBytes];
         byte[] tail = new byte[capturedBytes];
         byte[] slice = sliceOffset >= 0 ? new byte[sliceLength] : new byte[0];

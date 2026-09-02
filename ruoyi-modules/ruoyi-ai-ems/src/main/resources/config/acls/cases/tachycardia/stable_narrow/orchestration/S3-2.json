@@ -1,0 +1,47 @@
+{
+  "intent_code": "S3-2",
+  "act_type": "发令性指令",
+  "name_cn": "启动紧急电复律决策",
+  "description_cn": "在患者转为不稳定时，立即决定执行紧急同步电复律",
+  "keywords": ["马上同步电复律", "准备紧急电击", "立刻电复律"],
+  "pattern_hints": ["直接电复律", "别推药了直接电"],
+  "examples": [
+    "马上同步电复律",
+    "准备紧急电击",
+    "不稳定了立刻电复律",
+    "别推药了直接电复律",
+    "开启同步模式，选择能量"
+  ],
+  "standard_script": "马上同步电复律，100J，准备镇静，充电。",
+  "extraction": {
+    "target_params": ["procedure", "operation_status"],
+    "rules": {
+      "procedure": { "type": "string", "static": "cardioversion" },
+      "operation_status": {
+        "type": "string",
+        "enum": ["start", "done"]
+      }
+    }
+  },
+  "execution": {
+    "type": "action_chain",
+    "steps": [
+      { "step_id": "emergency_cardioversion", "ref_atomic": "DISCHARGE_SHOCK", "duty": "MONITOR_DEFIB" }
+    ],
+    "preconditions": {},
+    "on_complete": {
+      "response_template": "⚡ 紧急同步电复律启动，操作状态：{operation_status}。",
+      "transition_event": "S3-2_DONE"
+    }
+  },
+  "pragmatic_handlers": {
+    "发令性指令": {
+      "action": "advance_chain",
+      "response_template": "⚡ 紧急同步电复律启动，操作状态：{operation_status}。"
+    },
+    "策略纠偏/否决": {
+      "action": "abort_chain",
+      "response_template": "🛑 已取消紧急电复律。"
+    }
+  }
+}

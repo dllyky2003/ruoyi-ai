@@ -297,8 +297,7 @@ public class HttpRequestNode extends AbstractWfNode {
             Object value = entry.getValue();
 
             // 处理特殊的 $merge 指令
-            if ("$merge".equals(key) && value instanceof String) {
-                String varRef = (String) value;
+            if ("$merge".equals(key) && value instanceof String varRef) {
                 Map<String, Object> mergeData = resolveVariableAsJson(varRef, inputs, mapper);
                 if (mergeData != null) {
                     rendered.putAll(mergeData);
@@ -306,8 +305,7 @@ public class HttpRequestNode extends AbstractWfNode {
                 continue;
             }
 
-            if (value instanceof String) {
-                String strValue = (String) value;
+            if (value instanceof String strValue) {
 
                 // 检查是否是单纯的变量引用（如 {var_01}）
                 if (strValue.matches("^\\{\\w+\\}$")) {

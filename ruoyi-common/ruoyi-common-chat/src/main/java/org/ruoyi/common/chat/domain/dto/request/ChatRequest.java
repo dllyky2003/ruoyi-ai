@@ -100,4 +100,6 @@ public class ChatRequest {
      */
     private List<ChatMessage> contextMessages;
 
+    private Double temperature;
+
 }

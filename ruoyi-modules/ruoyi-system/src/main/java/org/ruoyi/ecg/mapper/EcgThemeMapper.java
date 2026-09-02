@@ -202,5 +202,5 @@ public interface EcgThemeMapper {
      * 查询所有教学方案资源
      * @return 资源列表
      */
-    public List<EcgThemeSource> selectAllThemeSources();
+    List<EcgThemeSource> selectAllThemeSources();
 }

@@ -66,14 +66,13 @@ public class SysLogininforServiceImpl implements ISysLogininforService {
         }
 
         String address = AddressUtils.getRealAddressByIP(ip);
-        StringBuilder s = new StringBuilder();
-        s.append(getBlock(ip));
-        s.append(address);
-        s.append(getBlock(logininforEvent.getUsername()));
-        s.append(getBlock(logininforEvent.getStatus()));
-        s.append(getBlock(logininforEvent.getMessage()));
+        String s = getBlock(ip) +
+            address +
+            getBlock(logininforEvent.getUsername()) +
+            getBlock(logininforEvent.getStatus()) +
+            getBlock(logininforEvent.getMessage());
         // 打印信息到日志
-        log.info(s.toString(), logininforEvent.getArgs());
+        log.info(s, logininforEvent.getArgs());
         // 获取客户端操作系统
         String os = userAgent.getOs().getName();
         // 获取客户端浏览器
@@ -105,7 +104,7 @@ public class SysLogininforServiceImpl implements ISysLogininforService {
         if (msg == null) {
             msg = "";
         }
-        return "[" + msg.toString() + "]";
+        return "[" + msg + "]";
     }
 
     /**

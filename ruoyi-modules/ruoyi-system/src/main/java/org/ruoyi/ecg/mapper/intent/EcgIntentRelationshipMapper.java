@@ -23,7 +23,7 @@ public interface EcgIntentRelationshipMapper {
      * @param relationship 查询条件
      * @return 意图关系集合
      */
-    public List<EcgIntentRelationship> selectEcgIntentRelationshipList(EcgIntentRelationship relationship);
+    List<EcgIntentRelationship> selectEcgIntentRelationshipList(EcgIntentRelationship relationship);
 
     /**
      * 根据源意图ID查询关系列表
@@ -31,7 +31,7 @@ public interface EcgIntentRelationshipMapper {
      * @param sourceIntentId 源意图编码
      * @return 意图关系集合
      */
-    public List<EcgIntentRelationship> selectRelationshipsBySourceId(@Param("sourceIntentId") String sourceIntentId);
+    List<EcgIntentRelationship> selectRelationshipsBySourceId(@Param("sourceIntentId") String sourceIntentId);
 
     /**
      * 根据主键ID查询意图关系
@@ -39,7 +39,7 @@ public interface EcgIntentRelationshipMapper {
      * @param id 主键
      * @return 意图关系
      */
-    public EcgIntentRelationship selectEcgIntentRelationshipById(@Param("id") Long id);
+    EcgIntentRelationship selectEcgIntentRelationshipById(@Param("id") Long id);
 
     /**
      * 检查意图关系是否已存在
@@ -49,9 +49,9 @@ public interface EcgIntentRelationshipMapper {
      * @param relationshipType 关系类型
      * @return 数量
      */
-    public int countRelationship(@Param("sourceIntentId") String sourceIntentId,
-                                  @Param("targetIntentId") String targetIntentId,
-                                  @Param("relationshipType") String relationshipType);
+    int countRelationship(@Param("sourceIntentId") String sourceIntentId,
+                          @Param("targetIntentId") String targetIntentId,
+                          @Param("relationshipType") String relationshipType);
 
     // ==================== 插入方法 ====================
 
@@ -61,7 +61,7 @@ public interface EcgIntentRelationshipMapper {
      * @param relationship 意图关系
      * @return 结果
      */
-    public int insertEcgIntentRelationship(EcgIntentRelationship relationship);
+    int insertEcgIntentRelationship(EcgIntentRelationship relationship);
 
     /**
      * 批量新增意图关系
@@ -69,7 +69,7 @@ public interface EcgIntentRelationshipMapper {
      * @param relationships 意图关系列表
      * @return 结果
      */
-    public int insertEcgIntentRelationshipBatch(@Param("list") List<EcgIntentRelationship> relationships);
+    int insertEcgIntentRelationshipBatch(@Param("list") List<EcgIntentRelationship> relationships);
 
     // ==================== 更新方法 ====================
 
@@ -79,7 +79,7 @@ public interface EcgIntentRelationshipMapper {
      * @param relationship 意图关系
      * @return 结果
      */
-    public int updateEcgIntentRelationship(EcgIntentRelationship relationship);
+    int updateEcgIntentRelationship(EcgIntentRelationship relationship);
 
     // ==================== 删除方法 ====================
 
@@ -89,7 +89,7 @@ public interface EcgIntentRelationshipMapper {
      * @param id 主键
      * @return 结果
      */
-    public int deleteEcgIntentRelationshipById(@Param("id") Long id);
+    int deleteEcgIntentRelationshipById(@Param("id") Long id);
 
     /**
      * 根据源意图ID删除所有关系
@@ -97,7 +97,7 @@ public interface EcgIntentRelationshipMapper {
      * @param sourceIntentId 源意图编码
      * @return 结果
      */
-    public int deleteRelationshipsBySourceId(@Param("sourceIntentId") String sourceIntentId);
+    int deleteRelationshipsBySourceId(@Param("sourceIntentId") String sourceIntentId);
 
     /**
      * 批量删除意图关系
@@ -105,5 +105,5 @@ public interface EcgIntentRelationshipMapper {
      * @param ids 主键数组
      * @return 结果
      */
-    public int deleteEcgIntentRelationshipByIds(@Param("array") Long[] ids);
+    int deleteEcgIntentRelationshipByIds(@Param("array") Long[] ids);
 }

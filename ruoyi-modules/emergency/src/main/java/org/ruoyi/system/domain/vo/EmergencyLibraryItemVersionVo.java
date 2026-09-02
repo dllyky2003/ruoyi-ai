@@ -1,24 +1,19 @@
 package org.ruoyi.system.domain.vo;
 
-import java.util.Date;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import org.ruoyi.system.domain.EmergencyLibraryItemVersion;
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
-import org.ruoyi.common.excel.annotation.ExcelDictFormat;
-import org.ruoyi.common.excel.convert.ExcelDictConvert;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.github.linpeilie.annotations.AutoMapper;
 import lombok.Data;
+import org.ruoyi.system.domain.EmergencyLibraryItemVersion;
 import org.ruoyi.system.domain.definition.EmergencyLibraryItemDefinition;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
 
-
-
 /**
- * 公共库冻结定义；published 后禁止 UPDATE视图对象 emergency_library_item_version
+ * 公共库冻结定义；published 后禁止 UPDATE 视图对象 emergency_library_item_version
  *
  * @author ageerle
  * @date 2026-08-18
@@ -31,107 +26,109 @@ public class EmergencyLibraryItemVersionVo implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    /**
-     *
-     */
-    @ExcelProperty(value = "")
+    // ==================== 主键 ====================
+    @ExcelProperty(value = "版本ID")
     private Long id;
 
-    /**
-     * 部门id
-     */
-    @ExcelProperty(value = "部门id")
+    // ==================== 租户/部门/用户 ====================
+    @ExcelProperty(value = "租户编号")
+    private String tenantId;
+
+    @ExcelProperty(value = "部门ID")
     private Long deptId;
 
-    /**
-     * 用户id
-     */
-    @ExcelProperty(value = "用户id")
+    @ExcelProperty(value = "用户ID")
     private Long userId;
 
-    /**
-     * 排序号
-     */
     @ExcelProperty(value = "排序号")
-    private Long orderNum;
+    private Integer orderNum;
 
-    /**
-     *
-     */
-    @ExcelProperty(value = "")
+    @ExcelProperty(value = "创建部门")
+    private Long createDept;
+
+    // ==================== 审计字段 ====================
+    @ExcelProperty(value = "创建时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date createTime;
+
+    @ExcelProperty(value = "创建人")
+    private Long createBy;
+
+    @ExcelProperty(value = "更新时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date updateTime;
+
+    @ExcelProperty(value = "更新人")
+    private Long updateBy;
+
+    @ExcelProperty(value = "删除标志")
+    private Integer delFlag;
+
+    // ==================== 业务字段 ====================
+    @ExcelProperty(value = "姓名")
+    private String name;
+
+    @ExcelProperty(value = "性别")
+    private String sex;
+
+    @ExcelProperty(value = "工作流类型")
+    private String workflowType;
+    @ExcelProperty(value = "难度等级")
+    private String difficultyLevel;
+    @ExcelProperty(value = "年龄")
+    private int age;
+    @ExcelProperty(value = "预计时长（分钟）")
+    private float estimatedDurationMinutes;
+    @ExcelProperty(value = "学习目标")
+    private String  learningObjectives;
+
+
+
+    @ExcelProperty(value = "模式")
+    private String mode;
+
+    @ExcelProperty(value = "标签")
+    private String tags;
+
+    @ExcelProperty(value = "库条目ID")
     private Long libraryItemId;
 
-    /**
-     *
-     */
-    @ExcelProperty(value = "")
-    private Long versionNo;
+    @ExcelProperty(value = "版本号")
+    private Integer versionNo;          // 修正为 Integer
 
-    /**
-     *
-     */
-    @ExcelProperty(value = "")
+    @ExcelProperty(value = "结构版本")
     private String schemaVersion;
 
-    /**
-     * draft/reviewing/published/archived
-     */
-    @ExcelProperty(value = "draft/reviewing/published/archived")
-    private String status;
+    @ExcelProperty(value = "状态")
+    private String status;              // draft/reviewing/published/archived
 
-    /**
-     *
-     */
-
+    // 该字段不需要 @TableField，VO 仅用于展示
     private EmergencyLibraryItemDefinition definitionJson;
 
-    /**
-     *
-     */
-    @ExcelProperty(value = "")
+    @ExcelProperty(value = "定义哈希")
     private String definitionHash;
 
-    /**
-     *
-     */
-    @ExcelProperty(value = "")
+    @ExcelProperty(value = "指南来源")
     private String sourceGuideline;
 
-    /**
-     *
-     */
-    @ExcelProperty(value = "")
+    @ExcelProperty(value = "指南版本")
     private String sourceVersion;
 
-    /**
-     *
-     */
-    @ExcelProperty(value = "")
+    @ExcelProperty(value = "生效开始时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date effectiveFrom;
 
-    /**
-     *
-     */
-    @ExcelProperty(value = "")
+    @ExcelProperty(value = "生效结束时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date effectiveTo;
 
-    /**
-     *
-     */
-    @ExcelProperty(value = "")
+    @ExcelProperty(value = "变更原因")
     private String changeReason;
 
-    /**
-     *
-     */
-    @ExcelProperty(value = "")
+    @ExcelProperty(value = "审核人")
     private Long reviewedBy;
 
-    /**
-     *
-     */
-    @ExcelProperty(value = "")
+    @ExcelProperty(value = "审核时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date reviewedAt;
-
-
 }

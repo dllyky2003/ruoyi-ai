@@ -21,7 +21,7 @@ public interface IEcgStateLibraryService {
      * @param stateId 状态ID
      * @return ECG状态
      */
-    public EcgStateLibrary selectEcgStateLibraryById(String stateId);
+    EcgStateLibrary selectEcgStateLibraryById(String stateId);
 
     /**
      * 查询ECG状态列表（支持条件筛选、排序、模糊搜索）
@@ -29,28 +29,28 @@ public interface IEcgStateLibraryService {
      * @param ecgStateLibrary 查询条件
      * @return ECG状态集合
      */
-    public List<EcgStateLibrary> selectEcgStateLibraryList(EcgStateLibrary ecgStateLibrary);
+    List<EcgStateLibrary> selectEcgStateLibraryList(EcgStateLibrary ecgStateLibrary);
 
     /**
      * 查询所有ECG状态（下拉选择用）
      *
      * @return ECG状态集合
      */
-    public List<EcgStateLibrary> selectAllEcgStateLibrary();
+    List<EcgStateLibrary> selectAllEcgStateLibrary();
 
     /**
      * 查询所有启用的ECG状态（下拉选择用）
      *
      * @return ECG状态集合
      */
-    public List<EcgStateLibrary> selectActiveEcgStateLibrary();
+    List<EcgStateLibrary> selectActiveEcgStateLibrary();
 
     /**
      * 查询ECG状态简略信息（仅ID、名称、别名）
      *
      * @return ECG状态简略集合
      */
-    public List<EcgStateLibrary> selectSimpleEcgStateLibrary();
+    List<EcgStateLibrary> selectSimpleEcgStateLibrary();
 
     /**
      * 根据分类查询ECG状态列表
@@ -58,14 +58,14 @@ public interface IEcgStateLibraryService {
      * @param categoryCode 分类代码（BRADY/TACHY/ARREST/ROSC/OTHER）
      * @return ECG状态集合
      */
-    public List<EcgStateLibrary> selectEcgStateLibraryByCategory(String categoryCode);
+    List<EcgStateLibrary> selectEcgStateLibraryByCategory(String categoryCode);
 
     /**
      * 查询所有分类列表（去重，下拉选择用）
      *
      * @return 分类代码列表
      */
-    public List<String> selectCategoryList();
+    List<String> selectCategoryList();
 
     // =============================================
     // 基础增删改
@@ -77,7 +77,7 @@ public interface IEcgStateLibraryService {
      * @param ecgStateLibrary ECG状态
      * @return 结果
      */
-    public int insertEcgStateLibrary(EcgStateLibrary ecgStateLibrary);
+    int insertEcgStateLibrary(EcgStateLibrary ecgStateLibrary);
 
     /**
      * 修改ECG状态
@@ -85,7 +85,7 @@ public interface IEcgStateLibraryService {
      * @param ecgStateLibrary ECG状态
      * @return 结果
      */
-    public int updateEcgStateLibrary(EcgStateLibrary ecgStateLibrary);
+    int updateEcgStateLibrary(EcgStateLibrary ecgStateLibrary);
 
     /**
      * 切换启用/停用状态
@@ -94,7 +94,7 @@ public interface IEcgStateLibraryService {
      * @param isActive 启用状态（0-停用，1-启用）
      * @return 结果
      */
-    public int changeActiveStatus(String stateId, String isActive);
+    int changeActiveStatus(String stateId, String isActive);
 
     /**
      * 逻辑删除ECG状态（del_flag置为2）
@@ -102,7 +102,7 @@ public interface IEcgStateLibraryService {
      * @param stateId 状态ID
      * @return 结果
      */
-    public int deleteEcgStateLibraryById(String stateId);
+    int deleteEcgStateLibraryById(String stateId);
 
     /**
      * 批量逻辑删除ECG状态（del_flag置为2）
@@ -110,7 +110,7 @@ public interface IEcgStateLibraryService {
      * @param stateIds 需要删除的状态ID数组
      * @return 结果
      */
-    public int deleteEcgStateLibraryByIds(String[] stateIds);
+    int deleteEcgStateLibraryByIds(String[] stateIds);
 
     // =============================================
     // 物理删除（慎用）
@@ -122,7 +122,7 @@ public interface IEcgStateLibraryService {
      * @param stateId 状态ID
      * @return 结果
      */
-    public int physicalDeleteEcgStateLibraryById(String stateId);
+    int physicalDeleteEcgStateLibraryById(String stateId);
 
     /**
      * 批量物理删除ECG状态（慎用）
@@ -130,7 +130,7 @@ public interface IEcgStateLibraryService {
      * @param stateIds 状态ID数组
      * @return 结果
      */
-    public int physicalDeleteEcgStateLibraryByIds(String[] stateIds);
+    int physicalDeleteEcgStateLibraryByIds(String[] stateIds);
 
     // =============================================
     // 批量操作
@@ -142,7 +142,7 @@ public interface IEcgStateLibraryService {
      * @param stateList 状态列表（包含stateId和sortNum）
      * @return 结果
      */
-    public int batchUpdateSortNum(List<EcgStateLibrary> stateList);
+    int batchUpdateSortNum(List<EcgStateLibrary> stateList);
 
     // =============================================
     // 唯一性校验
@@ -154,7 +154,7 @@ public interface IEcgStateLibraryService {
      * @param stateName 状态名称
      * @return true-存在，false-不存在
      */
-    public boolean checkStateNameExists(String stateName);
+    boolean checkStateNameExists(String stateName);
 
     /**
      * 检查波形代码是否存在
@@ -162,7 +162,7 @@ public interface IEcgStateLibraryService {
      * @param waveformCode 波形代码
      * @return true-存在，false-不存在
      */
-    public boolean checkWaveformCodeExists(String waveformCode);
+    boolean checkWaveformCodeExists(String waveformCode);
 
     // =============================================
     // 导入导出
@@ -176,5 +176,5 @@ public interface IEcgStateLibraryService {
      * @param operName 操作人
      * @return 导入结果
      */
-    public String importStateLibrary(List<EcgStateLibrary> stateList, boolean isUpdateSupport, String operName);
+    String importStateLibrary(List<EcgStateLibrary> stateList, boolean isUpdateSupport, String operName);
 }

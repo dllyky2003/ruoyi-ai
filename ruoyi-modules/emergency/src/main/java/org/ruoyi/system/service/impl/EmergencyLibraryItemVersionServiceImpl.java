@@ -16,6 +16,7 @@ import org.ruoyi.system.domain.EmergencyLibraryItemVersion;
 import org.ruoyi.system.mapper.EmergencyLibraryItemVersionMapper;
 import org.ruoyi.system.service.IEmergencyLibraryItemVersionService;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Collection;
@@ -31,6 +32,9 @@ import java.util.Collection;
 @Service
 public class EmergencyLibraryItemVersionServiceImpl implements IEmergencyLibraryItemVersionService {
 
+    /**
+     *
+     */
     private final EmergencyLibraryItemVersionMapper baseMapper;
 
     /**
@@ -55,6 +59,32 @@ public class EmergencyLibraryItemVersionServiceImpl implements IEmergencyLibrary
     public TableDataInfo<EmergencyLibraryItemVersionVo> queryPageList(EmergencyLibraryItemVersionBo bo, PageQuery pageQuery) {
         LambdaQueryWrapper<EmergencyLibraryItemVersion> lqw = buildQueryWrapper(bo);
         Page<EmergencyLibraryItemVersionVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
+
+        // ========== 调试代码 ==========
+        log.info("====== 调试信息 ======");
+        log.info("查询结果总数: {}", result.getTotal());
+        if (!result.getRecords().isEmpty()) {
+            EmergencyLibraryItemVersionVo first = result.getRecords().get(0);
+            log.info("第一条数据: {}", first);
+            log.info("definitionJson 字段值: {}", first.getDefinitionJson());
+            log.info("definitionJson 是否为 null: {}", first.getDefinitionJson() == null);
+
+            // 打印所有字段名（通过反射）
+            try {
+                java.lang.reflect.Field[] fields = first.getClass().getDeclaredFields();
+                List<String> fieldNames = new ArrayList<>();
+                for (java.lang.reflect.Field f : fields) {
+                    fieldNames.add(f.getName());
+                }
+                log.info("Vo 类中声明的字段: {}", fieldNames);
+            } catch (Exception e) {
+                log.error("获取字段列表失败", e);
+            }
+        } else {
+            log.info("查询结果为空");
+        }
+        // ========== 调试结束 ==========
+
         return TableDataInfo.build(result);
     }
 
@@ -74,7 +104,7 @@ public class EmergencyLibraryItemVersionServiceImpl implements IEmergencyLibrary
         Map<String, Object> params = bo.getParams();
         LambdaQueryWrapper<EmergencyLibraryItemVersion> lqw = Wrappers.lambdaQuery();
         lqw.orderByAsc(EmergencyLibraryItemVersion::getId);
-         lqw.eq(bo.getLibraryItemId() != null, EmergencyLibraryItemVersion::getLibraryItemId, bo.getLibraryItemId());
+        lqw.eq(bo.getLibraryItemId() != null, EmergencyLibraryItemVersion::getLibraryItemId, bo.getLibraryItemId());
         lqw.eq(bo.getVersionNo() != null, EmergencyLibraryItemVersion::getVersionNo, bo.getVersionNo());
         lqw.eq(StringUtils.isNotBlank(bo.getSchemaVersion()), EmergencyLibraryItemVersion::getSchemaVersion, bo.getSchemaVersion());
         lqw.eq(StringUtils.isNotBlank(bo.getStatus()), EmergencyLibraryItemVersion::getStatus, bo.getStatus());
@@ -115,7 +145,9 @@ public class EmergencyLibraryItemVersionServiceImpl implements IEmergencyLibrary
      */
     @Override
     public Boolean updateByBo(EmergencyLibraryItemVersionBo bo) {
+
         EmergencyLibraryItemVersion update = MapstructUtils.convert(bo, EmergencyLibraryItemVersion.class);
+
         validEntityBeforeSave(update);
         return baseMapper.updateById(update) > 0;
     }

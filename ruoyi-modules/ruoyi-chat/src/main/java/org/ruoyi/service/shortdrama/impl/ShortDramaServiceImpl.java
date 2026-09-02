@@ -2240,7 +2240,7 @@ public class ShortDramaServiceImpl implements IShortDramaService {
                 entity.setProjectId(projectId);
                 entity.setName(firstNotBlank(loc.getName(), "未命名场景"));
                 entity.setSummary(loc.getSummary());
-                entity.setHasCrowd(loc.getHasCrowd() != null ? loc.getHasCrowd() : false);
+                entity.setHasCrowd(loc.getHasCrowd() != null && loc.getHasCrowd());
                 entity.setCrowdDescription(loc.getCrowdDescription());
                 entity.setAvailableSlots(loc.getAvailableSlots() != null ? JsonUtils.toJsonString(loc.getAvailableSlots()) : null);
                 entity.setDescriptions(loc.getDescriptions() != null ? JsonUtils.toJsonString(loc.getDescriptions()) : null);
@@ -2362,7 +2362,7 @@ public class ShortDramaServiceImpl implements IShortDramaService {
                 }
               ]
             }
-            ⚠️ JSON安全：严格遵守JSON标准格式。字符串值内的双引号必须转义为\"。对话引号统一使用「」代替英文双引号。
+            ⚠️ JSON安全：严格遵守JSON标准格式。字符串值内的双引号必须转义为"。对话引号统一使用「」代替英文双引号。
 
             剧本内容：
             %s
@@ -2428,7 +2428,7 @@ public class ShortDramaServiceImpl implements IShortDramaService {
                 }
               ]
             }
-            ⚠️ JSON安全：严格遵守JSON标准格式。字符串值内的双引号必须转义为\"。对话引号统一使用「」代替英文双引号。
+            ⚠️ JSON安全：严格遵守JSON标准格式。字符串值内的双引号必须转义为"。对话引号统一使用「」代替英文双引号。
 
             角色名：%s
             性别：%s
@@ -2491,7 +2491,7 @@ public class ShortDramaServiceImpl implements IShortDramaService {
                 }
               ]
             }
-            ⚠️ JSON安全：严格遵守JSON标准格式。字符串值内的双引号必须转义为\"。对话引号统一使用「」代替英文双引号。
+            ⚠️ JSON安全：严格遵守JSON标准格式。字符串值内的双引号必须转义为"。对话引号统一使用「」代替英文双引号。
 
             剧本内容：
             %s
@@ -2749,7 +2749,7 @@ public class ShortDramaServiceImpl implements IShortDramaService {
               "depth_of_field": "深景深（T8.0），清晰展现宫殿空间",
               "color_tone": "暖色调，温馨氛围"
             }
-            ⚠️ JSON安全：严格遵守JSON标准格式。字符串值内的双引号必须转义为\"。对话引号统一使用「」代替英文双引号。使用相对方向（画面左侧/右侧），禁止使用东南西北。
+            ⚠️ JSON安全：严格遵守JSON标准格式。字符串值内的双引号必须转义为"。对话引号统一使用「」代替英文双引号。使用相对方向（画面左侧/右侧），禁止使用东南西北。
 
             分镜数据（共%d个镜头）：
             %s
@@ -2841,7 +2841,7 @@ public class ShortDramaServiceImpl implements IShortDramaService {
                 {"name": "角色名", "acting": "嘴角微扬眼神柔和地看向对方，身体微微前倾，双手自然垂放，轻轻眨眼"}
               ]
             }
-            ⚠️ JSON安全：严格遵守JSON标准格式。字符串值内的双引号必须转义为\"。对话引号统一使用「」代替英文双引号。
+            ⚠️ JSON安全：严格遵守JSON标准格式。字符串值内的双引号必须转义为"。对话引号统一使用「」代替英文双引号。
 
             分镜数据（共%d个镜头）：
             %s
@@ -3282,7 +3282,7 @@ public class ShortDramaServiceImpl implements IShortDramaService {
               "scene_type": "daily",
               "source_text": "张三对大家说：开会了"
             }
-            ⚠️ JSON安全：严格遵守JSON标准格式。字符串值内的双引号必须转义为\"。对话引号统一使用「」代替英文双引号。特写镜头必须使用固定镜头。
+            ⚠️ JSON安全：严格遵守JSON标准格式。字符串值内的双引号必须转义为"。对话引号统一使用「」代替英文双引号。特写镜头必须使用固定镜头。
 
             分镜规划：%s
 

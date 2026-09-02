@@ -1,0 +1,33 @@
+{
+  "metaSchemaVersion": "1.0",
+  "caseTypeId": "acls_scene_ohca_rhythm_unknown",
+  "population": { "patientGroup": "adult" },
+  "caseScene": {
+    "setting": "out_of_hospital",
+    "timeWindow": "initial",
+    "pulseStatus": "none",
+    "rhythmVisibility": "unknown",
+    "resourceConstraints": {
+      "defibAvailability": "defib_available",
+      "medAvailability": "unknown"
+    },
+    "stability": "unknown",
+    "cardiacArrestSubclass": "unknown",
+    "tachySubclass": "unknown",
+    "bradySubclass": "unknown",
+    "acsSubclass": "unknown",
+    "neuroSyndrome": "unknown"
+  },
+  "zhSummary": "成人无脉骤停，节律信息不明，训练在信息缺失下仍保持可执行抢救闭环。",
+  "zhKeyTriggers": [
+    "pulseStatus=none",
+    "rhythmVisibility=unknown",
+    "cardiacArrestSubclass=unknown"
+  ],
+  "zhTeachingFocus": "在节律未知时仍能维持流程闭环并触发适配策略。",
+
+  "teachingObjectives": [
+    { "objectiveId": "OBJ_OHCA_03", "objectiveText": "在节律不明条件下保持可执行的抢救闭环并触发相应策略分支", "primaryScoring": true }
+  ],
+  "evaluationTargets": { "requiredSignals": ["pulseStatus", "rhythmVisibility", "timingWindowCompliance"] }
+}

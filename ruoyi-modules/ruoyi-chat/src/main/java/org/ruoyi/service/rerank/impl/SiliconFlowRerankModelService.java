@@ -116,7 +116,7 @@ public class SiliconFlowRerankModelService implements RerankModelService {
         request.setQuery(rerankRequest.getQuery());
         request.setDocuments(rerankRequest.getDocuments());
         request.setTop_n(rerankRequest.getTopN() != null ? rerankRequest.getTopN() : rerankRequest.getDocuments().size());
-        request.setReturn_documents(rerankRequest.getReturnDocuments() != null ? rerankRequest.getReturnDocuments() : false);
+        request.setReturn_documents(rerankRequest.getReturnDocuments() != null && rerankRequest.getReturnDocuments());
         return objectMapper.writeValueAsString(request);
     }
 

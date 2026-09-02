@@ -1,5 +1,6 @@
 package org.ruoyi.system.mapper;
 
+import jodd.introspector.Mapper;
 import org.ruoyi.system.domain.EmergencyCaseVersionLibraryRef;
 import org.ruoyi.system.domain.vo.EmergencyCaseVersionLibraryRefVo;
 import org.ruoyi.common.mybatis.core.mapper.BaseMapperPlus;

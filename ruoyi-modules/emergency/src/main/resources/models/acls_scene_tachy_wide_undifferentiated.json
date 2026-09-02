@@ -1,0 +1,33 @@
+{
+  "metaSchemaVersion": "1.0",
+  "caseTypeId": "acls_scene_tachy_wide_undifferentiated",
+  "population": { "patientGroup": "adult" },
+  "caseScene": {
+    "setting": "in_hospital",
+    "timeWindow": "initial",
+    "pulseStatus": "present",
+    "rhythmVisibility": "monitored_visible",
+    "resourceConstraints": {
+      "defibAvailability": "defib_available",
+      "medAvailability": "meds_available"
+    },
+    "stability": "unstable",
+    "cardiacArrestSubclass": "unknown",
+    "tachySubclass": "wide_undifferentiated",
+    "bradySubclass": "unknown",
+    "acsSubclass": "unknown",
+    "neuroSyndrome": "unknown"
+  },
+  "zhSummary": "宽QRS未鉴别教学兜底场景，训练保守但可执行路径与再评估策略。",
+  "zhKeyTriggers": [
+    "pulseStatus=present",
+    "tachySubclass=wide_undifferentiated",
+    "stability=unstable"
+  ],
+  "zhTeachingFocus": "在无法可靠鉴别时仍能选择安全可执行路径并推进再评估。",
+
+  "teachingObjectives": [
+    { "objectiveId": "OBJ_TACHY_04", "objectiveText": "在宽QRS无法可靠鉴别时执行保守可执行路径并推进再评估", "primaryScoring": true }
+  ],
+  "evaluationTargets": { "requiredSignals": ["pulseStatus", "rhythmVisibility", "timingWindowCompliance", "stability"] }
+}

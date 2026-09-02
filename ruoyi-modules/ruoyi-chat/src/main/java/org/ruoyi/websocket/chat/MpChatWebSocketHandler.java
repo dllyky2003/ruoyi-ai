@@ -358,30 +358,25 @@ public class MpChatWebSocketHandler extends AbstractWebSocketHandler {
     }
 
     /**
-     * 多知识库复合检索器：并发查询各库并合并结果。
-     * （与 ChatServiceFacade 内部 CompositeContentRetriever 同构，独立保留以解耦公共门面）
-     */
-    private static class CompositeContentRetriever implements ContentRetriever {
-        private final List<ContentRetriever> delegates;
-
-        CompositeContentRetriever(List<ContentRetriever> delegates) {
-            this.delegates = delegates;
-        }
+         * 多知识库复合检索器：并发查询各库并合并结果。
+         * （与 ChatServiceFacade 内部 CompositeContentRetriever 同构，独立保留以解耦公共门面）
+         */
+        private record CompositeContentRetriever(List<ContentRetriever> delegates) implements ContentRetriever {
 
         @Override
-        public List<Content> retrieve(Query query) {
-            List<Content> all = new ArrayList<>();
-            for (ContentRetriever r : delegates) {
-                try {
-                    List<Content> part = r.retrieve(query);
-                    if (part != null) {
-                        all.addAll(part);
+            public List<Content> retrieve(Query query) {
+                List<Content> all = new ArrayList<>();
+                for (ContentRetriever r : delegates) {
+                    try {
+                        List<Content> part = r.retrieve(query);
+                        if (part != null) {
+                            all.addAll(part);
+                        }
+                    } catch (Exception e) {
+                        log.warn("mp-chat 复合检索子检索器异常: {}", e.getMessage());
                     }
-                } catch (Exception e) {
-                    log.warn("mp-chat 复合检索子检索器异常: {}", e.getMessage());
                 }
+                return all;
             }
-            return all;
         }
-    }
 }

@@ -23,7 +23,7 @@ public interface EcgIntentDefinitionMapper {
      * @param intent 查询条件
      * @return 意图定义集合
      */
-    public List<EcgIntentDefinition> selectEcgIntentDefinitionList(EcgIntentDefinition intent);
+    List<EcgIntentDefinition> selectEcgIntentDefinitionList(EcgIntentDefinition intent);
 
     /**
      * 获取所有意图（下拉选择用）
@@ -31,7 +31,7 @@ public interface EcgIntentDefinitionMapper {
      * @param category 分类过滤（可选）
      * @return 意图定义集合
      */
-    public List<EcgIntentDefinition> selectAllIntentOptions(@Param("category") String category);
+    List<EcgIntentDefinition> selectAllIntentOptions(@Param("category") String category);
 
     /**
      * 根据意图ID查询意图定义
@@ -39,7 +39,7 @@ public interface EcgIntentDefinitionMapper {
      * @param intentId 意图编码
      * @return 意图定义
      */
-    public EcgIntentDefinition selectEcgIntentDefinitionById(@Param("intentId") String intentId);
+    EcgIntentDefinition selectEcgIntentDefinitionById(@Param("intentId") String intentId);
 
     // ==================== 插入方法 ====================
 
@@ -49,7 +49,7 @@ public interface EcgIntentDefinitionMapper {
      * @param intent 意图定义
      * @return 结果
      */
-    public int insertEcgIntentDefinition(EcgIntentDefinition intent);
+    int insertEcgIntentDefinition(EcgIntentDefinition intent);
 
     // ==================== 更新方法 ====================
 
@@ -59,7 +59,7 @@ public interface EcgIntentDefinitionMapper {
      * @param intent 意图定义
      * @return 结果
      */
-    public int updateEcgIntentDefinition(EcgIntentDefinition intent);
+    int updateEcgIntentDefinition(EcgIntentDefinition intent);
 
     /**
      * 批量更新意图状态
@@ -68,7 +68,7 @@ public interface EcgIntentDefinitionMapper {
      * @param isActive 状态值（0禁用 1启用）
      * @return 结果
      */
-    public int batchUpdateStatus(@Param("array") String[] intentIds, @Param("isActive") Integer isActive);
+    int batchUpdateStatus(@Param("array") String[] intentIds, @Param("isActive") Integer isActive);
 
     // ==================== 删除方法（逻辑删除） ====================
 
@@ -78,7 +78,7 @@ public interface EcgIntentDefinitionMapper {
      * @param intentId 意图编码
      * @return 结果
      */
-    public int deleteEcgIntentDefinitionById(@Param("intentId") String intentId);
+    int deleteEcgIntentDefinitionById(@Param("intentId") String intentId);
 
     /**
      * 批量逻辑删除意图定义
@@ -86,5 +86,5 @@ public interface EcgIntentDefinitionMapper {
      * @param intentIds 需要删除的意图编码数组
      * @return 结果
      */
-    public int deleteEcgIntentDefinitionByIds(@Param("array") String[] intentIds);
+    int deleteEcgIntentDefinitionByIds(@Param("array") String[] intentIds);
 }

@@ -1,0 +1,381 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-08-28",
+  "description": "ACLS通用上下文变量定义（G类），适用于所有Megacode案例",
+  "layer": "GENERAL",
+
+  "variables": [
+    {
+      "name": "current_rhythm",
+      "type": "string",
+      "enum": [
+        { "value": "Sinus", "label": "窦性心律" },
+        { "value": "SVT", "label": "室上速" },
+        { "value": "AFib", "label": "房颤" },
+        { "value": "AFlutter", "label": "房扑" },
+        { "value": "VT", "label": "室速" },
+        { "value": "VF", "label": "室颤" },
+        { "value": "PEA", "label": "无脉电活动" },
+        { "value": "Asystole", "label": "停搏" }
+      ],
+      "description": "当前实时心律（客观事实）",
+      "category": "PHYSIOLOGICAL",
+      "source": "SIMULATOR",
+      "writable_by": "SIMULATOR",
+      "default_value": "SVT",
+      "persistence": true,
+      "scoring": false
+    },
+    {
+      "name": "systolic_bp",
+      "type": "integer",
+      "min": 0,
+      "max": 300,
+      "unit": "mmHg",
+      "description": "收缩压（客观事实）",
+      "category": "PHYSIOLOGICAL",
+      "source": "SIMULATOR",
+      "writable_by": "SIMULATOR",
+      "default_value": 145,
+      "persistence": true,
+      "scoring": false
+    },
+    {
+      "name": "diastolic_bp",
+      "type": "integer",
+      "min": 0,
+      "max": 200,
+      "unit": "mmHg",
+      "description": "舒张压（客观事实）",
+      "category": "PHYSIOLOGICAL",
+      "source": "SIMULATOR",
+      "writable_by": "SIMULATOR",
+      "default_value": 90,
+      "persistence": true,
+      "scoring": false
+    },
+    {
+      "name": "heart_rate",
+      "type": "integer",
+      "min": 0,
+      "max": 350,
+      "unit": "bpm",
+      "description": "心率（客观事实）",
+      "category": "PHYSIOLOGICAL",
+      "source": "SIMULATOR",
+      "writable_by": "SIMULATOR",
+      "default_value": 150,
+      "persistence": true,
+      "scoring": false
+    },
+    {
+      "name": "spo2",
+      "type": "integer",
+      "min": 0,
+      "max": 100,
+      "unit": "%",
+      "description": "血氧饱和度（客观事实）",
+      "category": "PHYSIOLOGICAL",
+      "source": "SIMULATOR",
+      "writable_by": "SIMULATOR",
+      "default_value": 98,
+      "persistence": true,
+      "scoring": false
+    },
+    {
+      "name": "consciousness",
+      "type": "string",
+      "enum": [
+        { "value": "alert", "label": "清醒" },
+        { "value": "verbal", "label": "对声音有反应" },
+        { "value": "pain", "label": "对疼痛有反应" },
+        { "value": "unresponsive", "label": "无反应" }
+      ],
+      "description": "意识状态（客观事实）",
+      "category": "PHYSIOLOGICAL",
+      "source": "SIMULATOR",
+      "writable_by": "SIMULATOR",
+      "default_value": "alert",
+      "persistence": true,
+      "scoring": false
+    },
+    {
+      "name": "respiratory_rate",
+      "type": "integer",
+      "min": 0,
+      "max": 60,
+      "unit": "/min",
+      "description": "呼吸频率（客观事实）",
+      "category": "PHYSIOLOGICAL",
+      "source": "SIMULATOR",
+      "writable_by": "SIMULATOR",
+      "default_value": 20,
+      "persistence": true,
+      "scoring": false
+    },
+
+    {
+      "name": "asserted_qrs_width",
+      "type": "string",
+      "enum": [
+        { "value": "narrow", "label": "窄QRS" },
+        { "value": "wide", "label": "宽QRS" },
+        { "value": null, "label": "未指定" }
+      ],
+      "description": "学员报告/判断的QRS宽度",
+      "category": "LEARNER_STATEMENT",
+      "source": "LEARNER",
+      "writable_by": "CLASSIFIER",
+      "default_value": null,
+      "persistence": true,
+      "scoring": true,
+      "scoring_rules": {
+        "compare_with": "current_rhythm",
+        "mapping": { "narrow": ["SVT", "AFib", "AFlutter", "Sinus"], "wide": ["VT", "VF"] }
+      }
+    },
+    {
+      "name": "asserted_rhythm_regular",
+      "type": "boolean",
+      "description": "学员报告/判断的节律规则性",
+      "category": "LEARNER_STATEMENT",
+      "source": "LEARNER",
+      "writable_by": "CLASSIFIER",
+      "default_value": null,
+      "persistence": true,
+      "scoring": true
+    },
+    {
+      "name": "asserted_stable",
+      "type": "boolean",
+      "description": "学员报告/判断的血流动力学稳定性",
+      "category": "LEARNER_STATEMENT",
+      "source": "LEARNER",
+      "writable_by": "CLASSIFIER",
+      "default_value": null,
+      "persistence": true,
+      "scoring": true
+    },
+    {
+      "name": "reported_systolic_bp",
+      "type": "integer",
+      "min": 0,
+      "max": 300,
+      "unit": "mmHg",
+      "description": "学员报告的收缩压值",
+      "category": "LEARNER_STATEMENT",
+      "source": "LEARNER",
+      "writable_by": "CLASSIFIER",
+      "default_value": null,
+      "persistence": true,
+      "scoring": true,
+      "scoring_rules": {
+        "compare_with": "systolic_bp",
+        "tolerance": 5
+      }
+    },
+    {
+      "name": "reported_diastolic_bp",
+      "type": "integer",
+      "min": 0,
+      "max": 200,
+      "unit": "mmHg",
+      "description": "学员报告的舒张压值",
+      "category": "LEARNER_STATEMENT",
+      "source": "LEARNER",
+      "writable_by": "CLASSIFIER",
+      "default_value": null,
+      "persistence": true,
+      "scoring": true,
+      "scoring_rules": {
+        "compare_with": "diastolic_bp",
+        "tolerance": 5
+      }
+    },
+    {
+      "name": "reported_heart_rate",
+      "type": "integer",
+      "min": 0,
+      "max": 350,
+      "unit": "bpm",
+      "description": "学员报告的心率值",
+      "category": "LEARNER_STATEMENT",
+      "source": "LEARNER",
+      "writable_by": "CLASSIFIER",
+      "default_value": null,
+      "persistence": true,
+      "scoring": true,
+      "scoring_rules": {
+        "compare_with": "heart_rate",
+        "tolerance": 5
+      }
+    },
+    {
+      "name": "reported_consciousness",
+      "type": "string",
+      "enum": [
+        { "value": "alert", "label": "清醒" },
+        { "value": "verbal", "label": "对声音有反应" },
+        { "value": "pain", "label": "对疼痛有反应" },
+        { "value": "unresponsive", "label": "无反应" }
+      ],
+      "description": "学员报告的意识状态",
+      "category": "LEARNER_STATEMENT",
+      "source": "LEARNER",
+      "writable_by": "CLASSIFIER",
+      "default_value": null,
+      "persistence": true,
+      "scoring": true,
+      "scoring_rules": {
+        "compare_with": "consciousness"
+      }
+    },
+
+    {
+      "name": "cardioversion_attempts",
+      "type": "integer",
+      "min": 0,
+      "max": 5,
+      "description": "电复律尝试次数",
+      "category": "PROCESS_MARKER",
+      "source": "STATE_MACHINE",
+      "writable_by": "STATE_MACHINE",
+      "default_value": 0,
+      "persistence": true,
+      "scoring": false
+    },
+    {
+      "name": "current_state",
+      "type": "string",
+      "description": "当前状态机状态",
+      "category": "SYSTEM",
+      "source": "STATE_MACHINE",
+      "writable_by": "STATE_MACHINE",
+      "default_value": "INITIAL_SETUP",
+      "persistence": true,
+      "scoring": false
+    },
+    {
+      "name": "operation_status",
+      "type": "string",
+      "enum": [
+        { "value": "start", "label": "已开始" },
+        { "value": "done", "label": "已完成" },
+        { "value": "pending", "label": "待执行" }
+      ],
+      "description": "操作执行状态",
+      "category": "PROCESS_MARKER",
+      "source": "STATE_MACHINE",
+      "writable_by": "STATE_MACHINE",
+      "default_value": "pending",
+      "persistence": true,
+      "scoring": false
+    },
+    {
+      "name": "case_type",
+      "type": "string",
+      "description": "当前案例类型编码",
+      "category": "SYSTEM",
+      "source": "SYSTEM",
+      "writable_by": "SYSTEM",
+      "default_value": null,
+      "persistence": true,
+      "scoring": false
+    },
+    {
+      "name": "time_elapsed_since_last_intervention",
+      "type": "integer",
+      "unit": "seconds",
+      "description": "距离上次治疗干预的秒数",
+      "category": "SYSTEM",
+      "source": "TIMER",
+      "writable_by": "TIMER",
+      "default_value": 0,
+      "persistence": false,
+      "scoring": false
+    },
+    {
+      "name": "session_clock_status",
+      "type": "string",
+      "enum": [
+        { "value": "RUNNING", "label": "运行中" },
+        { "value": "PAUSED", "label": "已暂停" },
+        { "value": "RESET", "label": "已重置" }
+      ],
+      "default_value": "RUNNING",
+      "writable_by": "SYSTEM"
+    },
+    {
+      "name": "last_error",
+      "type": "string",
+      "description": "最后一次错误信息",
+      "category": "SYSTEM",
+      "source": "SYSTEM",
+      "writable_by": "SYSTEM",
+      "default_value": null,
+      "persistence": true,
+      "scoring": false
+    },
+    {
+      "name": "session_start_time",
+      "type": "datetime",
+      "description": "会话开始时间",
+      "category": "SYSTEM",
+      "source": "SYSTEM",
+      "writable_by": "SYSTEM",
+      "default_value": null,
+      "persistence": true,
+      "scoring": false
+    }
+  ],
+
+  "slot_mappings": {
+    "description": "分类器槽位 → 变量名映射",
+    "mappings": {
+      "qrs_width": "asserted_qrs_width",
+      "rhythm_regular": "asserted_rhythm_regular",
+      "is_stable": "asserted_stable",
+      "systolic_bp": "reported_systolic_bp",
+      "diastolic_bp": "reported_diastolic_bp",
+      "heart_rate": "reported_heart_rate",
+      "consciousness": "reported_consciousness"
+    }
+  },
+
+  "auto_derived_rules": {
+    "description": "自动派生规则：由客观事实推导派生变量",
+    "rules": [
+      {
+        "source_var": "current_rhythm",
+        "target_var": "derived_qrs_width",
+        "mapping": {
+          "SVT": "narrow",
+          "AFib": "narrow",
+          "AFlutter": "narrow",
+          "Sinus": "narrow",
+          "VT": "wide",
+          "VF": "wide"
+        }
+      },
+      {
+        "source_var": "current_rhythm",
+        "target_var": "derived_rhythm_regular",
+        "mapping": {
+          "SVT": true,
+          "Sinus": true,
+          "VT": true,
+          "AFib": false,
+          "AFlutter": false,
+          "VF": false,
+          "PEA": false,
+          "Asystole": false
+        }
+      },
+      {
+        "source_vars": ["systolic_bp", "consciousness"],
+        "target_var": "derived_stable",
+        "rule": "#systolic_bp >= 90 and #consciousness == 'alert'"
+      }
+    ]
+  }
+}

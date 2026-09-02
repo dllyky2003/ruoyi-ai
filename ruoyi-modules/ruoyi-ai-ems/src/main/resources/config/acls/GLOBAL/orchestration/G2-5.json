@@ -1,0 +1,41 @@
+{
+  "intent_code": "G2-5",
+  "act_type": "策略纠偏/否决",
+  "name_cn": "策略纠偏或推翻重来指令",
+  "description_cn": "当发现先前决策错误时，果断叫停当前流程，宣布更改治疗方案",
+  "keywords": ["停止给药", "准备紧急电击", "改按室颤"],
+  "pattern_hints": ["判断错了停止", "推翻原方案"],
+  "examples": [
+    "等等刚才判断错了停止给药",
+    "错了这是预激快停用地尔硫卓",
+    "别再推腺苷了准备紧急电击",
+    "推翻原方案改按室颤处理"
+  ],
+  "standard_script": "停止给药，刚才判断有误，改按室颤处理，准备电击。",
+  "extraction": {
+    "target_params": ["overrideAction"],
+    "rules": {
+      "overrideAction": {
+        "type": "string",
+        "enum": ["stop_drug", "switch_to_cardioversion", "switch_to_vf_protocol"]
+      }
+    }
+  },
+  "execution": {
+    "type": "action_chain",
+    "steps": [
+      { "step_id": "confirm", "ref_atomic": "CONFIRM", "duty": "TEAM_LEADER" }
+    ],
+    "preconditions": {},
+    "on_complete": {
+      "response_template": "🔄 策略已调整：{overrideAction}，新方案正在执行。",
+      "transition_event": "G2-5_DONE"
+    }
+  },
+  "pragmatic_handlers": {
+    "策略纠偏/否决": {
+      "action": "advance_chain",
+      "response_template": "🔄 策略已调整：{overrideAction}，新方案正在执行。"
+    }
+  }
+}

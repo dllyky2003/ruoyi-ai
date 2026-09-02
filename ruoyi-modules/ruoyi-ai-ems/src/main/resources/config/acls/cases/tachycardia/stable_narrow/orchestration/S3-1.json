@@ -1,0 +1,40 @@
+{
+  "intent_code": "S3-1",
+  "act_type": "宣告",
+  "name_cn": "血流动力学恶化宣告",
+  "description_cn": "报告患者已出现明确不稳定征象：低血压、意识水平下降、休克等",
+  "keywords": ["血压掉到", "不清醒了", "胸痛加重", "休克了"],
+  "pattern_hints": ["血压掉到了", "不稳定了"],
+  "examples": [
+    "血压掉到85了",
+    "人不清醒了",
+    "胸痛加重不稳定了",
+    "收缩压只有85快处理",
+    "患者喘不上气肺里有啰音",
+    "末梢湿冷休克了"
+  ],
+  "standard_script": "患者血压掉到85/50，意识模糊，不稳定了，立即准备电复律。",
+  "extraction": {
+    "target_params": ["symptoms", "asserted_stable", "reported_systolic_bp"],
+    "rules": {
+      "symptoms": {
+        "type": "array",
+        "items": ["chest_pain", "shortness_of_breath", "altered_consciousness", "pulmonary_edema", "shock"]
+      },
+      "asserted_stable": { "type": "boolean", "static": false },
+      "reported_systolic_bp": { "type": "integer" }
+    }
+  },
+  "execution": {
+    "type": "atomic",
+    "response_template": "🚨 紧急！患者不稳定，血压 {reported_systolic_bp}，症状 {symptoms}，准备启动电复律！",
+    "requires_state_transition": true,
+    "transition_event": "S3-1_DONE"
+  },
+  "pragmatic_handlers": {
+    "宣告": {
+      "action": "execute_action",
+      "response_template": "🚨 紧急！患者不稳定，血压 {reported_systolic_bp}，症状 {symptoms}，准备启动电复律！"
+    }
+  }
+}

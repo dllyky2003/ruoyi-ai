@@ -1,0 +1,29 @@
+{
+  "metaSchemaVersion": "1.0",
+  "caseTypeId": "acls_scene_acs_stemi_possible",
+  "population": { "patientGroup": "adult" },
+  "caseScene": {
+    "setting": "out_of_hospital",
+    "timeWindow": "initial",
+    "pulseStatus": "unknown",
+    "rhythmVisibility": "unknown",
+    "resourceConstraints": {
+      "defibAvailability": "unknown",
+      "medAvailability": "unknown"
+    },
+    "stability": "unknown",
+    "cardiacArrestSubclass": "unknown",
+    "tachySubclass": "unknown",
+    "bradySubclass": "unknown",
+    "acsSubclass": "stemi_possible",
+    "neuroSyndrome": "unknown"
+  },
+  "zhSummary": "胸痛疑似 STEMI 训练场景，重点训练高风险评估与转运/处置主线触发。",
+  "zhKeyTriggers": [ "acsSubclass=stemi_possible" ],
+  "zhTeachingFocus": "STEMI 疑似证据识别后的教学主线触发与闭环处置。",
+
+  "teachingObjectives": [
+    { "objectiveId": "OBJ_ACS_01", "objectiveText": "完成胸痛高风险评估并触发 STEMI 相关教学主线与转运策略", "primaryScoring": true }
+  ],
+  "evaluationTargets": { "requiredSignals": ["timingWindowCompliance"] }
+}

@@ -1,0 +1,65 @@
+physicalExam:
+  jvdOptions: ["是", "否"]
+  crtOptions: ["<2秒", "2-3秒", ">3秒"]
+  lungOptions: ["清晰", "湿啰音", "哮鸣音", "呼吸音消失", "呼吸音减弱/不清"]
+  lungApexOptions: ["清晰", "湿啰音", "哮鸣音"]
+  yesNoOptions: ["是", "否"]
+  pupilOptions: ["等大等圆", "不等大"]
+  faceOptions: ["对称", "不对称"]
+  abdomenOptions: ["软", "压痛", "反跳痛", "腹肌紧张/防御"]
+  dorsalisPedisPulseType: ["是", "否"]
+  thighArteryPulseType: ["是", "否"]
+medicationHistory:
+  homeMedLongTermOptions:
+    - "钙通道阻滞剂（如氨氯地平）"
+    - "ACEI/ARB类（如缬沙坦）"
+    - "β受体阻滞剂（如美托洛尔）"
+    - "他汀类（如阿托伐他汀）"
+    - "口服降糖药（二甲双胍）"
+    - "胰岛素"
+    - "利尿剂"
+    - "无 / 不详"
+  allergyHasAllergyOptions: ["有", "无", "不详"]
+  allergyDrugCategoryOptions:
+    - "青霉素类"
+    - "头孢菌素类"
+    - "磺胺类"
+    - "阿司匹林/水杨酸类"
+    - "造影剂"
+    - "其他 / 不详"
+  allergySeverityOptions:
+    - "皮疹/荨麻疹（轻度）"
+    - "呼吸困难/喘息（中度）"
+    - "过敏性休克（重度）"
+    - "不详"
+  homeMedAntiplateletOptions: ["氯吡格雷", "替格瑞洛", "未服用", "不详"]
+  homeMedAnticoagulantOptions: ["华法林", "利伐沙班", "达比加群", "未服用", "不详"]
+  homeMedPde5Options:
+    - "是，24小时内服用"
+    - "是，超过24小时"
+    - "未服用"
+    - "不详 / 未问"
+  tempMedSedativeOptions:
+    - "地西泮（安定）"
+    - "艾司唑仑"
+    - "佐匹克隆"
+    - "未服用"
+    - "不详"
+  tempMedNitroGivenOptions: ["是", "否", "不详"]
+  tempMedNitroDoseOptions:
+    - ""
+    - "2粒"
+    - "3粒"
+    - "5粒"
+    - "10粒"
+    - "不详"
+  historyHypertensionOptions: ["有", "无", "不详"]
+  historyHypertensionYearsOptions: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  historyDiabetesOptions:
+    - "1型"
+    - "2型（饮食控制）"
+    - "2型（口服药）"
+    - "无"
+    - "不详"
+  historyRenalOptions: ["有（透析）", "有（非透析）", "无", "不详"]
+  historyGiBleedOptions: ["有", "无", "不详"]

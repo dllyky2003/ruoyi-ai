@@ -1,0 +1,29 @@
+{
+  "intent_code": "G1-2",
+  "act_type": "探查性询问",
+  "name_cn": "安全禁忌询问",
+  "description_cn": "在连接电极片或执行电击前，确认是否存在除颤禁忌",
+  "keywords": ["起搏器吗", "膏药吗", "金属饰物"],
+  "pattern_hints": ["有除颤禁忌吗", "身上有膏药吗"],
+  "examples": [
+    "身上有膏药或起搏器吗",
+    "有除颤禁忌吗",
+    "检查一下有没有金属饰物"
+  ],
+  "standard_script": "患者身上有膏药、起搏器或金属饰物吗？",
+  "extraction": {
+    "target_params": [],
+    "rules": {}
+  },
+  "execution": {
+    "type": "query",
+    "response_template": "📋 正在检查患者体表，未发现膏药、起搏器或金属饰物。",
+    "data_source": "context"
+  },
+  "pragmatic_handlers": {
+    "探查性询问": {
+      "action": "query_context",
+      "response_template": "📋 正在检查患者体表，未发现膏药、起搏器或金属饰物。"
+    }
+  }
+}

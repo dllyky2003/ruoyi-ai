@@ -7,6 +7,7 @@ import org.ruoyi.common.excel.annotation.ExcelDictFormat;
 import org.ruoyi.common.excel.convert.ExcelDictConvert;
 import io.github.linpeilie.annotations.AutoMapper;
 import lombok.Data;
+import org.ruoyi.system.domain.definition.EmergencyLibraryItemDefinition;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -47,40 +48,70 @@ public class EmergencyCaseVersionResourceRefVo implements Serializable {
     private Long orderNum;
 
     /**
-     * 
+     *
      */
     @ExcelProperty(value = "")
     private Long caseVersionId;
 
     /**
-     * 
+     *
      */
     @ExcelProperty(value = "")
     private String resourceConfigId;
 
     /**
-     * 
+     *
      */
     @ExcelProperty(value = "")
     private Long libraryItemId;
 
     /**
-     * 
+     *
      */
     @ExcelProperty(value = "")
     private Long libraryVersionId;
 
     /**
-     * 
+     *
      */
     @ExcelProperty(value = "")
     private String resourceType;
 
     /**
-     * 
+     *
      */
     @ExcelProperty(value = "")
     private Long enabled;
 
 
+    private String libraryName;
+
+    private  EmergencyLibraryItemDefinition libraryDefinitionJson;
+
+    private Integer libraryVersionNo;
+
+    public void setLibraryDefinitionJson(EmergencyLibraryItemDefinition libraryDefinitionJson) {
+        this.libraryDefinitionJson = libraryDefinitionJson;
+    }
+
+    public EmergencyLibraryItemDefinition getLibraryDefinitionJson() {
+
+        return libraryDefinitionJson;
+    }
+
+    public void setLibraryName(String libraryName) {
+        this.libraryName = libraryName;
+    }
+
+    public String getLibraryName() {
+        return libraryName;
+    }
+
+    public void setLibraryVersionNo(Integer libraryVersionNo) {
+        this.libraryVersionNo = libraryVersionNo;
+    }
+
+    public Integer getLibraryVersionNo() {
+        return libraryVersionNo;
+    }
 }

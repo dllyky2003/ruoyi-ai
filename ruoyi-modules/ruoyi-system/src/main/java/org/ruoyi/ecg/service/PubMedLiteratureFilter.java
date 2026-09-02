@@ -5,7 +5,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.regex.Pattern;
 
 /**
  * PubMed文献检索程序
@@ -87,8 +86,7 @@ public class PubMedLiteratureFilter {
         if (lower.contains("influenza a virus") && lower.contains("h5n1")) return true;
         // 检查其他变体
         if (lower.contains("h5n1 influenza")) return true;
-        if (lower.contains("h5n1 virus")) return true;
-        return false;
+        return lower.contains("h5n1 virus");
     }
 
     /**
@@ -138,9 +136,7 @@ public class PubMedLiteratureFilter {
 
         // 3. 必须包含血清学关键词
         boolean hasSerology = containsSerology(fullText);
-        if (!hasSerology) return false;
-
-        return true;
+        return hasSerology;
     }
 
     /**
@@ -166,32 +162,19 @@ public class PubMedLiteratureFilter {
     }
 
     // ============ 匹配详情类 ============
-    public static class MatchDetail {
-        public final boolean matched;
-        public final boolean hasSerology;
-        public final boolean hasH5N1;
-        public final boolean hasHuman;
-        public final boolean hasCattle;
-
-        public MatchDetail(boolean matched, boolean hasSerology, boolean hasH5N1,
-                          boolean hasHuman, boolean hasCattle) {
-            this.matched = matched;
-            this.hasSerology = hasSerology;
-            this.hasH5N1 = hasH5N1;
-            this.hasHuman = hasHuman;
-            this.hasCattle = hasCattle;
-        }
+        public record MatchDetail(boolean matched, boolean hasSerology, boolean hasH5N1, boolean hasHuman,
+                                  boolean hasCattle) {
 
         public String toReasonString() {
-            if (!matched) return "不匹配";
-            List<String> reasons = new ArrayList<>();
-            if (hasH5N1) reasons.add("H5N1");
-            if (hasHuman) reasons.add("人类");
-            if (hasCattle) reasons.add("牛");
-            if (hasSerology) reasons.add("血清学");
-            return "✓ " + String.join(" + ", reasons);
+                if (!matched) return "不匹配";
+                List<String> reasons = new ArrayList<>();
+                if (hasH5N1) reasons.add("H5N1");
+                if (hasHuman) reasons.add("人类");
+                if (hasCattle) reasons.add("牛");
+                if (hasSerology) reasons.add("血清学");
+                return "✓ " + String.join(" + ", reasons);
+            }
         }
-    }
 
     // ============ CSV解析 ============
 

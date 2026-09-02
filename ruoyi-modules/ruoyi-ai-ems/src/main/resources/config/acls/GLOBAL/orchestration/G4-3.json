@@ -1,0 +1,42 @@
+{
+  "intent_code": "G4-3",
+  "act_type": "探查性询问",
+  "name_cn": "询问或报告血氧或呼吸",
+  "description_cn": "获取或报告患者的血氧饱和度和呼吸频率",
+  "keywords": ["血氧饱和度", "呼吸频率", "血氧数值"],
+  "pattern_hints": ["血氧多少", "呼吸几次"],
+  "examples": [
+    "血氧饱和度多少",
+    "血氧饱和度只有92%给氧",
+    "呼吸频率多少"
+  ],
+  "standard_script": "血氧饱和度多少？呼吸频率多少？",
+  "extraction": {
+    "target_params": ["spo2", "resp_rate"],
+    "rules": {
+      "spo2": { "type": "integer" },
+      "resp_rate": { "type": "integer" }
+    }
+  },
+  "execution": {
+    "type": "action_chain",
+    "steps": [
+      { "step_id": "read_oximetry", "ref_atomic": "READ_OXIMETRY", "duty": "ASSESS" }
+    ],
+    "preconditions": {},
+    "on_complete": {
+      "response_template": "🫁 SpO₂ {spo2}%，呼吸 {resp_rate} 次/分。",
+      "transition_event": null
+    }
+  },
+  "pragmatic_handlers": {
+    "探查性询问": {
+      "action": "advance_chain",
+      "response_template": "🫁 SpO₂ {spo2}%，呼吸 {resp_rate} 次/分。"
+    },
+    "发令性指令": {
+      "action": "advance_chain",
+      "response_template": "🫁 正在测量... SpO₂ {spo2}%，呼吸 {resp_rate} 次/分。"
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "metaSchemaVersion": "1.0",
+  "caseTypeId": "acls_scene_tachy_regular_wide_vt",
+  "population": { "patientGroup": "adult" },
+  "caseScene": {
+    "setting": "in_hospital",
+    "timeWindow": "initial",
+    "pulseStatus": "present",
+    "rhythmVisibility": "monitored_visible",
+    "resourceConstraints": {
+      "defibAvailability": "defib_available",
+      "medAvailability": "meds_available"
+    },
+    "stability": "unstable",
+    "cardiacArrestSubclass": "unknown",
+    "tachySubclass": "regular_wide_vt",
+    "bradySubclass": "unknown",
+    "acsSubclass": "unknown",
+    "neuroSyndrome": "unknown"
+  },
+  "zhSummary": "规则宽QRS单形态VT教学场景，重点训练VT倾向与处置闭环。",
+  "zhKeyTriggers": [
+    "pulseStatus=present",
+    "tachySubclass=regular_wide_vt",
+    "stability=unstable"
+  ],
+  "zhTeachingFocus": "宽QRS识别后按VT倾向路径推进并完成再评估闭环。",
+
+  "teachingObjectives": [
+    { "objectiveId": "OBJ_TACHY_03", "objectiveText": "对规则宽QRS进行VT倾向处理并完成对应处置闭环", "primaryScoring": true }
+  ],
+  "evaluationTargets": { "requiredSignals": ["pulseStatus", "rhythmVisibility", "timingWindowCompliance", "stability"] }
+}

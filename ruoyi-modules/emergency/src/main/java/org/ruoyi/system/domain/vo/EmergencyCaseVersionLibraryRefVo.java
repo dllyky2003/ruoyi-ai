@@ -7,6 +7,7 @@ import org.ruoyi.common.excel.annotation.ExcelDictFormat;
 import org.ruoyi.common.excel.convert.ExcelDictConvert;
 import io.github.linpeilie.annotations.AutoMapper;
 import lombok.Data;
+import org.ruoyi.system.domain.definition.EmergencyLibraryItemDefinition;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -27,7 +28,9 @@ public class EmergencyCaseVersionLibraryRefVo implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
-
+    private EmergencyLibraryItemDefinition libraryDefinitionJson;  // 或具体的 EmergencyLibraryItemDefinition 类型
+    private String libraryName;
+    private Integer libraryVersionNo;
     /**
      * 部门id
      */
@@ -47,34 +50,37 @@ public class EmergencyCaseVersionLibraryRefVo implements Serializable {
     private Long orderNum;
 
     /**
-     * 
+     *
      */
     @ExcelProperty(value = "")
     private Long caseVersionId;
 
     /**
-     * 
+     *
      */
     @ExcelProperty(value = "")
     private Long libraryItemId;
 
     /**
-     * 
+     *
      */
     @ExcelProperty(value = "")
     private Long libraryVersionId;
 
     /**
-     * 
+     *
      */
     @ExcelProperty(value = "")
     private String refType;
 
     /**
-     * 
+     *
      */
     @ExcelProperty(value = "")
     private String jsonPath;
+
+
+
 
 
 }

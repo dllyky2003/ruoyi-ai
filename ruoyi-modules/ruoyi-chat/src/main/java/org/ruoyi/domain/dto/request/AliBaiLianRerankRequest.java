@@ -38,7 +38,7 @@ public record AliBaiLianRerankRequest(
                 query,
                 topN != null ? topN : documents.size(),
                 null,
-                returnDocuments != null ? returnDocuments : true
+            returnDocuments == null || returnDocuments
         );
     }
 

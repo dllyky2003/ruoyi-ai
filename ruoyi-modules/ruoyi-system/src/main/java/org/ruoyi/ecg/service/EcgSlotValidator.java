@@ -140,16 +140,13 @@ public class EcgSlotValidator {
         }
 
         // 范围校验（数值类型）
-        if (value instanceof Number) {
-            Number num = (Number) value;
+        if (value instanceof Number num) {
             if (slotDef.getMinValue() != null
                 && num.doubleValue() < slotDef.getMinValue().doubleValue()) {
                 return false;
             }
-            if (slotDef.getMaxValue() != null
-                && num.doubleValue() > slotDef.getMaxValue().doubleValue()) {
-                return false;
-            }
+            return slotDef.getMaxValue() == null
+                || !(num.doubleValue() > slotDef.getMaxValue().doubleValue());
         }
 
         return true;

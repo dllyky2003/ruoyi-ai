@@ -1,6 +1,5 @@
-package org.ruoyi.ecg.service;
+package com.ruoyi.ems.intent.utils;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;

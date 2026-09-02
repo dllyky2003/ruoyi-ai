@@ -1,0 +1,402 @@
+# ============================================================
+# 案例ID（必须与状态机 YAML 中的 caseId 完全一致）
+# ============================================================
+caseId: "case_acls_narrow_qrs_stable"
+
+# ============================================================
+# 状态规则映射
+# 格式：状态ID -> 意图规则列表
+# 说明：当状态机处于某状态时，收到特定意图（+参数）触发对应事件
+# ============================================================
+stateRules:
+
+  # ==========================================================
+  # 1. 初始评估 / ABC 检查（INITIAL_ASSESSMENT）
+  # ==========================================================
+  "INITIAL_ASSESSMENT":
+    - intentCode: "G4-1"          # 报告血压
+      eventTemplate: null         # null 表示不触发迁移，仅记录参数
+      priority: 10
+    - intentCode: "G4-2"          # 报告心率
+      eventTemplate: null
+      priority: 10
+    - intentCode: "G4-4"          # 报告意识状态
+      eventTemplate: null
+      priority: 10
+    - intentCode: "S1-3"          # 评估稳定性（学员直接报稳定/不稳定）
+      conditionParams:
+        isUnstable: false
+      eventTemplate: "S1-3_stable"
+      priority: 20
+    - intentCode: "S1-3"
+      conditionParams:
+        isUnstable: true
+      eventTemplate: "S1-3_unstable"
+      priority: 20
+    - intentCode: "S1-1"          # 错误：跳过ABC直接看心电图
+      eventTemplate: "EVENT_ERROR_MISJUDGE"
+      priority: 1
+
+  # ==========================================================
+  # 2. 稳定性评估（ASSESS_STABILITY）
+  # ==========================================================
+  "ASSESS_STABILITY":
+    - intentCode: "S1-3"
+      conditionParams:
+        isUnstable: false
+      eventTemplate: "S1-3_stable"
+      priority: 20
+    - intentCode: "S1-3"
+      conditionParams:
+        isUnstable: true
+      eventTemplate: "S1-3_unstable"
+      priority: 20
+    - intentCode: "S3-1"          # 血流动力学恶化宣告（随时可能发生）
+      eventTemplate: "S3-1_worsened"
+      priority: 50                # 优先级高，覆盖其他低优先规则
+    - intentCode: "S1-1"          # 错误：尚未评估稳定就直接报QRS宽度
+      eventTemplate: "EVENT_ERROR_MISJUDGE"
+      priority: 1
+    - intentCode: "G4-1"          # 血压报告（仅记录，不迁移）
+      eventTemplate: null
+      priority: 10
+    - intentCode: "G4-2"          # 心率报告（仅记录）
+      eventTemplate: null
+      priority: 10
+
+  # ==========================================================
+  # 3. QRS 宽度判断（CHECK_QRS_WIDTH）
+  # ==========================================================
+  "CHECK_QRS_WIDTH":
+    - intentCode: "S1-1"
+      conditionParams:
+        qrsWidth: "narrow"
+      eventTemplate: "S1-1_narrow"
+      priority: 20
+    - intentCode: "S1-1"
+      conditionParams:
+        qrsWidth: "wide"
+      eventTemplate: "S1-1_wide"
+      priority: 20
+    - intentCode: "S3-1"          # 任何时候都可能恶化
+      eventTemplate: "S3-1_worsened"
+      priority: 50
+    - intentCode: "G4-2"          # 报告心率（仅记录）
+      eventTemplate: null
+      priority: 10
+
+  # ==========================================================
+  # 4. 窄QRS节律规则性判断（NARROW_QRS_CHECK_RHYTHM）
+  # ==========================================================
+  "NARROW_QRS_CHECK_RHYTHM":
+    - intentCode: "S1-2"
+      conditionParams:
+        rhythmRegular: true
+      eventTemplate: "S1-2_regular"
+      priority: 20
+    - intentCode: "S1-2"
+      conditionParams:
+        rhythmRegular: false
+      eventTemplate: "S1-2_irregular"
+      priority: 20
+    - intentCode: "S3-1"
+      eventTemplate: "S3-1_worsened"
+      priority: 50
+    - intentCode: "S2-1"          # 错误：未判断节律直接做迷走神经
+      eventTemplate: "EVENT_ERROR_MISJUDGE"
+      priority: 1
+
+  # ==========================================================
+  # 5. 迷走神经操作（DO_VAGAL_MANEUVER）
+  # ==========================================================
+  "DO_VAGAL_MANEUVER":
+    - intentCode: "S2-1"          # 迷走神经执行完成
+      eventTemplate: "S2-1_done"
+      priority: 20
+    - intentCode: "S2-2"          # 错误：跳过迷走神经直接推腺苷
+      eventTemplate: "EVENT_ERROR_SKIP_VAGAL"
+      priority: 1
+    - intentCode: "S3-1"          # 操作中突发恶化
+      eventTemplate: "S3-1_worsened"
+      priority: 50
+    - intentCode: "G2-3"          # 超时报时（延时警告）
+      eventTemplate: "EVENT_TIMEOUT_VAGAL"
+      priority: 15
+
+  # ==========================================================
+  # 6. 评估迷走神经效果（ASSESS_VAGAL_EFFECT）
+  # ==========================================================
+  "ASSESS_VAGAL_EFFECT":
+    - intentCode: "S2-8"
+      conditionParams:
+        outcome: "success"
+      eventTemplate: "S2-8_success"
+      priority: 20
+    - intentCode: "S2-8"
+      conditionParams:
+        outcome: "failure"
+      eventTemplate: "S2-8_failure"
+      priority: 20
+    - intentCode: "S1-4"          # 如果学员不确定心律，可视为无效（默认失败）
+      eventTemplate: "S2-8_failure"
+      priority: 10
+    - intentCode: "S3-1"
+      eventTemplate: "S3-1_worsened"
+      priority: 50
+    - intentCode: "G2-3"          # 评估超时（>30秒）默认判为无效
+      eventTemplate: "EVENT_TIMEOUT_EFFECT"
+      priority: 15
+
+  # ==========================================================
+  # 7. 腺苷6mg执行（DO_ADENOSINE_6MG）
+  # ==========================================================
+  "DO_ADENOSINE_6MG":
+    - intentCode: "S2-2"          # 6mg推注完成
+      eventTemplate: "S2-2_done"
+      priority: 20
+    - intentCode: "S2-4"          # 冲管指令（仅记录，与S2-2联动）
+      eventTemplate: null
+      priority: 10
+    - intentCode: "S3-1"
+      eventTemplate: "S3-1_worsened"
+      priority: 50
+    - intentCode: "G2-3"          # 准备/推注超时
+      eventTemplate: "EVENT_TIMEOUT_PREP"
+      priority: 15
+
+  # ==========================================================
+  # 8. 评估腺苷6mg效果（ASSESS_6MG_EFFECT）
+  # ==========================================================
+  "ASSESS_6MG_EFFECT":
+    - intentCode: "S2-8"
+      conditionParams:
+        outcome: "success"
+      eventTemplate: "S2-8_success"
+      priority: 20
+    - intentCode: "S2-8"
+      conditionParams:
+        outcome: "failure"
+      eventTemplate: "S2-8_failure"
+      priority: 20
+    - intentCode: "S1-4"          # 不确定心律 -> 视为无效
+      eventTemplate: "S2-8_failure"
+      priority: 10
+    - intentCode: "S3-1"
+      eventTemplate: "S3-1_worsened"
+      priority: 50
+    - intentCode: "G2-3"          # 评估超时（>60秒）默认判为无效
+      eventTemplate: "EVENT_TIMEOUT_EFFECT"
+      priority: 15
+    - intentCode: "G4-5"          # 要求复评（仅记录，等待结果报告）
+      eventTemplate: null
+      priority: 10
+
+  # ==========================================================
+  # 9. 腺苷12mg执行（DO_ADENOSINE_12MG）
+  # ==========================================================
+  "DO_ADENOSINE_12MG":
+    - intentCode: "S2-3"          # 12mg推注完成
+      eventTemplate: "S2-3_done"
+      priority: 20
+    - intentCode: "S2-4"          # 冲管指令（仅记录）
+      eventTemplate: null
+      priority: 10
+    - intentCode: "S3-1"
+      eventTemplate: "S3-1_worsened"
+      priority: 50
+    - intentCode: "G2-3"          # 准备超时
+      eventTemplate: "EVENT_TIMEOUT_PREP"
+      priority: 15
+
+  # ==========================================================
+  # 10. 评估腺苷12mg效果（ASSESS_12MG_EFFECT）
+  # ==========================================================
+  "ASSESS_12MG_EFFECT":
+    - intentCode: "S2-8"
+      conditionParams:
+        outcome: "success"
+      eventTemplate: "S2-8_success"
+      priority: 20
+    - intentCode: "S2-8"
+      conditionParams:
+        outcome: "failure"
+      eventTemplate: "S2-8_failure"
+      priority: 20
+    - intentCode: "S1-4"          # 不确定 -> 视为无效
+      eventTemplate: "S2-8_failure"
+      priority: 10
+    - intentCode: "S3-1"
+      eventTemplate: "S3-1_worsened"
+      priority: 50
+    - intentCode: "G2-3"          # 评估超时
+      eventTemplate: "EVENT_TIMEOUT_EFFECT"
+      priority: 15
+
+  # ==========================================================
+  # 11. 二线药物执行（DO_SECOND_LINE_DRUG）—— β阻滞剂 / CCB
+  # ==========================================================
+  "DO_SECOND_LINE_DRUG":
+    - intentCode: "S2-5"         # 二线药物推注完成
+      eventTemplate: "S2-5_done"
+      priority: 20
+    - intentCode: "S3-1"
+      eventTemplate: "S3-1_worsened"
+      priority: 50
+    - intentCode: "G2-3"          # 准备超时（>120秒）
+      eventTemplate: "EVENT_TIMEOUT_PREP"
+      priority: 15
+    - intentCode: "S2-7"          # WPW警示（仅告警，不迁移）
+      eventTemplate: null
+      priority: 10
+
+  # ==========================================================
+  # 12. 评估二线药物效果（ASSESS_SECOND_EFFECT）
+  # ==========================================================
+  "ASSESS_SECOND_EFFECT":
+    - intentCode: "S2-8"
+      conditionParams:
+        outcome: "success"
+      eventTemplate: "S2-8_success"
+      priority: 20
+    - intentCode: "S2-8"
+      conditionParams:
+        outcome: "failure"
+      eventTemplate: "S2-8_failure"
+      priority: 20
+    - intentCode: "S3-1"
+      eventTemplate: "S3-1_worsened"
+      priority: 50
+    - intentCode: "G2-3"          # 评估超时
+      eventTemplate: "EVENT_TIMEOUT_EFFECT"
+      priority: 15
+
+  # ==========================================================
+  # 13. 专家会诊（EXPERT_CONSULTATION）
+  # ==========================================================
+  "EXPERT_CONSULTATION":
+    - intentCode: "G2-4"          # 呼叫/完成会诊
+      eventTemplate: "G2-4_consult"
+      priority: 20
+    - intentCode: "S3-1"          # 等待期间恶化
+      eventTemplate: "S3-1_worsened"
+      priority: 50
+    - intentCode: "G2-3"          # 会诊等待超时
+      eventTemplate: "EVENT_TIMEOUT_CONSULT"
+      priority: 15
+
+  # ==========================================================
+  # 14. 不稳定/紧急电复律（UNSTABLE_CARDIOVERSION）
+  # ==========================================================
+  "UNSTABLE_CARDIOVERSION":
+    - intentCode: "S2-6"          # 电复律执行完成
+      conditionParams:
+        actionStatus: "done"
+      eventTemplate: "S2-6_done"
+      priority: 20
+    - intentCode: "S2-6"          # 电复律开始准备
+      conditionParams:
+        actionStatus: "start"
+      eventTemplate: "S2-6_start"
+      priority: 20
+    - intentCode: "S2-8"          # 电复律后转复成功
+      conditionParams:
+        outcome: "success"
+      eventTemplate: "S2-8_success"
+      priority: 20
+    - intentCode: "S2-8"          # 电复律后未转复（可重复电击）
+      conditionParams:
+        outcome: "failure"
+      eventTemplate: "S2-8_failure"
+      priority: 20
+    - intentCode: "S4-2"          # 错误：非同步误电击致室颤
+      eventTemplate: "S4-2_ventricular_arrest"
+      priority: 50
+    - intentCode: "G1-1"          # 安全清场（仅记录，电复律前置动作）
+      eventTemplate: null
+      priority: 10
+    - intentCode: "G3-1"          # 设置同步模式（仅记录）
+      eventTemplate: null
+      priority: 10
+
+  # ==========================================================
+  # 15. 转为窦性监护（MONITOR_SINUS_RHYTHM）—— 结束状态
+  # ==========================================================
+  "MONITOR_SINUS_RHYTHM":
+    - intentCode: "G4-1"          # 血压监测（仅记录）
+      eventTemplate: null
+      priority: 10
+    - intentCode: "G4-2"          # 心率监测（仅记录）
+      eventTemplate: null
+      priority: 10
+    - intentCode: "G4-4"          # 意识监测（仅记录）
+      eventTemplate: null
+      priority: 10
+    # 如果转复后又恶化（极少见），仍然允许进入不稳定路径
+    - intentCode: "S3-1"
+      eventTemplate: "S3-1_worsened"
+      priority: 50
+
+  # ==========================================================
+  # 16. 错误纠正处理（ERROR_HANDLING）
+  # ==========================================================
+  "ERROR_HANDLING":
+    - intentCode: "G2-5"          # 策略纠偏 / 承认错误并纠正
+      conditionParams:
+        overrideAction: "stop_drug"
+      eventTemplate: "EVENT_ERROR_FIXED"
+      priority: 20
+    - intentCode: "G2-5"          # 改为电复律
+      conditionParams:
+        overrideAction: "switch_to_cardioversion"
+      eventTemplate: "EVENT_ERROR_FIXED"
+      priority: 20
+    - intentCode: "S2-1"          # 补做迷走神经（纠正跳过迷走神经的错误）
+      eventTemplate: "EVENT_ERROR_FIXED_VAGAL"
+      priority: 15
+    - intentCode: "S2-2"          # 纠正剂量错误后重新给药6mg
+      eventTemplate: "EVENT_ERROR_FIXED_DOSE"
+      priority: 15
+    - intentCode: "S2-6"          # 纠正同步模式错误后继续电复律
+      eventTemplate: "EVENT_ERROR_FIXED_SYNC"
+      priority: 15
+    - intentCode: "G2-3"          # 错误处理超时（系统自动强制纠正）
+      eventTemplate: "EVENT_TIMEOUT_NEXT"
+      priority: 5
+
+  # ==========================================================
+  # 17. 延时处理（TIMEOUT_HANDLING）—— 超时后自动推进
+  # ==========================================================
+  "TIMEOUT_HANDLING":
+    - intentCode: "G2-3"          # 超时后继续（学员手动确认继续）
+      conditionParams:
+        duration: "continue"
+      eventTemplate: "EVENT_TIMEOUT_CONTINUE"
+      priority: 20
+    - intentCode: "G2-3"          # 默认超时后自动进入下一步（默认判无效）
+      eventTemplate: "EVENT_TIMEOUT_NEXT"
+      priority: 10
+    - intentCode: "S3-1"          # 延时期间恶化
+      eventTemplate: "S3-1_worsened"
+      priority: 50
+
+  # ==========================================================
+  # 18. 宽QRS转换 / 不规则心律转换（跳转至其他算法）
+  #     这些状态通常作为终结状态，不需要过多规则
+  # ==========================================================
+  "WIDE_QRS_ALGORITHM":
+    - intentCode: "G4-1"
+      eventTemplate: null
+      priority: 10
+
+  "IRREGULAR_RHYTHM_ALGORITHM":
+    - intentCode: "G4-1"
+      eventTemplate: null
+      priority: 10
+
+  # ==========================================================
+  # 19. 最终终结状态（TERMINAL_END）
+  # ==========================================================
+  "TERMINAL_END":
+    - intentCode: "G4-1"
+      eventTemplate: null
+      priority: 10

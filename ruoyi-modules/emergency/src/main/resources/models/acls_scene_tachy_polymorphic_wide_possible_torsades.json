@@ -1,0 +1,33 @@
+{
+  "metaSchemaVersion": "1.0",
+  "caseTypeId": "acls_scene_tachy_polymorphic_wide_possible_torsades",
+  "population": { "patientGroup": "adult" },
+  "caseScene": {
+    "setting": "in_hospital",
+    "timeWindow": "initial",
+    "pulseStatus": "present",
+    "rhythmVisibility": "monitored_visible",
+    "resourceConstraints": {
+      "defibAvailability": "defib_available",
+      "medAvailability": "meds_available"
+    },
+    "stability": "unstable",
+    "cardiacArrestSubclass": "unknown",
+    "tachySubclass": "polymorphic_wide_possible_torsades",
+    "bradySubclass": "unknown",
+    "acsSubclass": "unknown",
+    "neuroSyndrome": "unknown"
+  },
+  "zhSummary": "多形态宽QRS/扭转风险教学场景，训练更严格的识别与干预路径选择。",
+  "zhKeyTriggers": [
+    "pulseStatus=present",
+    "tachySubclass=polymorphic_wide_possible_torsades",
+    "stability=unstable"
+  ],
+  "zhTeachingFocus": "高风险节律识别后按更严格路径推进并完成流程闭环。",
+
+  "teachingObjectives": [
+    { "objectiveId": "OBJ_TACHY_05", "objectiveText": "针对多形态/扭转高风险情境执行更严格的识别与干预流程", "primaryScoring": true }
+  ],
+  "evaluationTargets": { "requiredSignals": ["pulseStatus", "rhythmVisibility", "timingWindowCompliance", "stability"] }
+}

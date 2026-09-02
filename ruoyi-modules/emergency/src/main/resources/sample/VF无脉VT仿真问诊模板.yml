@@ -1,0 +1,237 @@
+  ```yaml
+  megacode_01_aclS_template:
+    case_tag: "VF/无脉VT骤停"
+    population: "成人"
+    simulator_roles:
+      virtual_patient: "virtual_patient"
+      virtual_family: "virtual_family"
+    language: "中文"
+
+    Critical_Intervention_Questions:
+      - q_id: "Critical_Q1"
+        time_window: "0-2min（首轮CPR内完成提问与并行采集）"
+        parallel_operation: "Recorder同时记录；按压与除颤准备由团队并行完成；尽量避免中断按压"
+        question: "家属：你们大概从什么时候开始发现他突然倒下、失去反应的？这是目击的吗？"
+        delegation: "ACLS Recorder / Virtual Family Interviewer"
+        simulator_role: "virtual_family"
+        expected_a: "我们是目击的，他大约在30分钟前突然叫了声就不再回应、倒地失去反应。"
+        sim_answer: "我们是目击的，他大约在30分钟前突然叫了声就不再回应、倒地失去反应。"
+        answer_must_include_keywords:
+          - "目击"
+          - "30分钟"
+          - "突然"
+          - "不再回应"
+          - "倒地"
+          - "失去反应"
+        score: 30
+
+      - q_id: "Critical_Q2"
+        time_window: "0-2min（首轮CPR内完成提问与并行采集）"
+        parallel_operation: "同时追问“倒下前是否有胸痛/心悸/喘憋”；并行准备电除颤能量与节律确认流程"
+        question: "倒下前几分钟他有没有胸痛、心悸或明显喘不过气/呼吸困难？当时大概是什么感觉？"
+        delegation: "ACLS Recorder / Virtual Family Interviewer"
+        simulator_role: "virtual_family"
+        expected_a: "倒下前他捂着胸说很不舒服，还说心跳很乱、喘得厉害，脸色也变差。"
+        sim_answer: "倒下前他捂着胸说很不舒服，还说心跳很乱、喘得厉害，脸色也变差。"
+        answer_must_include_keywords:
+          - "胸"
+          - "很不舒服"
+          - "心跳"
+          - "很乱"
+          - "喘"
+          - "呼吸困难"
+        score: 25
+
+      - q_id: "Critical_Q3"
+        time_window: "0-2min（首轮CPR内完成提问与并行采集）"
+        parallel_operation: "在团队进行按压/除颤的同时，快速确认既往心脏病与近期用药/加量史"
+        question: "他有没有已知心脏病或既往做过支架/心梗？这两天/昨晚有没有额外吃药、加量或中毒风险？"
+        delegation: "ACLS Recorder / Virtual Family Interviewer"
+        simulator_role: "virtual_family"
+        expected_a: "有冠心病史，两年前做过支架；昨晚他自己又加吃了安眠药，具体叫什么我不太确定，但他说“可能多吃了点”。"
+        sim_answer: "有冠心病史，两年前做过支架；昨晚他自己又加吃了安眠药，具体叫什么我不太确定，但他说“可能多吃了点”。"
+        answer_must_include_keywords:
+          - "冠心病"
+          - "两年前"
+          - "支架"
+          - "昨晚"
+          - "加吃"
+          - "安眠药"
+          - "多吃了点"
+        score: 25
+
+    Routine_SAMPLE_Questions:
+      Must:
+        S:
+          - q_id: "S1"
+            question: "（症状）倒下前他最主要的症状是什么？比如胸痛、心悸、头晕、恶心还是呼吸困难？"
+            delegation: "ACLS Recorder / Virtual Family Interviewer"
+            simulator_role: "virtual_family"
+            expected_a: "主要是胸口不适和心跳很乱，伴随明显喘不过气，还说头有点晕。"
+            sim_answer: "主要是胸口不适和心跳很乱，伴随明显喘不过气，还说头有点晕。"
+            answer_must_include_keywords: ["胸口不适", "心跳很乱", "喘不过气", "头有点晕"]
+
+          - q_id: "S2"
+            question: "（症状）倒下后他有没有出现抽搐、呕吐或口唇发紫？"
+            delegation: "ACLS Recorder / Virtual Family Interviewer"
+            simulator_role: "virtual_family"
+            expected_a: "倒下后没有明显抽搐，但我们看到他嘴唇发紫、喘不出来，然后就很快不再能回应了。"
+            sim_answer: "倒下后没有明显抽搐，但我们看到他嘴唇发紫、喘不出来，然后就很快不再能回应了。"
+            answer_must_include_keywords: ["没有明显抽搐", "嘴唇发紫", "喘不出来", "不再能回应"]
+
+        E:
+          - q_id: "E1"
+            question: "（事件/诱因）倒下前24小时内有没有明显诱因：剧烈运动、感染发热、严重腹泻/呕吐、突然停药或大量饮酒？"
+            delegation: "ACLS Recorder / Virtual Family Interviewer"
+            simulator_role: "virtual_family"
+            expected_a: "昨晚他喝了酒不少，而且腹泻腹痛很厉害，早上到中午还一直拉肚子。"
+            sim_answer: "昨晚他喝了酒不少，而且腹泻腹痛很厉害，早上到中午还一直拉肚子。"
+            answer_must_include_keywords: ["喝了酒", "腹泻", "腹痛", "一直拉肚子"]
+
+          - q_id: "E2"
+            question: "（事件/诱因）是否有触电、溺水、严重过敏接触、或任何不明原因的中毒风险？"
+            delegation: "ACLS Recorder / Virtual Family Interviewer"
+            simulator_role: "virtual_family"
+            expected_a: "没有触电也没有溺水；也没听说对什么东西过敏，只是昨晚他自己多吃了点安眠药。"
+            sim_answer: "没有触电也没有溺水；也没听说对什么东西过敏，只是昨晚他自己多吃了点安眠药。"
+            answer_must_include_keywords: ["没有触电", "没有溺水", "没听说过敏", "多吃了点安眠药"]
+
+        P:
+          - q_id: "P1"
+            question: "（既往史）他既往有什么重要病史？例如冠心病、心梗、心衰、糖尿病、慢阻肺等。"
+            delegation: "ACLS Recorder / Virtual Family Interviewer"
+            simulator_role: "virtual_family"
+            expected_a: "他有冠心病，两年前做过冠脉支架，平时也会吃药控制；没有说过癫痫或脑卒中的病史。"
+            sim_answer: "他有冠心病，两年前做过冠脉支架，平时也会吃药控制；没有说过癫痫或脑卒中的病史。"
+            answer_must_include_keywords: ["冠心病", "两年前", "冠脉支架", "没有癫痫", "没有脑卒中"]
+
+          - q_id: "P2"
+            question: "（既往史）以前有没有发生过类似晕倒、心律失常、需要过起搏或除颤？"
+            delegation: "ACLS Recorder / Virtual Family Interviewer"
+            simulator_role: "virtual_family"
+            expected_a: "之前没有明显晕倒，也没有听说过需要起搏或除颤。"
+            sim_answer: "之前没有明显晕倒，也没有听说过需要起搏或除颤。"
+            answer_must_include_keywords: ["没有明显晕倒", "没有起搏", "没有除颤"]
+
+        M:
+          - q_id: "M1"
+            question: "（用药史）他平时在吃哪些药？倒下前是否按时服药？"
+            delegation: "ACLS Recorder / Virtual Family Interviewer"
+            simulator_role: "virtual_family"
+            expected_a: "平时主要吃阿司匹林和他汀，还有一种控制心率的药，基本都按时吃。"
+            sim_answer: "平时主要吃阿司匹林和他汀，还有一种控制心率的药，基本都按时吃。"
+            answer_must_include_keywords: ["阿司匹林", "他汀", "控制心率的药", "基本都按时吃"]
+
+          - q_id: "M2"
+            question: "（用药史）昨晚或近期有没有额外加服药物、安眠药/镇静药，或任何不明药片/剂量错误？"
+            delegation: "ACLS Recorder / Virtual Family Interviewer"
+            simulator_role: "virtual_family"
+            expected_a: "昨晚他说睡不着，就自己又加吃了安眠药，说“可能多吃了点”，不确定具体名称和剂量。"
+            sim_answer: "昨晚他说睡不着，就自己又加吃了安眠药，说“可能多吃了点”，不确定具体名称和剂量。"
+            answer_must_include_keywords: ["睡不着", "自己加吃", "安眠药", "可能多吃了点", "不确定剂量"]
+
+      Should:
+        A:
+          - q_id: "A1"
+            question: "（过敏史）他对药物或食物有没有已知过敏史？例如青霉素、阿司匹林或造影剂。"
+            delegation: "ACLS Recorder / Virtual Family Interviewer"
+            simulator_role: "virtual_family"
+            expected_a: "家属说没有已知药物过敏史。"
+            sim_answer: "家属说没有已知药物过敏史。"
+            answer_must_include_keywords: ["没有", "已知药物过敏史"]
+
+          - q_id: "A2"
+            question: "（过敏史）最近有没有接触新的药物、草药或注射治疗（例如打针、输液）后出现异常？"
+            delegation: "ACLS Recorder / Virtual Family Interviewer"
+            simulator_role: "virtual_family"
+            expected_a: "最近没有新打针或输液，都是自己在家吃药。"
+            sim_answer: "最近没有新打针或输液，都是自己在家吃药。"
+            answer_must_include_keywords: ["没有新打针", "没有输液", "在家吃药"]
+
+        L:
+          - q_id: "L1"
+            question: "（最后进食/最后已知状态）他最近一次吃饭或喝水大概是什么时候？倒下前有没有突然大量进食/空腹？"
+            delegation: "ACLS Recorder / Virtual Family Interviewer"
+            simulator_role: "virtual_family"
+            expected_a: "他大概是倒下前1到2小时吃过晚饭，之后主要就是喝了点酒。"
+            sim_answer: "他大概是倒下前1到2小时吃过晚饭，之后主要就是喝了点酒。"
+            answer_must_include_keywords: ["倒下前1到2小时", "吃过晚饭", "之后喝了点酒"]
+
+          - q_id: "L2"
+            question: "（最后已知状态）倒下前最后一次你们确认他清醒/能正常说话是在什么时候？"
+            delegation: "ACLS Recorder / Virtual Family Interviewer"
+            simulator_role: "virtual_family"
+            expected_a: "大概30分钟前我们还在说话，突然他就捂着胸不太对劲，然后就倒下了。"
+            sim_answer: "大概30分钟前我们还在说话，突然他就捂着胸不太对劲，然后就倒下了。"
+            answer_must_include_keywords: ["30分钟前", "还能说话", "捂着胸", "然后就倒下"]
+
+        E:
+          - q_id: "E3"
+            question: "（环境/暴露）倒下前有没有剧烈受凉或持续高温、室内缺氧（如煤气）、吸入刺激性气体或烟雾？"
+            delegation: "ACLS Recorder / Virtual Family Interviewer"
+            simulator_role: "virtual_family"
+            expected_a: "没有煤气中毒，也没有在封闭空间缺氧；就是在家里，通风还可以。"
+            sim_answer: "没有煤气中毒，也没有在封闭空间缺氧；就是在家里，通风还可以。"
+            answer_must_include_keywords: ["没有煤气中毒", "没有缺氧", "在家里", "通风还可以"]
+
+          - q_id: "E4"
+            question: "（环境/暴露）倒下前是否出现过外伤、胸部撞击，或需要考虑气胸/大出血等情况？"
+            delegation: "ACLS Recorder / Virtual Family Interviewer"
+            simulator_role: "virtual_family"
+            expected_a: "没有外伤，也没看到胸部被撞到；家里也不像有出血情况。"
+            sim_answer: "没有外伤，也没看到胸部被撞到；家里也不像有出血情况。"
+            answer_must_include_keywords: ["没有外伤", "胸部没被撞到", "没有出血情况"]
+
+    Task_Delegation_Matrix:
+      - role: "ACLS Team Leader / 按压-除颤决策者"
+        primary_tasks:
+          - "确认节律：VF/无脉VT并宣布需要电除颤"
+          - "指挥能量选择与电除颤时机（并行不打断高质量按压）"
+          - "在除颤后协调下一轮按压与重评"
+        question_authority: "不直接负责SAMPLE提问；仅在必要时口头补充关键信息"
+
+      - role: "ACLS Airway & Ventilation Operator（气道/通气）"
+        primary_tasks:
+          - "维持通气/氧合，尽量减少通气相关中断"
+          - "监测通气有效性（胸廓起伏/呼吸音/必要时波形）"
+          - "准备ROSC后通气循环同步评估"
+        question_authority: "不直接负责家属问诊；必要时向Recorder补充通气相关观测"
+
+      - role: "ACLS Recorder / Virtual Family Interviewer（记录员/家属访谈）"
+        primary_tasks:
+          - "在首轮CPR内按Critical Q1-Q3顺序完成对虚拟家属的快速问询"
+          - "同步记录每条问题的sim_answer并用于后续可逆病因判断"
+          - "按需继续SAMPLE Must/Should提问，但不延误按压/除颤"
+        question_authority: "负责所有问诊问题的发问与答案核对（与sim_answer/keywords一致）"
+
+    SAMPLE_Conclusions_and_Reversible_Hypotheses:
+      conclusion: "本例呈VF/无脉VT骤停，家属提供：倒下前胸痛/心悸并伴喘憋、已知冠心病支架史，且近期出现明显腹泻/饮酒与可能安眠药加量；优先考虑‘缺血/急性冠脉事件’与‘电解质/代谢紊乱、药物/镇静相关诱因’导致恶性心律。"
+      rule_1: "VF/无脉VT：立即高质量CPR并尽快完成电除颤（同时保证按压不中断）。"
+      rule_2: "每个循环都要快速检查并处理可逆病因（Hs & Ts），将问诊线索用于优先级排序。"
+
+      reversible_hypotheses:
+        - hypothesis_id: "RH1"
+          name: "急性冠脉综合征/心肌缺血诱发室颤"
+          inclusion_clue: "倒下前胸口不适明显、心跳紊乱且喘憋；既往冠心病并两年前行冠脉支架。"
+          exclusion_clue: "若家属明确否认胸痛/心前区不适、且无冠心病/支架等既往史，同时倒下前无呼吸循环崩溃线索，则该假设降级。"
+
+        - hypothesis_id: "RH2"
+          name: "电解质/代谢紊乱（腹泻相关）"
+          inclusion_clue: "昨晚至早上腹泻腹痛厉害并一直拉肚子（可导致低钾/酸碱失衡）。"
+          exclusion_clue: "若能确认近期无腹泻/呕吐，无明显脱水与摄入异常，并结合POC/检验未见电解质异常迹象，则降级。"
+
+        - hypothesis_id: "RH3"
+          name: "药物/毒物或镇静药过量导致低通气/诱发恶性心律风险"
+          inclusion_clue: "昨晚自行加吃安眠药，家属仅能确认“可能多吃了点”，且倒下后嘴唇发紫、喘不出来。"
+          exclusion_clue: "若家属否认任何安眠药/镇静药加量或中毒可能，且倒下后无缺氧相关表现，则降级。"
+
+        - hypothesis_id: "RH4"
+          name: "低氧/通气不足（缺氧作为诱因）"
+          inclusion_clue: "倒下后出现嘴唇发紫、喘不出来；倒下前也有明显喘憋。"
+          exclusion_clue: "若团队通气评估显示有效通气、氧合迅速改善且无缺氧迹象，同时问诊否认任何呼吸诱因，则降级。"
+
+        - hypothesis_id: "RH5"
+          name: "肺栓塞/呼吸循环急性事件（需要与缺氧线索并行排查）"
+          inclusion_clue: "倒下前喘憋显著且脸色变差，属于急性呼吸循环崩溃表现；需根据进一步问诊补足是否久坐、下肢肿痛等。"
+          exclusion_clue: "若后续补充信息显示无突然呼吸困难轨迹、无下肢肿痛/久坐/既往血栓史，且出现明确心源性胸痛主导证据，则该假设降级。"
+    ```

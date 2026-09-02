@@ -1,0 +1,42 @@
+adult_megacode_left_tags_by_category:
+  可电除颤心律:
+    - megacode_01: "VF/无脉VT骤停"
+    - megacode_04: "难治VF/VT复发"
+
+  非可电骤停:
+    - megacode_02: "PEA骤停（非目击）"
+    - megacode_03: "Asystole/电静止骤停"
+    - megacode_18: "大出血失血性休克→PEA"
+    - megacode_19: "肺栓塞阻塞性休克→PEA"
+    - megacode_27: "CO/氰化物中毒致PEA/循环崩溃"
+
+  心动过缓处置:
+    - megacode_05: "缓慢心律低灌注（有脉）"
+    - megacode_06: "缓慢心律极危（起搏前）"
+
+  心动过速不稳:
+    - megacode_07: "SVT不稳（窄QRS）"
+    - megacode_08: "AF/房扑不稳（不规则快）"
+    - megacode_09: "宽QRS不稳（疑VT）"
+    - megacode_10: "宽QRS快心律不稳（同步电复律）"
+    - megacode_11: "快心律性休克（灌注崩溃）"
+
+  复苏后管理:
+    - megacode_12: "ROSC早期：通气循环同步"
+    - megacode_13: "ROSC再失代偿：呼吸失败"
+    - megacode_14: "ROSC再失代偿：休克低灌注"
+    - megacode_15: "ROSC后电解质/心律复发"
+    - megacode_16: "ROSC目标治疗失败（持续评估）"
+
+  可逆致死病因:
+    - megacode_17: "张力性气胸濒危"
+    - megacode_20: "过敏性休克（气道水肿+低血压）"
+    - megacode_21: "重症哮喘持续状态"
+    - megacode_22: "溺水重度缺氧（近乎骤停）"
+    - megacode_23: "触电/电击伤致恶性心律"
+    - megacode_24: "阿片中毒：呼吸暂停→骤停风险"
+    - megacode_25: "镇静催眠/酒精复合中毒（低压低氧）"
+    - megacode_26: "有机磷胆碱能危象"
+    - megacode_28: "高钾/酸中毒等代谢致命心律"
+    - megacode_29: "严重低体温危急心律（复温）"
+    - megacode_30: "重症颅脑损伤：气道通气失败风险"

@@ -1,0 +1,40 @@
+{
+  "intent_code": "S2-7",
+  "act_type": "宣告",
+  "name_cn": "WPW/预激综合征警示",
+  "description_cn": "当识别到宽QRS伴预激波时，警示禁用腺苷、CCB、β受体阻滞剂、地高辛",
+  "keywords": ["预激综合征", "禁用腺苷", "CCB禁用", "δ波阳性"],
+  "pattern_hints": ["不能用腺苷", "WPW患者"],
+  "examples": [
+    "注意有预激综合征不能用腺苷和地尔硫卓",
+    "这个宽QRS是预激CCB禁用",
+    "WPW患者只能用胺碘酮或电复律",
+    "δ波阳性避免使用房室结阻滞剂"
+  ],
+  "standard_script": "注意！患者有预激综合征，禁用腺苷、CCB、β阻滞剂和地高辛。",
+  "extraction": {
+    "target_params": ["is_wpw", "contraindicatedDrugs"],
+    "rules": {
+      "is_wpw": { "type": "boolean", "static": true },
+      "contraindicatedDrugs": {
+        "type": "array",
+        "items": ["adenosine", "ccb", "beta_blocker", "digoxin"]
+      }
+    }
+  },
+  "execution": {
+    "type": "atomic",
+    "response_template": "🚨 注意：WPW阳性，禁用 {contraindicatedDrugs}！",
+    "requires_state_transition": false
+  },
+  "pragmatic_handlers": {
+    "宣告": {
+      "action": "execute_action",
+      "response_template": "🚨 注意：WPW阳性，禁用 {contraindicatedDrugs}！"
+    },
+    "探查性询问": {
+      "action": "query_context",
+      "response_template": "📋 WPW警示状态：{is_wpw}，禁用 {contraindicatedDrugs}。"
+    }
+  }
+}

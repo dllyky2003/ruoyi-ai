@@ -1,0 +1,34 @@
+{
+  "metaSchemaVersion": "1.0",
+  "caseTypeId": "acls_scene_ohca_vf_pvt",
+  "population": { "patientGroup": "adult" },
+  "caseScene": {
+    "setting": "out_of_hospital",
+    "timeWindow": "initial",
+    "pulseStatus": "none",
+    "rhythmVisibility": "monitored_visible",
+    "resourceConstraints": {
+      "defibAvailability": "defib_available",
+      "medAvailability": "unknown"
+    },
+    "stability": "unknown",
+    "cardiacArrestSubclass": "vf_pvt",
+    "tachySubclass": "unknown",
+    "bradySubclass": "unknown",
+    "acsSubclass": "unknown",
+    "neuroSyndrome": "unknown"
+  },
+  "zhSummary": "成人无脉骤停，节律为可除颤（VF/无脉VT），训练除颤+高质量CPR闭环。",
+  "zhKeyTriggers": [
+    "pulseStatus=none",
+    "cardiacArrestSubclass=vf_pvt",
+    "rhythmVisibility=monitored_visible",
+    "resourceConstraints.defibAvailability=defib_available"
+  ],
+  "zhTeachingFocus": "快速识别可除颤心律并执行除颤与CPR循环再评估。",
+
+  "teachingObjectives": [
+    { "objectiveId": "OBJ_OHCA_01", "objectiveText": "确认无脉性可除颤心律并执行电除颤与高质量CPR闭环", "primaryScoring": true }
+  ],
+  "evaluationTargets": { "requiredSignals": ["pulseStatus", "rhythmVisibility", "timingWindowCompliance"] }
+}

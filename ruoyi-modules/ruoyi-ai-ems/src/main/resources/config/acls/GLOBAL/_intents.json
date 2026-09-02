@@ -1,0 +1,628 @@
+{
+  "dict_version": "2.1.2",
+  "last_updated": "2026-09-01",
+  "description": "ACLS Megacode 通用基础意图层（G类），适用于所有案例的团队协作、安全、基础操作及生命体征监测。本次更新强化参数抽取的ASR容错：为所有数值类参数增加默认值、异常值校验、单位自动补全。例如血压、心率、血氧等若缺失数值则标记null，由后端触发澄清；环境安全评估增加默认'none'。同时优化override_instruction，明确当语音识别缺失关键信息时的回退策略。",
+  "layers": [
+    {
+      "layer_code": "GENERAL",
+      "layer_name": "通用基础意图层",
+      "layer_description": "适用于所有ACLS Megacode案例的团队协作、安全、基础操作及生命体征监测等通用指令。",
+      "sub_domains": [
+        {
+          "sub_domain_name": "团队安全与清场",
+          "domain_code": "安全",
+          "sub_domain_description": "本子域聚焦除颤放电前的强制性安全核查，包括人员物理撤离、起搏器/膏药等禁忌询问，以及抢救环境中物理危险因素（湿滑、电线、火源等）的排查，保障患者与团队成员的生命安全。",
+          "extraction_hint": "安全相关指令，重点关注电击前清场、禁忌询问、环境危险识别。若语音仅询问未给出具体信息，允许输出 null。ASR可能误报危险类型，若识别到'安全/没问题'则hazardType填'none'，actionStatus填'confirmed'。",
+          "intents": [
+            {
+              "intent_code": "G1-1",
+              "act_type": "发令性指令",
+              "name_cn": "安全清场指令",
+              "description_cn": "【仅限电击前物理清场】在执行电击/放电前，要求所有人员离开病床及患者身体，避免触电风险。此意图专用于人员安全撤离，严禁归类任何药物、按压、插管、过敏、家属等非撤离内容。",
+              "keywords": ["手离开", "让开", "离远点"],
+              "pattern_hints": ["大家让开", "别碰病人"],
+              "examples": [
+                "大家手离开床",
+                "Clear所有人都让开",
+                "准备放电大家离远点",
+                "别碰病人离开",
+                "【负例-禁止匹配】什么药过敏",
+                "【负例-禁止匹配】家属来了吗"
+              ],
+              "standard_script": "大家手离开床，准备放电，确认所有人员离开患者！",
+              "extraction": {
+                "target_params": [],
+                "rules": {}
+              }
+            },
+            {
+              "intent_code": "G1-2",
+              "act_type": "探查性询问",
+              "name_cn": "安全禁忌询问",
+              "description_cn": "在连接电极片或执行电击前，确认是否存在除颤禁忌（如药物贴片、起搏器等）。仅限于询问起搏器、膏药、金属饰物等，严禁匹配家属、病史、过敏等无关内容。",
+              "keywords": ["起搏器吗", "膏药吗", "金属饰物"],
+              "pattern_hints": ["有除颤禁忌吗", "身上有膏药吗"],
+              "examples": [
+                "身上有膏药或起搏器吗",
+                "有除颤禁忌吗",
+                "检查一下有没有金属饰物",
+                "【负例-禁止匹配】家属来了吗",
+                "【负例-禁止匹配】什么药过敏"
+              ],
+              "standard_script": "患者身上有膏药、起搏器或金属饰物吗？",
+              "extraction": {
+                "target_params": [],
+                "rules": {}
+              }
+            },
+            {
+              "intent_code": "G1-3",
+              "act_type": "探查性询问",
+              "name_cn": "环境安全评估",
+              "description_cn": "在抢救开始前或抢救过程中，确认工作环境是否存在额外危险（如湿滑地面、松散电线、火源、易燃易爆物、外部暴力威胁等），并采取相应防护或排除措施。此意图不涉及电击放电前的人员物理撤离（请走G1-1）。",
+              "keywords": ["现场安全吗", "地板湿滑", "脚下电线"],
+              "pattern_hints": ["环境安全确认", "周围安全吗"],
+              "examples": [
+                "现场安全吗",
+                "环境安全确认一下",
+                "地板湿滑小心滑倒",
+                "大家注意脚下电线",
+                "周围环境安全",
+                "确认现场无明火"
+              ],
+              "standard_script": "现场环境安全吗？检查地面是否湿滑、有无电线或火源。",
+              "extraction": {
+                "target_params": ["hazardType", "actionStatus"],
+                "rules": {
+                  "hazardType": {
+                    "type": "string",
+                    "enum": ["slip_trip", "electrical", "fire_explosion", "violence", "none"],
+                    "logic": "提取具体危险类型：'湿滑/地板/摔倒' → 'slip_trip'；'电线/漏电' → 'electrical'；'火源/易燃' → 'fire_explosion'；'暴力/威胁' → 'violence'；若明确说'安全/没问题'则填'none'。若语音中未提及任何危险，默认'none'。"
+                  },
+                  "actionStatus": {
+                    "type": "string",
+                    "enum": ["check", "confirmed", "mitigated"],
+                    "logic": "若为'确认一下/看一下' → 'check'；'确认安全/没问题' → 'confirmed'；'采取了措施（如清理）' → 'mitigated'。若未提及状态，默认'check'。"
+                  }
+                },
+                "override_instruction": "【ASR容错】若语音中仅说'环境安全'或'现场安全'，未提及具体危险类型，则hazardType填'none'，actionStatus填'confirmed'。若提到'看看/检查'，则actionStatus填'check'。"
+              }
+            }
+          ]
+        },
+        {
+          "sub_domain_name": "角色分工与闭环",
+          "domain_code": "团队",
+          "sub_domain_description": "本子域管理团队协作全流程，涵盖人员职责分工、医嘱闭环确认、关键时间节点记录、专家会诊请求、紧急策略纠偏、治疗操作启动、家属到场确认及安全转运部署，确保信息流转清晰、执行高效。",
+          "extraction_hint": "团队协作指令，重点关注角色分配、确认反馈、时间记录。提取人物和职责时，优先识别明确的主语和动作。ASR可能漏掉人名或时间，缺失时允许null，由后端根据上下文补全。",
+          "intents": [
+            {
+              "intent_code": "G2-1",
+              "act_type": "发令性指令",
+              "name_cn": "角色分配或呼叫增援",
+              "description_cn": "明确团队成员的职责分工，或在超出能力范围时请求支援。",
+              "keywords": ["负责按压", "管理气道", "推药", "记录时间"],
+              "pattern_hints": ["你来负责", "呼叫二线"],
+              "examples": [
+                "你来负责按压",
+                "张三管理气道",
+                "李四推药",
+                "王五记录时间",
+                "呼叫二线支援"
+              ],
+              "standard_script": "张三负责按压，李四管理气道，王五推药，赵六记录时间。",
+              "extraction": {
+                "target_params": ["person", "duty"],
+                "rules": {
+                  "person": {
+                    "type": "string",
+                    "logic": "提取被分配职责的人员（姓名如'张三'、代词如'你/我'、角色如'麻醉科'）。若为多组分配，优先提取第一组主语；若为呼叫增援未指定人，填'援军'。若语音未提及任何人，填null。"
+                  },
+                  "duty": {
+                    "type": "string",
+                    "enum": [
+                      "team_leader",
+                      "compressor",
+                      "airway_manager",
+                      "monitor_defib",
+                      "medication",
+                      "time_recorder",
+                      "scribe",
+                      "driver_assistant",
+                      "family_liaison",
+                      "consult"
+                    ],
+                    "logic": "映射中文职责到英文枚举：\n- '指挥/主导/负责全局' → 'team_leader'\n- '按压/CPR' → 'compressor'\n- '气道/插管/通气/球囊' → 'airway_manager'\n- '除颤/监护/心电图/电击' → 'monitor_defib'\n- '推药/给药/静脉/输液' → 'medication'\n- '记录时间/计时/报时' → 'time_recorder'\n- '写病历/记录' → 'scribe'\n- '开车/搬运/协助' → 'driver_assistant'\n- '家属沟通/安抚' → 'family_liaison'\n- '呼叫支援/会诊' → 'consult'\n若无法明确，默认'general'。"
+                  }
+                },
+                "override_instruction": "【ASR容错】若语音为'呼叫支援'未指定人，person填'援军'，duty填'consult'。若语音为'你来负责'未指定职责，duty填'general'。"
+              }
+            },
+            {
+              "intent_code": "G2-2",
+              "act_type": "闭环确认",
+              "name_cn": "医嘱复述或闭环确认",
+              "description_cn": "执行者对接收到的指令进行口头复述或确认，确保信息准确传达并形成闭环。",
+              "keywords": ["确认推完", "收到充好", "复述执行"],
+              "pattern_hints": ["确认已推完", "收到已充好"],
+              "examples": [
+                "确认[NUM]毫克腺苷已推完",
+                "收到[NUM]焦耳已充好",
+                "复述同步电复律[NUM]焦耳准备放电",
+                "马上执行"
+              ],
+              "standard_script": "确认收到，腺苷6mg已推完，生理盐水冲管完成。",
+              "extraction": {
+                "target_params": [],
+                "rules": {}
+              }
+            },
+            {
+              "intent_code": "G2-3",
+              "act_type": "发令性指令",
+              "name_cn": "关键时间点报时",
+              "description_cn": "记录重要操作或事件发生的具体时间，或启动计时器、查询剩余时间，用于后续评估时间线。",
+              "keywords": ["现在时间", "计时开始", "还剩多久"],
+              "pattern_hints": ["记录给药时间", "开始计时"],
+              "examples": [
+                "现在时间[NUM]点[NUM]分",
+                "给药后[NUM]分钟到了",
+                "持续按压[NUM]分钟计时开始",
+                "再评估一下现在[NUM]点[NUM]分",
+                "开始计时",
+                "计时开始",
+                "还有多长时间",
+                "还差多久",
+                "记录给药时间",
+                "记录电击时间",
+                "记录转复时间"
+              ],
+              "standard_script": "记录给药时间，现在14点20分，2分钟后复评。",
+              "extraction": {
+                "target_params": ["time", "duration"],
+                "rules": {
+                  "time": {
+                    "type": "string",
+                    "source": "keyword",
+                    "logic": "提取报时的具体时间点，如'14点20分'、'14:22'；若未提及具体时刻则填null。"
+                  },
+                  "duration": {
+                    "type": "string",
+                    "source": "keyword",
+                    "logic": "提取计时描述，如'1分钟'、'2分钟'，或剩余时间如'还剩2分钟'；若未提及则填null。"
+                  }
+                },
+                "override_instruction": "【ASR容错】若语音仅为'开始计时'或'计时开始'，未提供具体时长，time填null，duration填null，由后端默认启动通用计时器。"
+              }
+            },
+            {
+              "intent_code": "G2-4",
+              "act_type": "发令性指令",
+              "name_cn": "请求专家会诊",
+              "description_cn": "当诊断不明确、标准治疗方案无效或病情复杂时，请求心内科、电生理或重症专家会诊支援。",
+              "keywords": ["心内科会诊", "电生理医生", "专家支援"],
+              "pattern_hints": ["呼叫会诊", "请专家来看"],
+              "examples": [
+                "呼叫心内科会诊",
+                "请电生理医生过来看一下",
+                "联系上级医院准备转运",
+                "这个情况复杂请专家支援",
+                "诊断不明，请求专家会诊"
+              ],
+              "standard_script": "呼叫心内科会诊，患者心律不明确，需要专家支援。",
+              "extraction": {
+                "target_params": ["consultType"],
+                "rules": {
+                  "consultType": {
+                    "type": "string",
+                    "enum": ["cardiology", "electrophysiology", "critical_care", "general"],
+                    "logic": "若提及'心内科'→'cardiology'；'电生理'→'electrophysiology'；'重症/ICU'→'critical_care'；否则默认'general'。"
+                  }
+                },
+                "override_instruction": "【ASR容错】若仅说'会诊'或'请专家'，未指定科室，consultType填'general'。"
+              }
+            },
+            {
+              "intent_code": "G2-5",
+              "act_type": "策略纠偏/否决",
+              "name_cn": "策略纠偏或推翻重来指令",
+              "description_cn": "当发现先前决策错误时，果断叫停当前流程，宣布更改治疗方案。体现团队危急领导力。",
+              "keywords": ["停止给药", "准备紧急电击", "改按室颤"],
+              "pattern_hints": ["判断错了停止", "推翻原方案"],
+              "examples": [
+                "等等刚才判断错了停止给药",
+                "错了这是预激快停用地尔硫卓",
+                "别再推腺苷了准备紧急电击",
+                "推翻原方案改按室颤处理"
+              ],
+              "standard_script": "停止给药，刚才判断有误，改按室颤处理，准备电击。",
+              "extraction": {
+                "target_params": ["overrideAction"],
+                "rules": {
+                  "overrideAction": {
+                    "type": "string",
+                    "enum": ["stop_drug", "switch_to_cardioversion", "switch_to_vf_protocol"],
+                    "logic": "若含'停止给药'→'stop_drug'；'准备紧急电击'→'switch_to_cardioversion'；'改按室颤'→'switch_to_vf_protocol'。"
+                  }
+                }
+              }
+            },
+            {
+              "intent_code": "G2-6",
+              "act_type": "发令性指令",
+              "name_cn": "治疗操作启动指令",
+              "description_cn": "明确指示团队开始执行某一项具体的标准操作，如开始按压、开始通气、开始插管、开始评估等。不涉及人员撤离或时间报时，纯动作触发。注意：除颤相关操作请走S2-6。",
+              "keywords": ["开始按压", "开始通气", "准备插管", "开始评估"],
+              "pattern_hints": ["开始做CPR", "重新评估一下"],
+              "examples": [
+                "开始胸外按压",
+                "开始做CPR",
+                "准备插管",
+                "开始通气",
+                "开始评估",
+                "重新评估",
+                "开始初步评估"
+              ],
+              "standard_script": "开始胸外按压，频率100-120次/分，深度5-6厘米。",
+              "extraction": {
+                "target_params": ["operation"],
+                "rules": {
+                  "operation": {
+                    "type": "string",
+                    "enum": ["cpr", "ventilation", "intubation"],
+                    "logic": "出现'按压/CPR'→'cpr'；'通气/球囊'→'ventilation'；'插管'→'intubation'。若仅说'开始'或'准备'未指定具体操作，填null。"
+                  }
+                },
+                "override_instruction": "【ASR容错】若语音仅为'开始操作'、'准备操作'而未指明具体内容，operation填null，由后端根据上下文询问。"
+              }
+            },
+            {
+              "intent_code": "G2-7",
+              "act_type": "探查性询问",
+              "name_cn": "家属沟通确认",
+              "description_cn": "确认患者家属是否在场，以便进行病史获取、病情告知或沟通协调。",
+              "keywords": ["家属来了吗", "家属在吗", "家属到了吗"],
+              "pattern_hints": ["家属来了没", "病人家属在不在"],
+              "examples": [
+                "家属来了吗",
+                "病人家属在吗",
+                "患者家属到了没有"
+              ],
+              "standard_script": "家属到了吗？请家属进来，需要了解病情。",
+              "extraction": {
+                "target_params": ["present"],
+                "rules": {
+                  "present": {
+                    "type": "boolean",
+                    "logic": "若回答'来了/在'→true；'没来/不在'→false；若为询问本身则填null。"
+                  }
+                }
+              }
+            },
+            {
+              "intent_code": "G2-8",
+              "act_type": "发令性指令",
+              "name_cn": "转运准备指令",
+              "description_cn": "指示团队准备转运患者至医院或上级医疗机构，包括通知接收方、准备设备、确保安全转运等。",
+              "keywords": ["准备转运", "联系接收医院", "转运设备"],
+              "pattern_hints": ["通知急诊科", "准备转运至"],
+              "examples": [
+                "准备转运",
+                "联系接收医院",
+                "准备转运设备",
+                "通知急诊科准备接收",
+                "准备转运至有PCI条件的医院",
+                "准备转运，持续监护",
+                "随时准备升级治疗"
+              ],
+              "standard_script": "准备转运至有PCI条件的医院，联系接收方，备好监护设备。",
+              "extraction": {
+                "target_params": ["destination", "transportMode"],
+                "rules": {
+                  "destination": {
+                    "type": "string",
+                    "enum": ["PCI", "stroke_center", "general_hospital", "ICU"],
+                    "logic": "'PCI/介入'→'PCI'；'卒中/脑卒中'→'stroke_center'；'综合医院'→'general_hospital'；'ICU'→'ICU'。若未提及目的地，填null。"
+                  },
+                  "transportMode": {
+                    "type": "string",
+                    "enum": ["ambulance", "helicopter", "pending"],
+                    "logic": "'救护车'→'ambulance'；'直升机'→'helicopter'；若未说明→'pending'。"
+                  }
+                },
+                "override_instruction": "【ASR容错】若仅说'准备转运'，未指定目的地和方式，destination填null，transportMode填'pending'。"
+              }
+            }
+          ]
+        },
+        {
+          "sub_domain_name": "基础设备与通路准备",
+          "domain_code": "设备",
+          "sub_domain_description": "本子域规范基础医疗设备的启用与连接，包括监护/除颤仪的开机及模式设置、除颤电极片或12导联心电图的连接，以及静脉或骨内给药通路的建立，为后续监测和治疗奠定基础。",
+          "extraction_hint": "设备操作和静脉通路建立指令。重点关注模式设置、导联类型、通路类型。ASR可能漏掉模式或通路类型，缺失时填默认值（监护模式、IV）。",
+          "intents": [
+            {
+              "intent_code": "G3-1",
+              "act_type": "发令性指令",
+              "name_cn": "开机或监护模式设置",
+              "description_cn": "开启除颤仪或监护仪，并将其设置为监护或除颤模式。注意：本意图仅限设备开机和模式切换，不涉及放电、充电或同步电击，后者请走S2-6。",
+              "keywords": ["打开除颤仪", "监护模式", "手动除颤模式"],
+              "pattern_hints": ["调到监护模式", "启动血氧监测"],
+              "examples": [
+                "打开除颤仪调到监护模式",
+                "启动血氧饱和度监测",
+                "把机器调到手动除颤模式"
+              ],
+              "standard_script": "打开除颤仪，调至监护模式，连接血氧饱和度监测。",
+              "extraction": {
+                "target_params": ["mode"],
+                "rules": {
+                  "mode": {
+                    "type": "string",
+                    "enum": ["monitor", "defib", "manual"],
+                    "logic": "若出现'监护模式'→'monitor'；'除颤模式/手动除颤'→'defib'或'manual'。若未提及模式，默认'monitor'。"
+                  }
+                },
+                "override_instruction": "【ASR容错】若仅说'开机'未指定模式，mode填'monitor'。"
+              }
+            },
+            {
+              "intent_code": "G3-2",
+              "act_type": "发令性指令",
+              "name_cn": "电极片或导联连接",
+              "description_cn": "连接除颤电极片或12导联心电图导联线，以便获取心电信号。",
+              "keywords": ["贴除颤电极片", "12导联心电图", "连接导联线"],
+              "pattern_hints": ["贴好电极片", "接监护仪上"],
+              "examples": [
+                "贴好除颤电极片",
+                "连接[NUM]导联心电图",
+                "把电极片接到监护仪上",
+                "准备12导联心电图",
+                "连接导联线",
+                "贴电极片"
+              ],
+              "standard_script": "贴好除颤电极片，连接12导联心电图。",
+              "extraction": {
+                "target_params": ["leadType"],
+                "rules": {
+                  "leadType": {
+                    "type": "string",
+                    "enum": ["defib_pads", "12_lead"],
+                    "logic": "出现'除颤电极片'→'defib_pads'；'12导联'→'12_lead'。若未指定，默认'defib_pads'。"
+                  }
+                }
+              }
+            },
+            {
+              "intent_code": "G3-3",
+              "act_type": "发令性指令",
+              "name_cn": "建立静脉或骨内通路",
+              "description_cn": "建立静脉留置针或骨内通路，确保后续给药途径。本意图仅限血管/骨内通路建立，严禁归类任何除颤、监护、按压等操作指令。",
+              "keywords": ["建立静脉通道", "留置针", "骨内通路"],
+              "pattern_hints": ["打上留置针", "准备骨内"],
+              "examples": [
+                "建立静脉通道",
+                "打上留置针接上生理盐水",
+                "准备骨内通路",
+                "【负例-禁止匹配】准备除颤",
+                "【负例-禁止匹配】准备除颤仪"
+              ],
+              "standard_script": "建立一条大号静脉通道，接生理盐水；如困难准备骨内通路。",
+              "extraction": {
+                "target_params": ["accessType"],
+                "rules": {
+                  "accessType": {
+                    "type": "string",
+                    "enum": ["IV", "IO"],
+                    "logic": "出现'静脉通道/留置针'→'IV'；'骨内'→'IO'。若未指定，默认'IV'。"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "sub_domain_name": "通用生命体征监测",
+          "domain_code": "生命体征",
+          "sub_domain_description": "本子域负责患者核心生理数据的获取与追踪，包括血压、心率、血氧饱和度、呼吸频率、意识状态（GCS）的询问与报告；同时涵盖干预后的疗效复评及病史/化验信息的快速采集，为临床决策提供实时依据。",
+          "extraction_hint": "生命体征数值报告和询问。抽取数值时，注意单位，血压保留收缩压和舒张压，心率、血氧、呼吸频率直接提取数字。ASR可能漏掉数字，此时应填null，由后端触发澄清或等待下一轮输入。对于血压，若仅报告一个数值，优先作为收缩压，舒张压填null。",
+          "intents": [
+            {
+              "intent_code": "G4-1",
+              "act_type": "探查性询问",
+              "name_cn": "询问或报告血压",
+              "description_cn": "获取或报告患者的收缩压和舒张压数值。本意图默认视为询问，报告场景可结合数值存在性判断。",
+              "keywords": ["血压多少", "收缩压", "舒张压"],
+              "pattern_hints": ["血压稳定吗", "再量一次血压"],
+              "examples": [
+                "血压多少",
+                "收缩压[NUM]舒张压[NUM]",
+                "再量[NUM]次血压",
+                "血压稳定吗"
+              ],
+              "standard_script": "血压多少？收缩压和舒张压分别是多少？",
+              "extraction": {
+                "target_params": ["systolic_bp", "diastolic_bp"],
+                "rules": {
+                  "systolic_bp": {
+                    "type": "integer",
+                    "source": "numeric_value",
+                    "logic": "提取收缩压数值，如'90'、'120'。若只报告一个数值，优先作为收缩压。若未提及则填null。若数值<30或>250，视为ASR错误，填null。"
+                  },
+                  "diastolic_bp": {
+                    "type": "integer",
+                    "source": "numeric_value",
+                    "logic": "提取舒张压数值，如'60'、'80'。若未提及则填null。若数值<20或>200，视为ASR错误，填null。"
+                  }
+                },
+                "override_instruction": "【ASR容错】若语音为'血压'或'量血压'未给出数值，systolic_bp和diastolic_bp均填null。若仅给出一个数字（如'血压120'），则systolic_bp=120，diastolic_bp=null。"
+              }
+            },
+            {
+              "intent_code": "G4-2",
+              "act_type": "探查性询问",
+              "name_cn": "询问或报告心率",
+              "description_cn": "【仅限心率数值】获取或报告患者的当前心率（次/分）。本意图仅用于心率数值的查询和报告，不含意识评估、心律分析或心电图判读。默认视为询问。",
+              "keywords": ["心率多少", "心率数值", "监护仪心率"],
+              "pattern_hints": ["现在心率多少", "报一下心率"],
+              "examples": [
+                "心率现在多少",
+                "心率[NUM]次分",
+                "监护仪上心率多少",
+                "现在病人心率多少",
+                "心率[NUM]",
+                "报一下心率",
+                "【负例-禁止匹配】患者意识清楚吗",
+                "【负例-禁止匹配】GCS评分多少"
+              ],
+              "standard_script": "现在心率多少？监护仪显示多少？",
+              "extraction": {
+                "target_params": ["heart_rate"],
+                "rules": {
+                  "heart_rate": {
+                    "type": "integer",
+                    "source": "numeric_value",
+                    "logic": "提取心率数值，如'150'、'80'。若文本为'心率快'、'心率慢'则忽略，填null。若用户直接说'心率120'，提取120。若数值<20或>300，视为ASR错误，填null。"
+                  }
+                }
+              }
+            },
+            {
+              "intent_code": "G4-3",
+              "act_type": "探查性询问",
+              "name_cn": "询问或报告血氧或呼吸",
+              "description_cn": "获取或报告患者的血氧饱和度（SpO2）和呼吸频率。默认视为询问。",
+              "keywords": ["血氧饱和度", "呼吸频率", "血氧数值"],
+              "pattern_hints": ["血氧多少", "呼吸几次"],
+              "examples": [
+                "血氧饱和度多少",
+                "血氧饱和度只有[NUM]%给氧",
+                "呼吸频率多少"
+              ],
+              "standard_script": "血氧饱和度多少？呼吸频率多少？",
+              "extraction": {
+                "target_params": ["spo2", "respiratory_rate"],
+                "rules": {
+                  "spo2": {
+                    "type": "integer",
+                    "source": "numeric_value",
+                    "logic": "提取血氧数值，如'92'、'98'。若带'%'忽略单位。未提及填null。若数值<50或>100，视为ASR错误，填null。"
+                  },
+                  "respRate": {
+                    "type": "integer",
+                    "source": "numeric_value",
+                    "logic": "提取呼吸频率数值，如'20'、'30'。未提及填null。若数值<5或>60，视为ASR错误，填null。"
+                  }
+                },
+                "override_instruction": "【ASR容错】若语音仅为'血氧'或'呼吸'未给出数值，对应字段填null。"
+              }
+            },
+            {
+              "intent_code": "G4-4",
+              "act_type": "探查性询问",
+              "name_cn": "询问或报告意识状态",
+              "description_cn": "获取或报告患者的意识水平（GCS评分、清醒/嗜睡/昏迷、对声音/疼痛的反应等）。本意图不含心率、血压、血氧等生命体征数值。默认视为询问。",
+              "keywords": ["意识清楚吗", "GCS评分", "叫病人有反应吗"],
+              "pattern_hints": ["能听到吗", "人清醒吗"],
+              "examples": [
+                "患者意识清楚吗",
+                "GCS评分多少",
+                "人清醒吗",
+                "叫一下病人看有没有反应",
+                "你听见我说话吗",
+                "能听到吗",
+                "【负例-禁止匹配】心率多少",
+                "【负例-禁止匹配】心率120",
+                "【负例-禁止匹配】血压多少"
+              ],
+              "standard_script": "患者意识清楚吗？GCS评分多少？叫他有反应吗？",
+              "extraction": {
+                "target_params": ["consciousness", "gcs"],
+                "rules": {
+                  "consciousness": {
+                    "type": "string",
+                    "enum": ["alert", "verbal", "pain", "unresponsive"],
+                    "logic": "'清醒/清楚'→'alert'；'对声音有反应/听见'→'verbal'；'对疼痛有反应'→'pain'；'昏迷/没反应'→'unresponsive'。若未提及，填null。"
+                  },
+                  "gcs": {
+                    "type": "integer",
+                    "source": "numeric_value",
+                    "logic": "若提及GCS具体分数（如'13分'）则提取整数，否则填null。若数值<3或>15，视为ASR错误，填null。"
+                  }
+                }
+              }
+            },
+            {
+              "intent_code": "G4-5",
+              "act_type": "发令性指令",
+              "name_cn": "治疗后复评指令",
+              "description_cn": "在每次药物或电击干预后，要求重新评估患者的血流动力学状态和心律转归。",
+              "keywords": ["再评估", "复律后心电图", "重新检查脉搏", "再次测血压", "推完药量血压"],
+              "pattern_hints": ["给药后评估", "复评一下效果"],
+              "examples": [
+                "给药后[NUM]分钟再评估一下",
+                "复律后心电图看一下",
+                "推完药了量一下血压和心率",
+                "再查一下有没有脉搏",
+                "每次干预后重新评估",
+                "评估治疗效果",
+                "复评一下"
+              ],
+              "standard_script": "给药后2分钟复评，查血压、心率和心律变化。",
+              "extraction": {
+                "target_params": ["reassessFocus"],
+                "rules": {
+                  "reassessFocus": {
+                    "type": "string",
+                    "enum": ["rhythm", "hemodynamics", "pulse", "general"],
+                    "logic": "'心电图/复律'→'rhythm'；'血压/心率'→'hemodynamics'；'脉搏'→'pulse'；否则默认'general'。"
+                  }
+                }
+              }
+            },
+            {
+              "intent_code": "G4-6",
+              "act_type": "探查性询问",
+              "name_cn": "病史快速采集（AMPLE）",
+              "description_cn": "在抢救或评估过程中，快速询问患者的过敏史、近期用药、既往病史、进食情况及发病事件经过，或安排必要的化验/检查。属于病情评估范畴，不涉及生命体征数值。默认视为询问。",
+              "keywords": ["过敏史", "吃什么药", "心脏病史", "最后一次吃饭"],
+              "pattern_hints": ["怎么发病的", "哪里不舒服"],
+              "examples": [
+                "患者有什么过敏史吗",
+                "平时吃什么药",
+                "有没有心脏病或糖尿病史",
+                "最后一次吃饭是什么时候",
+                "怎么发病的",
+                "有没有外伤史",
+                "之前用过什么药",
+                "你哪里不舒服",
+                "有什么不适",
+                "抽血做一下化验",
+                "做个化验",
+                "查一下血常规",
+                "查看化验结果",
+                "看一下化验报告",
+                "看看报告"
+              ],
+              "standard_script": "患者有什么过敏史？平时吃什么药？最后一次吃饭是什么时候？",
+              "extraction": {
+                "target_params": ["historyType", "detail"],
+                "rules": {
+                  "historyType": {
+                    "type": "string",
+                    "enum": ["allergy", "medication", "past_illness", "last_meal", "event", "trauma", "symptom", "lab"],
+                    "logic": "映射询问类型：'过敏' → 'allergy'；'吃药/用药' → 'medication'；'心脏病/糖尿病/既往史' → 'past_illness'；'吃饭/进食' → 'last_meal'；'怎么发病/起因' → 'event'；'外伤' → 'trauma'；'不舒服/不适' → 'symptom'；'化验/抽血/检查/报告' → 'lab'。"
+                  },
+                  "detail": {
+                    "type": "string",
+                    "logic": "提取患者或家属回答的具体内容，如'青霉素过敏'、'吃阿司匹林'、'3小时前吃饭'等。若只是询问未获得回答，则填 null。"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

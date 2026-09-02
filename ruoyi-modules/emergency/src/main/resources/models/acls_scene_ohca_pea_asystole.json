@@ -1,0 +1,34 @@
+{
+  "metaSchemaVersion": "1.0",
+  "caseTypeId": "acls_scene_ohca_pea_asystole",
+  "population": { "patientGroup": "adult" },
+  "caseScene": {
+    "setting": "out_of_hospital",
+    "timeWindow": "initial",
+    "pulseStatus": "none",
+    "rhythmVisibility": "monitored_visible",
+    "resourceConstraints": {
+      "defibAvailability": "defib_unavailable",
+      "medAvailability": "meds_available"
+    },
+    "stability": "unknown",
+    "cardiacArrestSubclass": "pea_asystole",
+    "tachySubclass": "unknown",
+    "bradySubclass": "unknown",
+    "acsSubclass": "unknown",
+    "neuroSyndrome": "unknown"
+  },
+  "zhSummary": "成人无脉骤停，节律为不可除颤（PEA/心脏停搏），训练以CPR与可逆病因/流程闭环为主。",
+  "zhKeyTriggers": [
+    "pulseStatus=none",
+    "cardiacArrestSubclass=pea_asystole",
+    "rhythmVisibility=monitored_visible",
+    "resourceConstraints.defibAvailability=defib_unavailable"
+  ],
+  "zhTeachingFocus": "避免无效除颤，把重点放在CPR循环与可逆病因处置链。",
+
+  "teachingObjectives": [
+    { "objectiveId": "OBJ_OHCA_02", "objectiveText": "识别无脉性不可除颤心律并以CPR与可逆病因思路推进流程闭环", "primaryScoring": true }
+  ],
+  "evaluationTargets": { "requiredSignals": ["pulseStatus", "rhythmVisibility", "timingWindowCompliance"] }
+}

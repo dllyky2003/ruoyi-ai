@@ -1,8 +1,11 @@
 package org.ruoyi;
 
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.metrics.buffering.BufferingApplicationStartup;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -12,7 +15,19 @@ import java.net.ServerSocket;
  *
  * @author Lion Li
  */
-@SpringBootApplication
+
+@SpringBootApplication(scanBasePackages = {
+    "org.ruoyi",           // RuoYi-AI 核心
+    "com.ruoyi.ems",       // 原有的急救模拟模块
+    "com.ruoyi.acls"       // 新增：ACLS智能引擎模块（你在这里）
+})
+@MapperScan(basePackages = {
+    "com.ruoyi.ems.mapper",
+    "org.ruoyi.system.mapper",
+    "com.ruoyi.acls"       // 新增：如果你在新模块中定义了 Mapper（虽极少，但加上无害）
+}
+)
+@EnableScheduling
 public class RuoYiAIApplication {
 
     public static void main(String[] args) {

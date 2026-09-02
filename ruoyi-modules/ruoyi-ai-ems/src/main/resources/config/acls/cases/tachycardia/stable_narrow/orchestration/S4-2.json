@@ -1,0 +1,37 @@
+{
+  "intent_code": "S4-2",
+  "act_type": "宣告",
+  "name_cn": "非同步误电击致室颤宣告",
+  "description_cn": "报告因未开启同步模式或能量选择不当导致诱发R-on-T或室颤",
+  "keywords": ["非同步放电", "打完变室颤", "没开同步"],
+  "pattern_hints": ["非同步后室颤", "R-on-T了"],
+  "examples": [
+    "糟糕非同步放电后室颤了",
+    "打完变室颤了快除颤",
+    "能量太高诱发尖端扭转型室速",
+    "没开同步R-on-T了"
+  ],
+  "standard_script": "完了，非同步放电后室颤，立即除颤。",
+  "extraction": {
+    "target_params": ["eventType", "energy"],
+    "rules": {
+      "eventType": {
+        "type": "string",
+        "enum": ["VF", "torsades"]
+      },
+      "energy": { "type": "string", "source": "numeric_value", "unit": "J" }
+    }
+  },
+  "execution": {
+    "type": "atomic",
+    "response_template": "🚨 非同步误电击诱发 {eventType}，能量 {energy} J，立即除颤！",
+    "requires_state_transition": true,
+    "transition_event": "S4-2_DONE"
+  },
+  "pragmatic_handlers": {
+    "宣告": {
+      "action": "execute_action",
+      "response_template": "🚨 非同步误电击诱发 {eventType}，能量 {energy} J，立即除颤！"
+    }
+  }
+}

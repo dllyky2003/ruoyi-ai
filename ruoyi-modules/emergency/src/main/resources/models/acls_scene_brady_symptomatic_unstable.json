@@ -1,0 +1,33 @@
+{
+  "metaSchemaVersion": "1.0",
+  "caseTypeId": "acls_scene_brady_symptomatic_unstable",
+  "population": { "patientGroup": "adult" },
+  "caseScene": {
+    "setting": "in_hospital",
+    "timeWindow": "initial",
+    "pulseStatus": "present",
+    "rhythmVisibility": "monitored_visible",
+    "resourceConstraints": {
+      "defibAvailability": "defib_available",
+      "medAvailability": "meds_available"
+    },
+    "stability": "unstable",
+    "cardiacArrestSubclass": "unknown",
+    "tachySubclass": "unknown",
+    "bradySubclass": "symptomatic_unstable",
+    "acsSubclass": "unknown",
+    "neuroSyndrome": "unknown"
+  },
+  "zhSummary": "成人有脉心动过缓且不稳定，训练识别不稳定并完成处置升级与再评估。",
+  "zhKeyTriggers": [
+    "pulseStatus=present",
+    "stability=unstable",
+    "bradySubclass=symptomatic_unstable"
+  ],
+  "zhTeachingFocus": "不稳定性识别与升级处置路径是否正确。",
+
+  "teachingObjectives": [
+    { "objectiveId": "OBJ_BRADY_01", "objectiveText": "识别不稳定心动过缓并按流程完成处置升级与再评估闭环", "primaryScoring": true }
+  ],
+  "evaluationTargets": { "requiredSignals": ["pulseStatus", "rhythmVisibility", "timingWindowCompliance"] }
+}

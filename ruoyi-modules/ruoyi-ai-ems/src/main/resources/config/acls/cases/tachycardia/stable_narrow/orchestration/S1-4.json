@@ -1,0 +1,39 @@
+{
+  "intent_code": "S1-4",
+  "act_type": "探查性询问",
+  "name_cn": "请求心律综合判读",
+  "description_cn": "当团队对当前心律不确定时，请求上级或专家帮助识别心律失常类型",
+  "keywords": ["这是什么心律", "帮忙看心电图", "是房颤吗"],
+  "pattern_hints": ["确认心律失常", "能确认吗"],
+  "examples": [
+    "这是什么心律",
+    "帮忙看一下心电图",
+    "这个心律是房颤吗",
+    "能确认一下是什么心律失常吗"
+  ],
+  "standard_script": "这是什么心律？帮忙看一下心电图，是房颤、房扑还是室上速？",
+  "extraction": {
+    "target_params": ["suspectedRhythm"],
+    "rules": {
+      "suspectedRhythm": {
+        "type": "string",
+        "enum": ["afib", "aflutter", "svt", "vt", "unknown"]
+      }
+    }
+  },
+  "execution": {
+    "type": "query",
+    "response_template": "📋 疑似心律：{suspectedRhythm}，请求上级确认。",
+    "data_source": "context"
+  },
+  "pragmatic_handlers": {
+    "探查性询问": {
+      "action": "query_context",
+      "response_template": "📋 疑似心律：{suspectedRhythm}，请求上级确认。"
+    },
+    "发令性指令": {
+      "action": "execute_action",
+      "response_template": "📋 正在分析心电图..."
+    }
+  }
+}

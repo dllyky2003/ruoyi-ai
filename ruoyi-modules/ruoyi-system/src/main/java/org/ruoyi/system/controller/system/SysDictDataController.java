@@ -75,11 +75,13 @@ public class SysDictDataController extends BaseController {
      */
     @GetMapping(value = "/type/{dictType}")
     public R<List<SysDictDataVo>> dictType(@PathVariable String dictType) {
+
         List<SysDictDataVo> data = dictTypeService.selectDictDataByType(dictType);
-        if (ObjectUtil.isNull(data)) {
-            data = new ArrayList<>();
+        if (ObjectUtil.isNull(data) || data.isEmpty()) {
+            return R.fail(dictType + ": 字典未定义或数据为空");
         }
-        return R.ok(data);
+        R<List<SysDictDataVo>> result = R.ok(data);
+        return result;
     }
 
     /**

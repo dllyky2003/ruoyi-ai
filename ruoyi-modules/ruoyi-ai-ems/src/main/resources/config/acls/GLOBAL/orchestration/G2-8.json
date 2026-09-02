@@ -1,0 +1,46 @@
+{
+  "intent_code": "G2-8",
+  "act_type": "发令性指令",
+  "name_cn": "转运准备指令",
+  "description_cn": "指示团队准备转运患者至医院或上级医疗机构",
+  "keywords": ["准备转运", "联系接收医院", "转运设备"],
+  "pattern_hints": ["通知急诊科", "准备转运至"],
+  "examples": [
+    "准备转运",
+    "联系接收医院",
+    "准备转运设备",
+    "通知急诊科准备接收",
+    "准备转运至有PCI条件的医院"
+  ],
+  "standard_script": "准备转运至有PCI条件的医院，联系接收方，备好监护设备。",
+  "extraction": {
+    "target_params": ["destination", "transportMode"],
+    "rules": {
+      "destination": {
+        "type": "string",
+        "enum": ["PCI", "stroke_center", "general_hospital", "ICU"]
+      },
+      "transportMode": {
+        "type": "string",
+        "enum": ["ambulance", "helicopter", "pending"]
+      }
+    }
+  },
+  "execution": {
+    "type": "action_chain",
+    "steps": [
+      { "step_id": "transport_prep", "ref_atomic": "TRANSPORT_PREP", "duty": "TEAM_LEADER" }
+    ],
+    "preconditions": {},
+    "on_complete": {
+      "response_template": "🚑 准备转运至 {destination}，已联系接收方。",
+      "transition_event": "G2-8_DONE"
+    }
+  },
+  "pragmatic_handlers": {
+    "发令性指令": {
+      "action": "advance_chain",
+      "response_template": "🚑 准备转运至 {destination}，已联系接收方。"
+    }
+  }
+}

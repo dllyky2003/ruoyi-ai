@@ -1,0 +1,33 @@
+{
+  "metaSchemaVersion": "1.0",
+  "caseTypeId": "acls_scene_tachy_irregular_narrow_af_afl",
+  "population": { "patientGroup": "adult" },
+  "caseScene": {
+    "setting": "in_hospital",
+    "timeWindow": "initial",
+    "pulseStatus": "present",
+    "rhythmVisibility": "monitored_visible",
+    "resourceConstraints": {
+      "defibAvailability": "defib_available",
+      "medAvailability": "meds_available"
+    },
+    "stability": "unstable",
+    "cardiacArrestSubclass": "unknown",
+    "tachySubclass": "irregular_narrow_af_afl",
+    "bradySubclass": "unknown",
+    "acsSubclass": "unknown",
+    "neuroSyndrome": "unknown"
+  },
+  "zhSummary": "不规则窄QRS（AF/房扑教学场景），训练节律特征识别与处置分支闭环。",
+  "zhKeyTriggers": [
+    "pulseStatus=present",
+    "tachySubclass=irregular_narrow_af_afl",
+    "stability=unstable"
+  ],
+  "zhTeachingFocus": "不规则节律识别与不稳定路径处置正确。",
+
+  "teachingObjectives": [
+    { "objectiveId": "OBJ_TACHY_02", "objectiveText": "识别不规则窄QRS节律并在不稳定/稳定路径之间做出正确选择", "primaryScoring": true }
+  ],
+  "evaluationTargets": { "requiredSignals": ["pulseStatus", "rhythmVisibility", "timingWindowCompliance", "stability"] }
+}

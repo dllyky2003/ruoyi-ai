@@ -21,10 +21,10 @@ public class VectorSearchService {
     private BgeM3EmbeddingService embeddingService;
 
     /** 语料向量缓存（启动时加载） */
-    private Map<String, float[]> corpusCache = new ConcurrentHashMap<>();
+    private final Map<String, float[]> corpusCache = new ConcurrentHashMap<>();
 
     /** 意图语料映射（intentId -> List<语料文本>） */
-    private Map<String, List<String>> intentUtteranceMap = new ConcurrentHashMap<>();
+    private final Map<String, List<String>> intentUtteranceMap = new ConcurrentHashMap<>();
 
     /**
      * 初始化语料库（由 EcgRuntimeBuilder 调用）

@@ -19,7 +19,7 @@ public class RedisTemplateUtil {
     public boolean unlock(String key, String clientId) {
         boolean result = false;
         if (clientId.equals(stringRedisTemplate.opsForValue().get(key))) {
-            result = Boolean.TRUE.equals(stringRedisTemplate.delete(key));
+            result = stringRedisTemplate.delete(key);
         }
         return result;
     }

@@ -1,0 +1,53 @@
+{
+  "intent_code": "S2-5",
+  "act_type": "发令性指令",
+  "name_cn": "不规则/规则窄QRS二线药物执行",
+  "description_cn": "针对不规则窄QRS心动过速使用β受体阻滞剂或钙通道阻滞剂控制心室率",
+  "keywords": ["地尔硫卓静注", "美托洛尔静推", "房颤控制心率"],
+  "pattern_hints": ["用艾司洛尔", "控制心率"],
+  "examples": [
+    "地尔硫卓0.25毫克千克静注",
+    "美托洛尔5毫克静推",
+    "房颤控制心率用艾司洛尔"
+  ],
+  "standard_script": "地尔硫卓0.25mg/kg缓慢静注，控制心室率；注意WPW禁用。",
+  "extraction": {
+    "target_params": ["drug", "dose", "operation_status"],
+    "rules": {
+      "drug": {
+        "type": "string",
+        "enum": ["metoprolol", "diltiazem", "esmolol"]
+      },
+      "dose": { "type": "string", "source": "numeric_value" },
+      "operation_status": {
+        "type": "string",
+        "enum": ["done", "start", "pending"]
+      }
+    }
+  },
+  "execution": {
+    "type": "action_chain",
+    "steps": [
+      { "step_id": "administer_drug", "ref_atomic": "IV_PUSH", "duty": "IV_MED" }
+    ],
+    "preconditions": {},
+    "on_complete": {
+      "response_template": "💉 正在静注 {dose} {drug}，注意WPW禁用。",
+      "transition_event": "S2-5_DONE"
+    }
+  },
+  "pragmatic_handlers": {
+    "发令性指令": {
+      "action": "advance_chain",
+      "response_template": "💉 正在静注 {dose} {drug}，注意WPW禁用。"
+    },
+    "探查性询问": {
+      "action": "query_step_status",
+      "response_template": "📋 二线药物执行状态：{operation_status}。"
+    },
+    "策略纠偏/否决": {
+      "action": "abort_chain",
+      "response_template": "🛑 已中止二线药物推注。"
+    }
+  }
+}

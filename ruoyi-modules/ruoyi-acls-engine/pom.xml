@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- ========== 父 POM：必须与主项目一致 ========== -->
+    <parent>
+        <groupId>org.ruoyi</groupId>
+        <artifactId>ruoyi-ai</artifactId>
+        <version>3.1.0</version>          <!-- ✅ 与父 POM 版本一致 -->
+        <relativePath>../pom.xml</relativePath>   <!-- ✅ 父 POM 相对路径 -->
+    </parent>
+
+    <!-- ========== 当前模块坐标 ========== -->
+    <artifactId>ruoyi-acls-engine</artifactId>
+    <!-- groupId 和 version 从父 POM 继承，无需重复声明 -->
+
+    <packaging>jar</packaging>
+
+    <description>
+        ACLS 模拟训练智能引擎 —— 自治组员、LLM认知、异步调度、资源仲裁
+    </description>
+
+    <dependencies>
+        <!-- ========== 依赖现有 EMS 模块 ========== -->
+        <dependency>
+            <groupId>org.ruoyi</groupId>           <!-- ✅ 与父 POM 一致 -->
+            <artifactId>ruoyi-ai-ems</artifactId>
+            <version>${project.version}</version>  <!-- ✅ 继承父 POM 版本 3.1.0 -->
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- ========== Spring Boot Starter ========== -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- ========== 配置处理器 ========== -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- ========== Lombok ========== -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- ========== 测试依赖 ========== -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip> <!-- 业务库，不生成可执行 JAR -->
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

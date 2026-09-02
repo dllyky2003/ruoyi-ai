@@ -16,8 +16,8 @@ import java.util.List;
  * @date 2026-08-18
  */
 public interface IEmergencyLibraryItemService {
-    public List<EmergencyLibraryItemVersionVo> getVersionsByItemId(Long itemId);
-    public EmergencyLibraryItemVo getItemWithVersions(Long id);
+    List<EmergencyLibraryItemVersionVo> getVersionsByItemId(Long itemId);
+    EmergencyLibraryItemVo getItemWithVersions(Long id);
     /**
      * 查询公共库对象身份
      *

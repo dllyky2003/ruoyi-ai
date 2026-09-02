@@ -34,11 +34,26 @@ public interface AbstractChatService {
      * @return 同步聊天模型实例
      */
     default ChatModel buildChatModel(ChatModelVo chatModelVo) {
+
+        //如果需要设置稳定输出，则将seed进行设置。
+        if(chatModelVo.getSeed().isEmpty())
+        {
+            return OpenAiChatModel.builder()
+                .baseUrl(chatModelVo.getApiHost())
+                .apiKey(chatModelVo.getApiKey())
+                .modelName(chatModelVo.getModelName())
+                .timeout(Duration.ofSeconds(120))
+                .temperature(chatModelVo.getTemperature())
+                .build();
+        }
+
         return OpenAiChatModel.builder()
             .baseUrl(chatModelVo.getApiHost())
             .apiKey(chatModelVo.getApiKey())
             .modelName(chatModelVo.getModelName())
             .timeout(Duration.ofSeconds(120))
+            .temperature(chatModelVo.getTemperature())
+            .seed(Integer.parseInt(chatModelVo.getSeed()))
             .build();
     }
 

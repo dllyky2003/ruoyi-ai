@@ -27,14 +27,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermission;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.time.Duration;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -957,9 +951,7 @@ public final class BuiltinCodingTools {
             length--;
         }
         List<String> lines = new ArrayList<>(length);
-        for (int index = 0; index < length; index++) {
-            lines.add(raw[index]);
-        }
+        lines.addAll(Arrays.asList(raw).subList(0, length));
         return lines;
     }
 
@@ -1158,21 +1150,26 @@ public final class BuiltinCodingTools {
             return truncated;
         }
     }
-
-    private static final class DeadlineProgressMonitor implements ProgressMonitor {
-        private final long deadlineNanos;
-
-        private DeadlineProgressMonitor(java.time.Duration timeout) {
-            long timeoutNanos = timeout.toNanos();
-            long now = System.nanoTime();
-            this.deadlineNanos = now > Long.MAX_VALUE - timeoutNanos ? Long.MAX_VALUE : now + timeoutNanos;
+    private record DeadlineProgressMonitor(long deadlineNanos) implements ProgressMonitor {
+        private DeadlineProgressMonitor(Duration timeout) {
+            // 在 this(...) 参数中完成所有计算，不允许前置语句
+            this(Math.min(Long.MAX_VALUE, Math.addExact(System.nanoTime(), timeout.toNanos())));
         }
 
-        @Override public void start(int totalTasks) { }
-        @Override public void beginTask(String title, int totalWork) { }
-        @Override public void update(int completed) { }
-        @Override public void endTask() { }
-        @Override public void showDuration(boolean enabled) { }
+        @Override
+        public void start(int totalTasks) { }
+
+        @Override
+        public void beginTask(String title, int totalWork) { }
+
+        @Override
+        public void update(int completed) { }
+
+        @Override
+        public void endTask() { }
+
+        @Override
+        public void showDuration(boolean enabled) { }
 
         @Override
         public boolean isCancelled() {

@@ -25,8 +25,7 @@ import java.util.regex.Pattern;
 public class EcgCommandRouter {
 
     private static final Logger log = LoggerFactory.getLogger(EcgCommandRouter.class);
-    @Resource
-    private org.ruoyi.ecg.service.TextCleaner textCleaner;
+
     @Resource
     private EcgRuntimeBuilder runtimeBuilder;
 
@@ -41,7 +40,7 @@ public ActionRequest route(String asrText, String currentPhase) {
     log.info("原始ASR文本: {}", asrText);
 
     // ★ 1. 文本清洗
-    String cleanedText = textCleaner.clean(asrText);
+    String cleanedText = asrText;
     log.info("清洗后文本: {}", cleanedText);
 
     // 2. 获取聚合根
@@ -179,8 +178,7 @@ public ActionRequest route(String asrText, String currentPhase) {
                 }
 
                 // 数值范围校验
-                if (value instanceof Number) {
-                    Number num = (Number) value;
+                if (value instanceof Number num) {
                     if (slotDef.getMinValue() != null && num.doubleValue() < slotDef.getMinValue().doubleValue()) {
                         return "参数 " + binding.getSlotName() + " 值 " + num + " 小于最小值 " + slotDef.getMinValue();
                     }

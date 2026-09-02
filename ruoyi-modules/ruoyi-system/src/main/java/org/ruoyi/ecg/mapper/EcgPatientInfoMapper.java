@@ -22,7 +22,7 @@ public interface EcgPatientInfoMapper
      * @param ecgPatientInfo 病人信息查询条件
      * @return 病人信息集合
      */
-    public List<EcgPatientInfo> selectEcgPatientInfoList(EcgPatientInfo ecgPatientInfo);
+    List<EcgPatientInfo> selectEcgPatientInfoList(EcgPatientInfo ecgPatientInfo);
 
     /**
      * 根据病人ID查询病人信息
@@ -30,7 +30,7 @@ public interface EcgPatientInfoMapper
      * @param patientId 病人信息主键
      * @return 病人信息
      */
-    public EcgPatientInfo selectEcgPatientInfoById(@Param("patientId") Long patientId);
+    EcgPatientInfo selectEcgPatientInfoById(@Param("patientId") Long patientId);
 
     /**
      * 根据病人编码查询病人信息
@@ -38,7 +38,7 @@ public interface EcgPatientInfoMapper
      * @param patientCode 病人编码
      * @return 病人信息
      */
-    public EcgPatientInfo selectEcgPatientInfoByCode(@Param("patientCode") String patientCode);
+    EcgPatientInfo selectEcgPatientInfoByCode(@Param("patientCode") String patientCode);
 
 
 
@@ -50,7 +50,7 @@ public interface EcgPatientInfoMapper
      * @param ecgPatientInfo 病人信息
      * @return 结果
      */
-    public int insertEcgPatientInfo(EcgPatientInfo ecgPatientInfo);
+    int insertEcgPatientInfo(EcgPatientInfo ecgPatientInfo);
 
     /**
      * 批量新增病人信息
@@ -58,7 +58,7 @@ public interface EcgPatientInfoMapper
      * @param patientList 病人信息列表
      * @return 结果
      */
-    public int insertEcgPatientInfoBatch(@Param("list") List<EcgPatientInfo> patientList);
+    int insertEcgPatientInfoBatch(@Param("list") List<EcgPatientInfo> patientList);
 
     // ==================== 更新方法 ====================
 
@@ -68,7 +68,7 @@ public interface EcgPatientInfoMapper
      * @param ecgPatientInfo 病人信息
      * @return 结果
      */
-    public int updateEcgPatientInfo(EcgPatientInfo ecgPatientInfo);
+    int updateEcgPatientInfo(EcgPatientInfo ecgPatientInfo);
 
     /**
      * 批量更新病人信息
@@ -76,7 +76,7 @@ public interface EcgPatientInfoMapper
      * @param patientList 病人信息列表
      * @return 结果
      */
-    public int updateEcgPatientInfoBatch(@Param("list") List<EcgPatientInfo> patientList);
+    int updateEcgPatientInfoBatch(@Param("list") List<EcgPatientInfo> patientList);
 
     /**
      * 更新病人分诊信息
@@ -84,7 +84,7 @@ public interface EcgPatientInfoMapper
      * @param ecgPatientInfo 病人信息（包含分诊相关字段）
      * @return 结果
      */
-    public int updateTriageInfo(EcgPatientInfo ecgPatientInfo);
+    int updateTriageInfo(EcgPatientInfo ecgPatientInfo);
 
     /**
      * 更新病人生命体征
@@ -92,7 +92,7 @@ public interface EcgPatientInfoMapper
      * @param ecgPatientInfo 病人信息（包含生命体征相关字段）
      * @return 结果
      */
-    public int updateVitalSigns(EcgPatientInfo ecgPatientInfo);
+    int updateVitalSigns(EcgPatientInfo ecgPatientInfo);
 
     // ==================== 删除方法（逻辑删除） ====================
 
@@ -102,7 +102,7 @@ public interface EcgPatientInfoMapper
      * @param patientId 病人信息主键
      * @return 结果
      */
-    public int deleteEcgPatientInfoById(@Param("patientId") Long patientId);
+    int deleteEcgPatientInfoById(@Param("patientId") Long patientId);
 
     /**
      * 批量逻辑删除病人信息
@@ -110,7 +110,7 @@ public interface EcgPatientInfoMapper
      * @param patientIds 需要删除的数据主键集合
      * @return 结果
      */
-    public int deleteEcgPatientInfoByIds(@Param("array") Long[] patientIds);
+    int deleteEcgPatientInfoByIds(@Param("array") Long[] patientIds);
 
     /**
      * 物理删除病人信息（慎用）
@@ -118,7 +118,7 @@ public interface EcgPatientInfoMapper
      * @param patientId 病人信息主键
      * @return 结果
      */
-    public int physicalDeleteEcgPatientInfoById(@Param("patientId") Long patientId);
+    int physicalDeleteEcgPatientInfoById(@Param("patientId") Long patientId);
 
     /**
      * 批量物理删除病人信息（慎用）
@@ -126,5 +126,5 @@ public interface EcgPatientInfoMapper
      * @param patientIds 需要删除的数据主键集合
      * @return 结果
      */
-    public int physicalDeleteEcgPatientInfoByIds(@Param("array") Long[] patientIds);
+    int physicalDeleteEcgPatientInfoByIds(@Param("array") Long[] patientIds);
 }

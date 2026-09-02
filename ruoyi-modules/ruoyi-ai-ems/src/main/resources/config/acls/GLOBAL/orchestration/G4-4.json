@@ -1,0 +1,47 @@
+{
+  "intent_code": "G4-4",
+  "act_type": "探查性询问",
+  "name_cn": "询问或报告意识状态",
+  "description_cn": "获取或报告患者的意识水平（GCS评分、清醒/嗜睡等）",
+  "keywords": ["意识清楚吗", "GCS评分", "叫病人有反应吗"],
+  "pattern_hints": ["能听到吗", "人清醒吗"],
+  "examples": [
+    "患者意识清楚吗",
+    "GCS评分多少",
+    "人清醒吗",
+    "叫一下病人看有没有反应",
+    "你听见我说话吗"
+  ],
+  "standard_script": "患者意识清楚吗？GCS评分多少？叫他有反应吗？",
+  "extraction": {
+    "target_params": ["consciousness", "gcs"],
+    "rules": {
+      "consciousness": {
+        "type": "string",
+        "enum": ["alert", "verbal", "pain", "unresponsive"]
+      },
+      "gcs": { "type": "integer" }
+    }
+  },
+  "execution": {
+    "type": "action_chain",
+    "steps": [
+      { "step_id": "read_consciousness", "ref_atomic": "READ_CONSCIOUSNESS", "duty": "ASSESS" }
+    ],
+    "preconditions": {},
+    "on_complete": {
+      "response_template": "🧠 意识状态：{consciousness}，GCS {gcs} 分。",
+      "transition_event": null
+    }
+  },
+  "pragmatic_handlers": {
+    "探查性询问": {
+      "action": "advance_chain",
+      "response_template": "🧠 意识状态：{consciousness}，GCS {gcs} 分。"
+    },
+    "发令性指令": {
+      "action": "advance_chain",
+      "response_template": "🧠 正在评估意识... {consciousness}，GCS {gcs} 分。"
+    }
+  }
+}

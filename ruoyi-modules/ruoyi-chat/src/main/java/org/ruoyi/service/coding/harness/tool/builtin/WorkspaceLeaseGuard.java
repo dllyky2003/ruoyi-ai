@@ -6,17 +6,13 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 
-/** Resolves every path against a canonical lease root and rejects link/reparse traversal. */
-final class WorkspaceLeaseGuard {
-
-    private final Path root;
+/**
+ * Resolves every path against a canonical lease root and rejects link/reparse traversal.
+ */
+record WorkspaceLeaseGuard(Path root) {
 
     WorkspaceLeaseGuard(RunContext context) {
-        this.root = context.leaseRoot();
-    }
-
-    Path root() {
-        return root;
+        this(context.leaseRoot());
     }
 
     Path existingFile(String input) {

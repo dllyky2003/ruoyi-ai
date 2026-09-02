@@ -1,0 +1,36 @@
+{
+  "intent_code": "G2-2",
+  "act_type": "闭环确认",
+  "name_cn": "医嘱复述或闭环确认",
+  "description_cn": "执行者对接收到的指令进行口头复述或确认",
+  "keywords": ["确认推完", "收到充好", "复述执行"],
+  "pattern_hints": ["确认已推完", "收到已充好"],
+  "examples": [
+    "确认腺苷已推完",
+    "收到100焦耳已充好",
+    "复述同步电复律100焦耳准备放电",
+    "马上执行"
+  ],
+  "standard_script": "确认收到，腺苷6mg已推完，生理盐水冲管完成。",
+  "extraction": {
+    "target_params": [],
+    "rules": {}
+  },
+  "execution": {
+    "type": "action_chain",
+    "steps": [
+      { "step_id": "confirm", "ref_atomic": "CONFIRM", "duty": "ASSIST" }
+    ],
+    "preconditions": {},
+    "on_complete": {
+      "response_template": "✅ 收到，已确认执行完毕。",
+      "transition_event": null
+    }
+  },
+  "pragmatic_handlers": {
+    "闭环确认": {
+      "action": "advance_chain",
+      "response_template": "✅ 收到，已确认执行完毕。"
+    }
+  }
+}

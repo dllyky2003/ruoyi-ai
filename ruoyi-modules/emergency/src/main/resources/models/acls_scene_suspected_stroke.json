@@ -1,0 +1,29 @@
+{
+  "metaSchemaVersion": "1.0",
+  "caseTypeId": "acls_scene_suspected_stroke",
+  "population": { "patientGroup": "adult" },
+  "caseScene": {
+    "setting": "out_of_hospital",
+    "timeWindow": "initial",
+    "pulseStatus": "unknown",
+    "rhythmVisibility": "unknown",
+    "resourceConstraints": {
+      "defibAvailability": "unknown",
+      "medAvailability": "unknown"
+    },
+    "stability": "unknown",
+    "cardiacArrestSubclass": "unknown",
+    "tachySubclass": "unknown",
+    "bradySubclass": "unknown",
+    "acsSubclass": "unknown",
+    "neuroSyndrome": "suspected_stroke"
+  },
+  "zhSummary": "疑似急性卒中训练场景，重点训练卒中识别并触发评估/分流/转运主线。",
+  "zhKeyTriggers": [ "neuroSyndrome=suspected_stroke" ],
+  "zhTeachingFocus": "神经功能异常识别后主线触发、流程闭环与转运策略。",
+
+  "teachingObjectives": [
+    { "objectiveId": "OBJ_STROKE_01", "objectiveText": "识别急性神经功能缺损特征并触发卒中评估/分流/转运教学主线", "primaryScoring": true }
+  ],
+  "evaluationTargets": { "requiredSignals": ["timingWindowCompliance"] }
+}

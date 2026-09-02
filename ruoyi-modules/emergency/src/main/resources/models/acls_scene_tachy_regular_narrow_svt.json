@@ -1,0 +1,33 @@
+{
+  "metaSchemaVersion": "1.0",
+  "caseTypeId": "acls_scene_tachy_regular_narrow_svt",
+  "population": { "patientGroup": "adult" },
+  "caseScene": {
+    "setting": "in_hospital",
+    "timeWindow": "initial",
+    "pulseStatus": "present",
+    "rhythmVisibility": "monitored_visible",
+    "resourceConstraints": {
+      "defibAvailability": "defib_available",
+      "medAvailability": "meds_available"
+    },
+    "stability": "unstable",
+    "cardiacArrestSubclass": "unknown",
+    "tachySubclass": "regular_narrow_svt",
+    "bradySubclass": "unknown",
+    "acsSubclass": "unknown",
+    "neuroSyndrome": "unknown"
+  },
+  "zhSummary": "规则窄QRS心动过速（SVT），重点训练稳定性判断与对应分支策略执行。",
+  "zhKeyTriggers": [
+    "pulseStatus=present",
+    "tachySubclass=regular_narrow_svt",
+    "stability=unstable"
+  ],
+  "zhTeachingFocus": "规则窄QRS识别 + 不稳定/稳定分支选择正确。",
+
+  "teachingObjectives": [
+    { "objectiveId": "OBJ_TACHY_01", "objectiveText": "对规则窄QRS心动过速完成稳定性判断并执行对应分支策略", "primaryScoring": true }
+  ],
+  "evaluationTargets": { "requiredSignals": ["pulseStatus", "rhythmVisibility", "timingWindowCompliance", "stability"] }
+}

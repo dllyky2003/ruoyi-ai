@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.*;
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import org.ruoyi.common.core.utils.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.validation.annotation.Validated;
 import org.ruoyi.common.idempotent.annotation.RepeatSubmit;
@@ -43,6 +44,22 @@ public class EmergencyTeachingCaseVersionController extends BaseController {
     @GetMapping("/list")
     public TableDataInfo<EmergencyTeachingCaseVersionVo> list(EmergencyTeachingCaseVersionBo bo, PageQuery pageQuery) {
         return emergencyTeachingCaseVersionService.queryPageList(bo, pageQuery);
+    }
+
+    /**
+     * 查询所有病例定义版本（不分页）
+     * 适用场景：下拉选择、预设数据加载等
+     * 建议默认只查已发布的版本，避免返回大量草稿
+     */
+
+    @GetMapping("/listAll")
+    public R<List<EmergencyTeachingCaseVersionVo>> listAll(EmergencyTeachingCaseVersionBo bo) {
+        if (StringUtils.isBlank(bo.getStatus())) {
+
+            bo.setStatus("published");
+        }
+        List<EmergencyTeachingCaseVersionVo> list = emergencyTeachingCaseVersionService.queryList(bo);
+        return R.ok(list);
     }
 
     /**

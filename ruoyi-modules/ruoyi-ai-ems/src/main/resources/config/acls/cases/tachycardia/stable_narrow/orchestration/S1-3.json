@@ -1,0 +1,42 @@
+{
+  "intent_code": "S1-3",
+  "act_type": "探查性询问",
+  "name_cn": "血流动力学稳定性评估",
+  "description_cn": "评估患者是否存在不稳定征象：低血压、意识改变、胸痛、休克等",
+  "keywords": ["胸痛吗", "意识清楚吗", "有没有休克", "有无脉搏"],
+  "pattern_hints": ["稳定没有低血压", "有没有肺水肿"],
+  "examples": [
+    "患者还胸痛吗",
+    "稳定没有低血压和意识改变",
+    "意识清楚吗有没有气紧",
+    "看看有没有肺水肿或啰音",
+    "有没有休克征象",
+    "判断血流动力学是否稳定"
+  ],
+  "standard_script": "患者有没有低血压、意识改变、胸痛、气促或休克征象？",
+  "extraction": {
+    "target_params": ["symptoms", "asserted_stable"],
+    "rules": {
+      "symptoms": {
+        "type": "array",
+        "items": ["chest_pain", "shortness_of_breath", "altered_consciousness", "pulmonary_edema", "shock"]
+      },
+      "asserted_stable": { "type": "boolean" }
+    }
+  },
+  "execution": {
+    "type": "query",
+    "response_template": "📋 血流动力学稳定性：{asserted_stable}。",
+    "data_source": "context"
+  },
+  "pragmatic_handlers": {
+    "探查性询问": {
+      "action": "query_context",
+      "response_template": "📋 血流动力学稳定性：{asserted_stable}。"
+    },
+    "发令性指令": {
+      "action": "execute_action",
+      "response_template": "📋 正在评估血流动力学稳定性..."
+    }
+  }
+}

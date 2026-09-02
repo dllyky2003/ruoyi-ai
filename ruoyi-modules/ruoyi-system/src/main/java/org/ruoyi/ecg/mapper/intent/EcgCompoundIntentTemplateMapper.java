@@ -23,7 +23,7 @@ public interface EcgCompoundIntentTemplateMapper {
      * @param template 查询条件
      * @return 复合模板集合
      */
-    public List<EcgCompoundIntentTemplate> selectEcgCompoundIntentTemplateList(EcgCompoundIntentTemplate template);
+    List<EcgCompoundIntentTemplate> selectEcgCompoundIntentTemplateList(EcgCompoundIntentTemplate template);
 
     /**
      * 根据模板ID查询复合指令模板
@@ -31,7 +31,7 @@ public interface EcgCompoundIntentTemplateMapper {
      * @param templateId 模板编码
      * @return 复合模板
      */
-    public EcgCompoundIntentTemplate selectEcgCompoundIntentTemplateById(@Param("templateId") String templateId);
+    EcgCompoundIntentTemplate selectEcgCompoundIntentTemplateById(@Param("templateId") String templateId);
 
     /**
      * 根据主键ID查询复合指令模板
@@ -39,7 +39,7 @@ public interface EcgCompoundIntentTemplateMapper {
      * @param id 主键
      * @return 复合模板
      */
-    public EcgCompoundIntentTemplate selectEcgCompoundIntentTemplateByPk(@Param("id") Long id);
+    EcgCompoundIntentTemplate selectEcgCompoundIntentTemplateByPk(@Param("id") Long id);
 
     // ==================== 插入方法 ====================
 
@@ -49,7 +49,7 @@ public interface EcgCompoundIntentTemplateMapper {
      * @param template 复合模板
      * @return 结果
      */
-    public int insertEcgCompoundIntentTemplate(EcgCompoundIntentTemplate template);
+    int insertEcgCompoundIntentTemplate(EcgCompoundIntentTemplate template);
 
     // ==================== 更新方法 ====================
 
@@ -59,7 +59,7 @@ public interface EcgCompoundIntentTemplateMapper {
      * @param template 复合模板
      * @return 结果
      */
-    public int updateEcgCompoundIntentTemplate(EcgCompoundIntentTemplate template);
+    int updateEcgCompoundIntentTemplate(EcgCompoundIntentTemplate template);
 
     // ==================== 删除方法 ====================
 
@@ -69,7 +69,7 @@ public interface EcgCompoundIntentTemplateMapper {
      * @param templateId 模板编码
      * @return 结果
      */
-    public int deleteEcgCompoundIntentTemplateById(@Param("templateId") String templateId);
+    int deleteEcgCompoundIntentTemplateById(@Param("templateId") String templateId);
 
     /**
      * 批量删除复合指令模板
@@ -77,5 +77,5 @@ public interface EcgCompoundIntentTemplateMapper {
      * @param ids 主键数组
      * @return 结果
      */
-    public int deleteEcgCompoundIntentTemplateByIds(@Param("array") Long[] ids);
+    int deleteEcgCompoundIntentTemplateByIds(@Param("array") Long[] ids);
 }

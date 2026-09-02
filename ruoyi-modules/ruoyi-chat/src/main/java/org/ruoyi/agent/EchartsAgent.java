@@ -17,7 +17,9 @@ public interface EchartsAgent {
 
         CRITICAL OUTPUT REQUIREMENTS:
         - Return Echarts JSON wrapped in markdown code block
-        - Use this exact format: ```json\n{...}\n```
+        - Use this exact format: ```json
+        {...}
+        ```
         - The JSON inside must be valid Echarts configuration
         - Frontend expects markdown format for proper parsing
 

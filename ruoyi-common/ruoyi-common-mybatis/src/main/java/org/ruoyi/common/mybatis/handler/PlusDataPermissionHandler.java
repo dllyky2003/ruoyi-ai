@@ -218,43 +218,41 @@ public class PlusDataPermissionHandler {
     }
 
     /**
-     * 对所有null变量找不到的变量返回默认值 委托模式 将不需要处理的方法委托给原处理器
-     */
-    @AllArgsConstructor
-    private static class NullSafePropertyAccessor implements PropertyAccessor {
+         * 对所有null变量找不到的变量返回默认值 委托模式 将不需要处理的方法委托给原处理器
+         */
 
-        private final PropertyAccessor delegate;
-        private final Object defaultValue;
+        private record NullSafePropertyAccessor(PropertyAccessor delegate,
+                                                Object defaultValue) implements PropertyAccessor {
 
-        @Override
-        public Class<?>[] getSpecificTargetClasses() {
-            return delegate.getSpecificTargetClasses();
-        }
-
-        @Override
-        public boolean canRead(EvaluationContext context, Object target, String name) throws AccessException {
-            return delegate.canRead(context, target, name);
-        }
-
-        @Override
-        public TypedValue read(EvaluationContext context, Object target, String name) throws AccessException {
-            TypedValue value = delegate.read(context, target, name);
-            // 如果读取到的值是 null，则返回默认值
-            if (value.getValue() == null) {
-                return new TypedValue(defaultValue);
+            @Override
+            public Class<?>[] getSpecificTargetClasses() {
+                return delegate.getSpecificTargetClasses();
             }
-            return value;
-        }
 
-        @Override
-        public boolean canWrite(EvaluationContext context, Object target, String name) throws AccessException {
-            return delegate.canWrite(context, target, name);
-        }
+            @Override
+            public boolean canRead(EvaluationContext context, Object target, String name) throws AccessException {
+                return delegate.canRead(context, target, name);
+            }
 
-        @Override
-        public void write(EvaluationContext context, Object target, String name, Object newValue) throws AccessException {
-            delegate.write(context, target, name, newValue);
+            @Override
+            public TypedValue read(EvaluationContext context, Object target, String name) throws AccessException {
+                TypedValue value = delegate.read(context, target, name);
+                // 如果读取到的值是 null，则返回默认值
+                if (value.getValue() == null) {
+                    return new TypedValue(defaultValue);
+                }
+                return value;
+            }
+
+            @Override
+            public boolean canWrite(EvaluationContext context, Object target, String name) throws AccessException {
+                return delegate.canWrite(context, target, name);
+            }
+
+            @Override
+            public void write(EvaluationContext context, Object target, String name, Object newValue) throws AccessException {
+                delegate.write(context, target, name, newValue);
+            }
         }
-    }
 
 }

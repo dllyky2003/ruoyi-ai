@@ -1,0 +1,44 @@
+{
+  "intent_code": "S4-4",
+  "act_type": "宣告",
+  "name_cn": "稳定窄QRS禁忌操作拦截",
+  "description_cn": "识别并拦截针对稳定窄QRS场景的绝对禁忌操作",
+  "keywords": ["开始胸外按压", "准备除颤", "非同步", "肾上腺素", "阿托品", "利多卡因"],
+  "pattern_hints": ["开始按压", "做CPR", "非同步放电", "推肾上腺素", "给阿托品"],
+  "examples": [
+    "开始胸外按压",
+    "准备1mg肾上腺素静推",
+    "把除颤仪调到非同步模式",
+    "赶紧准备除颤"
+  ],
+  "standard_script": "（错误指令示例，应被拦截）开始胸外按压。",
+  "extraction": {
+    "target_params": ["forbiddenAction", "specificDrug"],
+    "rules": {
+      "forbiddenAction": {
+        "type": "string",
+        "enum": ["cpr", "unsynchronized_shock", "wrong_drug"]
+      },
+      "specificDrug": {
+        "type": "string",
+        "enum": ["epinephrine", "atropine", "lidocaine"]
+      }
+    }
+  },
+  "execution": {
+    "type": "atomic",
+    "response_template": "🚫 系统拦截：稳定窄QRS场景下禁止 {forbiddenAction}（{specificDrug}），操作已阻止。",
+    "requires_state_transition": false,
+    "blocked": true
+  },
+  "pragmatic_handlers": {
+    "宣告": {
+      "action": "execute_action",
+      "response_template": "🚫 系统拦截：稳定窄QRS场景下禁止 {forbiddenAction}（{specificDrug}），操作已阻止。"
+    },
+    "发令性指令": {
+      "action": "block_action",
+      "response_template": "🚫 稳定窄QRS场景下禁止此操作！"
+    }
+  }
+}

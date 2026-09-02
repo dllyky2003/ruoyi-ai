@@ -23,7 +23,7 @@ public interface EcgIntentSlotBindingMapper {
      * @param binding 查询条件
      * @return 绑定集合
      */
-    public List<EcgIntentSlotBinding> selectEcgIntentSlotBindingList(EcgIntentSlotBinding binding);
+    List<EcgIntentSlotBinding> selectEcgIntentSlotBindingList(EcgIntentSlotBinding binding);
 
     /**
      * 根据意图ID查询绑定的槽位列表
@@ -31,7 +31,7 @@ public interface EcgIntentSlotBindingMapper {
      * @param intentId 意图编码
      * @return 绑定集合
      */
-    public List<EcgIntentSlotBinding> selectBindingsByIntentId(@Param("intentId") String intentId);
+    List<EcgIntentSlotBinding> selectBindingsByIntentId(@Param("intentId") String intentId);
 
     /**
      * 根据槽位名称查询引用该槽位的绑定列表
@@ -39,7 +39,7 @@ public interface EcgIntentSlotBindingMapper {
      * @param slotName 槽位名称
      * @return 绑定集合
      */
-    public List<EcgIntentSlotBinding> selectBindingsBySlotName(@Param("slotName") String slotName);
+    List<EcgIntentSlotBinding> selectBindingsBySlotName(@Param("slotName") String slotName);
 
     /**
      * 根据主键ID查询绑定
@@ -47,7 +47,7 @@ public interface EcgIntentSlotBindingMapper {
      * @param id 主键
      * @return 绑定
      */
-    public EcgIntentSlotBinding selectEcgIntentSlotBindingById(@Param("id") Long id);
+    EcgIntentSlotBinding selectEcgIntentSlotBindingById(@Param("id") Long id);
 
     // ==================== 插入方法 ====================
 
@@ -57,7 +57,7 @@ public interface EcgIntentSlotBindingMapper {
      * @param binding 绑定
      * @return 结果
      */
-    public int insertEcgIntentSlotBinding(EcgIntentSlotBinding binding);
+    int insertEcgIntentSlotBinding(EcgIntentSlotBinding binding);
 
     /**
      * 批量新增意图-槽位绑定
@@ -65,7 +65,7 @@ public interface EcgIntentSlotBindingMapper {
      * @param bindings 绑定列表
      * @return 结果
      */
-    public int insertEcgIntentSlotBindingBatch(@Param("list") List<EcgIntentSlotBinding> bindings);
+    int insertEcgIntentSlotBindingBatch(@Param("list") List<EcgIntentSlotBinding> bindings);
 
     // ==================== 更新方法 ====================
 
@@ -75,7 +75,7 @@ public interface EcgIntentSlotBindingMapper {
      * @param binding 绑定
      * @return 结果
      */
-    public int updateEcgIntentSlotBinding(EcgIntentSlotBinding binding);
+    int updateEcgIntentSlotBinding(EcgIntentSlotBinding binding);
 
     // ==================== 删除方法 ====================
 
@@ -85,7 +85,7 @@ public interface EcgIntentSlotBindingMapper {
      * @param id 主键
      * @return 结果
      */
-    public int deleteEcgIntentSlotBindingById(@Param("id") Long id);
+    int deleteEcgIntentSlotBindingById(@Param("id") Long id);
 
     /**
      * 根据意图ID删除所有绑定
@@ -93,7 +93,7 @@ public interface EcgIntentSlotBindingMapper {
      * @param intentId 意图编码
      * @return 结果
      */
-    public int deleteBindingsByIntentId(@Param("intentId") String intentId);
+    int deleteBindingsByIntentId(@Param("intentId") String intentId);
 
     /**
      * 批量删除绑定
@@ -101,5 +101,5 @@ public interface EcgIntentSlotBindingMapper {
      * @param ids 主键数组
      * @return 结果
      */
-    public int deleteEcgIntentSlotBindingByIds(@Param("array") Long[] ids);
+    int deleteEcgIntentSlotBindingByIds(@Param("array") Long[] ids);
 }

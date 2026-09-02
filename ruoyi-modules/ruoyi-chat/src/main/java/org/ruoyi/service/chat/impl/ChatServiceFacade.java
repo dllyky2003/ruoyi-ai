@@ -719,18 +719,13 @@ public class ChatServiceFacade implements IChatService {
     }
 
     /**
-     * 复合内容检索器：对多个知识库检索器并发查询并合并结果
-     */
-    private static class CompositeContentRetriever implements ContentRetriever {
-        private final List<ContentRetriever> delegates;
-
-        CompositeContentRetriever(List<ContentRetriever> delegates) {
-            this.delegates = delegates;
-        }
+         * 复合内容检索器：对多个知识库检索器并发查询并合并结果
+         */
+        private record CompositeContentRetriever(List<ContentRetriever> delegates) implements ContentRetriever {
 
         @Override
-        public List<Content> retrieve(Query query) {
-            List<CompletableFuture<List<Content>>> futures = delegates.stream()
+            public List<Content> retrieve(Query query) {
+                List<CompletableFuture<List<Content>>> futures = delegates.stream()
                     .map(r -> CompletableFuture.supplyAsync(() -> {
                         try {
                             List<Content> part = r.retrieve(query);
@@ -740,27 +735,27 @@ public class ChatServiceFacade implements IChatService {
                             return List.<Content>of();
                         }
                     })).toList();
-            Map<String, Content> unique = new LinkedHashMap<>();
-            for (CompletableFuture<List<Content>> future : futures) {
-                for (Content content : future.join()) {
-                    String key = content.textSegment().metadata().getString("kid") + "|"
+                Map<String, Content> unique = new LinkedHashMap<>();
+                for (CompletableFuture<List<Content>> future : futures) {
+                    for (Content content : future.join()) {
+                        String key = content.textSegment().metadata().getString("kid") + "|"
                             + content.textSegment().metadata().getString("docId") + "|"
                             + content.textSegment().metadata().getString("fid");
-                    if (key.endsWith("null|null|null")) key = content.textSegment().text();
-                    unique.putIfAbsent(key, content);
+                        if (key.endsWith("null|null|null")) key = content.textSegment().text();
+                        unique.putIfAbsent(key, content);
+                    }
                 }
+                List<Content> bounded = new ArrayList<>();
+                int chars = 0;
+                for (Content content : unique.values()) {
+                    int next = content.textSegment().text().length();
+                    if (bounded.size() >= 20 || chars + next > 24000) break;
+                    bounded.add(content);
+                    chars += next;
+                }
+                return bounded;
             }
-            List<Content> bounded = new ArrayList<>();
-            int chars = 0;
-            for (Content content : unique.values()) {
-                int next = content.textSegment().text().length();
-                if (bounded.size() >= 20 || chars + next > 24000) break;
-                bounded.add(content);
-                chars += next;
-            }
-            return bounded;
         }
-    }
 
     /**
      * 构建向量查询参数

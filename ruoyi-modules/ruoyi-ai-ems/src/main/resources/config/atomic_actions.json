@@ -1,0 +1,191 @@
+{
+  "PREPARE_SYRINGE": {
+    "actor": "IV_MED",
+    "durationSec": 4,
+    "requiresVerbal": "抽吸{medication} {dose}",
+    "async": true,
+    "vr_animation": "prepare_syringe"
+  },
+  "IV_PUSH": {
+    "actor": "IV_MED",
+    "durationSec": 2,
+    "requiresVerbal": "快速推注{medication} {dose}",
+    "async": true,
+    "vr_animation": "iv_push"
+  },
+  "FLUSH_LINE": {
+    "actor": "IV_MED",
+    "durationSec": 2,
+    "requiresVerbal": "生理盐水冲管完成",
+    "async": true,
+    "vr_animation": "flush_line"
+  },
+  "CHARGE_DEFIB": {
+    "actor": "MONITOR_DEFIB",
+    "durationSec": 5,
+    "requiresVerbal": "已充电至{energy}焦耳",
+    "async": true,
+    "vr_animation": "charge_defib"
+  },
+  "DISCHARGE_SHOCK": {
+    "actor": "MONITOR_DEFIB",
+    "durationSec": 1,
+    "requiresVerbal": "放电！",
+    "async": true,
+    "vr_animation": "discharge_shock"
+  },
+  "START_CHEST_COMPRESSION": {
+    "actor": "CPR",
+    "durationSec": 120,
+    "loop": true,
+    "async": true,
+    "vr_animation": "chest_compression"
+  },
+  "PLACE_IV_ACCESS": {
+    "actor": "IV_MED",
+    "durationSec": 40,
+    "requiresVerbal": "静脉通路已建立",
+    "async": true,
+    "vr_animation": "place_iv"
+  },
+  "READ_BP": {
+    "actor": "ASSESS",
+    "durationSec": 5,
+    "requiresVerbal": "血压{sys}/{dia} mmHg",
+    "async": true,
+    "vr_animation": "measure_bp"
+  },
+  "CLEAR_BEDSIDE": {
+    "actor": "ASSIST",
+    "durationSec": 2,
+    "requiresVerbal": "已清场，所有人离开",
+    "async": true,
+    "vr_animation": "clear_bedside"
+  },
+  "PREPARE_SEDATIVE": {
+    "actor": "IV_MED",
+    "durationSec": 3,
+    "requiresVerbal": "准备{medication} {dose}",
+    "async": true,
+    "vr_animation": "prepare_sedative"
+  },
+  "CHECK_CONTRADICTIONS": {
+    "actor": "ASSESS",
+    "durationSec": 3,
+    "requiresVerbal": "正在检查除颤禁忌：起搏器、膏药、金属饰物",
+    "async": true,
+    "vr_animation": "check_contraindications"
+  },
+  "ENV_CHECK": {
+    "actor": "ASSESS",
+    "durationSec": 3,
+    "requiresVerbal": "环境安全检查完毕",
+    "async": true,
+    "vr_animation": "env_check"
+  },
+  "ROLE_ASSIGN": {
+    "actor": "TEAM_LEADER",
+    "durationSec": 5,
+    "requiresVerbal": "角色分配完成",
+    "async": false,
+    "vr_animation": null
+  },
+  "CONFIRM": {
+    "actor": "ASSIST",
+    "durationSec": 1,
+    "requiresVerbal": "确认收到，执行完毕",
+    "async": false,
+    "vr_animation": null
+  },
+  "TIME_RECORD": {
+    "actor": "RECORD",
+    "durationSec": 1,
+    "requiresVerbal": "时间已记录",
+    "async": false,
+    "vr_animation": null
+  },
+  "CONSULT": {
+    "actor": "TEAM_LEADER",
+    "durationSec": 3,
+    "requiresVerbal": "已呼叫专家会诊",
+    "async": false,
+    "vr_animation": null
+  },
+  "FAMILY_CHECK": {
+    "actor": "FAMILY_LIAISON",
+    "durationSec": 2,
+    "requiresVerbal": "家属情况已确认",
+    "async": false,
+    "vr_animation": null
+  },
+  "TRANSPORT_PREP": {
+    "actor": "TEAM_LEADER",
+    "durationSec": 5,
+    "requiresVerbal": "转运准备中，已联系接收方",
+    "async": false,
+    "vr_animation": null
+  },
+  "DEVICE_SETUP": {
+    "actor": "MONITOR_DEFIB",
+    "durationSec": 4,
+    "requiresVerbal": "监护/除颤仪已开机，模式已设置",
+    "async": true,
+    "vr_animation": "device_setup"
+  },
+  "LEAD_PLACE": {
+    "actor": "MONITOR_DEFIB",
+    "durationSec": 4,
+    "requiresVerbal": "电极片/导联已连接",
+    "async": true,
+    "vr_animation": "lead_place"
+  },
+  "ACCESS_ESTABLISH": {
+    "actor": "IV_MED",
+    "durationSec": 40,
+    "requiresVerbal": "静脉/骨内通路已建立",
+    "async": true,
+    "vr_animation": "access_establish"
+  },
+  "READ_HEART_RATE": {
+    "actor": "ASSESS",
+    "durationSec": 2,
+    "requiresVerbal": "心率{heart_rate}次/分",
+    "async": true,
+    "vr_animation": "read_hr"
+  },
+  "READ_OXIMETRY": {
+    "actor": "ASSESS",
+    "durationSec": 2,
+    "requiresVerbal": "SpO₂{spo2}%，呼吸{resp_rate}次/分",
+    "async": true,
+    "vr_animation": "read_oximetry"
+  },
+  "READ_CONSCIOUSNESS": {
+    "actor": "ASSESS",
+    "durationSec": 3,
+    "requiresVerbal": "意识状态：{consciousness}，GCS{gcs}分",
+    "async": true,
+    "vr_animation": "read_consciousness"
+  },
+  "REASSESS": {
+    "actor": "ASSESS",
+    "durationSec": 4,
+    "requiresVerbal": "正在复评{reassess_focus}",
+    "async": true,
+    "vr_animation": "reassess"
+  },
+  "HISTORY_TAKE": {
+    "actor": "ASSESS",
+    "durationSec": 5,
+    "requiresVerbal": "AMPLE病史采集完成",
+    "async": true,
+    "vr_animation": "history_take"
+  },
+  "VAGAL_MANEUVER": {
+    "actor": "ASSESS",
+    "durationSec": 5,
+    "requiresVerbal": "迷走神经刺激完成",
+    "async": true,
+    "vr_animation": "vagal"
+  }
+}

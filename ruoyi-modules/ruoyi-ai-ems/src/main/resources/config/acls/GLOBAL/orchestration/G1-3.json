@@ -1,0 +1,39 @@
+{
+  "intent_code": "G1-3",
+  "act_type": "探查性询问",
+  "name_cn": "环境安全评估",
+  "description_cn": "确认工作环境是否存在额外危险",
+  "keywords": ["现场安全吗", "地板湿滑", "脚下电线"],
+  "pattern_hints": ["环境安全确认", "周围安全吗"],
+  "examples": [
+    "现场安全吗",
+    "环境安全确认一下",
+    "地板湿滑小心滑倒",
+    "大家注意脚下电线"
+  ],
+  "standard_script": "现场环境安全吗？检查地面是否湿滑、有无电线或火源。",
+  "extraction": {
+    "target_params": ["hazardType", "actionStatus"],
+    "rules": {
+      "hazardType": {
+        "type": "string",
+        "enum": ["slip_trip", "electrical", "fire_explosion", "violence", "none"]
+      },
+      "actionStatus": {
+        "type": "string",
+        "enum": ["check", "confirmed", "mitigated"]
+      }
+    }
+  },
+  "execution": {
+    "type": "query",
+    "response_template": "🔍 环境安全检查完毕，未发现明显危险因素。",
+    "data_source": "context"
+  },
+  "pragmatic_handlers": {
+    "探查性询问": {
+      "action": "query_context",
+      "response_template": "🔍 环境安全检查完毕，未发现明显危险因素。"
+    }
+  }
+}

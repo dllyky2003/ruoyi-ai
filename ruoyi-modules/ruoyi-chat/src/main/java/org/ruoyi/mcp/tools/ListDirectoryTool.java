@@ -62,7 +62,7 @@ public class ListDirectoryTool implements BuiltinToolProvider {
         // 创建参数对象
         ListDirectoryParams params = new ListDirectoryParams();
         params.filePath = filePath;
-        params.recursive = recursive != null ? recursive : false;
+        params.recursive = recursive != null && recursive;
         params.maxDepth = maxDepth != null ? maxDepth : 3;
 
         return execute(params);

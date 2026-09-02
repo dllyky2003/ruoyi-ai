@@ -182,5 +182,5 @@ public interface IEcgThemeService {
      * 获取所有教学方案资源列表
      * @return 资源列表
      */
-    public List<EcgThemeSource> selectAllThemeSources();
+    List<EcgThemeSource> selectAllThemeSources();
 }

@@ -23,7 +23,7 @@ public interface EcgContextFilteringMapper {
      * @param context 查询条件
      * @return 上下文过滤集合
      */
-    public List<EcgContextFiltering> selectEcgContextFilteringList(EcgContextFiltering context);
+    List<EcgContextFiltering> selectEcgContextFilteringList(EcgContextFiltering context);
 
     /**
      * 根据阶段ID查询上下文过滤配置
@@ -31,7 +31,7 @@ public interface EcgContextFilteringMapper {
      * @param phaseId 阶段编码
      * @return 上下文过滤
      */
-    public EcgContextFiltering selectEcgContextFilteringByPhaseId(@Param("phaseId") String phaseId);
+    EcgContextFiltering selectEcgContextFilteringByPhaseId(@Param("phaseId") String phaseId);
 
     /**
      * 根据主键ID查询上下文过滤
@@ -39,7 +39,7 @@ public interface EcgContextFilteringMapper {
      * @param id 主键
      * @return 上下文过滤
      */
-    public EcgContextFiltering selectEcgContextFilteringById(@Param("id") Long id);
+    EcgContextFiltering selectEcgContextFilteringById(@Param("id") Long id);
 
     // ==================== 插入方法 ====================
 
@@ -49,7 +49,7 @@ public interface EcgContextFilteringMapper {
      * @param context 上下文过滤
      * @return 结果
      */
-    public int insertEcgContextFiltering(EcgContextFiltering context);
+    int insertEcgContextFiltering(EcgContextFiltering context);
 
     // ==================== 更新方法 ====================
 
@@ -59,7 +59,7 @@ public interface EcgContextFilteringMapper {
      * @param context 上下文过滤
      * @return 结果
      */
-    public int updateEcgContextFiltering(EcgContextFiltering context);
+    int updateEcgContextFiltering(EcgContextFiltering context);
 
     // ==================== 删除方法 ====================
 
@@ -69,7 +69,7 @@ public interface EcgContextFilteringMapper {
      * @param phaseId 阶段编码
      * @return 结果
      */
-    public int deleteEcgContextFilteringByPhaseId(@Param("phaseId") String phaseId);
+    int deleteEcgContextFilteringByPhaseId(@Param("phaseId") String phaseId);
 
     /**
      * 批量删除上下文过滤配置
@@ -77,5 +77,5 @@ public interface EcgContextFilteringMapper {
      * @param ids 主键数组
      * @return 结果
      */
-    public int deleteEcgContextFilteringByIds(@Param("array") Long[] ids);
+    int deleteEcgContextFilteringByIds(@Param("array") Long[] ids);
 }

@@ -1,0 +1,39 @@
+{
+  "intent_code": "G2-3",
+  "act_type": "发令性指令",
+  "name_cn": "关键时间点报时",
+  "description_cn": "记录重要操作或事件发生的具体时间，或启动计时器",
+  "keywords": ["现在时间", "计时开始", "还剩多久"],
+  "pattern_hints": ["记录给药时间", "开始计时"],
+  "examples": [
+    "现在时间14点20分",
+    "给药后2分钟到了",
+    "开始计时",
+    "记录给药时间"
+  ],
+  "standard_script": "记录给药时间，现在14点20分，2分钟后复评。",
+  "extraction": {
+    "target_params": ["time", "duration"],
+    "rules": {
+      "time": { "type": "string" },
+      "duration": { "type": "string" }
+    }
+  },
+  "execution": {
+    "type": "action_chain",
+    "steps": [
+      { "step_id": "time_record", "ref_atomic": "TIME_RECORD", "duty": "RECORD" }
+    ],
+    "preconditions": {},
+    "on_complete": {
+      "response_template": "🕐 已记录时间：{time}，计时开始。",
+      "transition_event": null
+    }
+  },
+  "pragmatic_handlers": {
+    "发令性指令": {
+      "action": "advance_chain",
+      "response_template": "🕐 已记录时间：{time}，计时开始。"
+    }
+  }
+}

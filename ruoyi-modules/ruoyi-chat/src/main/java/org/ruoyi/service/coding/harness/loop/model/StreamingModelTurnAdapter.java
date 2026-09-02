@@ -96,67 +96,62 @@ public final class StreamingModelTurnAdapter {
         }
     }
 
-    private static final class TurnHandler implements StreamingChatResponseHandler {
-        private final TurnState state;
-
-        private TurnHandler(TurnState state) {
-            this.state = state;
-        }
+    private record TurnHandler(TurnState state) implements StreamingChatResponseHandler {
 
         @Override
-        public void onPartialResponse(String partialResponse) {
-            state.textDelta(partialResponse);
-        }
+            public void onPartialResponse(String partialResponse) {
+                state.textDelta(partialResponse);
+            }
 
-        @Override
-        public void onPartialResponse(PartialResponse partialResponse,
-                                      PartialResponseContext context) {
-            state.register(context == null ? null : context.streamingHandle());
-            state.textDelta(partialResponse == null ? null : partialResponse.text());
-        }
+            @Override
+            public void onPartialResponse(PartialResponse partialResponse,
+                                          PartialResponseContext context) {
+                state.register(context == null ? null : context.streamingHandle());
+                state.textDelta(partialResponse == null ? null : partialResponse.text());
+            }
 
-        @Override
-        public void onPartialThinking(PartialThinking partialThinking) {
-            state.thinkingDelta(partialThinking == null ? null : partialThinking.text());
-        }
+            @Override
+            public void onPartialThinking(PartialThinking partialThinking) {
+                state.thinkingDelta(partialThinking == null ? null : partialThinking.text());
+            }
 
-        @Override
-        public void onPartialThinking(PartialThinking partialThinking,
-                                      PartialThinkingContext context) {
-            state.register(context == null ? null : context.streamingHandle());
-            state.thinkingDelta(partialThinking == null ? null : partialThinking.text());
-        }
+            @Override
+            public void onPartialThinking(PartialThinking partialThinking,
+                                          PartialThinkingContext context) {
+                state.register(context == null ? null : context.streamingHandle());
+                state.thinkingDelta(partialThinking == null ? null : partialThinking.text());
+            }
 
-        @Override
-        public void onPartialToolCall(PartialToolCall partialToolCall) {
-            state.partialToolCall(partialToolCall);
-        }
+            @Override
+            public void onPartialToolCall(PartialToolCall partialToolCall) {
+                state.partialToolCall(partialToolCall);
+            }
 
-        @Override
-        public void onPartialToolCall(PartialToolCall partialToolCall,
-                                      PartialToolCallContext context) {
-            state.register(context == null ? null : context.streamingHandle());
-            state.partialToolCall(partialToolCall);
-        }
+            @Override
+            public void onPartialToolCall(PartialToolCall partialToolCall,
+                                          PartialToolCallContext context) {
+                state.register(context == null ? null : context.streamingHandle());
+                state.partialToolCall(partialToolCall);
+            }
 
-        @Override
-        public void onCompleteToolCall(CompleteToolCall completeToolCall) {
-            state.completeToolCall(completeToolCall);
-        }
+            @Override
+            public void onCompleteToolCall(CompleteToolCall completeToolCall) {
+                state.completeToolCall(completeToolCall);
+            }
 
-        @Override
-        public void onCompleteResponse(ChatResponse completeResponse) {
-            state.completed(completeResponse);
-        }
+            @Override
+            public void onCompleteResponse(ChatResponse completeResponse) {
+                state.completed(completeResponse);
+            }
 
-        @Override
-        public void onError(Throwable error) {
-            state.failed(ModelTurnFailureKind.PROVIDER_ERROR,
-                "Streaming model reported an error",
-                error == null ? new IllegalStateException("Provider supplied a null error") : error,
-                true);
+            @Override
+            public void onError(Throwable error) {
+                state.failed(ModelTurnFailureKind.PROVIDER_ERROR,
+                    "Streaming model reported an error",
+                    error == null ? new IllegalStateException("Provider supplied a null error") : error,
+                    true);
+            }
         }
-    }
 
     private static final class TurnState implements ModelTurnHandle.Control {
         private final Object lock = new Object();

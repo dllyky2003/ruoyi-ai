@@ -1,0 +1,43 @@
+{
+  "intent_code": "G2-1",
+  "act_type": "发令性指令",
+  "name_cn": "角色分配或呼叫增援",
+  "description_cn": "明确团队成员的职责分工，或在超出能力范围时请求支援",
+  "keywords": ["负责按压", "管理气道", "推药", "记录时间"],
+  "pattern_hints": ["你来负责", "呼叫二线"],
+  "examples": [
+    "你来负责按压",
+    "张三管理气道",
+    "李四推药",
+    "王五记录时间",
+    "呼叫二线支援"
+  ],
+  "standard_script": "张三负责按压，李四管理气道，王五推药，赵六记录时间。",
+  "extraction": {
+    "target_params": ["person", "duty"],
+    "rules": {
+      "person": { "type": "string" },
+      "duty": {
+        "type": "string",
+        "enum": ["team_leader", "compressor", "airway_manager", "monitor_defib", "medication", "time_recorder", "scribe", "driver_assistant", "family_liaison", "consult"]
+      }
+    }
+  },
+  "execution": {
+    "type": "action_chain",
+    "steps": [
+      { "step_id": "role_assign", "ref_atomic": "ROLE_ASSIGN", "duty": "TEAM_LEADER" }
+    ],
+    "preconditions": {},
+    "on_complete": {
+      "response_template": "✅ {person} 已分配为 {duty}，正在就位。",
+      "transition_event": null
+    }
+  },
+  "pragmatic_handlers": {
+    "发令性指令": {
+      "action": "advance_chain",
+      "response_template": "✅ {person} 已分配为 {duty}，正在就位。"
+    }
+  }
+}

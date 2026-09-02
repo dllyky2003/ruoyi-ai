@@ -54,6 +54,7 @@ logging:
     org.springframework: warn
     org.mybatis.spring.mapper: error
     org.apache.fury: warn
+    com.ruoyi.ems.intent.classifier: debug
   config: classpath:logback-plus.xml
 
 # 用户配置
@@ -140,6 +141,7 @@ security:
     - /*/api-docs/**
     - /warm-flow-ui/config
     - /workflow/run
+
 # 多租户配置
 tenant:
   # 是否开启
@@ -234,7 +236,9 @@ springdoc:
       packages-to-scan: org.ruoyi.generator
     - group: 5.工作流模块
       packages-to-scan: org.ruoyi.workflow
-    - group: 6.MCP模块
+    - group: 6.急救模块
+      packages-to-scan: com.ruoyi.ems
+    - group: 7.MCP模块
       packages-to-scan: org.ruoyi.mcp
 
 # 防止XSS攻击
@@ -352,6 +356,15 @@ workflow:
       connect-timeout: ${ZHIPU_WEB_SEARCH_CONNECT_TIMEOUT:10}
       read-timeout: ${ZHIPU_WEB_SEARCH_READ_TIMEOUT:30}
 
+# ==================== 意图分类器配置 ====================
+acls:
+  classifier:
+    mode: two-stage          # one-stage 或 two-stage
+    fallback-on-error: true
+    model-name: qwen2.5:latest
+  intent:
+    global-dictionary: classpath:intent_global_dictionary.json
+    case-dictionary: classpath:intent_narrow_qrs_stable.json
 # 短剧成片合成
 short-drama:
   composition:

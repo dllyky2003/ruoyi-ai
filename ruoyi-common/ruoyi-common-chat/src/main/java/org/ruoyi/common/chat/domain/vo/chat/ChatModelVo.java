@@ -79,6 +79,13 @@ public class ChatModelVo implements Serializable {
     @ExcelProperty(value = "密钥")
     private String apiKey;
 
+
+    @ExcelProperty(value = "温度")
+    private Double temperature=0.6;
+
+    @ExcelProperty(value = "种子")
+    private String seed="";
+
     /**
      * 备注
      */

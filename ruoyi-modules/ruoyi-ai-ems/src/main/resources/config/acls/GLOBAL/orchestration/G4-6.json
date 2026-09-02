@@ -1,0 +1,49 @@
+{
+  "intent_code": "G4-6",
+  "act_type": "探查性询问",
+  "name_cn": "病史快速采集（AMPLE）",
+  "description_cn": "快速询问患者的过敏史、近期用药、既往病史、进食情况及发病事件",
+  "keywords": ["过敏史", "吃什么药", "心脏病史", "最后一次吃饭"],
+  "pattern_hints": ["怎么发病的", "哪里不舒服"],
+  "examples": [
+    "患者有什么过敏史吗",
+    "平时吃什么药",
+    "有没有心脏病或糖尿病史",
+    "最后一次吃饭是什么时候",
+    "怎么发病的",
+    "有没有外伤史",
+    "抽血做一下化验"
+  ],
+  "standard_script": "患者有什么过敏史？平时吃什么药？最后一次吃饭是什么时候？",
+  "extraction": {
+    "target_params": ["historyType", "detail"],
+    "rules": {
+      "historyType": {
+        "type": "string",
+        "enum": ["allergy", "medication", "past_illness", "last_meal", "event", "trauma", "symptom", "lab"]
+      },
+      "detail": { "type": "string" }
+    }
+  },
+  "execution": {
+    "type": "action_chain",
+    "steps": [
+      { "step_id": "history_take", "ref_atomic": "HISTORY_TAKE", "duty": "ASSESS" }
+    ],
+    "preconditions": {},
+    "on_complete": {
+      "response_template": "📝 已采集 {historyType} 信息：{detail}。",
+      "transition_event": null
+    }
+  },
+  "pragmatic_handlers": {
+    "探查性询问": {
+      "action": "advance_chain",
+      "response_template": "📝 已采集 {historyType} 信息：{detail}。"
+    },
+    "发令性指令": {
+      "action": "advance_chain",
+      "response_template": "📝 正在采集 {historyType} 信息..."
+    }
+  }
+}

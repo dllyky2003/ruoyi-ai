@@ -1,0 +1,868 @@
+{
+  "runtimeContract": {
+    "runtimeAnchors": {
+      "cycleStartTs": "number (ms)",
+      "stageStartTs": "number (ms)"
+    },
+    "runtimeActionFlags": {
+      "actionId": {
+        "confirmedInWindow": "boolean"
+      }
+    },
+    "windowRefConvention": {
+      "anchor": "runtimeAnchors.cycleStartTs | runtimeAnchors.stageStartTs",
+      "durationRef": { "meta": "timeWindow" }
+    }
+  },
+  "caseTypeTemplates": [
+    {
+      "caseTypeId": "acls_scene_ohca_vf_pvt",
+      "resources": {
+        "prerequisites": [
+          {
+            "prereqId": "prereq_ohca_vf_pvt_base",
+            "zhExplain": "无脉VF/PVT分流前提：确认院前/无脉且初始节律已归类为 vf/pvt。",
+            "semanticCondition": {
+              "allOf": [
+                { "pulseStatus": "none" },
+                { "cardiacArrestSubclass": "vf_pvt" },
+                {
+                  "runtime": {
+                    "field": "runtimeActionFlags.initial_rhythm_classification.confirmedInWindow",
+                    "op": "eq",
+                    "value": true
+                  }
+                }
+              ],
+              "anyOf": [],
+              "metaRef": { "source": "caseType", "caseTypeId": "acls_scene_ohca_vf_pvt" },
+              "notes": "使用 actionId=initial_rhythm_classification 的 confirmedInWindow 作为“已归类”证据"
+            }
+          }
+        ]
+      },
+      "stages": {
+        "phases": [
+          {
+            "phaseId": "phase_defib_then_reassess",
+            "rules": [
+              {
+                "ruleId": "rule_defib_delivered_and_reassessed_in_window",
+                "zhExplain": "在 timeWindow 内完成除颤交付并完成再评估（形成下一步决策证据）。",
+                "condition": {
+                  "allOf": [
+                    { "cardiacArrestSubclass": "vf_pvt" },
+                    {
+                      "runtime": {
+                        "field": "runtimeActionFlags.defib_delivered.confirmedInWindow",
+                        "op": "eq",
+                        "value": true,
+                        "windowRef": {
+                          "anchor": "runtimeAnchors.cycleStartTs",
+                          "durationRef": { "meta": "timeWindow" }
+                        }
+                      }
+                    },
+                    {
+                      "runtime": {
+                        "field": "runtimeActionFlags.rhythm_reassessment_completed.confirmedInWindow",
+                        "op": "eq",
+                        "value": true,
+                        "windowRef": {
+                          "anchor": "runtimeAnchors.cycleStartTs",
+                          "durationRef": { "meta": "timeWindow" }
+                        }
+                      }
+                    }
+                  ],
+                  "anyOf": [],
+                  "metaRef": { "source": "caseType", "caseTypeId": "acls_scene_ohca_vf_pvt" },
+                  "notes": "同时要求：除颤交付 + 再评估完成"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    {
+      "caseTypeId": "acls_scene_ohca_pea_asystole",
+      "resources": {
+        "prerequisites": [
+          {
+            "prereqId": "prereq_ohca_pea_asystole_base",
+            "zhExplain": "无脉PEA/心搏停止分流前提：确认院前/无脉且初始节律已归类为 PEA/Asystole。",
+            "semanticCondition": {
+              "allOf": [
+                { "pulseStatus": "none" },
+                { "cardiacArrestSubclass": "pea_asystole" },
+                {
+                  "runtime": {
+                    "field": "runtimeActionFlags.initial_rhythm_classification.confirmedInWindow",
+                    "op": "eq",
+                    "value": true
+                  }
+                }
+              ],
+              "anyOf": [],
+              "metaRef": { "source": "caseType", "caseTypeId": "acls_scene_ohca_pea_asystole" },
+              "notes": "同一 actionId：initial_rhythm_classification"
+            }
+          }
+        ]
+      },
+      "stages": {
+        "phases": [
+          {
+            "phaseId": "phase_non_defib_intervention_then_reassess",
+            "rules": [
+              {
+                "ruleId": "rule_epi_administered_and_reassessed_in_window",
+                "zhExplain": "在 timeWindow 内完成关键用药（肾上腺素给药交付证据）并完成再评估。",
+                "condition": {
+                  "allOf": [
+                    { "cardiacArrestSubclass": "pea_asystole" },
+                    {
+                      "runtime": {
+                        "field": "runtimeActionFlags.epinephrine_administered.confirmedInWindow",
+                        "op": "eq",
+                        "value": true,
+                        "windowRef": {
+                          "anchor": "runtimeAnchors.cycleStartTs",
+                          "durationRef": { "meta": "timeWindow" }
+                        }
+                      }
+                    },
+                    {
+                      "runtime": {
+                        "field": "runtimeActionFlags.rhythm_reassessment_completed.confirmedInWindow",
+                        "op": "eq",
+                        "value": true,
+                        "windowRef": {
+                          "anchor": "runtimeAnchors.cycleStartTs",
+                          "durationRef": { "meta": "timeWindow" }
+                        }
+                      }
+                    }
+                  ],
+                  "anyOf": [],
+                  "metaRef": { "source": "caseType", "caseTypeId": "acls_scene_ohca_pea_asystole" },
+                  "notes": "用 actionId=epinephrine_administered 表达“非除颤关键处置交付”"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    {
+      "caseTypeId": "acls_scene_ohca_rhythm_unknown",
+      "resources": {
+        "prerequisites": [
+          {
+            "prereqId": "prereq_ohca_unknown_base",
+            "zhExplain": "无脉且节律尚未明确：允许先进行节律归类，再进入对应处置逻辑。",
+            "semanticCondition": {
+              "allOf": [
+                { "pulseStatus": "none" },
+                { "cardiacArrestSubclass": "unknown" },
+                {
+                  "runtime": {
+                    "field": "runtimeActionFlags.initial_rhythm_classification.confirmedInWindow",
+                    "op": "eq",
+                    "value": true
+                  }
+                }
+              ],
+              "anyOf": [],
+              "metaRef": { "source": "caseType", "caseTypeId": "acls_scene_ohca_rhythm_unknown" },
+              "notes": "这里强调：unknown 状态下仍需在窗口内完成归类（通过 prerequisites 把分流入口给到系统）"
+            }
+          }
+        ]
+      },
+      "stages": {
+        "phases": [
+          {
+            "phaseId": "phase_classify_then_reassess",
+            "rules": [
+              {
+                "ruleId": "rule_reclassify_then_reassess_in_window",
+                "zhExplain": "在 timeWindow 内完成再评估/确认（用于把 unknown 收敛到具体子类或进入下一循环）。",
+                "condition": {
+                  "allOf": [
+                    { "cardiacArrestSubclass": "unknown" },
+                    {
+                      "runtime": {
+                        "field": "runtimeActionFlags.rhythm_reassessment_completed.confirmedInWindow",
+                        "op": "eq",
+                        "value": true,
+                        "windowRef": {
+                          "anchor": "runtimeAnchors.cycleStartTs",
+                          "durationRef": { "meta": "timeWindow" }
+                        }
+                      }
+                    }
+                  ],
+                  "anyOf": [],
+                  "metaRef": { "source": "caseType", "caseTypeId": "acls_scene_ohca_rhythm_unknown" },
+                  "notes": "未知分支的核心评价点：是否做了“可用于决策的再评估证据”"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    {
+      "caseTypeId": "acls_scene_brady_symptomatic_unstable",
+      "resources": {
+        "prerequisites": [
+          {
+            "prereqId": "prereq_brady_symptomatic_unstable_base",
+            "zhExplain": "不稳定症状性心动过缓分流前提：确保系统知道 brady 子类并具备初始归类证据。",
+            "semanticCondition": {
+              "allOf": [
+                { "bradySubclass": "symptomatic_unstable" },
+                {
+                  "runtime": {
+                    "field": "runtimeActionFlags.initial_rhythm_classification.confirmedInWindow",
+                    "op": "eq",
+                    "value": true
+                  }
+                }
+              ],
+              "anyOf": [],
+              "metaRef": { "source": "caseType", "caseTypeId": "acls_scene_brady_symptomatic_unstable" },
+              "notes": "必要时可把 bradySubclass 的确定过程替换为你的实际证据 actionId"
+            }
+          }
+        ]
+      },
+      "stages": {
+        "phases": [
+          {
+            "phaseId": "phase_brady_treat_then_reassess",
+            "rules": [
+              {
+                "ruleId": "rule_symptomatic_brady_treatment_and_reassess_in_window",
+                "zhExplain": "在 timeWindow 内完成不稳定症状对症处理交付证据，并在窗口内完成再评估。",
+                "condition": {
+                  "allOf": [
+                    { "bradySubclass": "symptomatic_unstable" },
+                    {
+                      "runtime": {
+                        "field": "runtimeActionFlags.symptomatic_brady_treatment_completed.confirmedInWindow",
+                        "op": "eq",
+                        "value": true,
+                        "windowRef": {
+                          "anchor": "runtimeAnchors.cycleStartTs",
+                          "durationRef": { "meta": "timeWindow" }
+                        }
+                      }
+                    },
+                    {
+                      "runtime": {
+                        "field": "runtimeActionFlags.rhythm_reassessment_completed.confirmedInWindow",
+                        "op": "eq",
+                        "value": true,
+                        "windowRef": {
+                          "anchor": "runtimeAnchors.cycleStartTs",
+                          "durationRef": { "meta": "timeWindow" }
+                        }
+                      }
+                    }
+                  ],
+                  "anyOf": [],
+                  "metaRef": { "source": "caseType", "caseTypeId": "acls_scene_brady_symptomatic_unstable" }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    {
+      "caseTypeId": "acls_scene_tachy_regular_narrow_svt",
+      "resources": {
+        "prerequisites": [
+          {
+            "prereqId": "prereq_tachy_regular_narrow_svt_base",
+            "zhExplain": "窄QRS规则 SVT 分流前提：确保 tachy 子类与初始归类证据。",
+            "semanticCondition": {
+              "allOf": [
+                { "tachySubclass": "regular_narrow_svt" },
+                {
+                  "runtime": {
+                    "field": "runtimeActionFlags.initial_rhythm_classification.confirmedInWindow",
+                    "op": "eq",
+                    "value": true
+                  }
+                }
+              ],
+              "anyOf": [],
+              "metaRef": { "source": "caseType", "caseTypeId": "acls_scene_tachy_regular_narrow_svt" }
+            }
+          }
+        ]
+      },
+      "stages": {
+        "phases": [
+          {
+            "phaseId": "phase_svt_treat_then_reassess",
+            "rules": [
+              {
+                "ruleId": "rule_svt_targeted_treatment_and_reassess_in_window",
+                "zhExplain": "在 timeWindow 内完成窄QRS规则 SVT 的针对性处置交付证据，并完成再评估。",
+                "condition": {
+                  "allOf": [
+                    { "tachySubclass": "regular_narrow_svt" },
+                    {
+                      "runtime": {
+                        "field": "runtimeActionFlags.svt_targeted_treatment_completed.confirmedInWindow",
+                        "op": "eq",
+                        "value": true,
+                        "windowRef": {
+                          "anchor": "runtimeAnchors.cycleStartTs",
+                          "durationRef": { "meta": "timeWindow" }
+                        }
+                      }
+                    },
+                    {
+                      "runtime": {
+                        "field": "runtimeActionFlags.rhythm_reassessment_completed.confirmedInWindow",
+                        "op": "eq",
+                        "value": true,
+                        "windowRef": {
+                          "anchor": "runtimeAnchors.cycleStartTs",
+                          "durationRef": { "meta": "timeWindow" }
+                        }
+                      }
+                    }
+                  ],
+                  "anyOf": [],
+                  "metaRef": { "source": "caseType", "caseTypeId": "acls_scene_tachy_regular_narrow_svt" }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    {
+      "caseTypeId": "acls_scene_tachy_irregular_narrow_af_afl",
+      "resources": {
+        "prerequisites": [
+          {
+            "prereqId": "prereq_tachy_irregular_narrow_af_afl_base",
+            "zhExplain": "不规则窄QRS AF/AFL 分流前提：确保 tachy 子类与初始归类证据。",
+            "semanticCondition": {
+              "allOf": [
+                { "tachySubclass": "irregular_narrow_af_afl" },
+                {
+                  "runtime": {
+                    "field": "runtimeActionFlags.initial_rhythm_classification.confirmedInWindow",
+                    "op": "eq",
+                    "value": true
+                  }
+                }
+              ],
+              "anyOf": [],
+              "metaRef": { "source": "caseType", "caseTypeId": "acls_scene_tachy_irregular_narrow_af_afl" }
+            }
+          }
+        ]
+      },
+      "stages": {
+        "phases": [
+          {
+            "phaseId": "phase_af_afl_treat_then_reassess",
+            "rules": [
+              {
+                "ruleId": "rule_af_afl_rate_control_completed_and_reassess_in_window",
+                "zhExplain": "在 timeWindow 内完成 AF/AFL 的控制策略交付证据，并完成再评估。",
+                "condition": {
+                  "allOf": [
+                    { "tachySubclass": "irregular_narrow_af_afl" },
+                    {
+                      "runtime": {
+                        "field": "runtimeActionFlags.af_afl_rate_control_completed.confirmedInWindow",
+                        "op": "eq",
+                        "value": true,
+                        "windowRef": {
+                          "anchor": "runtimeAnchors.cycleStartTs",
+                          "durationRef": { "meta": "timeWindow" }
+                        }
+                      }
+                    },
+                    {
+                      "runtime": {
+                        "field": "runtimeActionFlags.rhythm_reassessment_completed.confirmedInWindow",
+                        "op": "eq",
+                        "value": true,
+                        "windowRef": {
+                          "anchor": "runtimeAnchors.cycleStartTs",
+                          "durationRef": { "meta": "timeWindow" }
+                        }
+                      }
+                    }
+                  ],
+                  "anyOf": [],
+                  "metaRef": { "source": "caseType", "caseTypeId": "acls_scene_tachy_irregular_narrow_af_afl" }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    {
+      "caseTypeId": "acls_scene_tachy_regular_wide_vt",
+      "resources": {
+        "prerequisites": [
+          {
+            "prereqId": "prereq_tachy_regular_wide_vt_base",
+            "zhExplain": "规则宽QRS VT 分流前提：确保 tachy 子类与初始归类证据。",
+            "semanticCondition": {
+              "allOf": [
+                { "tachySubclass": "regular_wide_vt" },
+                {
+                  "runtime": {
+                    "field": "runtimeActionFlags.initial_rhythm_classification.confirmedInWindow",
+                    "op": "eq",
+                    "value": true
+                  }
+                }
+              ],
+              "anyOf": [],
+              "metaRef": { "source": "caseType", "caseTypeId": "acls_scene_tachy_regular_wide_vt" }
+            }
+          }
+        ]
+      },
+      "stages": {
+        "phases": [
+          {
+            "phaseId": "phase_vt_treat_then_reassess",
+            "rules": [
+              {
+                "ruleId": "rule_regular_wide_vt_treatment_and_reassess_in_window",
+                "zhExplain": "在 timeWindow 内完成规则宽QRS VT 的针对性处置交付证据，并完成再评估。",
+                "condition": {
+                  "allOf": [
+                    { "tachySubclass": "regular_wide_vt" },
+                    {
+                      "runtime": {
+                        "field": "runtimeActionFlags.regular_wide_vt_treatment_completed.confirmedInWindow",
+                        "op": "eq",
+                        "value": true,
+                        "windowRef": {
+                          "anchor": "runtimeAnchors.cycleStartTs",
+                          "durationRef": { "meta": "timeWindow" }
+                        }
+                      }
+                    },
+                    {
+                      "runtime": {
+                        "field": "runtimeActionFlags.rhythm_reassessment_completed.confirmedInWindow",
+                        "op": "eq",
+                        "value": true,
+                        "windowRef": {
+                          "anchor": "runtimeAnchors.cycleStartTs",
+                          "durationRef": { "meta": "timeWindow" }
+                        }
+                      }
+                    }
+                  ],
+                  "anyOf": [],
+                  "metaRef": { "source": "caseType", "caseTypeId": "acls_scene_tachy_regular_wide_vt" }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    {
+      "caseTypeId": "acls_scene_tachy_wide_undifferentiated",
+      "resources": {
+        "prerequisites": [
+          {
+            "prereqId": "prereq_tachy_wide_undifferentiated_base",
+            "zhExplain": "宽QRS未分型分流前提：确保 tachy 子类与初始归类证据。",
+            "semanticCondition": {
+              "allOf": [
+                { "tachySubclass": "wide_undifferentiated" },
+                {
+                  "runtime": {
+                    "field": "runtimeActionFlags.initial_rhythm_classification.confirmedInWindow",
+                    "op": "eq",
+                    "value": true
+                  }
+                }
+              ],
+              "anyOf": [],
+              "metaRef": { "source": "caseType", "caseTypeId": "acls_scene_tachy_wide_undifferentiated" }
+            }
+          }
+        ]
+      },
+      "stages": {
+        "phases": [
+          {
+            "phaseId": "phase_wide_undiff_treat_then_reassess",
+            "rules": [
+              {
+                "ruleId": "rule_wide_undifferentiated_treatment_and_reassess_in_window",
+                "zhExplain": "在 timeWindow 内完成宽QRS未分型的通用处置交付证据，并完成再评估。",
+                "condition": {
+                  "allOf": [
+                    { "tachySubclass": "wide_undifferentiated" },
+                    {
+                      "runtime": {
+                        "field": "runtimeActionFlags.wide_undifferentiated_treatment_completed.confirmedInWindow",
+                        "op": "eq",
+                        "value": true,
+                        "windowRef": {
+                          "anchor": "runtimeAnchors.cycleStartTs",
+                          "durationRef": { "meta": "timeWindow" }
+                        }
+                      }
+                    },
+                    {
+                      "runtime": {
+                        "field": "runtimeActionFlags.rhythm_reassessment_completed.confirmedInWindow",
+                        "op": "eq",
+                        "value": true,
+                        "windowRef": {
+                          "anchor": "runtimeAnchors.cycleStartTs",
+                          "durationRef": { "meta": "timeWindow" }
+                        }
+                      }
+                    }
+                  ],
+                  "anyOf": [],
+                  "metaRef": { "source": "caseType", "caseTypeId": "acls_scene_tachy_wide_undifferentiated" }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    {
+      "caseTypeId": "acls_scene_tachy_polymorphic_wide_possible_torsades",
+      "resources": {
+        "prerequisites": [
+          {
+            "prereqId": "prereq_polymorphic_wide_possible_torsades_base",
+            "zhExplain": "疑似多形性宽QRS/Torsades分流前提：确保 tachy 子类与初始归类证据。",
+            "semanticCondition": {
+              "allOf": [
+                { "tachySubclass": "polymorphic_wide_possible_torsades" },
+                {
+                  "runtime": {
+                    "field": "runtimeActionFlags.initial_rhythm_classification.confirmedInWindow",
+                    "op": "eq",
+                    "value": true
+                  }
+                }
+              ],
+              "anyOf": [],
+              "metaRef": { "source": "caseType", "caseTypeId": "acls_scene_tachy_polymorphic_wide_possible_torsades" }
+            }
+          }
+        ]
+      },
+      "stages": {
+        "phases": [
+          {
+            "phaseId": "phase_torsades_treat_then_reassess",
+            "rules": [
+              {
+                "ruleId": "rule_torsades_targeted_treatment_and_reassess_in_window",
+                "zhExplain": "在 timeWindow 内完成针对疑似Torsades的处置交付证据，并完成再评估。",
+                "condition": {
+                  "allOf": [
+                    { "tachySubclass": "polymorphic_wide_possible_torsades" },
+                    {
+                      "runtime": {
+                        "field": "runtimeActionFlags.torsades_targeted_treatment_completed.confirmedInWindow",
+                        "op": "eq",
+                        "value": true,
+                        "windowRef": {
+                          "anchor": "runtimeAnchors.cycleStartTs",
+                          "durationRef": { "meta": "timeWindow" }
+                        }
+                      }
+                    },
+                    {
+                      "runtime": {
+                        "field": "runtimeActionFlags.rhythm_reassessment_completed.confirmedInWindow",
+                        "op": "eq",
+                        "value": true,
+                        "windowRef": {
+                          "anchor": "runtimeAnchors.cycleStartTs",
+                          "durationRef": { "meta": "timeWindow" }
+                        }
+                      }
+                    }
+                  ],
+                  "anyOf": [],
+                  "metaRef": { "source": "caseType", "caseTypeId": "acls_scene_tachy_polymorphic_wide_possible_torsades" }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    {
+      "caseTypeId": "acls_scene_acs_stemi_possible",
+      "resources": {
+        "prerequisites": [
+          {
+            "prereqId": "prereq_acs_stemi_possible_base",
+            "zhExplain": "疑似STEMI分流前提：确保 ACS 子类被识别并完成初始ACS工作/关键评估交付证据。",
+            "semanticCondition": {
+              "allOf": [
+                { "acsSubclass": "stemi_possible" },
+                {
+                  "runtime": {
+                    "field": "runtimeActionFlags.acs_initial_workup_completed.confirmedInWindow",
+                    "op": "eq",
+                    "value": true
+                  }
+                }
+              ],
+              "anyOf": [],
+              "metaRef": { "source": "caseType", "caseTypeId": "acls_scene_acs_stemi_possible" },
+              "notes": "把“初始ACS工作完成”映射到你们轨迹中可确认的动作证据"
+            }
+          }
+        ]
+      },
+      "stages": {
+        "phases": [
+          {
+            "phaseId": "phase_acs_stemi_key_actions_window",
+            "rules": [
+              {
+                "ruleId": "rule_acs_stemi_key_therapy_and_reassessment_in_window",
+                "zhExplain": "在 timeWindow 内完成STEMI关键处置交付证据，并完成复评/交接所需的再评估证据。",
+                "condition": {
+                  "allOf": [
+                    { "acsSubclass": "stemi_possible" },
+                    {
+                      "runtime": {
+                        "field": "runtimeActionFlags.acs_stemi_key_therapy_completed.confirmedInWindow",
+                        "op": "eq",
+                        "value": true,
+                        "windowRef": {
+                          "anchor": "runtimeAnchors.stageStartTs",
+                          "durationRef": { "meta": "timeWindow" }
+                        }
+                      }
+                    },
+                    {
+                      "runtime": {
+                        "field": "runtimeActionFlags.acs_reassessment_or_handoff_completed.confirmedInWindow",
+                        "op": "eq",
+                        "value": true,
+                        "windowRef": {
+                          "anchor": "runtimeAnchors.stageStartTs",
+                          "durationRef": { "meta": "timeWindow" }
+                        }
+                      }
+                    }
+                  ],
+                  "anyOf": [],
+                  "metaRef": { "source": "caseType", "caseTypeId": "acls_scene_acs_stemi_possible" }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    {
+      "caseTypeId": "acls_scene_acs_nste_ua_possible",
+      "resources": {
+        "prerequisites": [
+          {
+            "prereqId": "prereq_acs_nste_ua_possible_base",
+            "zhExplain": "疑似NSTE-ACS/UA分流前提：确保 ACS 子类被识别并完成初始ACS工作/关键评估交付证据。",
+            "semanticCondition": {
+              "allOf": [
+                { "acsSubclass": "nste_acs_ua_possible" },
+                {
+                  "runtime": {
+                    "field": "runtimeActionFlags.acs_initial_workup_completed.confirmedInWindow",
+                    "op": "eq",
+                    "value": true
+                  }
+                }
+              ],
+              "anyOf": [],
+              "metaRef": { "source": "caseType", "caseTypeId": "acls_scene_acs_nste_ua_possible" }
+            }
+          }
+        ]
+      },
+      "stages": {
+        "phases": [
+          {
+            "phaseId": "phase_acs_nste_ua_key_actions_window",
+            "rules": [
+              {
+                "ruleId": "rule_acs_nste_ua_key_therapy_and_reassessment_in_window",
+                "zhExplain": "在 timeWindow 内完成NSTE-ACS/UA关键处置交付证据，并完成复评/交接所需的再评估证据。",
+                "condition": {
+                  "allOf": [
+                    { "acsSubclass": "nste_acs_ua_possible" },
+                    {
+                      "runtime": {
+                        "field": "runtimeActionFlags.acs_nste_ua_key_therapy_completed.confirmedInWindow",
+                        "op": "eq",
+                        "value": true,
+                        "windowRef": {
+                          "anchor": "runtimeAnchors.stageStartTs",
+                          "durationRef": { "meta": "timeWindow" }
+                        }
+                      }
+                    },
+                    {
+                      "runtime": {
+                        "field": "runtimeActionFlags.acs_reassessment_or_handoff_completed.confirmedInWindow",
+                        "op": "eq",
+                        "value": true,
+                        "windowRef": {
+                          "anchor": "runtimeAnchors.stageStartTs",
+                          "durationRef": { "meta": "timeWindow" }
+                        }
+                      }
+                    }
+                  ],
+                  "anyOf": [],
+                  "metaRef": { "source": "caseType", "caseTypeId": "acls_scene_acs_nste_ua_possible" }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    {
+      "caseTypeId": "acls_scene_suspected_stroke",
+      "resources": {
+        "prerequisites": [
+          {
+            "prereqId": "prereq_suspected_stroke_base",
+            "zhExplain": "疑似卒中分流前提：完成卒中神经筛查/评估交付证据。",
+            "semanticCondition": {
+              "allOf": [
+                { "neuroSyndrome": "suspected_stroke" },
+                {
+                  "runtime": {
+                    "field": "runtimeActionFlags.stroke_neuro_screen_started_or_completed.confirmedInWindow",
+                    "op": "eq",
+                    "value": true
+                  }
+                }
+              ],
+              "anyOf": [],
+              "metaRef": { "source": "caseType", "caseTypeId": "acls_scene_suspected_stroke" },
+              "notes": "如果你们只采集“已完成”，把 actionId 切到 stroke_neuro_screen_completed 即可"
+            }
+          }
+        ]
+      },
+      "stages": {
+        "phases": [
+          {
+            "phaseId": "phase_stroke_assessment_and_activation_window",
+            "rules": [
+              {
+                "ruleId": "rule_stroke_screen_and_activation_in_window",
+                "zhExplain": "在 timeWindow 内完成卒中筛查交付证据，并触发卒中上报/升级流程交付证据（便于交接）。",
+                "condition": {
+                  "allOf": [
+                    { "neuroSyndrome": "suspected_stroke" },
+                    {
+                      "runtime": {
+                        "field": "runtimeActionFlags.stroke_neuro_screen_completed.confirmedInWindow",
+                        "op": "eq",
+                        "value": true,
+                        "windowRef": {
+                          "anchor": "runtimeAnchors.stageStartTs",
+                          "durationRef": { "meta": "timeWindow" }
+                        }
+                      }
+                    },
+                    {
+                      "runtime": {
+                        "field": "runtimeActionFlags.stroke_activation_or_escalation_triggered.confirmedInWindow",
+                        "op": "eq",
+                        "value": true,
+                        "windowRef": {
+                          "anchor": "runtimeAnchors.stageStartTs",
+                          "durationRef": { "meta": "timeWindow" }
+                        }
+                      }
+                    }
+                  ],
+                  "anyOf": [],
+                  "metaRef": { "source": "caseType", "caseTypeId": "acls_scene_suspected_stroke" }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "actionIdInventoryHint": {
+    "common": [
+      "initial_rhythm_classification",
+      "rhythm_reassessment_completed"
+    ],
+    "ohca_vf_pvt": [
+      "defib_delivered"
+    ],
+    "ohca_pea_asystole": [
+      "epinephrine_administered"
+    ],
+    "brady": [
+      "symptomatic_brady_treatment_completed"
+    ],
+    "tachy": [
+      "svt_targeted_treatment_completed",
+      "af_afl_rate_control_completed",
+      "regular_wide_vt_treatment_completed",
+      "wide_undifferentiated_treatment_completed",
+      "torsades_targeted_treatment_completed"
+    ],
+    "acs": [
+      "acs_initial_workup_completed",
+      "acs_stemi_key_therapy_completed",
+      "acs_nste_ua_key_therapy_completed",
+      "acs_reassessment_or_handoff_completed"
+    ],
+    "stroke": [
+      "stroke_neuro_screen_started_or_completed",
+      "stroke_neuro_screen_completed",
+      "stroke_activation_or_escalation_triggered"
+    ]
+  }
+}

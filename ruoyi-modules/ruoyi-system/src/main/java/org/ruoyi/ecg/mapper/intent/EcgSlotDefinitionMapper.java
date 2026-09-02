@@ -23,14 +23,14 @@ public interface EcgSlotDefinitionMapper {
      * @param slot 查询条件
      * @return 槽位定义集合
      */
-    public List<EcgSlotDefinition> selectEcgSlotDefinitionList(EcgSlotDefinition slot);
+    List<EcgSlotDefinition> selectEcgSlotDefinitionList(EcgSlotDefinition slot);
 
     /**
      * 获取所有槽位（下拉选择用）
      *
      * @return 槽位定义集合
      */
-    public List<EcgSlotDefinition> selectAllSlotOptions();
+    List<EcgSlotDefinition> selectAllSlotOptions();
 
     /**
      * 根据槽位名称查询槽位定义
@@ -38,7 +38,7 @@ public interface EcgSlotDefinitionMapper {
      * @param slotName 槽位名称
      * @return 槽位定义
      */
-    public EcgSlotDefinition selectEcgSlotDefinitionByName(@Param("slotName") String slotName);
+    EcgSlotDefinition selectEcgSlotDefinitionByName(@Param("slotName") String slotName);
 
     /**
      * 统计使用该槽位的意图数量
@@ -46,7 +46,7 @@ public interface EcgSlotDefinitionMapper {
      * @param slotName 槽位名称
      * @return 意图数量
      */
-    public int countIntentBySlot(@Param("slotName") String slotName);
+    int countIntentBySlot(@Param("slotName") String slotName);
 
     /**
      * 查询使用该槽位的所有意图编码
@@ -54,7 +54,7 @@ public interface EcgSlotDefinitionMapper {
      * @param slotName 槽位名称
      * @return 意图编码列表
      */
-    public List<String> selectIntentIdsBySlot(@Param("slotName") String slotName);
+    List<String> selectIntentIdsBySlot(@Param("slotName") String slotName);
 
     // ==================== 插入方法 ====================
 
@@ -64,7 +64,7 @@ public interface EcgSlotDefinitionMapper {
      * @param slot 槽位定义
      * @return 结果
      */
-    public int insertEcgSlotDefinition(EcgSlotDefinition slot);
+    int insertEcgSlotDefinition(EcgSlotDefinition slot);
 
     // ==================== 更新方法 ====================
 
@@ -74,7 +74,7 @@ public interface EcgSlotDefinitionMapper {
      * @param slot 槽位定义
      * @return 结果
      */
-    public int updateEcgSlotDefinition(EcgSlotDefinition slot);
+    int updateEcgSlotDefinition(EcgSlotDefinition slot);
 
     // ==================== 删除方法 ====================
 
@@ -84,5 +84,5 @@ public interface EcgSlotDefinitionMapper {
      * @param slotName 槽位名称
      * @return 结果
      */
-    public int deleteEcgSlotDefinitionByName(@Param("slotName") String slotName);
+    int deleteEcgSlotDefinitionByName(@Param("slotName") String slotName);
 }

@@ -1,0 +1,18 @@
+ollama:
+  base-url: http://localhost:11434
+  default-model: qwen2.5:latest
+  default-temperature: 0.15
+  models:
+    assessment: qwen2.5:latest
+    decision: qwen2.5:latest
+    safety: qwen2.5:latest
+    feedback: qwen2.5:latest
+    extraction: qwen2.5:latest
+    report: qwen2.5:latest
+  temperatures:
+    assessment: 0.1
+    decision: 0.1
+    safety: 0.0
+    feedback: 0.3
+    extraction: 0.0
+    report: 0.3

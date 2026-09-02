@@ -1,0 +1,44 @@
+{
+  "intent_code": "G3-2",
+  "act_type": "发令性指令",
+  "name_cn": "电极片或导联连接",
+  "description_cn": "连接除颤电极片或12导联心电图导联线",
+  "keywords": ["贴除颤电极片", "12导联心电图", "连接导联线"],
+  "pattern_hints": ["贴好电极片", "接监护仪上"],
+  "examples": [
+    "贴好除颤电极片",
+    "连接12导联心电图",
+    "把电极片接到监护仪上",
+    "准备12导联心电图"
+  ],
+  "standard_script": "贴好除颤电极片，连接12导联心电图。",
+  "extraction": {
+    "target_params": ["leadType"],
+    "rules": {
+      "leadType": {
+        "type": "string",
+        "enum": ["defib_pads", "12_lead"]
+      }
+    }
+  },
+  "execution": {
+    "type": "action_chain",
+    "steps": [
+      { "step_id": "lead_place", "ref_atomic": "LEAD_PLACE", "duty": "MONITOR_DEFIB" }
+    ],
+    "preconditions": {},
+    "on_complete": {
+      "response_template": "🩺 {leadType} 已连接，心电信号稳定。"
+    }
+  },
+  "pragmatic_handlers": {
+    "发令性指令": {
+      "action": "advance_chain",
+      "response_template": "🩺 {leadType} 已连接，心电信号稳定。"
+    },
+    "探查性询问": {
+      "action": "query_step_status",
+      "response_template": "📋 {leadType} 已连接，心电信号稳定。"
+    }
+  }
+}
