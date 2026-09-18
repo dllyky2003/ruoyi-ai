@@ -1,7 +1,7 @@
 package com.ruoyi.ems.intent.test;
 
 import com.ruoyi.ems.context.EmsContextManager;
-import com.ruoyi.ems.context.VariableMetaManager;
+import com.ruoyi.ems.config.loader.VariableMetaLoader;
 import com.ruoyi.ems.domain.VariableMeta;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -32,7 +32,7 @@ public class VariableMetaManagerTest {
         AnnotationConfigApplicationContext context =
             new AnnotationConfigApplicationContext(TestConfig.class);
 
-        VariableMetaManager manager = context.getBean(VariableMetaManager.class);
+        VariableMetaLoader manager = context.getBean(VariableMetaLoader.class);
 
         // 1. 基础加载测试
         testLoadVariables(manager);
@@ -56,7 +56,7 @@ public class VariableMetaManagerTest {
 
     // ==================== 测试方法 ====================
 
-    private static void testLoadVariables(VariableMetaManager manager) throws Exception {
+    private static void testLoadVariables(VariableMetaLoader manager) throws Exception {
         System.out.println("📋 测试1: 加载变量");
         System.out.println("----------------------------------------");
 
@@ -79,7 +79,7 @@ public class VariableMetaManagerTest {
         System.out.println("  ✅ 加载成功\n");
     }
 
-    private static void assertGeneralVariableExists(VariableMetaManager manager, String varName) {
+    private static void assertGeneralVariableExists(VariableMetaLoader manager, String varName) {
         Map<String, VariableMeta> generalVars = manager.getVariablesForCase("unknown_case");
         if (!generalVars.containsKey(varName)) {
             throw new AssertionError("❌ 通用变量 " + varName + " 不存在");
@@ -87,7 +87,7 @@ public class VariableMetaManagerTest {
         System.out.println("    ✅ 通用变量 " + varName + " 存在");
     }
 
-    private static void testResolveSlotMappings(VariableMetaManager manager) {
+    private static void testResolveSlotMappings(VariableMetaLoader manager) {
         System.out.println("📋 测试2: 槽位映射");
         System.out.println("----------------------------------------");
 
@@ -100,7 +100,7 @@ public class VariableMetaManagerTest {
         System.out.println("  ✅ 所有槽位映射正确\n");
     }
 
-    private static void testWritePermissionForAllCases(VariableMetaManager manager) throws Exception {
+    private static void testWritePermissionForAllCases(VariableMetaLoader manager) throws Exception {
         System.out.println("📋 测试3: 写入权限（遍历所有专属案例）");
         System.out.println("----------------------------------------");
 
@@ -130,7 +130,7 @@ public class VariableMetaManagerTest {
         System.out.println("  ✅ 权限校验正确\n");
     }
 
-    private static void testValidateValueForAllCases(VariableMetaManager manager) throws Exception {
+    private static void testValidateValueForAllCases(VariableMetaLoader manager) throws Exception {
         System.out.println("📋 测试4: 值校验（遍历所有专属案例）");
         System.out.println("----------------------------------------");
 
@@ -172,7 +172,7 @@ public class VariableMetaManagerTest {
      * 自动验证所有已加载案例的变量定义是否符合元数据规范。
      * 新增案例后无需修改此方法，它会自动遍历所有 caseType。
      */
-    private static void testAllLoadedVariables(VariableMetaManager manager) throws Exception {
+    private static void testAllLoadedVariables(VariableMetaLoader manager) throws Exception {
         System.out.println("📋 测试6: 自动验证所有加载的案例");
         System.out.println("----------------------------------------");
 
@@ -254,7 +254,7 @@ public class VariableMetaManagerTest {
         System.out.println();
     }
 
-    private static void testPrintAllVariables(VariableMetaManager manager) throws Exception {
+    private static void testPrintAllVariables(VariableMetaLoader manager) throws Exception {
         System.out.println("📋 测试5: 打印所有变量（供查看）");
         System.out.println("----------------------------------------");
 
@@ -287,8 +287,8 @@ public class VariableMetaManagerTest {
     // ==================== 反射辅助 ====================
 
     @SuppressWarnings("unchecked")
-    private static Set<String> getLoadedCaseTypes(VariableMetaManager manager) throws Exception {
-        Field field = VariableMetaManager.class.getDeclaredField("caseSpecificMetaMap");
+    private static Set<String> getLoadedCaseTypes(VariableMetaLoader manager) throws Exception {
+        Field field = VariableMetaLoader.class.getDeclaredField("caseSpecificMetaMap");
         field.setAccessible(true);
         Map<String, Map<String, VariableMeta>> map = (Map<String, Map<String, VariableMeta>>) field.get(manager);
         return map.keySet();
@@ -296,7 +296,7 @@ public class VariableMetaManagerTest {
 
     // ==================== 断言辅助 ====================
 
-    private static void assertSlotMapping(VariableMetaManager manager, String slot, String expectedVar) {
+    private static void assertSlotMapping(VariableMetaLoader manager, String slot, String expectedVar) {
         String actual = manager.resolveSlotToVariable(slot);
         if (!expectedVar.equals(actual)) {
             throw new AssertionError("❌ 槽位 " + slot + " 映射错误: 期望 " + expectedVar + "，实际 " + actual);

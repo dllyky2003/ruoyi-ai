@@ -356,15 +356,94 @@ workflow:
       connect-timeout: ${ZHIPU_WEB_SEARCH_CONNECT_TIMEOUT:10}
       read-timeout: ${ZHIPU_WEB_SEARCH_READ_TIMEOUT:30}
 
+
+funasr:
+  gateway:
+    host: 127.0.0.1
+    port: 8002
+    path: /ws/asr
+
+# ==================== 文本转语音配置 ====================
+kokoro:
+  api:
+    url: http://localhost:8880/v1/audio/speech
 # ==================== 意图分类器配置 ====================
+# ==================== ACLS 智能引擎配置（执行器模式） ====================
+# 此配置适用于考核模式或基础流程验证阶段：
+# - 组员仅执行组长指令，无任何自主行为（无反射、无LLM慢思考）
+# - 所有动作由预定义动作链（chains.json）驱动，完全确定、可复现
+# - 适合先跑通核心指令执行链，再逐步引入自主性
+ems:
+  unmatched-asr:
+    file: logs/unmatched-asr.jsonl
 acls:
+  room:
+    ws-base-url: ws://localhost:8080
+    token-ttl-seconds: 300
+  # -------- 意图分类器配置 --------
   classifier:
-    mode: two-stage          # one-stage 或 two-stage
-    fallback-on-error: true
-    model-name: qwen2.5:latest
+    mode: two-stage                      # 分类模式：two-stage（二阶段，域路由+细粒度）或 one-stage
+    fallback-on-error: true              # 分类失败时是否启用兜底分类器
+    model-name: qwen2.5:latest          # 用于意图识别的LLM模型名称（与Ollama中一致）
+  confidence:
+    execute-threshold: 0.75
+    clarify-threshold: 0.45
+
+  # -------- ★ 新增：Embedding 配置 --------
+  embedding:
+    enabled: true
+    provider: ollama
+    base-url: http://localhost:11434
+    model: bge-m3
+    dimension: 1024
+    connect-timeout-ms: 3000
+    read-timeout-ms: 10000
+  # -------- 意图与引擎核心配置 --------
   intent:
-    global-dictionary: classpath:intent_global_dictionary.json
-    case-dictionary: classpath:intent_narrow_qrs_stable.json
+    global-dictionary: classpath:intent_global_dictionary.json   # 通用意图字典路径
+    case-dictionary: classpath:intent_narrow_qrs_stable.json     # 案例专属意图字典
+
+    # 引擎总开关与模式
+    engine:
+      enabled: true                      # 是否启用新引擎（false则完全走旧逻辑）
+      mode: hybrid                       # hybrid=新引擎优先，legacy=完全回退旧引擎
+      ack-timeout: 50000                 # 等待组长口头确认的超时时间（毫秒），如“可以放电”
+      heartbeat-enabled: false           # ★ 执行器模式：禁用组员自主心跳（组员不会主动感知环境）
+
+      # 各类操作的整体超时（含准备+执行+确认）
+      operation-timeout:
+        defib: 15000                     # 除颤操作总超时（毫秒）
+        drug: 12000                      # 药物推注操作总超时
+        airway: 30000                    # 气道管理操作总超时
+        cpr-rotation: 10000              # CPR轮换操作总超时
+
+    # -------- 组员行为模式 --------
+    member-mode: executor                # ★ 执行器模式：组员仅执行命令，无自主预警或建议
+
+    # -------- 认知功能（LLM慢思考与反射规则） --------
+    cognitive:
+      enabled: false                     # ★ 执行器模式：禁用LLM慢思考（组员不会调用LLM生成建议）
+      queue-timeout: 10000               # 单个LLM思考任务超时（毫秒，仅当enabled=true时生效）
+      normal-cooldown: 3000              # 普通思考冷却时间（毫秒）
+      critical-cooldown: 500             # 紧急思考冷却时间（毫秒）
+      reflection-enabled: false          # ★ 执行器模式：禁用硬编码反射规则（如VF检测预警）
+
+    # -------- 调度器配置 --------
+    scheduler:
+      tick-interval: 100                 # 心跳间隔（毫秒），执行器模式下无实际影响
+      timeout-buffer: 5000               # 命令超时额外缓冲（毫秒），避免网络波动导致误判超时
+
+# ==================== 补充说明 ====================
+# 1. 执行器模式下，即使 cognitive.enabled 或 reflection-enabled 设为 true，
+#    也会被 member-mode: executor 覆盖，组员不会执行任何自主行为。
+# 2. 动作链执行完全依赖 chains.json 和 atomic_actions.json 配置。
+# 3. 所有与“组员自主性”相关的组件（CognizantTeamMember、CognitiveScheduler、HeartbeatScheduler）
+#    在 executor 模式下不会被激活，但不会影响系统启动。
+# 4. 此配置适合用于：
+#    - 验证基础指令执行链（语音→意图→动作链→命令执行）
+#    - 教学考核（学员操作，组员不干扰）
+#    - 压力测试（确定性高，便于定位问题）
+
 # 短剧成片合成
 short-drama:
   composition:

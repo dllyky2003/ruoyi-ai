@@ -202,11 +202,113 @@
             <artifactId>jackson-datatype-jsr310</artifactId>
             <version>2.13.4</version>
         </dependency>
+        <!-- Voices 核心库 -->
+        <!-- ========== Voices 相关依赖（全部添加排除） ========== -->
+        <dependency>
+            <groupId>org.pitest.voices</groupId>
+            <artifactId>chorus</artifactId>
+            <version>0.0.9</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-simple</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.pitest.voices</groupId>
+            <artifactId>alba</artifactId>
+            <version>0.0.9</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-simple</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.pitest.voices</groupId>
+            <artifactId>en_uk</artifactId>
+            <version>0.0.9</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-simple</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- 注意：这里删除了重复的 model-downloader 依赖，只保留一个 -->
+        <dependency>
+            <groupId>org.pitest.voices</groupId>
+            <artifactId>model-downloader</artifactId>
+            <version>0.0.9</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-simple</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>com.microsoft.onnxruntime</groupId>
+            <artifactId>onnxruntime</artifactId>
+            <version>1.22.0</version>
+            <!-- onnxruntime 通常不直接依赖 slf4j-simple，但保险起见也加上排除 -->
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-simple</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>com.belerweb</groupId>
+            <artifactId>pinyin4j</artifactId>
+            <version>2.5.1</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.java-websocket</groupId>
+            <artifactId>Java-WebSocket</artifactId>
+            <version>1.5.7</version>
+        </dependency>
+
 
     </dependencies>
 
     <build>
+
+
         <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>generate-variable-keys</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>com.ruoyi.ems.generator.VariableKeyGenerator</mainClass>
+                            <classpathScope>compile</classpathScope>
+                            <arguments>
+                                <!-- ★ 显式传入绝对路径，避免相对路径问题 -->
+                                <argument>${project.basedir}/src/main/resources/config/acls</argument>
+                                <argument>${project.basedir}/src/main/java</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

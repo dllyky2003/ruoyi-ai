@@ -1,0 +1,498 @@
+# ============================================================================
+# common.yaml - 通用意图路由（基于 EgoEMS 67 个 Keysteps）
+# 对应 IA_001 ~ IA_067，全部映射至已有 Skill
+# 特殊标注：对复合意图（需多步骤完成）在注释中说明，并提供建议组合
+# ============================================================================
+
+routes:
+  # ======== ABCs 与现场评估（IA_001 ~ IA_004） ========
+  - id: R-IA-001
+    caseType: "*"
+    intent: IA_001_approach_patient
+    targetType: SKILL
+    targetId: approach_patient
+    priority: 10
+    # 复合意图：包括接近患者和评估环境安全，当前 Skill 已覆盖两者
+
+  - id: R-IA-002
+    caseType: "*"
+    intent: IA_002_check_responsiveness
+    targetType: SKILL
+    targetId: check_responsiveness
+    priority: 10
+    # 单一意图：检查反应
+
+  - id: R-IA-003
+    caseType: "*"
+    intent: IA_003_check_pulse
+    targetType: SKILL
+    targetId: check_pulse
+    priority: 10
+
+  - id: R-IA-004
+    caseType: "*"
+    intent: IA_004_check_breathing
+    targetType: SKILL
+    targetId: check_breathing
+    priority: 10
+
+  # ======== 患者病史（IA_005 ~ IA_008） ========
+  - id: R-IA-005
+    caseType: "*"
+    intent: IA_005_review_medications
+    targetType: SKILL
+    targetId: review_medications
+    priority: 10
+
+  - id: R-IA-006
+    caseType: "*"
+    intent: IA_006_inquire_medication_anticoagulants
+    targetType: SKILL
+    targetId: inquire_anticoagulants
+    priority: 10
+    # 注意：意图编码为 IA_006_inquire_medication_anticoagulants，映射到 Skill inquire_anticoagulants
+
+  - id: R-IA-007
+    caseType: "*"
+    intent: IA_007_inquire_hpi_and_pmh
+    targetType: SKILL
+    targetId: inquire_hpi_pmh
+    priority: 10
+
+  - id: R-IA-008
+    caseType: "*"
+    intent: IA_008_inquire_substance_use
+    targetType: SKILL
+    targetId: inquire_substance_use
+    priority: 10
+
+  # ======== 生命体征评估（IA_009 ~ IA_017） ========
+  - id: R-IA-009
+    caseType: "*"
+    intent: IA_009_check_blood_pressure
+    targetType: SKILL
+    targetId: check_blood_pressure
+    priority: 10
+
+  - id: R-IA-010
+    caseType: "*"
+    intent: IA_010_check_heart_rate
+    targetType: SKILL
+    targetId: check_heart_rate
+    priority: 10
+
+  - id: R-IA-011
+    caseType: "*"
+    intent: IA_011_check_oxygen_saturation
+    targetType: SKILL
+    targetId: check_oxygen_saturation
+    priority: 10
+
+  - id: R-IA-012
+    caseType: "*"
+    intent: IA_012_check_respiratory_rate
+    targetType: SKILL
+    targetId: check_respiratory_rate
+    priority: 10
+
+  - id: R-IA-013
+    caseType: "*"
+    intent: IA_013_prepare_glucometer_and_strip
+    targetType: SKILL
+    targetId: prepare_glucometer_and_strip
+    priority: 10
+
+  - id: R-IA-014
+    caseType: "*"
+    intent: IA_014_read_and_record_glucose_level
+    targetType: SKILL
+    targetId: read_and_record_glucose_level
+    priority: 10
+
+  - id: R-IA-015
+    caseType: "*"
+    intent: IA_015_check_perrl
+    targetType: SKILL
+    targetId: check_perrl
+    priority: 10
+
+  - id: R-IA-016
+    caseType: "*"
+    intent: IA_016_check_skin_condition
+    targetType: SKILL
+    targetId: check_skin_condition
+    priority: 10
+
+  - id: R-IA-017
+    caseType: "*"
+    intent: IA_017_check_ao
+    targetType: SKILL
+    targetId: check_ao
+    priority: 10
+    # 注意：意图编码中 & 已转义，映射到 Skill check_ao
+
+  # ======== 卒中评估（IA_018 ~ IA_026） ========
+  - id: R-IA-018
+    caseType: "*"
+    intent: IA_018_check_grip_strength
+    targetType: SKILL
+    targetId: check_grip_strength
+    priority: 10
+
+  - id: R-IA-019
+    caseType: "*"
+    intent: IA_019_face_droop_check
+    targetType: SKILL
+    targetId: face_droop_check
+    priority: 10
+
+  - id: R-IA-020
+    caseType: "*"
+    intent: IA_020_arm_drift_check
+    targetType: SKILL
+    targetId: arm_drift_check
+    priority: 10
+
+  - id: R-IA-021
+    caseType: "*"
+    intent: IA_021_speech_abnormality_check
+    targetType: SKILL
+    targetId: speech_abnormality_check
+    priority: 10
+
+  - id: R-IA-022
+    caseType: "*"
+    intent: IA_022_assess_balance_and_coordination
+    targetType: SKILL
+    targetId: assess_balance_coordination
+    priority: 10
+
+  - id: R-IA-023
+    caseType: "*"
+    intent: IA_023_document_lkw_time
+    targetType: SKILL
+    targetId: document_lkw_time
+    priority: 10
+
+  - id: R-IA-024
+    caseType: "*"
+    intent: IA_024_check_vision_deficits
+    targetType: SKILL
+    targetId: check_vision_deficits
+    priority: 10
+
+  - id: R-IA-025
+    caseType: "*"
+    intent: IA_025_evaluate_aphasia
+    targetType: SKILL
+    targetId: evaluate_aphasia
+    priority: 10
+
+  - id: R-IA-026
+    caseType: "*"
+    intent: IA_026_assess_neglect_signs
+    targetType: SKILL
+    targetId: assess_neglect_signs
+    priority: 10
+
+  # ======== 12导联心电图（IA_027 ~ IA_044） ========
+  # 注意：心电图系列多为单一操作，部分需要配合患者静止、连接设备等
+  - id: R-IA-027
+    caseType: "*"
+    intent: IA_027_explain_procedure
+    targetType: SKILL
+    targetId: explain_ecg_procedure
+    priority: 10
+
+  - id: R-IA-028
+    caseType: "*"
+    intent: IA_028_shave_patient
+    targetType: SKILL
+    targetId: shave_patient
+    priority: 10
+
+  - id: R-IA-029
+    caseType: "*"
+    intent: IA_029_place_left_arm_lead
+    targetType: SKILL
+    targetId: place_lead_la
+    priority: 10
+
+  - id: R-IA-030
+    caseType: "*"
+    intent: IA_030_place_right_arm_lead
+    targetType: SKILL
+    targetId: place_lead_ra
+    priority: 10
+
+  - id: R-IA-031
+    caseType: "*"
+    intent: IA_031_place_left_leg_lead
+    targetType: SKILL
+    targetId: place_lead_ll
+    priority: 10
+
+  - id: R-IA-032
+    caseType: "*"
+    intent: IA_032_place_right_leg_lead
+    targetType: SKILL
+    targetId: place_lead_rl
+    priority: 10
+
+  - id: R-IA-033
+    caseType: "*"
+    intent: IA_033_place_v1_lead
+    targetType: SKILL
+    targetId: place_lead_v1
+    priority: 10
+
+  - id: R-IA-034
+    caseType: "*"
+    intent: IA_034_place_v2_lead
+    targetType: SKILL
+    targetId: place_lead_v2
+    priority: 10
+
+  - id: R-IA-035
+    caseType: "*"
+    intent: IA_035_place_v3_lead
+    targetType: SKILL
+    targetId: place_lead_v3
+    priority: 10
+
+  - id: R-IA-036
+    caseType: "*"
+    intent: IA_036_place_v4_lead
+    targetType: SKILL
+    targetId: place_lead_v4
+    priority: 10
+
+  - id: R-IA-037
+    caseType: "*"
+    intent: IA_037_place_v5_lead
+    targetType: SKILL
+    targetId: place_lead_v5
+    priority: 10
+
+  - id: R-IA-038
+    caseType: "*"
+    intent: IA_038_place_v6_lead
+    targetType: SKILL
+    targetId: place_lead_v6
+    priority: 10
+
+  - id: R-IA-039
+    caseType: "*"
+    intent: IA_039_request_patient_to_not_move
+    targetType: SKILL
+    targetId: request_patient_not_move
+    priority: 10
+
+  - id: R-IA-040
+    caseType: "*"
+    intent: IA_040_turn_on_ecg
+    targetType: SKILL
+    targetId: turn_on_ecg
+    priority: 10
+
+  - id: R-IA-041
+    caseType: "*"
+    intent: IA_041_connect_leads_to_ecg
+    targetType: SKILL
+    targetId: connect_leads_to_ecg
+    priority: 10
+
+  - id: R-IA-042
+    caseType: "*"
+    intent: IA_042_ask_patient_age_sex
+    targetType: SKILL
+    targetId: ask_patient_age_sex
+    priority: 10
+
+  - id: R-IA-043
+    caseType: "*"
+    intent: IA_043_obtain_ecg_recording
+    targetType: SKILL
+    targetId: obtain_ecg_recording
+    priority: 10
+
+  - id: R-IA-044
+    caseType: "*"
+    intent: IA_044_interpret_and_report
+    targetType: SKILL
+    targetId: interpret_ecg
+    priority: 10
+
+  # ======== 心肺复苏（IA_045 ~ IA_049） ========
+  # IA_045~047 复用 ABCs 的检查 Skill，但需结合 CPR 上下文
+  - id: R-IA-045
+    caseType: "*"
+    intent: IA_045_check_responsiveness_cpr
+    targetType: SKILL
+    targetId: check_responsiveness
+    priority: 10
+    # 复合意图：实际执行时需在 CPR 暂停期间检查，此处复用通用 Skill
+
+  - id: R-IA-046
+    caseType: "*"
+    intent: IA_046_check_pulse_cpr
+    targetType: SKILL
+    targetId: check_pulse
+    priority: 10
+    # 复合意图：CPR 暂停时检查脉搏
+
+  - id: R-IA-047
+    caseType: "*"
+    intent: IA_047_check_breathing_cpr
+    targetType: SKILL
+    targetId: check_breathing
+    priority: 10
+    # 复合意图：CPR 暂停时检查呼吸
+
+  - id: R-IA-048
+    caseType: "*"
+    intent: IA_048_chest_compressions
+    targetType: SKILL
+    targetId: cpr_compressions
+    priority: 10
+    # 复合意图：胸外按压需持续进行，可能配合轮换，此处 Skill 为持续按压操作
+
+  - id: R-IA-049
+    caseType: "*"
+    intent: IA_049_assess_patient
+    targetType: SKILL
+    targetId: assess_patient_cpr
+    priority: 10
+    # 复合意图：重新评估患者状况通常需综合反应、脉搏、呼吸等，当前 Skill 为综合查询
+
+  # ======== 除颤/AED（IA_050 ~ IA_056） ========
+  - id: R-IA-050
+    caseType: "*"
+    intent: IA_050_request_aed
+    targetType: SKILL
+    targetId: request_aed
+    priority: 10
+
+  - id: R-IA-051
+    caseType: "*"
+    intent: IA_051_request_assistance
+    targetType: SKILL
+    targetId: request_assistance
+    priority: 10
+
+  - id: R-IA-052
+    caseType: "*"
+    intent: IA_052_turn_on_aed
+    targetType: SKILL
+    targetId: turn_on_aed
+    priority: 10
+
+  - id: R-IA-053
+    caseType: "*"
+    intent: IA_053_attach_defib_pads
+    targetType: SKILL
+    targetId: attach_defib_pads
+    priority: 10
+
+  - id: R-IA-054
+    caseType: "*"
+    intent: IA_054_clear_for_analysis
+    targetType: SKILL
+    targetId: clear_for_analysis
+    priority: 10
+
+  - id: R-IA-055
+    caseType: "*"
+    intent: IA_055_clear_for_shock
+    targetType: SKILL
+    targetId: clear_for_shock
+    priority: 10
+
+  - id: R-IA-056
+    caseType: "*"
+    intent: IA_056_administer_shock_aed
+    targetType: SKILL
+    targetId: administer_shock_aed
+    priority: 10
+
+  # ======== 通气与气道管理（IA_057 ~ IA_061） ========
+  - id: R-IA-057
+    caseType: "*"
+    intent: IA_057_open_airway
+    targetType: SKILL
+    targetId: open_airway
+    priority: 10
+
+  - id: R-IA-058
+    caseType: "*"
+    intent: IA_058_place_bvm
+    targetType: SKILL
+    targetId: place_bvm
+    priority: 10
+
+  - id: R-IA-059
+    caseType: "*"
+    intent: IA_059_ventilate_patient
+    targetType: SKILL
+    targetId: ventilate_patient
+    priority: 10
+
+  - id: R-IA-060
+    caseType: "*"
+    intent: IA_060_suction_airway
+    targetType: SKILL
+    targetId: suction_airway
+    priority: 10
+
+  - id: R-IA-061
+    caseType: "*"
+    intent: IA_061_inset_NPA
+    targetType: SKILL
+    targetId: insert_npa
+    priority: 10
+    # 注意：意图编码中 inset_NPA 为原词，映射到 Skill insert_npa
+
+  # ======== 转运（IA_062 ~ IA_067） ========
+  # 这些意图均为独立步骤，但整体转运流程需串联执行，每个意图对应单一 Skill
+  - id: R-IA-062
+    caseType: "*"
+    intent: IA_062_transport
+    targetType: SKILL
+    targetId: transport_to_ambulance
+    priority: 10
+    # 复合意图（整个转运含多个子步骤，但此意图特指转移至救护车）
+
+  - id: R-IA-063
+    caseType: "*"
+    intent: IA_063_load_patient_to_stretcher
+    targetType: SKILL
+    targetId: load_to_stretcher
+    priority: 10
+
+  - id: R-IA-064
+    caseType: "*"
+    intent: IA_064_secure_patient_on_stretcher
+    targetType: SKILL
+    targetId: secure_patient
+    priority: 10
+
+  - id: R-IA-065
+    caseType: "*"
+    intent: IA_065_notify_hospital
+    targetType: SKILL
+    targetId: notify_hospital
+    priority: 10
+
+  - id: R-IA-066
+    caseType: "*"
+    intent: IA_066_notify_hospital_of_stroke_alert
+    targetType: SKILL
+    targetId: notify_stroke_alert
+    priority: 10
+
+  - id: R-IA-067
+    caseType: "*"
+    intent: IA_067_handoff_patient_to_hospital
+    targetType: SKILL
+    targetId: handoff_patient
+    priority: 10

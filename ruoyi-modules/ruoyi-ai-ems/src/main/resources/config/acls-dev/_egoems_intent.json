@@ -1,0 +1,1328 @@
+{
+  "dict_version": "1.0.1",
+  "last_updated": "2026-09-08",
+  "description": "基于EgoEMS 67个Keysteps构建的“意图字典（Intent Dictionary）”。每个二级intent均采用1:1映射到EgoEMS中的单个keystep_code，以便路由时直接落到keystep_candidates，并可与现有状态机/上下文共同做互斥守卫消歧。",
+  "layers": [
+    {
+      "layer_code": "GLOBAL_INTENT",
+      "layer_name": "全局通用意图层（EgoEMS 1~67对齐）",
+      "layer_description": "覆盖EgoEMS全部67个关键步骤：ABCs、病史采集、生命体征、卒中评估、12导联心电图、CPR、除颤、通气、转运。路由输出为keystep_candidates（每条intent确定到单个keystep_code）。",
+      "sub_domains": [
+        {
+          "sub_domain_name": "ABCs_and_Onsite_Assessment",
+          "domain_code": "SD_ABCS",
+          "sub_domain_description": "气道/呼吸/循环评估以及现场接近与基本反应评估相关步骤。",
+          "extraction_hint": "出现“接近/注意安全/看他/有没有反应/摸脉/看呼吸”等口语指令时，优先命中本域。",
+          "intents": [
+            {
+              "intent_code": "IA_001_approach_patient",
+              "act_type": "onsite_assessment",
+              "name_cn": "接近患者并评估现场安全",
+              "description_cn": "指令执行或确认接近患者，并评估现场安全。",
+              "keywords": ["接近", "走近", "安全", "现场", "评估", "看看现场安全"],
+              "pattern_hints": ["出现“接近/走近/安全/现场”"],
+              "examples": ["我先靠近看一下现场安全。", "走近患者并评估安全情况。"],
+              "standard_script": "接近患者并确认现场安全。",
+              "atom_actions": ["接近患者", "评估现场安全"],
+              "extraction": {
+                "method": "llm",
+                "target_params": ["process.environmentSafe"],
+                "rules": {},
+                "llm_prompt": "提取现场安全状态，输出'安全'或'不安全'。",
+                "override_instruction": "keystep_candidates=[\"approach_patient\"]"
+              }
+            },
+            {
+              "intent_code": "IA_002_check_responsiveness",
+              "act_type": "assessment",
+              "name_cn": "检查患者反应（对言语/刺激的反应）",
+              "description_cn": "指令执行或确认对患者进行反应检查。",
+              "keywords": ["叫他", "反应", "有没有反应", "刺激", "叫一叫", "看看能不能叫醒"],
+              "pattern_hints": ["出现“有没有反应/叫醒/刺激”"],
+              "examples": ["呼叫患者看看有没有反应。", "叫一下他，看有没有反应。"],
+              "standard_script": "检查患者对言语或物理刺激的反应。",
+              "atom_actions": ["询问或呼叫", "观察/判断反应"],
+              "extraction": {
+                "method": "llm",
+                "target_params": ["phys.consciousness"],
+                "rules": {},
+                "llm_prompt": "提取患者对言语或刺激有无反应，输出'有反应'或'无反应'。",
+                "override_instruction": "keystep_candidates=[\"check_responsiveness\"]"
+              }
+            },
+            {
+              "intent_code": "IA_003_check_pulse",
+              "act_type": "assessment",
+              "name_cn": "评估脉搏",
+              "description_cn": "指令执行或确认检查颈动脉或桡动脉搏动。",
+              "keywords": ["摸脉", "摸一下", "脉搏", "颈动脉", "桡动脉", "有没有脉"],
+              "pattern_hints": ["出现“摸脉/脉搏/有没有脉”"],
+              "examples": ["摸一下脉搏。", "检查有没有脉。"],
+              "standard_script": "检查患者的脉搏（颈动脉或桡动脉）。",
+              "atom_actions": ["定位脉搏点", "观察搏动"],
+              "extraction": {
+                "method": "llm",
+                "target_params": ["phys.hasPulse"],
+                "rules": {},
+                "llm_prompt": "提取有无脉搏，输出'有脉搏'或'无脉搏'。",
+                "override_instruction": "keystep_candidates=[\"check_pulse\"]"
+              }
+            },
+            {
+              "intent_code": "IA_004_check_breathing",
+              "act_type": "assessment",
+              "name_cn": "检查呼吸",
+              "description_cn": "指令执行或确认通过观察、听、感受来检查呼吸。",
+              "keywords": ["呼吸", "有没有呼吸", "看看胸口", "听", "感受", "气息"],
+              "pattern_hints": ["出现“有没有呼吸/听一听/看看胸廓”"],
+              "examples": ["看他有没有呼吸。", "听一听有没有呼吸气息。"],
+              "standard_script": "检查患者呼吸（观察、听、感受）。",
+              "atom_actions": ["观察胸廓", "听呼吸", "感受气流"],
+              "extraction": {
+                "method": "regex",
+                "target_params": ["phys.respiratoryRate"],
+                "rules": {
+                  "patterns": [
+                    "(?:RR|呼吸(?:频率|率)?|呼吸频率|respiratory(?: rate)?|breath(?:ing)?)(?:\\s*[:：])?\\s*(\\d+(?:\\.\\d+)?)\\s*(?:次/分|bpm|\\/min)?",
+                    "(\\d+(?:\\.\\d+)?)\\s*(?:次\\s*)?(?:每分|每分钟)"
+                  ]
+                },
+                "llm_prompt": "提取呼吸频率数值（次/分RR），只输出数字（允许小数）。若无则输出空字符串。",
+                "override_instruction": "keystep_candidates=[\"check_breathing\"]"
+              }
+            }
+          ]
+        },
+        {
+          "sub_domain_name": "Patient_History",
+          "domain_code": "SD_HISTORY",
+          "sub_domain_description": "患者病史采集与用药/抗凝/物质使用相关步骤。",
+          "extraction_hint": "出现“用药/抗凝/现病史/既往史/喝酒/吸毒/药物使用”等询问时命中本域。",
+          "intents": [
+            {
+              "intent_code": "IA_005_review_medications",
+              "act_type": "history_taking",
+              "name_cn": "回顾当前用药",
+              "description_cn": "指令执行或确认回顾患者当前用药情况。",
+              "keywords": ["用药", "吃药", "正在用", "目前用", "回顾用药"],
+              "pattern_hints": ["出现“用药/正在用/吃什么药/回顾用药”"],
+              "examples": ["他现在在吃什么药？", "回顾一下当前用药。"],
+              "standard_script": "回顾患者当前用药。",
+              "atom_actions": ["询问当前用药", "记录用药信息"],
+              "extraction": {
+                "method": "llm",
+                "target_params": ["clinical.medicationList"],
+                "rules": {},
+                "llm_prompt": "提取患者当前正在使用的药物名称列表，以逗号分隔。",
+                "override_instruction": "keystep_candidates=[\"review_medications\"]"
+              }
+            },
+            {
+              "intent_code": "IA_006_inquire_medication_anticoagulants",
+              "act_type": "history_taking",
+              "name_cn": "询问抗凝药物使用情况",
+              "description_cn": "指令执行或确认询问患者是否在使用抗凝药物。",
+              "keywords": ["抗凝", "华法林", "利伐沙班", "阿哌沙班", "正在用抗凝药"],
+              "pattern_hints": ["出现“抗凝/正在用抗凝/血液稀释药”"],
+              "examples": ["他有没有在用抗凝药？", "确认有没有用抗凝。"],
+              "standard_script": "询问患者抗凝药物使用情况。",
+              "atom_actions": ["询问抗凝用药", "确认是否在用"],
+              "extraction": {
+                "method": "llm",
+                "target_params": ["clinical.medicationList"],
+                "rules": {},
+                "llm_prompt": "提取抗凝药物使用情况，列出具体的抗凝药名称（如华法林、利伐沙班等），若无则输出'无'。",
+                "override_instruction": "keystep_candidates=[\"inquire_medication_anticoagulants\"]"
+              }
+            },
+            {
+              "intent_code": "IA_007_inquire_hpi_and_pmh",
+              "act_type": "history_taking",
+              "name_cn": "询问现病史和既往史",
+              "description_cn": "指令执行或确认询问现病史（HPI）与既往史（PMH）。",
+              "keywords": ["现病史", "既往史", "以前", "过去病史", "怎么开始", "发生了什么"],
+              "pattern_hints": ["出现“现病史/既往史/以前有什么病”"],
+              "examples": ["问一下现病史和既往史。", "现在哪儿不舒服？以前有什么病？"],
+              "standard_script": "询问现病史和既往史。",
+              "atom_actions": ["询问发病经过/现病史", "询问既往病史/重要疾病"],
+              "extraction": {
+                "method": "llm",
+                "target_params": ["clinical.pastMedicalHistory"],
+                "rules": {},
+                "llm_prompt": "提取现病史（发病经过、症状等）和既往史（既往重要疾病、手术等）信息。",
+                "override_instruction": "keystep_candidates=[\"inquire_hpi_and_pmh\"]"
+              }
+            },
+            {
+              "intent_code": "IA_008_inquire_substance_use",
+              "act_type": "history_taking",
+              "name_cn": "询问酒精或药物使用情况",
+              "description_cn": "指令执行或确认询问患者酒精/药物使用情况。",
+              "keywords": ["酒精", "喝酒", "药物", "用药", "毒品", "有没有吸", "最近用"],
+              "pattern_hints": ["出现“酒精/喝酒/药物/吸/毒品”"],
+              "examples": ["问一下有没有喝酒或用药。", "最近有没有使用酒精或药物？"],
+              "standard_script": "询问酒精或药物使用情况。",
+              "atom_actions": ["询问酒精使用", "询问药物/物质使用"],
+              "extraction": {
+                "method": "llm",
+                "target_params": ["clinical.medicationList"],
+                "rules": {},
+                "llm_prompt": "提取酒精或药物使用情况，包括种类、频率等。",
+                "override_instruction": "keystep_candidates=[\"inquire_substance_use\"]"
+              }
+            }
+          ]
+        },
+        {
+          "sub_domain_name": "Vital_Sign_Assessment",
+          "domain_code": "SD_VITALS",
+          "sub_domain_description": "生命体征评估：血压、心率、血氧、呼吸频率、血糖、瞳孔、皮肤、意识定向。",
+          "extraction_hint": "出现“血压/脉搏/血氧/呼吸频率/血糖/瞳孔/皮肤/清醒/定向力”等口语时命中本域。",
+          "intents": [
+            {
+              "intent_code": "IA_009_check_blood_pressure",
+              "act_type": "vitals_assessment",
+              "name_cn": "测量血压",
+              "description_cn": "指令执行或确认测量血压。",
+              "keywords": ["血压", "量血压", "收缩压", "舒张压", "测血压"],
+              "pattern_hints": ["出现“血压/量血压/测血压”"],
+              "examples": ["测一下血压。", "开始量血压。"],
+              "standard_script": "测量并记录血压。",
+              "atom_actions": ["测量血压", "记录数值"],
+              "extraction": {
+                "method": "regex",
+                "target_params": ["phys.systolicBp", "phys.diastolicBp"],
+                "rules": {
+                  "patterns": [
+                    "(?:BP|血压|动脉压)(?:\\s*[:：])?\\s*(\\d{2,3})\\s*[\\/\\-]\\s*(\\d{2,3})\\s*(?:mmHg)?",
+                    "收缩压\\s*(\\d{2,3})\\s*[,，、]?\\s*舒张压\\s*(\\d{2,3})",
+                    "(\\d{2,3})\\s*over\\s*(\\d{2,3})"
+                  ]
+                },
+                "llm_prompt": "提取血压的收缩压/舒张压（mmHg），输出两个数字，用'/'分隔：收缩压/舒张压；如无则输出空字符串。",
+                "override_instruction": "keystep_candidates=[\"check_blood_pressure\"]"
+              }
+            },
+            {
+              "intent_code": "IA_010_check_heart_rate",
+              "act_type": "vitals_assessment",
+              "name_cn": "检查心率",
+              "description_cn": "指令执行或确认检查心率/脉率。",
+              "keywords": ["心率", "脉率", "心跳", "多少次每分钟", "测心率"],
+              "pattern_hints": ["出现“心率/脉率/心跳/次每分钟”"],
+              "examples": ["测心率多少。", "检查脉率。"],
+              "standard_script": "检查患者心率（脉率）。",
+              "atom_actions": ["计数脉搏/心率", "记录心率"],
+              "extraction": {
+                "method": "regex",
+                "target_params": ["phys.heartRate"],
+                "rules": {
+                  "patterns": [
+                    "(?:HR|心率|脉率|心跳)(?:\\s*[:：])?\\s*(\\d{2,3})\\s*(?:次/分|bpm|\\/min)?",
+                    "(\\d{2,3})\\s*(?:次\\s*)?每分钟"
+                  ]
+                },
+                "llm_prompt": "提取心率数值，只输出数字（允许小数）。若无则输出空字符串。",
+                "override_instruction": "keystep_candidates=[\"check_heart_rate\"]"
+              }
+            },
+            {
+              "intent_code": "IA_011_check_oxygen_saturation",
+              "act_type": "vitals_assessment",
+              "name_cn": "测量血氧饱和度",
+              "description_cn": "指令执行或确认测量SpO2。",
+              "keywords": ["血氧", "血氧饱和度", "SpO2", "氧饱和度", "测血氧"],
+              "pattern_hints": ["出现“血氧/SpO2/氧饱和”"],
+              "examples": ["测一下血氧。", "看SpO2多少。"],
+              "standard_script": "测量血氧饱和度并记录结果。",
+              "atom_actions": ["获取血氧读数", "记录SpO2"],
+              "extraction": {
+                "method": "regex",
+                "target_params": ["phys.spo2"],
+                "rules": {
+                  "patterns": [
+                    "(?:SpO2|SPO2|氧饱和度|血氧)(?:\\s*[:：])?\\s*(\\d{2,3})\\s*%?",
+                    "(\\d{2,3})\\s*(?:百分比|percent)"
+                  ]
+                },
+                "llm_prompt": "提取血氧饱和度SpO2数值，只输出数字（允许小数）。若无则输出空字符串。",
+                "override_instruction": "keystep_candidates=[\"check_oxygen_saturation\"]"
+              }
+            },
+            {
+              "intent_code": "IA_012_check_respiratory_rate",
+              "act_type": "vitals_assessment",
+              "name_cn": "计算呼吸频率",
+              "description_cn": "指令执行或确认计算呼吸频率。",
+              "keywords": ["呼吸频率", "呼吸次数", "每分钟", "RR", "测呼吸"],
+              "pattern_hints": ["出现“呼吸频率/每分钟/呼吸次数”"],
+              "examples": ["数一下呼吸频率。", "呼吸每分钟多少？"],
+              "standard_script": "计算呼吸频率并记录。",
+              "atom_actions": ["计数呼吸次数", "记录呼吸频率"],
+              "extraction": {
+                "method": "regex",
+                "target_params": ["phys.respiratoryRate"],
+                "rules": {
+                  "patterns": [
+                    "(?:RR|呼吸(?:频率|率)?|呼吸频率|respiratory(?: rate)?|breath(?:ing)?)(?:\\s*[:：])?\\s*(\\d+(?:\\.\\d+)?)\\s*(?:次/分|bpm|\\/min)?",
+                    "(\\d+(?:\\.\\d+)?)\\s*(?:次\\s*)?(?:每分|每分钟)"
+                  ]
+                },
+                "llm_prompt": "提取呼吸频率数值（次/分RR），只输出数字（允许小数）。若无则输出空字符串。",
+                "override_instruction": "keystep_candidates=[\"check_respiratory_rate\"]"
+              }
+            },
+            {
+              "intent_code": "IA_013_prepare_glucometer_and_strip",
+              "act_type": "preparation",
+              "name_cn": "准备血糖仪和试纸",
+              "description_cn": "指令执行或确认准备血糖仪与试纸。",
+              "keywords": ["血糖仪", "试纸", "准备血糖", "拿血糖仪", "准备测血糖"],
+              "pattern_hints": ["出现“血糖仪/试纸/准备测血糖”"],
+              "examples": ["拿出血糖仪和试纸，准备测血糖。", "先准备血糖仪。"],
+              "standard_script": "准备血糖仪和试纸以进行测血糖。",
+              "atom_actions": ["取出血糖仪", "装好/取出试纸"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"prepare_glucometer_and_strip\"]"
+              }
+            },
+            {
+              "intent_code": "IA_014_read_and_record_glucose_level",
+              "act_type": "vitals_assessment",
+              "name_cn": "读取并记录血糖读数",
+              "description_cn": "指令执行或确认读取并记录血糖值。",
+              "keywords": ["血糖", "读数", "多少", "记录", "测出来", "血糖值"],
+              "pattern_hints": ["出现“测血糖/读出来/记录血糖/血糖多少”"],
+              "examples": ["读一下血糖多少，记下来。", "测血糖并记录数值。"],
+              "standard_script": "读取并记录血糖水平。",
+              "atom_actions": ["读取血糖仪结果", "记录血糖值"],
+              "extraction": {
+                "method": "regex",
+                "target_params": ["phys.bloodGlucose"],
+                "rules": {
+                  "patterns": [
+                    "(?:血糖|Glucose|BS|葡萄糖)(?:\\s*[:：])?\\s*(\\d+(?:\\.\\d+)?)\\s*(?:mg\\/dL|mmol\\/L|mmol)?",
+                    "(\\d+(?:\\.\\d+)?)\\s*(?:毫摩尔|毫克)"
+                  ]
+                },
+                "llm_prompt": "提取血糖数值，只输出数字（允许小数）。若无则输出空字符串。",
+                "override_instruction": "keystep_candidates=[\"read_and_record_glucose_level\"]"
+              }
+            },
+            {
+              "intent_code": "IA_015_check_perrl",
+              "act_type": "assessment",
+              "name_cn": "检查瞳孔对光反射（PERRL）",
+              "description_cn": "指令执行或确认检查瞳孔对光反射。",
+              "keywords": ["瞳孔", "对光反射", "PERRL", "看反应", "打一束光"],
+              "pattern_hints": ["出现“瞳孔/对光/打光/PERRL”"],
+              "examples": ["检查一下瞳孔对光反射。", "看PERRL。"],
+              "standard_script": "检查瞳孔对光反射。",
+              "atom_actions": ["观察瞳孔反应", "判定PERRL"],
+              "extraction": {
+                "method": "llm",
+                "target_params": ["phys.pupils"],
+                "rules": {},
+                "llm_prompt": "提取瞳孔对光反射状态，如'正常'、'迟钝'、'固定'等。",
+                "override_instruction": "keystep_candidates=[\"check_perrl\"]"
+              }
+            },
+            {
+              "intent_code": "IA_016_check_skin_condition",
+              "act_type": "assessment",
+              "name_cn": "评估皮肤情况（颜色/温度/湿度）",
+              "description_cn": "指令执行或确认评估皮肤颜色、温度和湿度。",
+              "keywords": ["皮肤", "颜色", "温度", "湿冷", "出汗", "发热", "评估皮肤"],
+              "pattern_hints": ["出现“皮肤/颜色/温度/湿度/出汗/冰冷”"],
+              "examples": ["看一下皮肤颜色和温度，有没有出汗。", "评估皮肤情况。"],
+              "standard_script": "评估皮肤颜色、温度和湿度。",
+              "atom_actions": ["观察皮肤颜色", "触摸判断温度", "观察湿度/出汗"],
+              "extraction": {
+                "method": "llm",
+                "target_params": ["phys.skinCondition"],
+                "rules": {},
+                "llm_prompt": "提取皮肤颜色、温度、湿度状况，如'苍白湿冷'、'潮红温暖'等。",
+                "override_instruction": "keystep_candidates=[\"check_skin_condition\"]"
+              }
+            },
+            {
+              "intent_code": "IA_017_check_ao",
+              "act_type": "assessment",
+              "name_cn": "检查意识与定向力（A&O）",
+              "description_cn": "指令执行或确认意识清醒程度与定向力。",
+              "keywords": ["清醒", "意识", "定向力", "A&O", "知道吗", "人/地/时"],
+              "pattern_hints": ["出现“A&O/定向/清醒/人地时”"],
+              "examples": ["看他A&O到什么程度。", "问问人地时，评估定向力。"],
+              "standard_script": "检查意识与定向力（A&O）。",
+              "atom_actions": ["询问定向信息", "判断意识状态"],
+              "extraction": {
+                "method": "llm",
+                "target_params": ["phys.consciousness"],
+                "rules": {},
+                "llm_prompt": "提取意识清醒程度和定向力（人、地、时），输出如'清醒，定向力完整'或'嗜睡，定向力障碍'。",
+                "override_instruction": "keystep_candidates=[\"check_a&o\"]"
+              }
+            }
+          ]
+        },
+        {
+          "sub_domain_name": "Stroke_Assessment",
+          "domain_code": "SD_STROKE",
+          "sub_domain_description": "卒中神经缺损评估：握力、面部下垂、手臂下垂、语言异常、平衡协调、LKW、视野缺损、失语、忽略。",
+          "extraction_hint": "出现“卒中/中风/FAST/微笑/举手/重复短语/握力/视力/失语/忽略/LKW”优先本域。",
+          "intents": [
+            {
+              "intent_code": "IA_018_check_grip_strength",
+              "act_type": "stroke_assessment",
+              "name_cn": "检查双侧握力是否对称",
+              "description_cn": "指令执行或确认检查双侧握力对称性。",
+              "keywords": ["握力", "捏紧", "左右对称", "双手握", "握拳"],
+              "pattern_hints": ["出现“握力/捏紧/握拳/左右”"],
+              "examples": ["让他握拳比较握力对称不对称。", "检查双侧握力。"],
+              "standard_script": "检查双侧握力是否对称。",
+              "atom_actions": ["指导握拳/捏紧", "观察左右对称性"],
+              "extraction": {
+                "method": "llm",
+                "target_params": ["process.deviationReason"],
+                "rules": {},
+                "llm_prompt": "提取神经检查中的握力对称性描述。若能提取，输出单行字符串且仅包含：grip=<描述>（例如：grip=对称 / grip=左侧减弱）。若未提及则输出空字符串。",
+                "override_instruction": "keystep_candidates=[\"check_grip_strength\"]"
+              }
+            },
+            {
+              "intent_code": "IA_019_face_droop_check",
+              "act_type": "stroke_assessment",
+              "name_cn": "面部下垂检查（让患者微笑）",
+              "description_cn": "指令执行或确认让患者微笑以评估面部对称性。",
+              "keywords": ["微笑", "面部", "嘴角", "下垂", "左右对称"],
+              "pattern_hints": ["出现“微笑/嘴角/面部下垂/FAST”"],
+              "examples": ["让他微笑，看看嘴角有没有下垂。", "检查面部对称性。"],
+              "standard_script": "让患者微笑以检查面部对称性。",
+              "atom_actions": ["指导微笑", "观察面部左右"],
+              "extraction": {
+                "method": "llm",
+                "target_params": ["process.deviationReason"],
+                "rules": {},
+                "llm_prompt": "提取神经检查中的面部下垂描述。若能提取，输出单行字符串且仅包含：face_droop=<描述>（例如：face_droop=嘴角左歪 / face_droop=对称）。若未提及则输出空字符串。",
+                "override_instruction": "keystep_candidates=[\"face_droop_check\"]"
+              }
+            },
+            {
+              "intent_code": "IA_020_arm_drift_check",
+              "act_type": "stroke_assessment",
+              "name_cn": "手臂下垂检查（举起双臂观察）",
+              "description_cn": "指令执行或确认让患者举起双臂并观察是否下垂。",
+              "keywords": ["举手", "举臂", "下垂", "手臂漂移", "举着不动"],
+              "pattern_hints": ["出现“举起双臂/保持举着/下垂”"],
+              "examples": ["让他举起双手，观察有没有下垂。", "让双臂抬起来保持几秒。"],
+              "standard_script": "让患者举起双臂并观察是否下垂。",
+              "atom_actions": ["指导举臂", "观察漂移/下垂"],
+              "extraction": {
+                "method": "llm",
+                "target_params": ["process.deviationReason"],
+                "rules": {},
+                "llm_prompt": "提取神经检查中的手臂下垂/漂移描述。若能提取，输出单行字符串且仅包含：arm_drift=<描述>（例如：arm_drift=右臂下垂 / arm_drift=无漂移）。若未提及则输出空字符串。",
+                "override_instruction": "keystep_candidates=[\"arm_drift_check\"]"
+              }
+            },
+            {
+              "intent_code": "IA_021_speech_abnormality_check",
+              "act_type": "stroke_assessment",
+              "name_cn": "语言异常检查（让患者重复短语）",
+              "description_cn": "指令执行或确认让患者重复短语以评估语言能力。",
+              "keywords": ["说话", "重复", "短语", "语言", "含糊", "听不懂"],
+              "pattern_hints": ["出现“重复短语/让他重复/说话不清/语言异常”"],
+              "examples": ["让他重复一句话，看看有没有语言问题。", "检查语言是否异常。"],
+              "standard_script": "让患者重复短语以评估语言能力。",
+              "atom_actions": ["指导复述", "评估语言输出"],
+              "extraction": {
+                "method": "llm",
+                "target_params": ["process.deviationReason"],
+                "rules": {},
+                "llm_prompt": "提取神经检查中的语言异常描述。若能提取，输出单行字符串且仅包含：speech=<描述>（例如：speech=含糊不清 / speech=重复困难）。若未提及则输出空字符串。",
+                "override_instruction": "keystep_candidates=[\"speech_abnormality_check\"]"
+              }
+            },
+            {
+              "intent_code": "IA_022_assess_balance_and_coordination",
+              "act_type": "stroke_assessment",
+              "name_cn": "评估平衡和协调能力",
+              "description_cn": "指令执行或确认评估平衡与移动/协调能力。",
+              "keywords": ["平衡", "协调", "走路", "站稳", "移动"],
+              "pattern_hints": ["出现“平衡/协调/走路/站稳”"],
+              "examples": ["评估一下平衡和协调能力。", "看看他站得稳不稳。"],
+              "standard_script": "评估平衡和移动/协调能力。",
+              "atom_actions": ["观察平衡", "观察协调动作"],
+              "extraction": {
+                "method": "llm",
+                "target_params": ["process.deviationReason"],
+                "rules": {},
+                "llm_prompt": "提取神经检查中的平衡与协调能力描述。若能提取，输出单行字符串且仅包含：balance_coord=<描述>（例如：balance_coord=站立不稳 / balance_coord=协调正常）。若未提及则输出空字符串。",
+                "override_instruction": "keystep_candidates=[\"assess_balance_and_coordination\"]"
+              }
+            },
+            {
+              "intent_code": "IA_023_document_lkw_time",
+              "act_type": "history_taking",
+              "name_cn": "记录最后一次正常知晓时间（LKW）",
+              "description_cn": "指令执行或确认记录LKW（最后一次正常知晓时间）。",
+              "keywords": ["LKW", "最后一次正常", "什么时候还正常", "发作时间", "记录时间"],
+              "pattern_hints": ["出现“LKW/最后一次正常/什么时候还好”"],
+              "examples": ["记录LKW时间。", "最后一次正常知晓是何时？记下来。"],
+              "standard_script": "记录最后一次正常知晓时间（LKW）。",
+              "atom_actions": ["询问LKW", "记录时间"],
+              "extraction": {
+                "method": "llm",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "提取最后一次正常知晓时间（LKW），格式如'2026-09-08 10:30'。",
+                "override_instruction": "keystep_candidates=[\"document_lkw_time\"]"
+              }
+            },
+            {
+              "intent_code": "IA_024_check_vision_deficits",
+              "act_type": "stroke_assessment",
+              "name_cn": "检查视野缺损",
+              "description_cn": "指令执行或确认询问视力变化或视野丧失情况。",
+              "keywords": ["视力", "看不见", "视野", "视线", "变化", "缺损"],
+              "pattern_hints": ["出现“视力/看不清/视野缺失/失明”"],
+              "examples": ["问一下视力有没有变化。", "有没有视野丧失？"],
+              "standard_script": "检查视力变化或视野丧失情况。",
+              "atom_actions": ["询问视野/视力变化", "记录缺损情况"],
+              "extraction": {
+                "method": "llm",
+                "target_params": ["process.deviationReason"],
+                "rules": {},
+                "llm_prompt": "提取神经检查中的视野缺损描述。若能提取，输出单行字符串且仅包含：vision_deficit=<描述>（例如：vision_deficit=左眼视野缺失 / vision_deficit=无缺损）。若未提及则输出空字符串。",
+                "override_instruction": "keystep_candidates=[\"check_vision_deficits\"]"
+              }
+            },
+            {
+              "intent_code": "IA_025_evaluate_aphasia",
+              "act_type": "stroke_assessment",
+              "name_cn": "评估失语症（失语）",
+              "description_cn": "指令执行或确认评估失语症情况。",
+              "keywords": ["失语", "说不清", "听不懂", "语言理解", "复述困难"],
+              "pattern_hints": ["出现“失语/听不懂/说不清”"],
+              "examples": ["评估一下失语症状。", "看看他有没有语言理解或表达困难。"],
+              "standard_script": "评估失语症。",
+              "atom_actions": ["观察语言理解/表达", "记录失语特征"],
+              "extraction": {
+                "method": "llm",
+                "target_params": ["process.deviationReason"],
+                "rules": {},
+                "llm_prompt": "提取神经检查中的失语症表现描述。若能提取，输出单行字符串且仅包含：aphasia=<描述>（例如：aphasia=表达性失语 / aphasia=理解障碍）。若未提及则输出空字符串。",
+                "override_instruction": "keystep_candidates=[\"evaluate_aphasia\"]"
+              }
+            },
+            {
+              "intent_code": "IA_026_assess_neglect_signs",
+              "act_type": "stroke_assessment",
+              "name_cn": "检查忽略体征（单侧忽略）",
+              "description_cn": "指令执行或确认检查单侧忽略体征。",
+              "keywords": ["忽略", "单侧", "看不到", "注意不到", "不理会"],
+              "pattern_hints": ["出现“忽略/单侧忽视/注意不到”"],
+              "examples": ["检查有没有单侧忽略。", "看看他有没有忽略一侧。"],
+              "standard_script": "检查单侧忽略体征。",
+              "atom_actions": ["提示注意/刺激一侧", "观察是否忽略"],
+              "extraction": {
+                "method": "llm",
+                "target_params": ["process.deviationReason"],
+                "rules": {},
+                "llm_prompt": "提取神经检查中的单侧忽略体征描述。若能提取，输出单行字符串且仅包含：neglect=<描述>（例如：neglect=左侧忽略 / neglect=无忽略）。若未提及则输出空字符串。",
+                "override_instruction": "keystep_candidates=[\"assess_neglect_signs\"]"
+              }
+            }
+          ]
+        },
+        {
+          "sub_domain_name": "12_Lead_ECG",
+          "domain_code": "SD_ECG12",
+          "sub_domain_description": "12导联心电图采集相关步骤。",
+          "extraction_hint": "出现“心电图/12导联/电极/剃毛/开机/连接/记录/解释/报告结果”等口语指令优先本域。",
+          "intents": [
+            {
+              "intent_code": "IA_027_explain_procedure",
+              "act_type": "ecg_setup",
+              "name_cn": "向患者解释心电图操作",
+              "description_cn": "指令执行或确认向患者解释心电图操作。",
+              "keywords": ["解释", "说明", "心电图", "告诉他", "操作", "要做什么"],
+              "pattern_hints": ["出现“解释/说明/心电图操作”"],
+              "examples": ["我先跟你解释一下做心电图。", "向患者说明心电图检查流程。"],
+              "standard_script": "向患者解释心电图操作。",
+              "atom_actions": ["对患者进行解释说明", "建立配合"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"explain_procedure\"]"
+              }
+            },
+            {
+              "intent_code": "IA_028_shave_patient",
+              "act_type": "ecg_setup",
+              "name_cn": "剃除皮肤以利于电极接触",
+              "description_cn": "指令执行或确认剃除皮肤以改善电极接触。",
+              "keywords": ["剃毛", "剃除", "皮肤处理", "刮一刮", "电极接触"],
+              "pattern_hints": ["出现“剃/刮/电极接触不良/处理皮肤”"],
+              "examples": ["需要的话先刮一下皮肤，方便贴电极。", "剃除皮肤以利于电极接触。"],
+              "standard_script": "剃除皮肤以利于电极接触。",
+              "atom_actions": ["剃除/刮除毛发", "准备贴电极"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"shave_patient\"]"
+              }
+            },
+            {
+              "intent_code": "IA_029_place_left_arm_lead",
+              "act_type": "ecg_setup",
+              "name_cn": "连接左臂电极",
+              "description_cn": "指令执行或确认将左臂导联电极连接到电极点。",
+              "keywords": ["左臂", "电极", "贴", "连接", "导联"],
+              "pattern_hints": ["出现“左臂电极/左手臂/贴左臂”"],
+              "examples": ["把左臂电极贴上并连接。", "连接左臂导联。"],
+              "standard_script": "连接左臂电极。",
+              "atom_actions": ["定位左臂电极位置", "贴上并连接"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"place_left_arm_lead\"]"
+              }
+            },
+            {
+              "intent_code": "IA_030_place_right_arm_lead",
+              "act_type": "ecg_setup",
+              "name_cn": "连接右臂电极",
+              "description_cn": "指令执行或确认将右臂导联电极连接到电极点。",
+              "keywords": ["右臂", "电极", "贴", "连接", "导联"],
+              "pattern_hints": ["出现“右臂电极/右手臂/贴右臂”"],
+              "examples": ["右臂电极贴上。", "连接右臂导联。"],
+              "standard_script": "连接右臂电极。",
+              "atom_actions": ["定位右臂电极位置", "贴上并连接"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"place_right_arm_lead\"]"
+              }
+            },
+            {
+              "intent_code": "IA_031_place_left_leg_lead",
+              "act_type": "ecg_setup",
+              "name_cn": "连接左腿电极",
+              "description_cn": "指令执行或确认将左腿导联电极连接到电极点。",
+              "keywords": ["左腿", "电极", "贴", "连接", "导联"],
+              "pattern_hints": ["出现“左腿电极/左小腿/贴左腿”"],
+              "examples": ["贴左腿电极。", "连接左腿导联。"],
+              "standard_script": "连接左腿电极。",
+              "atom_actions": ["定位左腿电极位置", "贴上并连接"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"place_left_leg_lead\"]"
+              }
+            },
+            {
+              "intent_code": "IA_032_place_right_leg_lead",
+              "act_type": "ecg_setup",
+              "name_cn": "连接右腿电极",
+              "description_cn": "指令执行或确认将右腿导联电极连接到电极点。",
+              "keywords": ["右腿", "电极", "贴", "连接", "导联"],
+              "pattern_hints": ["出现“右腿电极/右小腿/贴右腿”"],
+              "examples": ["贴右腿电极并连接。", "连接右腿导联。"],
+              "standard_script": "连接右腿电极。",
+              "atom_actions": ["定位右腿电极位置", "贴上并连接"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"place_right_leg_lead\"]"
+              }
+            },
+            {
+              "intent_code": "IA_033_place_v1_lead",
+              "act_type": "ecg_setup",
+              "name_cn": "放置V1导联电极",
+              "description_cn": "指令执行或确认将V1置于指定解剖位置。",
+              "keywords": ["V1", "导联", "电极", "第4肋间", "胸骨右缘"],
+              "pattern_hints": ["出现“V1/第4肋间/胸骨右缘”"],
+              "examples": ["V1放到第4肋间胸骨右缘。", "贴V1导联。"],
+              "standard_script": "将V1置于第4肋间胸骨右缘。",
+              "atom_actions": ["定位V1解剖点", "贴上V1电极"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"place_v1_lead\"]"
+              }
+            },
+            {
+              "intent_code": "IA_034_place_v2_lead",
+              "act_type": "ecg_setup",
+              "name_cn": "放置V2导联电极",
+              "description_cn": "指令执行或确认将V2置于指定解剖位置。",
+              "keywords": ["V2", "导联", "电极", "第4肋间", "胸骨左缘"],
+              "pattern_hints": ["出现“V2/第4肋间/胸骨左缘”"],
+              "examples": ["V2放到第4肋间胸骨左缘。", "贴V2导联。"],
+              "standard_script": "将V2置于第4肋间胸骨左缘。",
+              "atom_actions": ["定位V2解剖点", "贴上V2电极"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"place_v2_lead\"]"
+              }
+            },
+            {
+              "intent_code": "IA_035_place_v3_lead",
+              "act_type": "ecg_setup",
+              "name_cn": "放置V3导联电极",
+              "description_cn": "指令执行或确认将V3置于V2与V4之间。",
+              "keywords": ["V3", "导联", "电极", "V2和V4之间"],
+              "pattern_hints": ["出现“V3/V2和V4之间”"],
+              "examples": ["V3放在V2和V4之间的位置。", "贴V3导联。"],
+              "standard_script": "将V3置于V2和V4之间。",
+              "atom_actions": ["定位V3点（V2与V4间）", "贴上V3电极"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"place_v3_lead\"]"
+              }
+            },
+            {
+              "intent_code": "IA_036_place_v4_lead",
+              "act_type": "ecg_setup",
+              "name_cn": "放置V4导联电极",
+              "description_cn": "指令执行或确认将V4置于指定解剖位置。",
+              "keywords": ["V4", "导联", "电极", "第5肋间", "锁骨中线"],
+              "pattern_hints": ["出现“V4/第5肋间/锁骨中线”"],
+              "examples": ["V4放到第5肋间锁骨中线。", "贴V4导联。"],
+              "standard_script": "将V4置于第5肋间锁骨中线。",
+              "atom_actions": ["定位V4解剖点", "贴上V4电极"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"place_v4_lead\"]"
+              }
+            },
+            {
+              "intent_code": "IA_037_place_v5_lead",
+              "act_type": "ecg_setup",
+              "name_cn": "放置V5导联电极",
+              "description_cn": "指令执行或确认将V5置于腋前线。",
+              "keywords": ["V5", "导联", "电极", "腋前线"],
+              "pattern_hints": ["出现“V5/腋前线”"],
+              "examples": ["V5贴在腋前线。", "放置V5导联。"],
+              "standard_script": "将V5置于腋前线。",
+              "atom_actions": ["定位V5解剖点", "贴上V5电极"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"place_v5_lead\"]"
+              }
+            },
+            {
+              "intent_code": "IA_038_place_v6_lead",
+              "act_type": "ecg_setup",
+              "name_cn": "放置V6导联电极",
+              "description_cn": "指令执行或确认将V6置于腋中线。",
+              "keywords": ["V6", "导联", "电极", "腋中线"],
+              "pattern_hints": ["出现“V6/腋中线”"],
+              "examples": ["V6放到腋中线。", "贴V6导联。"],
+              "standard_script": "将V6置于腋中线。",
+              "atom_actions": ["定位V6解剖点", "贴上V6电极"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"place_v6_lead\"]"
+              }
+            },
+            {
+              "intent_code": "IA_039_request_patient_to_not_move",
+              "act_type": "ecg_setup",
+              "name_cn": "要求患者在记录期间保持不动",
+              "description_cn": "指令执行或确认在心电图采集期间要求患者保持不动。",
+              "keywords": ["别动", "保持不动", "不要动", "记录期间", "心电图采集不动"],
+              "pattern_hints": ["出现“别动/保持不动/不要动”且上下文为心电图采集"],
+              "examples": ["记录的时候不要动。", "心电图期间保持不动。"],
+              "standard_script": "要求患者在记录期间保持不动。",
+              "atom_actions": ["对患者发出静止指令", "减少运动伪差"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"request_patient_to_not_move\"]"
+              }
+            },
+            {
+              "intent_code": "IA_040_turn_on_ecg",
+              "act_type": "ecg_setup",
+              "name_cn": "开启心电图机",
+              "description_cn": "指令执行或确认打开心电图设备电源并进入采集状态。",
+              "keywords": ["开机", "打开心电图机", "心电图机", "启动", "打开电源"],
+              "pattern_hints": ["出现“开机/启动/打开心电图机”"],
+              "examples": ["打开心电图机。", "开机开始采集。"],
+              "standard_script": "开启心电图机。",
+              "atom_actions": ["开机", "准备采集"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"turn_on_ecg\"]"
+              }
+            },
+            {
+              "intent_code": "IA_041_connect_leads_to_ecg",
+              "act_type": "ecg_setup",
+              "name_cn": "将导联连接到心电图机",
+              "description_cn": "指令执行或确认将导联电极连接到心电图机。",
+              "keywords": ["连接", "导联线", "连上", "接到心电图机"],
+              "pattern_hints": ["出现“连接导联/连上机器/接到心电图机”"],
+              "examples": ["把导联线连到心电图机上。", "连接好导联。"],
+              "standard_script": "将导联连接到心电图机。",
+              "atom_actions": ["连接线缆", "确认连接状态"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"connect_leads_to_ecg\"]"
+              }
+            },
+            {
+              "intent_code": "IA_042_ask_patient_age_sex",
+              "act_type": "ecg_setup",
+              "name_cn": "确认患者年龄和性别",
+              "description_cn": "指令执行或确认输入/询问患者年龄与性别。",
+              "keywords": ["年龄", "性别", "男/女", "确认", "填信息"],
+              "pattern_hints": ["出现“年龄/性别”"],
+              "examples": ["问一下患者年龄和性别。", "确认男女性别和年龄。"],
+              "standard_script": "确认患者年龄和性别。",
+              "atom_actions": ["询问年龄", "询问性别", "准备输入"],
+              "extraction": {
+                "method": "llm",
+                "target_params": ["clinical.age", "clinical.gender"],
+                "rules": {},
+                "llm_prompt": "提取患者的年龄（数字）和性别（男/女）。",
+                "override_instruction": "keystep_candidates=[\"ask_patient_age_sex\"]"
+              }
+            },
+            {
+              "intent_code": "IA_043_obtain_ecg_recording",
+              "act_type": "ecg_execution",
+              "name_cn": "记录心电图",
+              "description_cn": "指令执行或确认采集/记录心电图数据。",
+              "keywords": ["记录", "采集", "心电图", "开始记录", "拍下来"],
+              "pattern_hints": ["出现“记录心电图/采集/开始采集/获取心电图”"],
+              "examples": ["开始记录心电图。", "采集心电图并保存。"],
+              "standard_script": "记录心电图。",
+              "atom_actions": ["开始采集", "保存记录"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"obtain_ecg_recording\"]"
+              }
+            },
+            {
+              "intent_code": "IA_044_interpret_and_report",
+              "act_type": "ecg_interpretation",
+              "name_cn": "审阅并报告心电图结果",
+              "description_cn": "指令执行或确认审阅并报告心电图结果。",
+              "keywords": ["看结果", "解释", "报告", "心电图结果", "判读", "读出来"],
+              "pattern_hints": ["出现“报告结果/判读/读心电图”"],
+              "examples": ["审阅心电图并报告结果。", "看一下心电图判读并说出来。"],
+              "standard_script": "审阅并报告心电图结果。",
+              "atom_actions": ["判读心电图", "向团队报告结果"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"interpret_and_report\"]"
+              }
+            }
+          ]
+        },
+        {
+          "sub_domain_name": "CPR",
+          "domain_code": "SD_CPR",
+          "sub_domain_description": "心肺复苏相关关键步骤：反应/脉搏/呼吸检查与胸外按压，以及重新评估。",
+          "extraction_hint": "出现“按压/胸外按压/不要停/恢复按压/重新评估/再次检查呼吸/脉搏/反应”等指令优先本域。",
+          "intents": [
+            {
+              "intent_code": "IA_045_check_responsiveness_cpr",
+              "act_type": "cpr_assessment",
+              "name_cn": "CPR中检查患者反应",
+              "description_cn": "在CPR评估中检查患者反应。",
+              "keywords": ["检查反应", "有没有反应", "叫一下", "反应如何"],
+              "pattern_hints": ["出现“CPR时检查反应/叫一下/有没有反应”"],
+              "examples": ["按压暂停，检查反应。", "看看有没有反应。"],
+              "standard_script": "重新检查患者反应。",
+              "atom_actions": ["暂停评估反应", "记录评估结果"],
+              "extraction": {
+                "method": "llm",
+                "target_params": ["phys.consciousness"],
+                "rules": {},
+                "llm_prompt": "CPR中检查患者反应，输出'有反应'或'无反应'。",
+                "override_instruction": "keystep_candidates=[\"check_responsiveness\"]"
+              }
+            },
+            {
+              "intent_code": "IA_046_check_pulse_cpr",
+              "act_type": "cpr_assessment",
+              "name_cn": "CPR中检查脉搏",
+              "description_cn": "在CPR评估中检查脉搏。",
+              "keywords": ["摸脉", "检查脉搏", "有没有脉", "脉动"],
+              "pattern_hints": ["出现“按压暂停，摸脉/检查脉搏”"],
+              "examples": ["停一下按压，检查脉搏。", "摸一下，看有没有脉。"],
+              "standard_script": "检查脉搏。",
+              "atom_actions": ["暂停评估脉搏", "记录判断"],
+              "extraction": {
+                "method": "llm",
+                "target_params": ["phys.hasPulse"],
+                "rules": {},
+                "llm_prompt": "CPR中检查脉搏，输出'有脉搏'或'无脉搏'。",
+                "override_instruction": "keystep_candidates=[\"check_pulse\"]"
+              }
+            },
+            {
+              "intent_code": "IA_047_check_breathing_cpr",
+              "act_type": "cpr_assessment",
+              "name_cn": "CPR中检查呼吸",
+              "description_cn": "在CPR评估中检查呼吸。",
+              "keywords": ["检查呼吸", "有没有呼吸", "看呼吸", "听呼吸"],
+              "pattern_hints": ["出现“停一下按压，检查呼吸”"],
+              "examples": ["停一下，检查有没有呼吸。", "看看呼吸情况。"],
+              "standard_script": "检查呼吸。",
+              "atom_actions": ["暂停评估呼吸", "记录判断"],
+              "extraction": {
+                "method": "regex",
+                "target_params": ["phys.respiratoryRate"],
+                "rules": {
+                  "patterns": [
+                    "(?:RR|呼吸(?:频率|率)?|呼吸频率|respiratory(?: rate)?|breath(?:ing)?)(?:\\s*[:：])?\\s*(\\d+(?:\\.\\d+)?)\\s*(?:次/分|bpm|\\/min)?",
+                    "(\\d+(?:\\.\\d+)?)\\s*(?:次\\s*)?(?:每分|每分钟)"
+                  ]
+                },
+                "llm_prompt": "CPR中提取呼吸频率数值（次/分RR），只输出数字（允许小数）。若无则输出空字符串。",
+                "override_instruction": "keystep_candidates=[\"check_breathing\"]"
+              }
+            },
+            {
+              "intent_code": "IA_048_chest_compressions",
+              "act_type": "cpr_execution",
+              "name_cn": "胸外按压（以合适频率与深度进行）",
+              "description_cn": "指令执行或确认以正确频率与深度进行胸外按压。",
+              "keywords": ["按压", "胸外按压", "深一点", "快一点", "频率", "深度", "不要停"],
+              "pattern_hints": ["出现“按压/胸外按压/不要停/深一点/快一点”"],
+              "examples": ["继续胸外按压，按得更深一点。", "不要停按压。"],
+              "standard_script": "以正确的频率和深度进行胸外按压。",
+              "atom_actions": ["执行胸外按压", "维持频率/深度质量"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"chest_compressions\"]"
+              }
+            },
+            {
+              "intent_code": "IA_049_assess_patient",
+              "act_type": "cpr_reassessment",
+              "name_cn": "重新评估患者状况",
+              "description_cn": "指令执行或确认重新评估患者状况。",
+              "keywords": ["重新评估", "再评估", "检查患者", "评估一下", "看看情况"],
+              "pattern_hints": ["出现“重新评估/再评估/检查患者”"],
+              "examples": ["重新评估一下患者情况。", "评估完再决定下一步。"],
+              "standard_script": "重新评估患者状况。",
+              "atom_actions": ["暂停评估/检查", "汇总评估结果"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"assess_patient\"]"
+              }
+            }
+          ]
+        },
+        {
+          "sub_domain_name": "Defibrillation_AED",
+          "domain_code": "SD_AED",
+          "sub_domain_description": "除颤/AED相关关键步骤：请求AED、呼叫协助、开机准备、贴电极、分析清场、清场、实施电击。",
+          "extraction_hint": "出现“AED/除颤/电击/贴电极/开机/清场/让开/不要碰/分析心律/按下电击”等口语指令优先本域。",
+          "intents": [
+            {
+              "intent_code": "IA_050_request_aed",
+              "act_type": "aed_request",
+              "name_cn": "尽早请求AED",
+              "description_cn": "指令执行或确认尽早请求AED设备。",
+              "keywords": ["要AED", "拿AED", "请求AED", "尽快找AED", "AED在哪"],
+              "pattern_hints": ["出现“请求AED/拿AED/找AED”"],
+              "examples": ["赶紧拿AED来。", "尽早请求AED。"],
+              "standard_script": "尽早请求AED。",
+              "atom_actions": ["发出请求", "定位/获取AED"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"request_aed\"]"
+              }
+            },
+            {
+              "intent_code": "IA_051_request_assistance",
+              "act_type": "team_request",
+              "name_cn": "呼叫旁观者或团队协助",
+              "description_cn": "指令执行或确认呼叫协助人员。",
+              "keywords": ["帮忙", "需要人", "叫人", "协助", "旁观者"],
+              "pattern_hints": ["出现“叫人/协助/帮忙/需要人”"],
+              "examples": ["叫旁边的人来帮忙。", "需要团队协助，马上叫人。"],
+              "standard_script": "呼叫旁观者或团队协助。",
+              "atom_actions": ["请求协助", "组织分工"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"request_assistance\"]"
+              }
+            },
+            {
+              "intent_code": "IA_052_turn_on_aed",
+              "act_type": "aed_setup",
+              "name_cn": "开启AED并准备使用",
+              "description_cn": "指令执行或确认开机AED并进入准备状态。",
+              "keywords": ["开机AED", "打开AED", "开启除颤器", "准备使用"],
+              "pattern_hints": ["出现“开机/启动AED/除颤器”"],
+              "examples": ["开机AED，准备使用。", "打开除颤器。"],
+              "standard_script": "开启AED并准备使用。",
+              "atom_actions": ["开机", "进入准备状态"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"turn_on_aed\"]"
+              }
+            },
+            {
+              "intent_code": "IA_053_attach_defib_pads",
+              "act_type": "aed_setup",
+              "name_cn": "将除颤电极片正确贴上（裸露胸部）",
+              "description_cn": "指令执行或确认将电极片正确贴在裸露胸部。",
+              "keywords": ["贴电极片", "电极", "贴上", "裸露胸部", "除颤贴片"],
+              "pattern_hints": ["出现“贴电极/电极片/除颤贴片/贴上”"],
+              "examples": ["把电极片贴在胸部。", "贴好除颤电极片。"],
+              "standard_script": "将电极片正确贴在裸露的胸部。",
+              "atom_actions": ["定位电极位置", "贴上电极片"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"attach_defib_pads\"]"
+              }
+            },
+            {
+              "intent_code": "IA_054_clear_for_analysis",
+              "act_type": "aed_safety",
+              "name_cn": "分析心律清场（无人接触患者）",
+              "description_cn": "指令执行或确认确保分析心律期间无人接触患者。",
+              "keywords": ["清场", "不要碰", "别碰", "离开", "分析中"],
+              "pattern_hints": ["出现“分析/无人接触/不要碰/清场”且上下文为AED分析"],
+              "examples": ["分析心律期间不要碰患者。", "清场，谁都别碰。"],
+              "standard_script": "确保心律分析期间无人接触患者。",
+              "atom_actions": ["发出不接触指令", "组织后退"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"clear_for_analysis\"]"
+              }
+            },
+            {
+              "intent_code": "IA_055_clear_for_shock",
+              "act_type": "aed_safety",
+              "name_cn": "电击前清场（确认所有人离开）",
+              "description_cn": "指令执行或确认电击前所有人员离开并停止接触患者。",
+              "keywords": ["电击前", "清场", "不要碰", "让开", "所有人离开", "别碰他"],
+              "pattern_hints": ["出现“电击/准备电击/按电击/清场/不要碰/让开”"],
+              "examples": ["电击前清场，所有人离开。", "不要碰他，我要电击了。"],
+              "standard_script": "确认所有人已离开后再电击。",
+              "atom_actions": ["确认清场", "执行安全提醒"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"clear_for_shock\"]"
+              }
+            },
+            {
+              "intent_code": "IA_056_administer_shock_aed",
+              "act_type": "aed_execution",
+              "name_cn": "实施电击（AED建议时电击）",
+              "description_cn": "指令执行或确认当AED建议电击时实施电击。",
+              "keywords": ["电击", "放电", "按下电击", "按电击键", "执行电击", "放电"],
+              "pattern_hints": ["出现“按下/放电/电击/执行电击”且通常包含AED建议或电击阶段上下文"],
+              "examples": ["按下电击键，实施电击。", "AED提示电击，马上放电。"],
+              "standard_script": "如AED建议则实施电击。",
+              "atom_actions": ["执行电击", "确认电击完成"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"administer_shock_aed\"]"
+              }
+            }
+          ]
+        },
+        {
+          "sub_domain_name": "Ventilation",
+          "domain_code": "SD_VENT",
+          "sub_domain_description": "通气/气道管理：打开气道、放置球囊面罩、通气实施、必要吸引清理、插入鼻咽通气管。",
+          "extraction_hint": "出现“打开气道/抬颏/球囊面罩/吹气/通气/吸痰/吸引/插NPA/鼻咽通气管”优先本域。",
+          "intents": [
+            {
+              "intent_code": "IA_057_open_airway",
+              "act_type": "airway_execution",
+              "name_cn": "打开气道（如下颌托举/抬颏后仰）",
+              "description_cn": "指令执行或确认进行气道开放技术。",
+              "keywords": ["打开气道", "抬颏", "后仰", "下颌托举", "保持通畅"],
+              "pattern_hints": ["出现“打开气道/抬颏/后仰/下颌托举”"],
+              "examples": ["抬颏后仰，打开气道。", "打开气道并保持通畅。"],
+              "standard_script": "使用气道技术（如下颌托举/仰头抬颏）。",
+              "atom_actions": ["气道体位调整", "确认气道开放"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"open_airway\"]"
+              }
+            },
+            {
+              "intent_code": "IA_058_place_bvm",
+              "act_type": "airway_execution",
+              "name_cn": "放置并密封球囊面罩（BVM）",
+              "description_cn": "指令执行或确认放置球囊面罩并形成密封。",
+              "keywords": ["球囊面罩", "BVM", "面罩密封", "封住", "放置", "通气面罩"],
+              "pattern_hints": ["出现“球囊面罩/放置面罩/密封/封好”"],
+              "examples": ["放置球囊面罩并密封。", "把面罩按紧，密封好。"],
+              "standard_script": "放置并密封球囊面罩。",
+              "atom_actions": ["放置面罩", "建立密封"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"place_bvm\"]"
+              }
+            },
+            {
+              "intent_code": "IA_059_ventilate_patient",
+              "act_type": "ventilation_execution",
+              "name_cn": "实施通气",
+              "description_cn": "指令执行或确认以适当方式对患者进行通气。",
+              "keywords": ["通气", "吹气", "球囊", "人工呼吸", "给气", "通进去"],
+              "pattern_hints": ["出现“通气/吹气/人工呼吸/给气”"],
+              "examples": ["开始通气。", "用球囊做通气。"],
+              "standard_script": "以适当方式实施通气。",
+              "atom_actions": ["实施通气", "维持通气节律"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"ventilate_patient\"]"
+              }
+            },
+            {
+              "intent_code": "IA_060_suction_airway",
+              "act_type": "airway_execution",
+              "name_cn": "使用吸引器清理气道（吸引）",
+              "description_cn": "指令执行或确认使用吸引器清理气道。",
+              "keywords": ["吸引", "吸痰", "清理气道", "吸出来", "用吸引器"],
+              "pattern_hints": ["出现“吸引/吸痰/吸出来/清理气道”"],
+              "examples": ["用吸引器吸一下气道。", "吸引，清理口咽/气道。"],
+              "standard_script": "使用吸引器清理气道。",
+              "atom_actions": ["连接/准备吸引器", "进行吸引清理"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"suction_airway\"]"
+              }
+            },
+            {
+              "intent_code": "IA_061_inset_NPA",
+              "act_type": "airway_execution",
+              "name_cn": "插入鼻咽通气管（NPA）",
+              "description_cn": "指令执行或确认插入鼻咽通气管以维持气道通畅。",
+              "keywords": ["插NPA", "鼻咽通气管", "鼻咽", "通气管", "插入", "维持通畅"],
+              "pattern_hints": ["出现“NPA/鼻咽通气管/插入通气管”"],
+              "examples": ["插入鼻咽通气管NPA。", "插NPA，保持气道通畅。"],
+              "standard_script": "插入鼻咽通气管以维持气道通畅。",
+              "atom_actions": ["定位插入", "插入并确认通畅"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"inset_NPA\"]"
+              }
+            }
+          ]
+        },
+        {
+          "sub_domain_name": "Transport",
+          "domain_code": "SD_TRANSPORT",
+          "sub_domain_description": "转运流程：转移患者到救护车、上担架、固定患者、通知接收医院、卒中警报激活、交接报告。",
+          "extraction_hint": "出现“转运/担架/固定/通知医院/卒中警报/交接报告/handoff”等口语指令优先本域。",
+          "intents": [
+            {
+              "intent_code": "IA_062_transport",
+              "act_type": "transport_execution",
+              "name_cn": "将患者转移至救护车",
+              "description_cn": "指令执行或确认将患者转移到救护车。",
+              "keywords": ["转运", "去救护车", "上车", "搬到车上", "运送"],
+              "pattern_hints": ["出现“转运/上救护车/运送”"],
+              "examples": ["准备转运到救护车。", "把患者转移到救护车。"],
+              "standard_script": "将患者转移至救护车。",
+              "atom_actions": ["转移患者", "上车"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"transport\"]"
+              }
+            },
+            {
+              "intent_code": "IA_063_load_patient_to_stretcher",
+              "act_type": "transport_execution",
+              "name_cn": "将患者抬上担架",
+              "description_cn": "指令执行或确认将患者抬上担架。",
+              "keywords": ["担架", "抬上", "上担架", "搬运"],
+              "pattern_hints": ["出现“担架/上担架/抬上”"],
+              "examples": ["把患者抬上担架。", "准备上担架。"],
+              "standard_script": "将患者抬上担架。",
+              "atom_actions": ["抬患者", "放置担架"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"load_patient_to_stretcher\"]"
+              }
+            },
+            {
+              "intent_code": "IA_064_secure_patient_on_stretcher",
+              "act_type": "transport_execution",
+              "name_cn": "固定患者于担架上",
+              "description_cn": "指令执行或确认使用安全带固定患者。",
+              "keywords": ["固定", "安全带", "绑好", "保护"],
+              "pattern_hints": ["出现“固定/绑好/安全带”"],
+              "examples": ["固定好患者，防止滑落。", "系好安全带。"],
+              "standard_script": "将患者固定在担架上。",
+              "atom_actions": ["系安全带", "检查固定"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"secure_patient_on_stretcher\"]"
+              }
+            },
+            {
+              "intent_code": "IA_065_notify_hospital",
+              "act_type": "transport_communication",
+              "name_cn": "通知接收医院",
+              "description_cn": "指令执行或确认提前通知接收医院。",
+              "keywords": ["通知医院", "打给医院", "告知", "接收"],
+              "pattern_hints": ["出现“通知/告知/打给医院”"],
+              "examples": ["通知医院我们马上到。", "提前给医院打电话。"],
+              "standard_script": "通知接收医院患者情况。",
+              "atom_actions": ["呼叫医院", "报告信息"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"notify_hospital\"]"
+              }
+            },
+            {
+              "intent_code": "IA_066_notify_hospital_of_stroke_alert",
+              "act_type": "transport_communication",
+              "name_cn": "激活卒中警报并通知医院",
+              "description_cn": "指令执行或确认启动卒中警报并通知医院。",
+              "keywords": ["卒中警报", "卒中通知", "激活", "卒中团队"],
+              "pattern_hints": ["出现“卒中警报/卒中通知/激活卒中”"],
+              "examples": ["启动卒中警报，通知医院。", "马上通知卒中团队。"],
+              "standard_script": "激活卒中警报并通知医院。",
+              "atom_actions": ["启动警报", "发送通知"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"notify_hospital_of_stroke_alert\"]"
+              }
+            },
+            {
+              "intent_code": "IA_067_handoff_patient_to_hospital",
+              "act_type": "transport_handoff",
+              "name_cn": "向医院交接患者",
+              "description_cn": "指令执行或确认向医院急救团队完成交接。",
+              "keywords": ["交接", "handoff", "移交", "报告", "交接报告"],
+              "pattern_hints": ["出现“交接/移交/handoff”"],
+              "examples": ["向急诊医生交接患者。", "进行交接报告。"],
+              "standard_script": "完成患者向医院的交接。",
+              "atom_actions": ["口头交接", "交付病历"],
+              "extraction": {
+                "method": "none",
+                "target_params": [],
+                "rules": {},
+                "llm_prompt": "",
+                "override_instruction": "keystep_candidates=[\"handoff_patient_to_hospital\"]"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

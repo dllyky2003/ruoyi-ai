@@ -1,0 +1,43 @@
+# ============================================================================
+# 01_abcs.yaml - ABCs 评估（所有案例共享）
+# 对应 EgoEMS #1~#4
+# ============================================================================
+
+skills:
+  - id: approach_patient
+    duty: ASSESS
+    type: generic_assert
+    params:
+      targetVar: process.sceneSafety
+      successSpeech: "现场安全，已接近患者。"
+      valueMap:
+        safe: "安全"
+        unsafe: "不安全"
+        unknown: "待判读"
+
+  - id: check_responsiveness
+    duty: ASSESS
+    type: generic_assert
+    params:
+      targetVar: process.responsiveness
+      successSpeech: "患者对刺激的反应为 {value}。"
+      valueMap:
+        alert: "清醒"
+        verbal: "对声音有反应"
+        pain: "对疼痛有反应"
+        unresponsive: "无反应"
+        unknown: "待判读"
+
+  - id: check_pulse
+    duty: ASSESS
+    type: query
+    params:
+      targetVar: phys.hasPulse
+      successSpeech: "颈动脉搏动可触及，心率 {value} 次/分。"
+
+  - id: check_breathing
+    duty: ASSESS
+    type: query
+    params:
+      targetVar: phys.respiratoryRate
+      successSpeech: "患者呼吸 {value} 次/分，胸廓起伏对称。"

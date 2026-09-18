@@ -2,6 +2,7 @@ package com.ruoyi.ems.spi;
 
 import com.ruoyi.ems.domain.IntentCommand;
 
+
 import java.util.Map;
 
 /**
@@ -17,12 +18,6 @@ public interface IntelligentCommandProcessor {
      */
     boolean supports(String intentId);
 
-    /**
-     * 处理指令
-     * @param sessionId 会话ID
-     * @param command 已识别好的意图命令
-     * @param webSocketSession WebSocket会话（用于实时推送）
-     * @return 处理结果，若返回 null 或抛出异常，则降级到旧逻辑
-     */
-    Map<String, Object> processCommand(String sessionId, IntentCommand command, Object webSocketSession);
+
+    public Map<String, Object> processCommand(String sessionId, IntentCommand command);
 }

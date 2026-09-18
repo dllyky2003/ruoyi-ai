@@ -1,0 +1,9 @@
+caseId: "stable_narrow"
+rules:
+  - id: "case_stable_narrow_defib"
+    intent: "S-101-2-6"
+    allowedStates: ["ANY"]
+    conditions:
+      - "#energy == 120"     # 仅允许120J
+    denyMessage: "本案例中稳定窄QRS除颤只能使用120J"
+    priority: 5

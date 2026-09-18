@@ -170,7 +170,7 @@ class PromptTemplateServiceTest {
 //        System.out.println("\n========== User Prompt ==========\n");
 //        System.out.println(service.buildOneStageUserPrompt("大家手离开床，准备放电",context));
 
-        System.out.println(service.buildDomainRouterSystemPrompt(context));
+        System.out.println(service.buildDomainRouterSystemPrompt());
         System.out.println("\n========== User Prompt ==========\n");
         System.out.println(service.buildDomainRouterUserPrompt("大家手离开床，准备放电",context));
     }

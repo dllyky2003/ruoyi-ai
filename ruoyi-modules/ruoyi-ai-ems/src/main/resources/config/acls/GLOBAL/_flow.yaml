@@ -1,0 +1,459 @@
+# ============================================================
+# 父级流程：GENERAL_ACLS（全局编排）
+# 案例编号：000
+# 存放位置：GLOBAL/_flow.yaml
+# 职责：全局编排、安全解锁、子级路由、ROSC统一接管、超时/错误处理
+# 版本：2.0.0（补充BLS初始评估、终止复苏路径）
+# 修订：2.0.1（补充 F-000-INITIAL_SETUP 自循环 effects）
+# 修订：2.1.0（★ Phase SM：新增 initialPhase + phases 段）
+# ============================================================
+caseId: "GLOBAL"
+caseName: "ACLS全局父级编排"
+version: "2.0.0"
+
+description: "所有Megacode案例共享的顶层状态机，包含完整的BLS初始评估与终止复苏路径"
+
+stateDescriptions:
+  F-000-SCENE_START: "场景启动"
+  F-000-BLS_PRIMARY_SURVEY: "BLS初步评估（安全、反应、呼吸、脉搏）"
+  F-000-INITIAL_ASSESSMENT: "初始评估（生命体征获取）"
+  F-000-INITIAL_SETUP: "初始设置（安全/设备/通路就绪）"
+  F-000-ROSC_MANAGEMENT: "ROSC管理（循环恢复后处理）"
+  F-000-POST_ROSC_CARE: "复苏后护理（12导联、TTM等）"
+  F-000-TERMINATE_RESUSCITATION: "终止复苏决策与记录"
+  F-000-TERMINAL_END: "✅ 案例结束"
+  F-000-ERROR_HANDLING: "❌ 错误处理"
+  F-000-TIMEOUT_HANDLING: "⏰ 超时处理"
+
+stateMachine:
+  initial: "F-000-SCENE_START"
+
+  # ★ Phase SM：初始主阶段
+  initialPhase: "BLS"
+
+  states:
+    - F-000-SCENE_START
+    - F-000-BLS_PRIMARY_SURVEY
+    - F-000-INITIAL_ASSESSMENT
+    - F-000-INITIAL_SETUP
+    - F-000-ROSC_MANAGEMENT
+    - F-000-POST_ROSC_CARE
+    - F-000-TERMINATE_RESUSCITATION
+    - F-000-TERMINAL_END
+    - F-000-ERROR_HANDLING
+    - F-000-TIMEOUT_HANDLING
+  endStates:
+    - F-000-TERMINAL_END
+
+  # ==========================================================
+  # ★ Phase SM：宏阶段骨架
+  # 合并语义：子级按 id 覆盖/追加；不重写 = 完全继承
+  # 说明：TERMINAL_END / ERROR_HANDLING / TIMEOUT_HANDLING 不定义 phase
+  #       —— 它们是终止/横切状态，主阶段保持在前一个阶段即可
+  # ==========================================================
+  phases:
+
+    # ==========================================================
+    # 1. BLS：场景启动 + 基础生命支持初评
+    # ==========================================================
+    - id: "BLS"
+      displayName: "基础生命支持"
+      priority: 100
+      states:
+        - F-000-SCENE_START
+        - F-000-BLS_PRIMARY_SURVEY
+        - F-000-INITIAL_ASSESSMENT
+      entryIntents:
+        - IA_001_approach_patient
+        - IA_002_check_responsiveness
+        - IA_003_check_pulse
+        - IA_004_check_breathing
+      entryCondition: "#process.blsSurveyComplete == false"
+      allowedIntents:
+        # 评估类
+        - IA_001_approach_patient
+        - IA_002_check_responsiveness
+        - IA_003_check_pulse
+        - IA_004_check_breathing
+        - IA_005_review_medications
+        - IA_006_inquire_medication_anticoagulants
+        - IA_008_inquire_substance_use
+        - IA_010_check_heart_rate
+        - IA_011_check_oxygen_saturation
+        - IA_014_read_and_record_glucose_level
+        - IA_015_check_perrl
+        - IA_016_check_skin_condition
+        - IA_017_check_ao
+        - IA_018_check_grip_strength
+        - IA_019_face_droop_check
+        - IA_021_speech_abnormality_check
+        - IA_022_assess_balance_and_coordination
+        - IA_023_document_lkw_time
+        - IA_024_check_vision_deficits
+        - IA_025_evaluate_aphasia
+        - IA_026_assess_neglect_signs
+        - IA_042_ask_patient_age_sex
+        - IA_049_assess_patient
+        # 请求帮助
+        - IA_050_request_aed
+        - IA_051_request_assistance
+      softWarnIntents:
+        # 高级评估：BLS 未完成时软警告，但不阻断
+        - IA_040_turn_on_ecg
+        - IA_041_connect_leads_to_ecg
+        - IA_043_obtain_ecg_recording
+        - IA_044_interpret_and_report
+      lock:
+        enabled: false
+
+    # ==========================================================
+    # 2. SETUP：初始设置（设备/通路/ECG 就绪）
+    # ==========================================================
+    - id: "SETUP"
+      displayName: "初始设置"
+      priority: 90
+      states:
+        - F-000-INITIAL_SETUP
+      entryCondition: "#process.blsSurveyComplete == true"
+      allowedIntents:
+        # ECG 设备与电极
+        - IA_028_shave_patient
+        - IA_029_place_left_arm_lead
+        - IA_030_place_right_arm_lead
+        - IA_031_place_left_leg_lead
+        - IA_032_place_right_leg_lead
+        - IA_033_place_v1_lead
+        - IA_035_place_v3_lead
+        - IA_036_place_v4_lead
+        - IA_037_place_v5_lead
+        - IA_038_place_v6_lead
+        - IA_039_request_patient_to_not_move
+        - IA_040_turn_on_ecg
+        - IA_041_connect_leads_to_ecg
+        - IA_042_ask_patient_age_sex
+        - IA_043_obtain_ecg_recording
+        - IA_044_interpret_and_report
+        # 请求帮助
+        - IA_050_request_aed
+        - IA_051_request_assistance
+        # 气道与通气
+        - IA_057_open_airway
+        - IA_058_place_bvm
+        - IA_059_ventilate_patient
+        - IA_060_suction_airway
+        - IA_061_inset_NPA
+      requiresPhases:
+        - BLS
+      lock:
+        enabled: false
+
+    # ==========================================================
+    # 3. CPR：心脏骤停通用骨架（子级共享）
+    # 注：不设 requiresPhases——CPR 由状态命中直接激活，
+    #     避免"学员快速推进状态"时因前置阶段未经过而被误过滤
+    # ==========================================================
+    - id: "CPR"
+      displayName: "心脏骤停 CPR"
+      priority: 95
+      aliases:
+        - F_103_EXIT_TO_PARENT
+      states:
+        - F_103_CPR_START
+      entryIntents:
+        - IA_048_chest_compressions
+        - IA_045_check_responsiveness_cpr
+        - IA_046_check_pulse_cpr
+        - IA_047_check_breathing_cpr
+      entryCondition: "#phys.rhythm == 'VF' || #phys.rhythm == 'VT' || #phys.rhythm == 'PEA' || #phys.rhythm == 'Asystole'"
+      allowedIntents:
+        # CPR 核心
+        - IA_045_check_responsiveness_cpr
+        - IA_046_check_pulse_cpr
+        - IA_047_check_breathing_cpr
+        - IA_048_chest_compressions
+        # AED 除颤
+        - IA_050_request_aed
+        - IA_052_turn_on_aed
+        - IA_053_attach_defib_pads
+        - IA_054_clear_for_analysis
+        - IA_055_clear_for_shock
+        - IA_056_administer_shock_aed
+        # 气道与通气
+        - IA_057_open_airway
+        - IA_058_place_bvm
+        - IA_059_ventilate_patient
+        - IA_060_suction_airway
+        - IA_061_inset_NPA
+        # 请求帮助
+        - IA_051_request_assistance
+      lock:
+        enabled: false
+
+    # ==========================================================
+    # 4. ROSC：循环恢复后管理
+    # ==========================================================
+    - id: "ROSC"
+      displayName: "ROSC 管理"
+      priority: 70
+      states:
+        - F-000-ROSC_MANAGEMENT
+      entryCondition: "#clinical.rosc == true"
+      allowedIntents:
+        - IA_040_turn_on_ecg
+        - IA_041_connect_leads_to_ecg
+        - IA_043_obtain_ecg_recording
+        - IA_044_interpret_and_report
+        - IA_050_request_aed
+        - IA_051_request_assistance
+        - IA_057_open_airway
+        - IA_058_place_bvm
+        - IA_059_ventilate_patient
+        - IA_063_load_patient_to_stretcher
+        - IA_064_secure_patient_on_stretcher
+        - IA_065_notify_hospital
+      requiresPhases:
+        - SETUP
+      lock:
+        enabled: false
+
+    # ==========================================================
+    # 5. POST_ROSC：复苏后护理
+    # ==========================================================
+    - id: "POST_ROSC"
+      displayName: "复苏后护理"
+      priority: 60
+      states:
+        - F-000-POST_ROSC_CARE
+      entryCondition: "#clinical.roscStabilized == true"
+      allowedIntents:
+        - IA_040_turn_on_ecg
+        - IA_043_obtain_ecg_recording
+        - IA_044_interpret_and_report
+        - IA_051_request_assistance
+        - IA_057_open_airway
+        - IA_059_ventilate_patient
+        - IA_063_load_patient_to_stretcher
+        - IA_064_secure_patient_on_stretcher
+        - IA_065_notify_hospital
+        - IA_067_handoff_patient_to_hospital
+      requiresPhases:
+        - ROSC
+      lock:
+        enabled: false
+
+    # ==========================================================
+    # 6. TERMINATION：终止复苏
+    # ==========================================================
+    - id: "TERMINATION"
+      displayName: "终止复苏"
+      priority: 55
+      states:
+        - F-000-TERMINATE_RESUSCITATION
+      entryCondition: "#process.terminateResuscitation == true"
+      allowedIntents:
+        - IA_051_request_assistance
+        - IA_065_notify_hospital
+        - IA_067_handoff_patient_to_hospital
+      requiresPhases:
+        - SETUP
+      lock:
+        enabled: false
+
+  transitions:
+    # ==========================================================
+    # 1. 场景启动 → BLS初步评估
+    # ==========================================================
+    - source: "F-000-SCENE_START"
+      target: "F-000-BLS_PRIMARY_SURVEY"
+      condition: "#phys.sceneSafety == 'safe'"
+      priority: 10
+      description: "场景启动，进入BLS初步评估"
+
+    # ==========================================================
+    # 2. BLS评估 → 初始评估
+    # ==========================================================
+    - source: "F-000-BLS_PRIMARY_SURVEY"
+      target: "F-000-INITIAL_ASSESSMENT"
+      condition: "#process.blsSurveyComplete == true"
+      priority: 10
+      description: "BLS评估完成，进入生命体征获取"
+
+    # ==========================================================
+    # 3. 初始评估 → 初始设置
+    # ==========================================================
+    - source: "F-000-INITIAL_ASSESSMENT"
+      target: "F-000-INITIAL_SETUP"
+      condition: "#phys.heartRate != null && #phys.systolicBp != null && #phys.consciousness != null"
+      priority: 10
+      description: "生命体征已获取，进入初始设置"
+
+    # ==========================================================
+    # 4. 父级安全/设备就绪（★ 已补 effects）
+    # ==========================================================
+    - source: "F-000-INITIAL_SETUP"
+      target: "F-000-INITIAL_SETUP"
+      intentCode: "IA_001_approach_patient"
+      condition: "#process.safetyCleared == false"
+      priority: 10
+      effects:
+        - var: "process.safetyCleared"
+          value: true
+      description: "接近患者+安全清场确认 → safetyCleared = true"
+
+    - source: "F-000-INITIAL_SETUP"
+      target: "F-000-INITIAL_SETUP"
+      intentCode: "IA_040_turn_on_ecg"
+      condition: "#device.defibConnected == false"
+      priority: 11
+      effects:
+        - var: "device.defibConnected"
+          value: true
+      description: "开机（监护/除颤模式）→ defibConnected = true"
+
+    - source: "F-000-INITIAL_SETUP"
+      target: "F-000-INITIAL_SETUP"
+      intentCode: "IA_041_connect_leads_to_ecg"
+      condition: "#device.leadsPlaced == false"
+      priority: 12
+      effects:
+        - var: "device.leadsPlaced"
+          value: true
+      description: "连接导联/电极片 → leadsPlaced = true"
+
+    - source: "F-000-INITIAL_SETUP"
+      target: "F-000-INITIAL_SETUP"
+      intentCode: null
+      condition: "#device.ivEstablished == false"
+      priority: 13
+      effects:
+        - var: "device.ivEstablished"
+          value: true
+      description: "静脉通路建立 → ivEstablished = true（可由子级或通用意图驱动）"
+
+    # ==========================================================
+    # 5. 初始设置 → 子级路由（派生变量驱动）
+    # ==========================================================
+    - source: "F-000-INITIAL_SETUP"
+      target: "F_101_ASSESS_STABILITY"
+      condition: "#derived.stable == true && #derived.qrsWidth == 'narrow' && #derived.rhythmRegular == true"
+      priority: 30
+      description: "稳定 + 窄QRS + 规则 → 进入SVT子级（101）"
+
+    - source: "F-000-INITIAL_SETUP"
+      target: "F_102_ASSESS_STABILITY"
+      condition: "(#derived.stable == false || #derived.qrsWidth == 'wide') && #phys.heartRate >= 50"
+      priority: 25
+      description: "不稳定或宽QRS → 进入不稳定/宽QRS子级（102）"
+
+    - source: "F-000-INITIAL_SETUP"
+      target: "F_103_CPR_START"
+      condition: "#phys.rhythm == 'VF' || #phys.rhythm == 'VT' || #phys.rhythm == 'PEA' || #phys.rhythm == 'Asystole'"
+      priority: 100
+      description: "心脏骤停心律 → 进入骤停子级（103）"
+
+    - source: "F-000-INITIAL_SETUP"
+      target: "F_104_ASSESS_BRADY"
+      condition: "#phys.heartRate < 50 && #phys.symptomsPresent == true"
+      priority: 90
+      description: "有症状心动过缓 → 进入心动过缓子级（104）"
+
+    # ==========================================================
+    # 6. 子级退出 → ROSC管理
+    # ==========================================================
+    - source: "F_101_EXIT_TO_PARENT"
+      target: "F-000-ROSC_MANAGEMENT"
+      condition: "#process.returnToParent == 'ROSC'"
+      priority: 100
+      description: "子级转复成功 → 父级ROSC接管"
+
+    - source: "F_102_EXIT_TO_PARENT"
+      target: "F-000-ROSC_MANAGEMENT"
+      condition: "#process.returnToParent == 'ROSC'"
+      priority: 100
+      description: "子级转复成功 → 父级ROSC接管"
+
+    - source: "F_103_EXIT_TO_PARENT"
+      target: "F-000-ROSC_MANAGEMENT"
+      condition: "#clinical.rosc == true"
+      priority: 100
+      description: "骤停子级ROSC → 父级ROSC接管"
+
+    - source: "F_104_EXIT_TO_PARENT"
+      target: "F-000-ROSC_MANAGEMENT"
+      condition: "#process.returnToParent == 'ROSC'"
+      priority: 100
+      description: "心动过缓子级转复 → 父级ROSC接管"
+
+    # ==========================================================
+    # 7. 子级异常退出
+    # ==========================================================
+    - source: "F_101_EXIT_TO_PARENT"
+      target: "F-000-INITIAL_SETUP"
+      condition: "#process.returnToParent == 'UNSTABLE' || #process.returnToParent == 'WIDE_QRS' || #process.returnToParent == 'IRREGULAR_RHYTHM'"
+      priority: 80
+      description: "子级状态变化 → 返回父级重新分类"
+
+    - source: "F_101_EXIT_TO_PARENT"
+      target: "F-000-ERROR_HANDLING"
+      condition: "#process.returnToParent == 'REFRACTORY_SVT' || #process.returnToParent == 'PERSISTENT_SVT' || #process.returnToParent == 'REFRACTORY_SHOCK'"
+      priority: 90
+      description: "子级治疗失败 → 错误处理"
+      deviation: true
+
+    - source: "F_101_EXIT_TO_PARENT"
+      target: "F-000-ERROR_HANDLING"
+      condition: "#process.returnToParent == 'WPW_CONTRADICTION'"
+      priority: 100
+      description: "WPW禁忌 → 错误处理"
+      deviation: false
+
+    # ==========================================================
+    # 8. ROSC → 复苏后护理 → 结束
+    # ==========================================================
+    - source: "F-000-ROSC_MANAGEMENT"
+      target: "F-000-POST_ROSC_CARE"
+      condition: "#clinical.roscStabilized == true"
+      priority: 10
+      description: "ROSC稳定 → 进入复苏后护理"
+
+    - source: "F-000-POST_ROSC_CARE"
+      target: "F-000-TERMINAL_END"
+      condition: "#clinical.postRoscComplete == true"
+      priority: 10
+      description: "复苏后护理完成 → 案例结束"
+
+    # ==========================================================
+    # 9. 终止复苏路径
+    # ==========================================================
+    - source: "F-000-INITIAL_SETUP"
+      target: "F-000-TERMINATE_RESUSCITATION"
+      condition: "#process.terminateResuscitation == true"
+      priority: 100
+      description: "初始设置阶段决定终止复苏"
+
+    - source: "F_103_EXIT_TO_PARENT"
+      target: "F-000-TERMINATE_RESUSCITATION"
+      condition: "#process.terminateResuscitation == true && #clinical.rosc == false"
+      priority: 110
+      description: "骤停子级治疗无效，终止复苏"
+
+    - source: "F-000-TERMINATE_RESUSCITATION"
+      target: "F-000-TERMINAL_END"
+      condition: "#process.terminationDocumented == true"
+      priority: 10
+      description: "终止复苏记录完成，案例结束"
+
+    # ==========================================================
+    # 10. 错误/超时恢复
+    # ==========================================================
+    - source: "F-000-ERROR_HANDLING"
+      target: "F-000-INITIAL_SETUP"
+      condition: "#process.errorFixed == true"
+      priority: 10
+      description: "错误已修复 → 返回初始设置"
+
+    - source: "F-000-TIMEOUT_HANDLING"
+      target: "F-000-INITIAL_SETUP"
+      condition: "#process.timeoutResolved == true"
+      priority: 10
+      description: "超时已处理 → 返回初始设置"

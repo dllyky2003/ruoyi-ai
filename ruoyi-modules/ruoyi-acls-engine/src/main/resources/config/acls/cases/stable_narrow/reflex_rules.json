@@ -1,0 +1,181 @@
+{
+  "version": "1.0",
+  "description": "stable_narrow 案例专属反射规则 - 成人稳定型心绞痛/ACS场景 (AHA ACLS 2025)",
+  "target_population": "adult",
+  "clinical_basis": "AHA 2025 Guidelines for CPR and ECC / ACS Guidelines",
+  "rules": [
+    {
+      "id": "ACS_CHEST_PAIN_ALERT",
+      "duty": "ASSESS",
+      "condition": "#context.getVar('phys.chestPainPresent') == true && #context.getVar('process.chestPainDuration', 0) > 5",
+      "speech": "报告组长，患者胸痛持续超过5分钟，建议立即进行 12 导联心电图并给予硝酸甘油！",
+      "priority": 6,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 持续胸痛 >5 分钟应启动 ACS 评估流程"
+    },
+    {
+      "id": "ECG_STE_ALERT",
+      "duty": "MONITOR_DEFIB",
+      "condition": "#context.getVar('phys.ecgStElevation') == true",
+      "speech": "报告组长，心电图提示 ST 段抬高，建议立即启动 STEMI 流程！",
+      "priority": 8,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: STEMI 需尽快再灌注治疗"
+    },
+    {
+      "id": "ECG_ST_DEPRESSION_T_INVERSION",
+      "duty": "MONITOR_DEFIB",
+      "condition": "#context.getVar('phys.ecgStDepression') == true || #context.getVar('phys.ecgTInversion') == true",
+      "speech": "报告组长，心电图提示 ST 段压低/T 波倒置，考虑非 ST 段抬高型 ACS，建议启动抗缺血治疗！",
+      "priority": 5,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: NSTE-ACS 需抗缺血、抗血小板治疗"
+    },
+    {
+      "id": "DRUG_NITROGLYCERIN_READY",
+      "duty": "IV_MED",
+      "condition": "#context.getVar('phys.chestPainPresent') == true && #context.getVar('intervention.nitroGiven') == false && #context.getVar('phys.systolicBp', 0) > 90",
+      "speech": "报告组长，患者胸痛且血压 > 90mmHg，建议给予硝酸甘油 0.4mg 舌下含服！",
+      "priority": 5,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 硝酸甘油用于缺血性胸痛，血压 > 90mmHg 可使用"
+    },
+    {
+      "id": "DRUG_ASPIRIN_READY",
+      "duty": "IV_MED",
+      "condition": "#context.getVar('phys.chestPainPresent') == true && #context.getVar('intervention.aspirinGiven') == false",
+      "speech": "报告组长，建议给予阿司匹林 324mg 嚼服（如无禁忌）！",
+      "priority": 5,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: ACS 应立即给予阿司匹林 324mg"
+    },
+    {
+      "id": "DRUG_BETA_BLOCKER_INDICATION",
+      "duty": "IV_MED",
+      "condition": "#context.getVar('phys.chestPainPresent') == true && #context.getVar('phys.heartRate', 0) > 60 && #context.getVar('phys.systolicBp', 0) > 90",
+      "speech": "报告组长，患者心率 > 60 次/分，血压 > 90mmHg，建议早期使用 β 受体阻滞剂！",
+      "priority": 4,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: STEMI 患者早期使用 β 受体阻滞剂降低死亡率"
+    },
+    {
+      "id": "VITAL_HYPOTENSION_ACS",
+      "duty": "MONITOR_DEFIB",
+      "condition": "#context.getVar('phys.systolicBp', 0) < 90 && #context.getVar('phys.systolicBp', 0) > 0",
+      "speech": "报告组长，患者低血压（收缩压 < 90mmHg），可能为心源性休克或右室梗死，建议立即评估！",
+      "priority": 7,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 低血压合并 ACS 需警惕心源性休克"
+    },
+    {
+      "id": "VITAL_BRADYCARDIA_ACS",
+      "duty": "MONITOR_DEFIB",
+      "condition": "#context.getVar('phys.heartRate', 0) < 50 && #context.getVar('phys.heartRate', 0) > 0 && #context.getVar('phys.chestPainPresent') == true",
+      "speech": "报告组长，患者心动过缓（心率 < 50次/分），可能为下壁心肌梗死，建议评估起搏需求！",
+      "priority": 6,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 下壁心梗可致心动过缓，需阿托品或起搏"
+    },
+    {
+      "id": "VITAL_TACHYCARDIA_ACS",
+      "duty": "MONITOR_DEFIB",
+      "condition": "#context.getVar('phys.heartRate', 0) > 120 && #context.getVar('phys.heartRate', 0) > 0 && #context.getVar('phys.chestPainPresent') == true",
+      "speech": "报告组长，患者心动过速（心率 > 120次/分），可能为代偿或心律失常，建议评估血流动力学！",
+      "priority": 6,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 心动过速可加重心肌耗氧，需及时处理"
+    },
+    {
+      "id": "VITAL_HYPOXEMIA_ACS",
+      "duty": "MONITOR_DEFIB",
+      "condition": "#context.getVar('phys.spo2', 0) < 94 && #context.getVar('phys.spo2', 0) > 0",
+      "speech": "报告组长，血氧饱和度低于 94%，建议给予吸氧，维持 SpO2 ≥ 94%！",
+      "priority": 5,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 低氧血症需吸氧，目标 SpO2 ≥ 94%"
+    },
+    {
+      "id": "RHYTHM_VF_VT_ALERT",
+      "duty": "MONITOR_DEFIB",
+      "condition": "#context.getVar('phys.rhythm') == 'VF' || #context.getVar('phys.rhythm') == 'VT'",
+      "speech": "报告组长，患者发生室颤/无脉性室速！立即开始 CPR 并除颤，能量 200J！",
+      "animation": "defib_prep",
+      "priority": 10,
+      "type": "action",
+      "clinical_basis": "AHA 2025: 可电击心律应立即除颤"
+    },
+    {
+      "id": "RHYTHM_PEA_ASYSTOLE",
+      "duty": "MONITOR_DEFIB",
+      "condition": "#context.getVar('phys.rhythm') == 'PEA' || #context.getVar('phys.rhythm') == 'ASYSTOLE'",
+      "speech": "报告组长，心律为无脉电活动/停搏，不可电击！立即给予肾上腺素 1mg 并排查可逆原因！",
+      "priority": 8,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: PEA/Asystole 不可电击，应专注 CPR 和可逆原因"
+    },
+    {
+      "id": "RHYTHM_SINUS_ROSC",
+      "duty": "MONITOR_DEFIB",
+      "condition": "#context.getVar('phys.rhythm') == 'SINUS' && #context.getVar('phys.hasPulse') == true",
+      "speech": "报告组长，患者恢复自主循环，心律为窦性，可触及脉搏！",
+      "animation": "rosc_success",
+      "priority": 9,
+      "type": "action",
+      "clinical_basis": "AHA 2025: ROSC 识别后立即启动复苏后管理"
+    },
+    {
+      "id": "CPR_2MIN_CYCLE_CHECK",
+      "duty": "CPR",
+      "condition": "#context.getVar('process.cprCycleElapsed', 0) >= 115 && #context.getVar('process.cprCycleElapsed', 0) < 125",
+      "speech": "报告组长，2 分钟 CPR 即将完成，准备暂停按压进行心律和脉搏检查！",
+      "priority": 7,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 每 2 分钟检查心律"
+    },
+    {
+      "id": "CPR_HANDS_OFF_ALERT",
+      "duty": "CPR",
+      "condition": "#context.getVar('process.handsOffTime', 0) > 5",
+      "speech": "报告组长，按压中断已超过 5 秒，立即恢复胸外按压！",
+      "priority": 7,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 尽量缩短按压中断时间"
+    },
+    {
+      "id": "DRUG_EPINEPHRINE_DUE",
+      "duty": "IV_MED",
+      "condition": "#utils.getEpiLastGivenTime() >= 180 && #utils.getEpiLastGivenTime() < 190 && #context.getCurrentState() != 'ROSC'",
+      "speech": "报告组长，肾上腺素间隔已 3 分钟，建议推注第二剂 1mg！",
+      "priority": 6,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 肾上腺素 1mg IV/IO，每 3-5 分钟一次"
+    },
+    {
+      "id": "DRUG_AMIODARONE_FIRST",
+      "duty": "IV_MED",
+      "condition": "#context.getVar('process.shockCount') == 3 && #context.getVar('intervention.amiodaroneGiven') == false && #context.getVar('phys.rhythm') == 'VF'",
+      "speech": "报告组长，已完成 3 次电击仍为室颤，建议推注胺碘酮 300mg！",
+      "priority": 6,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: refractory VF 第 3 次电击后给予胺碘酮 300mg"
+    },
+    {
+      "id": "ROSC_TARGETED_TEMP",
+      "duty": "MONITOR_DEFIB",
+      "condition": "#context.getVar('clinical.roscConfirmed') == true && #context.getVar('intervention.ttmInitiated') == false",
+      "speech": "报告组长，患者已 ROSC，建议启动目标温度管理（32-37.5°C）！",
+      "priority": 6,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: ROSC 后昏迷患者应进行温度控制"
+    },
+    {
+      "id": "ROSC_12LEAD_ECG",
+      "duty": "MONITOR_DEFIB",
+      "condition": "#context.getVar('clinical.roscConfirmed') == true && #context.getVar('process.ecgPerformed') == false",
+      "speech": "报告组长，建议尽快获取 12 导联心电图，排除 STEMI！",
+      "priority": 6,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: ROSC 后应尽快行 12 导联心电图"
+    }
+  ]
+}

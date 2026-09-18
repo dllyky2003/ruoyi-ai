@@ -1,0 +1,446 @@
+{
+  "IA_001_approach_patient": {
+    "method": "llm",
+    "target_params": ["process.environmentSafe"],
+    "rules": {},
+    "llm_prompt": "提取现场安全状态，输出'安全'或'不安全'。",
+    "override_instruction": "keystep_candidates=[\"approach_patient\"]"
+  },
+  "IA_002_check_responsiveness": {
+    "method": "llm",
+    "target_params": ["phys.consciousness"],
+    "rules": {},
+    "llm_prompt": "提取患者对言语或刺激有无反应，输出'有反应'或'无反应'。",
+    "override_instruction": "keystep_candidates=[\"check_responsiveness\"]"
+  },
+  "IA_003_check_pulse": {
+    "method": "llm",
+    "target_params": ["phys.hasPulse"],
+    "rules": {},
+    "llm_prompt": "提取有无脉搏，输出'有脉搏'或'无脉搏'。",
+    "override_instruction": "keystep_candidates=[\"check_pulse\"]"
+  },
+  "IA_004_check_breathing": {
+    "method": "llm",
+    "target_params": ["phys.respiratoryRate"],
+    "rules": {},
+    "llm_prompt": "提取呼吸状态，输出'有呼吸'、'无呼吸'或具体的呼吸频率数值。",
+    "override_instruction": "keystep_candidates=[\"check_breathing\"]"
+  },
+  "IA_005_review_medications": {
+    "method": "llm",
+    "target_params": ["clinical.medicationList"],
+    "rules": {},
+    "llm_prompt": "提取患者当前正在使用的药物名称列表，以逗号分隔。",
+    "override_instruction": "keystep_candidates=[\"review_medications\"]"
+  },
+  "IA_006_inquire_medication_anticoagulants": {
+    "method": "llm",
+    "target_params": ["clinical.medicationList"],
+    "rules": {},
+    "llm_prompt": "提取抗凝药物使用情况，列出具体的抗凝药名称（如华法林、利伐沙班等），若无则输出'无'。",
+    "override_instruction": "keystep_candidates=[\"inquire_medication_anticoagulants\"]"
+  },
+  "IA_007_inquire_hpi_and_pmh": {
+    "method": "llm",
+    "target_params": ["clinical.pastMedicalHistory"],
+    "rules": {},
+    "llm_prompt": "提取现病史（发病经过、症状等）和既往史（既往重要疾病、手术等）信息。",
+    "override_instruction": "keystep_candidates=[\"inquire_hpi_and_pmh\"]"
+  },
+  "IA_008_inquire_substance_use": {
+    "method": "llm",
+    "target_params": ["clinical.medicationList"],
+    "rules": {},
+    "llm_prompt": "提取酒精或药物使用情况，包括种类、频率等。",
+    "override_instruction": "keystep_candidates=[\"inquire_substance_use\"]"
+  },
+  "IA_009_check_blood_pressure": {
+    "method": "regex",
+    "target_params": ["phys.systolicBp", "phys.diastolicBp"],
+    "rules": {
+      "pattern": "(\\d+)\\s*[/-]\\s*(\\d+)"
+    },
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"check_blood_pressure\"]"
+  },
+  "IA_010_check_heart_rate": {
+    "method": "regex",
+    "target_params": ["phys.heartRate"],
+    "rules": {
+      "pattern": "(\\d+)\\s*(?:次/分|bpm)?"
+    },
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"check_heart_rate\"]"
+  },
+  "IA_011_check_oxygen_saturation": {
+    "method": "regex",
+    "target_params": ["phys.spo2"],
+    "rules": {
+      "pattern": "(\\d+)\\s*%?"
+    },
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"check_oxygen_saturation\"]"
+  },
+  "IA_012_check_respiratory_rate": {
+    "method": "regex",
+    "target_params": ["phys.respiratoryRate"],
+    "rules": {
+      "pattern": "(\\d+)\\s*(?:次/分| breaths)?"
+    },
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"check_respiratory_rate\"]"
+  },
+  "IA_013_prepare_glucometer_and_strip": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"prepare_glucometer_and_strip\"]"
+  },
+  "IA_014_read_and_record_glucose_level": {
+    "method": "regex",
+    "target_params": ["phys.bloodGlucose"],
+    "rules": {
+      "pattern": "(\\d+)\\s*(?:mg/dL|mmol)?"
+    },
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"read_and_record_glucose_level\"]"
+  },
+  "IA_015_check_perrl": {
+    "method": "llm",
+    "target_params": ["phys.pupils"],
+    "rules": {},
+    "llm_prompt": "提取瞳孔对光反射状态，如'正常'、'迟钝'、'固定'等。",
+    "override_instruction": "keystep_candidates=[\"check_perrl\"]"
+  },
+  "IA_016_check_skin_condition": {
+    "method": "llm",
+    "target_params": ["phys.skinCondition"],
+    "rules": {},
+    "llm_prompt": "提取皮肤颜色、温度、湿度状况，如'苍白湿冷'、'潮红温暖'等。",
+    "override_instruction": "keystep_candidates=[\"check_skin_condition\"]"
+  },
+  "IA_017_check_ao": {
+    "method": "llm",
+    "target_params": ["phys.consciousness"],
+    "rules": {},
+    "llm_prompt": "提取意识清醒程度和定向力（人、地、时），输出如'清醒，定向力完整'或'嗜睡，定向力障碍'。",
+    "override_instruction": "keystep_candidates=[\"check_a&o\"]"
+  },
+  "IA_018_check_grip_strength": {
+    "method": "llm",
+    "target_params": ["process.deviationReason"],
+    "rules": {},
+    "llm_prompt": "提取双侧握力对称性描述，如'对称'、'左侧减弱'等。",
+    "override_instruction": "keystep_candidates=[\"check_grip_strength\"]"
+  },
+  "IA_019_face_droop_check": {
+    "method": "llm",
+    "target_params": ["process.deviationReason"],
+    "rules": {},
+    "llm_prompt": "提取面部下垂情况描述，如'嘴角左歪'、'对称'等。",
+    "override_instruction": "keystep_candidates=[\"face_droop_check\"]"
+  },
+  "IA_020_arm_drift_check": {
+    "method": "llm",
+    "target_params": ["process.deviationReason"],
+    "rules": {},
+    "llm_prompt": "提取手臂下垂情况描述，如'右臂下垂'、'无漂移'等。",
+    "override_instruction": "keystep_candidates=[\"arm_drift_check\"]"
+  },
+  "IA_021_speech_abnormality_check": {
+    "method": "llm",
+    "target_params": ["process.deviationReason"],
+    "rules": {},
+    "llm_prompt": "提取语言异常描述，如'含糊不清'、'重复困难'等。",
+    "override_instruction": "keystep_candidates=[\"speech_abnormality_check\"]"
+  },
+  "IA_022_assess_balance_and_coordination": {
+    "method": "llm",
+    "target_params": ["process.deviationReason"],
+    "rules": {},
+    "llm_prompt": "提取平衡和协调能力描述，如'站立不稳'、'协调正常'等。",
+    "override_instruction": "keystep_candidates=[\"assess_balance_and_coordination\"]"
+  },
+  "IA_023_document_lkw_time": {
+    "method": "llm",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "提取最后一次正常知晓时间（LKW），格式如'2026-09-08 10:30'。",
+    "override_instruction": "keystep_candidates=[\"document_lkw_time\"]"
+  },
+  "IA_024_check_vision_deficits": {
+    "method": "llm",
+    "target_params": ["process.deviationReason"],
+    "rules": {},
+    "llm_prompt": "提取视野缺损描述，如'左眼视野缺失'、'无缺损'等。",
+    "override_instruction": "keystep_candidates=[\"check_vision_deficits\"]"
+  },
+  "IA_025_evaluate_aphasia": {
+    "method": "llm",
+    "target_params": ["process.deviationReason"],
+    "rules": {},
+    "llm_prompt": "提取失语症表现描述，如'表达性失语'、'理解障碍'等。",
+    "override_instruction": "keystep_candidates=[\"evaluate_aphasia\"]"
+  },
+  "IA_026_assess_neglect_signs": {
+    "method": "llm",
+    "target_params": ["process.deviationReason"],
+    "rules": {},
+    "llm_prompt": "提取单侧忽略体征描述，如'左侧忽略'、'无忽略'等。",
+    "override_instruction": "keystep_candidates=[\"assess_neglect_signs\"]"
+  },
+  "IA_027_explain_procedure": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"explain_procedure\"]"
+  },
+  "IA_028_shave_patient": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"shave_patient\"]"
+  },
+  "IA_029_place_left_arm_lead": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"place_left_arm_lead\"]"
+  },
+  "IA_030_place_right_arm_lead": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"place_right_arm_lead\"]"
+  },
+  "IA_031_place_left_leg_lead": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"place_left_leg_lead\"]"
+  },
+  "IA_032_place_right_leg_lead": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"place_right_leg_lead\"]"
+  },
+  "IA_033_place_v1_lead": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"place_v1_lead\"]"
+  },
+  "IA_034_place_v2_lead": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"place_v2_lead\"]"
+  },
+  "IA_035_place_v3_lead": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"place_v3_lead\"]"
+  },
+  "IA_036_place_v4_lead": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"place_v4_lead\"]"
+  },
+  "IA_037_place_v5_lead": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"place_v5_lead\"]"
+  },
+  "IA_038_place_v6_lead": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"place_v6_lead\"]"
+  },
+  "IA_039_request_patient_to_not_move": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"request_patient_to_not_move\"]"
+  },
+  "IA_040_turn_on_ecg": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"turn_on_ecg\"]"
+  },
+  "IA_041_connect_leads_to_ecg": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"connect_leads_to_ecg\"]"
+  },
+  "IA_042_ask_patient_age_sex": {
+    "method": "llm",
+    "target_params": ["clinical.age", "clinical.gender"],
+    "rules": {},
+    "llm_prompt": "提取患者的年龄（数字）和性别（男/女）。",
+    "override_instruction": "keystep_candidates=[\"ask_patient_age_sex\"]"
+  },
+  "IA_043_obtain_ecg_recording": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"obtain_ecg_recording\"]"
+  },
+  "IA_044_interpret_and_report": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"interpret_and_report\"]"
+  },
+  "IA_045_check_responsiveness_cpr": {
+    "method": "llm",
+    "target_params": ["phys.consciousness"],
+    "rules": {},
+    "llm_prompt": "CPR中检查患者反应，输出'有反应'或'无反应'。",
+    "override_instruction": "keystep_candidates=[\"check_responsiveness\"]"
+  },
+  "IA_046_check_pulse_cpr": {
+    "method": "llm",
+    "target_params": ["phys.hasPulse"],
+    "rules": {},
+    "llm_prompt": "CPR中检查脉搏，输出'有脉搏'或'无脉搏'。",
+    "override_instruction": "keystep_candidates=[\"check_pulse\"]"
+  },
+  "IA_047_check_breathing_cpr": {
+    "method": "llm",
+    "target_params": ["phys.respiratoryRate"],
+    "rules": {},
+    "llm_prompt": "CPR中检查呼吸，输出'有呼吸'、'无呼吸'或具体频率。",
+    "override_instruction": "keystep_candidates=[\"check_breathing\"]"
+  },
+  "IA_048_chest_compressions": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"chest_compressions\"]"
+  },
+  "IA_049_assess_patient": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"assess_patient\"]"
+  },
+  "IA_050_request_aed": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"request_aed\"]"
+  },
+  "IA_051_request_assistance": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"request_assistance\"]"
+  },
+  "IA_052_turn_on_aed": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"turn_on_aed\"]"
+  },
+  "IA_053_attach_defib_pads": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"attach_defib_pads\"]"
+  },
+  "IA_054_clear_for_analysis": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"clear_for_analysis\"]"
+  },
+  "IA_055_clear_for_shock": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"clear_for_shock\"]"
+  },
+  "IA_056_administer_shock_aed": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"administer_shock_aed\"]"
+  },
+  "IA_057_open_airway": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"open_airway\"]"
+  },
+  "IA_058_place_bvm": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"place_bvm\"]"
+  },
+  "IA_059_ventilate_patient": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"ventilate_patient\"]"
+  },
+  "IA_060_suction_airway": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"suction_airway\"]"
+  },
+  "IA_061_inset_NPA": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"inset_NPA\"]"
+  },
+  "IA_062_transport": {
+    "method": "none",
+    "target_params": [],
+    "rules": {},
+    "llm_prompt": "",
+    "override_instruction": "keystep_candidates=[\"transport\"]"
+  }
+}

@@ -1,0 +1,30 @@
+# ============================================================================
+# 04_cpr.yaml - CPR（所有案例共享）
+# 对应 EgoEMS #45~#49
+# ============================================================================
+
+skills:
+  - id: cpr_compressions
+    duty: CPR
+    type: standard
+    params:
+      vrActionCode: "CHEST_COMPRESSIONS"
+      durationSeconds: 120
+      successVar: process.cprPerformed
+      successSpeech: "胸外按压进行中。"
+
+  - id: assess_patient_cpr
+    duty: ASSESS
+    type: query
+    params:
+      targetVar: process.patientStatus
+      responseTemplate: "患者当前状况：{value}。"
+
+  - id: cpr_rotation
+    duty: CPR
+    type: standard
+    params:
+      vrActionCode: "CPR_ROTATION"
+      durationSeconds: 3
+      successVar: process.cprRotated
+      successSpeech: "按压员轮换完成。"

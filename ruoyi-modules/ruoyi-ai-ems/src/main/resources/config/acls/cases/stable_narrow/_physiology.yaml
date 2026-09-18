@@ -1,0 +1,212 @@
+# ================================================================
+# 窄QRS稳定心动过速（SVT）生理预设
+# 案例编号：101
+# 存放位置：cases/stable_narrow/_physiology.yaml
+# 作用：定义每个状态的基线生命体征及状态间过渡时间
+# 设计原则：基线代表"学员不做任何干预时的自然病程"，
+#           学员的操作（给药、电击等）将作为"叠加层"动态影响最终显示值。
+# ================================================================
+
+# 全局默认过渡时间（秒），当某个状态未单独指定时使用
+default_transition_duration: 10
+
+# 每个状态的生理基线定义
+# 键名必须与状态机中的状态 ID 完全一致
+state_physiology:
+
+  # --------------------------------------------
+  # 0. 初始评估阶段（刚接诊患者）
+  # --------------------------------------------
+  F-000-INITIAL_ASSESSMENT:
+    phys.heartRate: 150
+    phys.systolicBp: 145
+    phys.diastolicBp: 90
+    phys.spo2: 98
+    phys.respiratoryRate: 22
+    phys.consciousness: "alert"
+    transition_duration: 5
+
+  # --------------------------------------------
+  # 1. 初始设置阶段（刚完成初步评估，准备进入治疗）
+  # --------------------------------------------
+  F-000-INITIAL_SETUP:
+    phys.heartRate: 150
+    phys.systolicBp: 145
+    phys.diastolicBp: 90
+    phys.spo2: 98
+    phys.respiratoryRate: 22
+    phys.consciousness: "alert"
+    transition_duration: 5
+
+  # --------------------------------------------
+  # 2. 稳定评估阶段
+  # --------------------------------------------
+  F-101-ASSESS_STABILITY:
+    phys.heartRate: 150
+    phys.systolicBp: 145
+    phys.diastolicBp: 90
+    phys.spo2: 98
+    phys.respiratoryRate: 22
+    phys.consciousness: "alert"
+    transition_duration: 5
+
+  # --------------------------------------------
+  # 3. QRS宽度确认
+  # --------------------------------------------
+  F-101-CHECK_QRS_WIDTH:
+    phys.heartRate: 150
+    phys.systolicBp: 145
+    phys.diastolicBp: 90
+    phys.spo2: 98
+    phys.respiratoryRate: 22
+    phys.consciousness: "alert"
+
+  # --------------------------------------------
+  # 4. 节律确认
+  # --------------------------------------------
+  F-101-CHECK_RHYTHM:
+    phys.heartRate: 150
+    phys.systolicBp: 145
+    phys.diastolicBp: 90
+    phys.spo2: 98
+    phys.respiratoryRate: 22
+    phys.consciousness: "alert"
+
+  # --------------------------------------------
+  # 5. 迷走神经刺激
+  # --------------------------------------------
+  F-101-DO_VAGAL_MANEUVER:
+    phys.heartRate: 148
+    phys.systolicBp: 142
+    phys.diastolicBp: 88
+    phys.spo2: 98
+    phys.respiratoryRate: 22
+    phys.consciousness: "alert"
+    transition_duration: 15
+
+  # --------------------------------------------
+  # 6. 腺苷 6mg
+  # --------------------------------------------
+  F-101-DO_ADENOSINE_6MG:
+    phys.heartRate: 145
+    phys.systolicBp: 138
+    phys.diastolicBp: 85
+    phys.spo2: 98
+    phys.respiratoryRate: 22
+    phys.consciousness: "alert"
+    transition_duration: 20
+
+  # --------------------------------------------
+  # 7. 腺苷 12mg
+  # --------------------------------------------
+  F-101-DO_ADENOSINE_12MG:
+    phys.heartRate: 155
+    phys.systolicBp: 135
+    phys.diastolicBp: 82
+    phys.spo2: 97
+    phys.respiratoryRate: 24
+    phys.consciousness: "alert"
+    transition_duration: 20
+
+  # --------------------------------------------
+  # 8. 二线药物（β阻滞剂或CCB）
+  # --------------------------------------------
+  F-101-DO_SECOND_LINE_DRUG:
+    phys.heartRate: 160
+    phys.systolicBp: 125
+    phys.diastolicBp: 75
+    phys.spo2: 96
+    phys.respiratoryRate: 26
+    phys.consciousness: "verbal"
+    transition_duration: 30
+
+  # --------------------------------------------
+  # 9. 监测窦性心律（转复成功）
+  # --------------------------------------------
+  F-101-MONITOR_SINUS_RHYTHM:
+    phys.heartRate: 85
+    phys.systolicBp: 130
+    phys.diastolicBp: 80
+    phys.spo2: 99
+    phys.respiratoryRate: 18
+    phys.consciousness: "alert"
+    transition_duration: 25
+
+  # --------------------------------------------
+  # 10. 不稳定 → 同步电复律
+  # --------------------------------------------
+  F-101-UNSTABLE_CARDIOVERSION:
+    phys.heartRate: 180
+    phys.systolicBp: 78
+    phys.diastolicBp: 50
+    phys.spo2: 92
+    phys.respiratoryRate: 30
+    phys.consciousness: "pain"
+    transition_duration: 20
+
+  # --------------------------------------------
+  # 11. 退出到父级
+  # --------------------------------------------
+  F-101-EXIT_TO_PARENT:
+    phys.heartRate: 85
+    phys.systolicBp: 130
+    phys.diastolicBp: 80
+    phys.spo2: 99
+    phys.respiratoryRate: 18
+    phys.consciousness: "alert"
+    transition_duration: 10
+
+# ================================================================
+# ★ 操作效果定义（与效果定义保持一致）
+# 系统在运行时，根据学员操作动态应用这些效果叠加到基线上
+# 注意：目标变量名已更新为分层命名
+# ================================================================
+operation_effects:
+  # 腺苷 6mg：心率瞬间下降约150次/分，然后线性恢复
+  ADENOSINE_6MG:
+    - target: phys.heartRate
+      delta: -150
+      duration: 8
+      recovery: 12
+      curve: INSTANT_DROP_LINEAR_RECOVER
+
+  # 腺苷 12mg：效果更强，持续时间稍长
+  ADENOSINE_12MG:
+    - target: phys.heartRate
+      delta: -160
+      duration: 10
+      recovery: 15
+      curve: INSTANT_DROP_LINEAR_RECOVER
+
+  # 迷走刺激（如果学员执行了迷走神经刺激，也可触发此效果）
+  # 注意：如果在状态基线中已有变化，叠加效果可选
+  # VAGAL_MANEUVER:
+  #   - target: phys.heartRate
+  #     delta: -20
+  #     duration: 10
+  #     recovery: 10
+  #     curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  # 除颤（如不稳定时使用同步电复律）
+  # DEFIB_200J:
+  #   - target: phys.heartRate
+  #     delta: -100
+  #     duration: 2
+  #     recovery: 5
+  #     curve: INSTANT_DROP_LINEAR_RECOVER
+
+  # 气道插管（如果该案例涉及插管）
+  # AIRWAY_INTUBATION:
+  #   - target: phys.spo2
+  #     delta: 5
+  #     duration: 30
+  #     recovery: 10
+  #     curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  # CPR 轮换（如果涉及）
+  # CPR_ROTATION:
+  #   - target: phys.heartRate
+  #     delta: 10
+  #     duration: 5
+  #     recovery: 5
+  #     curve: LINEAR_DECAY_LINEAR_RECOVER

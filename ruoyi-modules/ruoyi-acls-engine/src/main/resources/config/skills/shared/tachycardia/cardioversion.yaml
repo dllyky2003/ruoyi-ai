@@ -1,0 +1,11 @@
+# ============================================================================
+# cardioversion.yaml - 同步电复律（心动过速家族共享）
+# 对应 S-101-2-6：不稳定或难治性心动过速的紧急干预
+# ============================================================================
+
+skills:
+  - id: synchronized_cardioversion
+    duty: MONITOR_DEFIB
+    type: complex
+    params:
+      beanName: "cardioversionSkill"

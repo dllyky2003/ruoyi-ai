@@ -2,13 +2,17 @@ package com.ruoyi.acls.adapter;
 
 import com.ruoyi.acls.engine.AclsCommandEngine;
 import com.ruoyi.acls.engine.CommandResult;
+import com.ruoyi.acls.router.SemanticRouter;
+import com.ruoyi.acls.skill.registery.SkillRegistry;
 import com.ruoyi.ems.domain.IntentCommand;
 import com.ruoyi.ems.spi.IntelligentCommandProcessor;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -21,52 +25,72 @@ import java.util.Map;
 public class AclsIntelligentProcessor implements IntelligentCommandProcessor {
 
     private final AclsCommandEngine engine;
+    private final SkillRegistry skillRegistry;
+    private final SemanticRouter semanticRouter;
+
+    @PostConstruct
+    public void init() {
+        log.info("✅ AclsIntelligentProcessor Bean 初始化完成");
+        log.info("   SkillRegistry 中共有 {} 个技能", skillRegistry.size());
+    }
 
     /**
-     * 仅处理 ACLS 相关的意图（以 "ACLS_" 或 "S2-" 开头的）
-     * 其他意图仍然走旧逻辑
+     * 判断当前处理器是否支持该意图
+     *
+     * <p>支持规则：意图编码存在于 SkillRegistry 中，或 SemanticRouter 中存在对应路由
      */
     @Override
     public boolean supports(String intentId) {
-        return intentId != null && (
-            intentId.startsWith("ACLS_") ||
-                intentId.startsWith("S2-") ||
-                intentId.equals("START_CPR") ||
-                intentId.equals("DEFIBRILLATE") ||
-                intentId.equals("GIVE_EPINEPHRINE")
-        );
+        if (intentId == null) {
+            return false;
+        }
+
+        // ★ META_* 不属于技能链路，即使有通配符路由也不该拦截
+        if (intentId.startsWith("META_")) {
+            log.debug("supports: intentId={}, META_* 不归此处理器处理", intentId);
+            return false;
+        }
+
+        if (skillRegistry.exists(intentId)) {
+            return true;
+        }
+        return semanticRouter.hasRouteForIntent(intentId);
     }
 
     @Override
-    public Map<String, Object> processCommand(String sessionId, IntentCommand command, Object webSocketSession) {
-        log.info("🧠 [新引擎] 处理指令: session={}, intent={}, text={}",
-            sessionId, command.getIntentCode(), command.getRawText());
-
+    public Map<String, Object> processCommand(String sessionId, IntentCommand command) {
         try {
-            // 调用新引擎
-            CommandResult result = engine.processCommand(
-                command.getIntentCode(),
-                sessionId,
-                command.getRawText() != null ? command.getRawText() : ""
-            );
+            CommandResult result = engine.processCommand(command, sessionId);
 
-            // 构造响应
             Map<String, Object> response = new HashMap<>();
             response.put("success", result.isSuccess());
-            response.put("responseText", result.getResponseText());
-            response.put("animations", result.getAnimations());
-            response.put("contextUpdates", result.getContextUpdates());
+            response.put("animations", result.getAnimations() != null ? result.getAnimations() : List.of());
+            response.put("contextUpdates", result.getContextUpdates() != null ? result.getContextUpdates() : Map.of());
 
-            // 如果有错误信息，记录日志
-            if (!result.isSuccess() && result.getErrorMessage() != null) {
-                log.warn("新引擎执行失败: {}", result.getErrorMessage());
+            String responseText;
+            if (result.isSuccess()) {
+                responseText = result.getResponseText();
+                if (responseText == null) {
+                    responseText = "";    // 允许空，前端自行处理
+                }
+            } else {
+                responseText = result.getErrorMessage() != null ? result.getErrorMessage() : "指令执行失败";
             }
+            response.put("responseText", responseText);
 
             return response;
 
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            // 业务失败（如参数校验、状态机无法转换），直接返回失败响应，不触发降级
+            log.warn("新引擎业务失败: {}", e.getMessage());
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("responseText", "操作失败: " + e.getMessage());
+            response.put("animations", List.of());
+            response.put("contextUpdates", Map.of());
+            return response;
         } catch (Exception e) {
-            log.error("新引擎执行异常，将降级到旧逻辑", e);
-            // 抛出异常让调用方降级到旧逻辑
+            log.error("新引擎系统异常，将抛出异常让调用方降级", e);
             throw new RuntimeException("新引擎执行失败: " + e.getMessage(), e);
         }
     }

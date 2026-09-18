@@ -16,7 +16,10 @@ import java.util.List;
  * 正则兜底分类器：基于标准话术（standard_script）进行关键词匹配
  * 当LLM分类失败或置信度低时使用
  *
- * 修改说明：匹配源从 examples 改为 standard_script，使匹配更贴近标准话术。
+ * 修改说明：
+ *  1. 匹配源从 examples 改为 standard_script，使匹配更贴近标准话术。
+ *  2. determineActType 补充「有没有」疑问词。
+ *  3. 命中时回填 matchedDefinition，避免 IntentCommand.isValid() 判定失效。
  */
 @Slf4j
 @Component
@@ -25,15 +28,23 @@ public class FallbackClassifier implements IntentClassifier {
 
     private final CaseIntentDefinitionsLoader registry;
 
+    @Override
+    public void warmUp()
+    {
+
+    }
 
     @Override
     public IntentCommand classify(String asrText, ClassificationContext context) {
-
-        return classify(asrText);
+        return doClassify(asrText, context);
     }
 
     @Override
     public IntentCommand classify(String asrText) {
+        return doClassify(asrText, null);
+    }
+
+    private IntentCommand doClassify(String asrText, ClassificationContext context) {
         if (asrText == null || asrText.trim().isEmpty()) {
             return IntentCommand.invalid(asrText, "语音文本为空");
         }
@@ -75,7 +86,8 @@ public class FallbackClassifier implements IntentClassifier {
         // 4. 返回结果
         if (bestMatch != null && bestScore > 0) {
             double confidence = Math.min(0.7, 0.3 + (bestScore / 10.0) * 0.4);
-            log.debug("Fallback 匹配: code={}, score={}, confidence={}", bestMatch.getIntentCode(), bestScore, confidence);
+            log.debug("Fallback 匹配: code={}, score={}, confidence={}",
+                bestMatch.getIntentCode(), bestScore, confidence);
 
             IntentCandidate candidate = IntentCandidate.builder()
                 .intentCode(bestMatch.getIntentCode())
@@ -89,10 +101,12 @@ public class FallbackClassifier implements IntentClassifier {
                 .intentCode(bestMatch.getIntentCode())
                 .confidence(confidence)
                 .candidates(candidates)
+                .actType(bestMatch.getActType())
                 .valid(true)
                 .classifyMode("FALLBACK")
                 .slots(Collections.emptyMap())
                 .rawText(asrText)
+                .matchedDefinition(bestMatch)
                 .build();
         } else {
             log.warn("Fallback 无匹配: {}", text);
@@ -128,13 +142,13 @@ public class FallbackClassifier implements IntentClassifier {
     /**
      * 根据文本内容推断 act_type
      * 规则：
-     * - 含疑问词（吗、多少、什么、几、是否） → "询问"
-     * - 含“了”且不含“准备” → "宣告"（避免“准备...了”被误判）
+     * - 含疑问词（吗、多少、什么、几、是否、有没有） → "询问"
+     * - 含"了"且不含"准备" → "宣告"（避免"准备...了"被误判）
      * - 其余 → "指令"
      */
     private String determineActType(String text) {
         if (text.contains("吗") || text.contains("多少") || text.contains("什么")
-            || text.contains("几") || text.contains("是否")) {
+            || text.contains("几") || text.contains("是否") || text.contains("有没有")) {
             return "询问";
         }
         if (text.contains("了") && !text.contains("准备")) {

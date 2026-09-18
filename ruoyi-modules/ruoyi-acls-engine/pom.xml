@@ -4,18 +4,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- ========== 父 POM：必须与主项目一致 ========== -->
     <parent>
         <groupId>org.ruoyi</groupId>
         <artifactId>ruoyi-ai</artifactId>
-        <version>3.1.0</version>          <!-- ✅ 与父 POM 版本一致 -->
-        <relativePath>../pom.xml</relativePath>   <!-- ✅ 父 POM 相对路径 -->
+        <version>3.1.0</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <!-- ========== 当前模块坐标 ========== -->
     <artifactId>ruoyi-acls-engine</artifactId>
-    <!-- groupId 和 version 从父 POM 继承，无需重复声明 -->
-
     <packaging>jar</packaging>
 
     <description>
@@ -23,38 +19,53 @@
     </description>
 
     <dependencies>
-        <!-- ========== 依赖现有 EMS 模块 ========== -->
+        <!-- 依赖现有 EMS 模块（编译期需要，运行时由主程序提供） -->
         <dependency>
-            <groupId>org.ruoyi</groupId>           <!-- ✅ 与父 POM 一致 -->
+            <groupId>org.ruoyi</groupId>
             <artifactId>ruoyi-ai-ems</artifactId>
-            <version>${project.version}</version>  <!-- ✅ 继承父 POM 版本 3.1.0 -->
+            <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
 
-        <!-- ========== Spring Boot Starter ========== -->
+        <!-- Spring 上下文（@Component、@Autowired 等） -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Spring Boot 自动配置（@ConditionalOnProperty、@ConfigurationProperties 等） -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+            <scope>provided</scope>
         </dependency>
 
-        <!-- ========== 配置处理器 ========== -->
+        <!-- 配置处理器（可选，用于 IDE 提示） -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
         </dependency>
 
-        <!-- ========== Lombok ========== -->
+        <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
-
-        <!-- ========== 测试依赖 ========== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
+            <artifactId>spring-boot-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -65,7 +76,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <skip>true</skip> <!-- 业务库，不生成可执行 JAR -->
+                    <skip>true</skip>
                 </configuration>
             </plugin>
         </plugins>

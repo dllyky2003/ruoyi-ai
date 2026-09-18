@@ -1,0 +1,54 @@
+{
+  "version": "1.0.0",
+  "description": "事件日志时间戳派生规则。mode 从 target 前缀自动解析（last*/first*），无前缀默认 first。caseTypes 不填表示全局适用。",
+  "derivations": [
+    { "code": "FIRST_CONTACT",      "target": "derived.firstContactTime" },
+    { "code": "ECG_12LEAD",         "target": "derived.firstECGTime" },
+    { "code": "BP_MEASURED",        "target": "derived.firstBpTime" },
+    { "code": "IV_ACCESS",          "target": "derived.firstIvAccessTime" },
+    { "code": "OXYGEN_START",       "target": "derived.firstOxygenTime" },
+    { "code": "SCENE_EXIT",         "target": "derived.sceneExitTime" },
+    { "code": "HOSPITAL_ARRIVAL",   "target": "derived.hospitalArrivalTime" },
+    { "code": "FLUSH",              "target": "derived.lastFlushTime" },
+    { "code": "*",                  "target": "derived.lastInterventionTime" },
+
+    { "code": "CPR_START",          "target": "derived.cprStartTime" },
+    { "code": "CPR_STOP",           "target": "derived.cprStopTime" },
+    { "code": "DEFIB",              "target": "derived.firstDefibTime" },
+    { "code": "DEFIB",              "target": "derived.lastShockTime" },
+    { "code": "ROSC",               "target": "derived.roscTime" },
+
+    { "code": "DRUG_PUSH",          "target": "derived.firstDrugTime" },
+    { "code": "EPINEPHRINE_PUSH",   "target": "derived.firstEpinephrineTime" },
+    { "code": "EPINEPHRINE_PUSH",   "target": "derived.lastEpinephrineTime" },
+    { "code": "AMIODARONE_PUSH",    "target": "derived.firstAmiodaroneTime" },
+    { "code": "LIDOCAINE_PUSH",     "target": "derived.firstLidocaineTime" },
+
+    { "code": "VAGAL_MANEUVER",     "target": "derived.firstVagalTime",
+      "caseTypes": ["svt_stable", "stable_narrow_tachycardia"] },
+    { "code": "ADENOSINE_PUSH",     "target": "derived.firstAdenosineTime",
+      "caseTypes": ["svt_stable", "stable_narrow_tachycardia"] },
+    { "code": "CARDIOVERSION",      "target": "derived.firstCardioversionTime" },
+    { "code": "DILTIAZEM_PUSH",     "target": "derived.firstDiltiazemTime",
+      "caseTypes": ["afib_rapid", "aflutter_rapid"] },
+    { "code": "METOPROLOL_PUSH",    "target": "derived.firstMetoprololTime",
+      "caseTypes": ["afib_rapid", "aflutter_rapid"] },
+
+    { "code": "ATROPINE_PUSH",      "target": "derived.firstAtropineTime",
+      "caseTypes": ["bradycardia_symptomatic", "bradycardia_stable"] },
+    { "code": "PACING_START",       "target": "derived.pacingStartTime",
+      "caseTypes": ["bradycardia_symptomatic"] },
+    { "code": "DOPAMINE_START",     "target": "derived.dopamineStartTime",
+      "caseTypes": ["bradycardia_symptomatic"] },
+
+    { "code": "INTUBATION",         "target": "derived.intubationTime" },
+    { "code": "SGA_PLACEMENT",      "target": "derived.sgaTime" },
+    { "code": "TERMINATION",        "target": "derived.terminationTime" },
+
+    { "code": "ASPIRIN_PUSH",       "target": "derived.firstAspirinTime",
+      "caseTypes": ["acs_stemi", "acs_nstemi"] },
+    { "code": "NITRO_PUSH",         "target": "derived.firstNitroTime",
+      "caseTypes": ["acs_stemi", "acs_nstemi"] },
+    { "code": "TTM_START",          "target": "derived.ttmStartTime" }
+  ]
+}

@@ -4,7 +4,6 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * 团队成员配置模型（一个成员可以承担多个职责）
@@ -17,6 +16,6 @@ public class MemberSlot {
     /** 成员名字（可随机生成或预设） */
     private String name;
     /** 该成员承担的 ACLS 职责列表 */
-    private Set<Duty> duties;
+    private List<Duty> duties;
 }
 

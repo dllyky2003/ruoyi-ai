@@ -1,0 +1,54 @@
+# ============================================================================
+# 05_transport.yaml - 转运/交接类技能
+# 对应 EgoEMS #62~#67：转运、担架、固定、通知医院、交接
+# 职责：ASSIST（司机/担架员）、RECORD（记录员）
+# ============================================================================
+
+skills:
+  - id: transport
+    duty: ASSIST
+    type: standard
+    params:
+      vrActionCode: "TRANSPORT"
+      durationSeconds: 5
+      successVar: process.transportStarted
+      successSpeech: "患者已开始转运至救护车。"
+
+  - id: load_patient_to_stretcher
+    duty: ASSIST
+    type: standard
+    params:
+      vrActionCode: "LOAD_STRETCHER"
+      durationSeconds: 6
+      successVar: process.patientLoaded
+      successSpeech: "患者已抬上担架。"
+
+  - id: secure_patient_on_stretcher
+    duty: ASSIST
+    type: standard
+    params:
+      vrActionCode: "SECURE_STRETCHER"
+      durationSeconds: 3
+      successVar: process.patientSecured
+      successSpeech: "患者已用安全带固定。"
+
+  - id: notify_hospital
+    duty: RECORD
+    type: query
+    params:
+      targetVar: process.hospitalNotified
+      responseTemplate: "已通知接收医院。"
+
+  - id: notify_hospital_of_stroke_alert
+    duty: RECORD
+    type: query
+    params:
+      targetVar: process.strokeAlertNotified
+      responseTemplate: "已激活卒中警报通知。"
+
+  - id: handoff_patient_to_hospital
+    duty: RECORD
+    type: query
+    params:
+      targetVar: process.handoffDone
+      responseTemplate: "患者交接已向医院报告。"

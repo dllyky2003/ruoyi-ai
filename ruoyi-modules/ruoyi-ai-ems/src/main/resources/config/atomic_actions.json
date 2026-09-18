@@ -187,5 +187,104 @@
     "requiresVerbal": "迷走神经刺激完成",
     "async": true,
     "vr_animation": "vagal"
+  },
+  "CHECK_DEFIB_CONNECTION": {
+    "actor": "MONITOR_DEFIB",
+    "durationSec": 3,
+    "requiresVerbal": "正在检查除颤仪连接状态",
+    "async": true,
+    "vr_animation": "check_defib"
+  },
+  "CHECK_AIRWAY_EQUIPMENT": {
+    "actor": "AIRWAY",
+    "durationSec": 4,
+    "requiresVerbal": "正在检查气道设备：喉镜、导管、球囊",
+    "async": true,
+    "vr_animation": "check_airway"
+  },
+  "PERFORM_INTUBATION": {
+    "actor": "AIRWAY",
+    "durationSec": 10,
+    "requiresVerbal": "正在进行气管插管",
+    "async": true,
+    "vr_animation": "intubation"
+  },
+  "PERFORM_BVM": {
+    "actor": "AIRWAY",
+    "durationSec": 3,
+    "requiresVerbal": "开始球囊面罩通气",
+    "async": true,
+    "vr_animation": "bvm"
+  },
+  "PERFORM_SGA": {
+    "actor": "AIRWAY",
+    "durationSec": 5,
+    "requiresVerbal": "放置声门上气道",
+    "async": true,
+    "vr_animation": "sga_placement"
+  },
+  "CPR_ROTATION": {
+    "actor": "CPR",
+    "durationSec": 3,
+    "requiresVerbal": "按压员轮换中",
+    "async": true,
+    "vr_animation": "cpr_rotation"
+  },
+  "CANCEL_DEFIB": {
+    "actor": "MONITOR_DEFIB",
+    "durationSec": 2,
+    "requiresVerbal": "除颤操作已取消，设备归位",
+    "async": true,
+    "vr_animation": "cancel_defib"
+  },
+  "CANCEL_DRUG": {
+    "actor": "IV_MED",
+    "durationSec": 1,
+    "requiresVerbal": "药物推注已取消",
+    "async": true,
+    "vr_animation": "cancel_drug"
+  },
+  "CANCEL_AIRWAY": {
+    "actor": "AIRWAY",
+    "durationSec": 2,
+    "requiresVerbal": "气道操作已取消",
+    "async": true,
+    "vr_animation": "cancel_airway"
+  },
+  "CANCEL_ROTATION": {
+    "actor": "CPR",
+    "durationSec": 1,
+    "requiresVerbal": "按压轮换已取消",
+    "async": true,
+    "vr_animation": "cancel_rotation"
+  },
+    "OVERRIDE_PROTOCOL": {
+      "actor": "TEAM_LEADER",
+      "durationSec": 2,
+      "requiresVerbal": "策略已更改，执行新方案：{override_action}",
+      "async": false,
+      "vr_animation": null
+    },
+    "SET_SYNC_MODE": {
+      "actor": "MONITOR_DEFIB",
+      "durationSec": 3,
+      "requiresVerbal": "已调至同步模式，能量选择{energy}焦耳",
+      "async": true,
+      "vr_animation": "device_setup"
+    },
+    "DECLARE_UNSTABLE": {
+      "actor": "ASSESS",
+      "durationSec": 2,
+      "requiresVerbal": "患者不稳定，血压{reported_systolic_bp}，意识改变，立即处理",
+      "async": true,
+      "vr_animation": "declare_alert"
+    },
+    "DECLARE_CRITICAL_EVENT": {
+      "actor": "ASSESS",
+      "durationSec": 2,
+      "requiresVerbal": "危急事件：{event_type}，触发心脏骤停流程",
+      "async": true,
+      "vr_animation": "declare_alert"
+    }
   }
-}
+

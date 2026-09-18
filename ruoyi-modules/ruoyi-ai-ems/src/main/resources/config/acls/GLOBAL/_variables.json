@@ -1,353 +1,5177 @@
 {
-  "version": "1.0.0",
-  "lastUpdated": "2026-08-28",
-  "description": "ACLS通用上下文变量定义（G类），适用于所有Megacode案例",
+  "version": "2.1.0",
+  "lastUpdated": "2026-09-17",
+  "description": "ACLS Megacode 培训全局变量定义 - 完整生产版 v2.1",
   "layer": "GENERAL",
-
   "variables": [
     {
-      "name": "current_rhythm",
-      "type": "string",
-      "enum": [
-        { "value": "Sinus", "label": "窦性心律" },
-        { "value": "SVT", "label": "室上速" },
-        { "value": "AFib", "label": "房颤" },
-        { "value": "AFlutter", "label": "房扑" },
-        { "value": "VT", "label": "室速" },
-        { "value": "VF", "label": "室颤" },
-        { "value": "PEA", "label": "无脉电活动" },
-        { "value": "Asystole", "label": "停搏" }
-      ],
-      "description": "当前实时心律（客观事实）",
-      "category": "PHYSIOLOGICAL",
-      "source": "SIMULATOR",
-      "writable_by": "SIMULATOR",
-      "default_value": "SVT",
-      "persistence": true,
-      "scoring": false
-    },
-    {
-      "name": "systolic_bp",
-      "type": "integer",
-      "min": 0,
-      "max": 300,
-      "unit": "mmHg",
-      "description": "收缩压（客观事实）",
-      "category": "PHYSIOLOGICAL",
-      "source": "SIMULATOR",
-      "writable_by": "SIMULATOR",
-      "default_value": 145,
-      "persistence": true,
-      "scoring": false
-    },
-    {
-      "name": "diastolic_bp",
-      "type": "integer",
-      "min": 0,
-      "max": 200,
-      "unit": "mmHg",
-      "description": "舒张压（客观事实）",
-      "category": "PHYSIOLOGICAL",
-      "source": "SIMULATOR",
-      "writable_by": "SIMULATOR",
-      "default_value": 90,
-      "persistence": true,
-      "scoring": false
-    },
-    {
-      "name": "heart_rate",
+      "name": "phys.heartRate",
+      "name_cn": "心率",
       "type": "integer",
       "min": 0,
       "max": 350,
       "unit": "bpm",
-      "description": "心率（客观事实）",
+      "description": "实时心率",
       "category": "PHYSIOLOGICAL",
-      "source": "SIMULATOR",
-      "writable_by": "SIMULATOR",
-      "default_value": 150,
-      "persistence": true,
-      "scoring": false
+      "default_value": 150
     },
     {
-      "name": "spo2",
+      "name": "phys.systolicBp",
+      "name_cn": "收缩压",
       "type": "integer",
       "min": 0,
-      "max": 100,
-      "unit": "%",
-      "description": "血氧饱和度（客观事实）",
+      "max": 300,
+      "unit": "mmHg",
+      "description": "收缩压",
       "category": "PHYSIOLOGICAL",
-      "source": "SIMULATOR",
-      "writable_by": "SIMULATOR",
-      "default_value": 98,
-      "persistence": true,
-      "scoring": false
+      "default_value": 145
     },
     {
-      "name": "consciousness",
+      "name": "phys.diastolicBp",
+      "name_cn": "舒张压",
+      "type": "integer",
+      "min": 0,
+      "max": 200,
+      "unit": "mmHg",
+      "description": "舒张压",
+      "category": "PHYSIOLOGICAL",
+      "default_value": 90
+    },
+    {
+      "name": "phys.meanArterialPressure",
+      "name_cn": "平均动脉压",
+      "type": "integer",
+      "min": 0,
+      "max": 250,
+      "unit": "mmHg",
+      "description": "平均动脉压",
+      "category": "PHYSIOLOGICAL",
+      "default_value": 108
+    },
+    {
+      "name": "phys.pulsePressure",
+      "name_cn": "脉压差",
+      "type": "integer",
+      "min": 0,
+      "max": 200,
+      "unit": "mmHg",
+      "description": "收缩压与舒张压之差",
+      "category": "PHYSIOLOGICAL",
+      "default_value": 55
+    },
+    {
+      "name": "phys.hasPulse",
+      "name_cn": "可触及脉搏",
+      "type": "boolean",
+      "description": "是否可触及颈动脉或股动脉搏动",
+      "category": "PHYSIOLOGICAL",
+      "default_value": true,
+      "value_labels": {
+        "true": "可触及",
+        "false": "未触及",
+        "unknown": "待判读"
+      }
+    },
+    {
+      "name": "phys.peripheralPulse",
+      "name_cn": "末梢脉搏",
+      "type": "boolean",
+      "description": "桡动脉或足背动脉是否可触及",
+      "category": "PHYSIOLOGICAL",
+      "default_value": true,
+      "value_labels": {
+        "true": "可触及",
+        "false": "未触及",
+        "unknown": "待判读"
+      }
+    },
+    {
+      "name": "phys.rhythm",
+      "name_cn": "当前心律",
       "type": "string",
       "enum": [
-        { "value": "alert", "label": "清醒" },
-        { "value": "verbal", "label": "对声音有反应" },
-        { "value": "pain", "label": "对疼痛有反应" },
-        { "value": "unresponsive", "label": "无反应" }
+        {
+          "value": "Sinus",
+          "label": "窦性心律"
+        },
+        {
+          "value": "SVT",
+          "label": "室上性心动过速"
+        },
+        {
+          "value": "AFib",
+          "label": "心房颤动"
+        },
+        {
+          "value": "AFlutter",
+          "label": "心房扑动"
+        },
+        {
+          "value": "VT",
+          "label": "室性心动过速"
+        },
+        {
+          "value": "VF",
+          "label": "心室颤动"
+        },
+        {
+          "value": "PEA",
+          "label": "无脉电活动"
+        },
+        {
+          "value": "Asystole",
+          "label": "心室停搏"
+        }
       ],
-      "description": "意识状态（客观事实）",
+      "description": "当前实时心律",
       "category": "PHYSIOLOGICAL",
-      "source": "SIMULATOR",
-      "writable_by": "SIMULATOR",
-      "default_value": "alert",
-      "persistence": true,
-      "scoring": false
+      "default_value": "SVT"
     },
     {
-      "name": "respiratory_rate",
+      "name": "phys.rhythmSource",
+      "name_cn": "心律来源",
+      "type": "string",
+      "enum": [
+        {
+          "value": "monitor",
+          "label": "监护仪"
+        },
+        {
+          "value": "ecg_12lead",
+          "label": "12导联心电图"
+        },
+        {
+          "value": "none",
+          "label": "无"
+        }
+      ],
+      "description": "心律数据的来源设备",
+      "category": "PHYSIOLOGICAL",
+      "default_value": "monitor"
+    },
+    {
+      "name": "phys.respiratoryRate",
+      "name_cn": "呼吸频率",
       "type": "integer",
       "min": 0,
       "max": 60,
       "unit": "/min",
-      "description": "呼吸频率（客观事实）",
+      "description": "自主呼吸频率",
       "category": "PHYSIOLOGICAL",
-      "source": "SIMULATOR",
-      "writable_by": "SIMULATOR",
-      "default_value": 20,
-      "persistence": true,
-      "scoring": false
+      "default_value": 20
     },
-
     {
-      "name": "asserted_qrs_width",
+      "name": "phys.spo2",
+      "name_cn": "血氧饱和度",
+      "type": "integer",
+      "min": 0,
+      "max": 100,
+      "unit": "%",
+      "description": "脉搏血氧饱和度",
+      "category": "PHYSIOLOGICAL",
+      "default_value": 98
+    },
+    {
+      "name": "phys.etco2",
+      "name_cn": "呼气末二氧化碳",
+      "type": "integer",
+      "min": 0,
+      "max": 100,
+      "unit": "mmHg",
+      "description": "呼气末二氧化碳分压",
+      "category": "PHYSIOLOGICAL",
+      "default_value": 35
+    },
+    {
+      "name": "phys.etco2Trend",
+      "name_cn": "ETCO2变化趋势",
       "type": "string",
       "enum": [
-        { "value": "narrow", "label": "窄QRS" },
-        { "value": "wide", "label": "宽QRS" },
-        { "value": null, "label": "未指定" }
+        {
+          "value": "rising",
+          "label": "上升"
+        },
+        {
+          "value": "stable",
+          "label": "平稳"
+        },
+        {
+          "value": "falling",
+          "label": "下降"
+        }
       ],
-      "description": "学员报告/判断的QRS宽度",
-      "category": "LEARNER_STATEMENT",
-      "source": "LEARNER",
-      "writable_by": "CLASSIFIER",
-      "default_value": null,
-      "persistence": true,
-      "scoring": true,
-      "scoring_rules": {
-        "compare_with": "current_rhythm",
-        "mapping": { "narrow": ["SVT", "AFib", "AFlutter", "Sinus"], "wide": ["VT", "VF"] }
+      "description": "ETCO2趋势方向",
+      "category": "PHYSIOLOGICAL",
+      "default_value": "stable"
+    },
+    {
+      "name": "phys.paO2",
+      "name_cn": "动脉血氧分压",
+      "type": "integer",
+      "min": 0,
+      "max": 150,
+      "unit": "mmHg",
+      "description": "动脉血气氧分压",
+      "category": "PHYSIOLOGICAL",
+      "default_value": null
+    },
+    {
+      "name": "phys.paCO2",
+      "name_cn": "动脉血二氧化碳分压",
+      "type": "integer",
+      "min": 0,
+      "max": 100,
+      "unit": "mmHg",
+      "description": "动脉血气二氧化碳分压",
+      "category": "PHYSIOLOGICAL",
+      "default_value": null
+    },
+    {
+      "name": "phys.ventilationMode",
+      "name_cn": "通气模式",
+      "type": "string",
+      "enum": [
+        {
+          "value": "spontaneous",
+          "label": "自主呼吸"
+        },
+        {
+          "value": "bvm",
+          "label": "球囊面罩通气"
+        },
+        {
+          "value": "ventilator",
+          "label": "机械通气"
+        },
+        {
+          "value": "none",
+          "label": "无通气"
+        }
+      ],
+      "description": "当前通气方式",
+      "category": "PHYSIOLOGICAL",
+      "default_value": "spontaneous"
+    },
+    {
+      "name": "phys.consciousness",
+      "name_cn": "意识状态",
+      "type": "string",
+      "enum": [
+        {
+          "value": "alert",
+          "label": "清醒"
+        },
+        {
+          "value": "verbal",
+          "label": "对呼叫有反应"
+        },
+        {
+          "value": "pain",
+          "label": "对疼痛有反应"
+        },
+        {
+          "value": "unresponsive",
+          "label": "无反应"
+        }
+      ],
+      "description": "AVPU意识分级",
+      "category": "PHYSIOLOGICAL",
+      "default_value": "alert"
+    },
+    {
+      "name": "phys.gcsEye",
+      "name_cn": "GCS睁眼",
+      "type": "integer",
+      "min": 1,
+      "max": 4,
+      "description": "GCS睁眼反应评分",
+      "category": "PHYSIOLOGICAL",
+      "default_value": 4
+    },
+    {
+      "name": "phys.gcsVerbal",
+      "name_cn": "GCS语言",
+      "type": "integer",
+      "min": 1,
+      "max": 5,
+      "description": "GCS语言反应评分",
+      "category": "PHYSIOLOGICAL",
+      "default_value": 5
+    },
+    {
+      "name": "phys.gcsMotor",
+      "name_cn": "GCS运动",
+      "type": "integer",
+      "min": 1,
+      "max": 6,
+      "description": "GCS运动反应评分",
+      "category": "PHYSIOLOGICAL",
+      "default_value": 6
+    },
+    {
+      "name": "phys.gcsTotal",
+      "name_cn": "GCS总分",
+      "type": "integer",
+      "min": 3,
+      "max": 15,
+      "description": "GCS总评分",
+      "category": "PHYSIOLOGICAL",
+      "default_value": 15
+    },
+    {
+      "name": "phys.pupils",
+      "name_cn": "瞳孔反应",
+      "type": "string",
+      "enum": [
+        {
+          "value": "brisk",
+          "label": "灵敏"
+        },
+        {
+          "value": "sluggish",
+          "label": "迟钝"
+        },
+        {
+          "value": "fixed",
+          "label": "固定"
+        },
+        {
+          "value": "unequal",
+          "label": "不等大"
+        }
+      ],
+      "description": "瞳孔对光反射",
+      "category": "PHYSIOLOGICAL",
+      "default_value": "brisk"
+    },
+    {
+      "name": "phys.pupilSize",
+      "name_cn": "瞳孔大小",
+      "type": "string",
+      "enum": [
+        {
+          "value": "normal",
+          "label": "正常"
+        },
+        {
+          "value": "miosis",
+          "label": "缩小"
+        },
+        {
+          "value": "mydriasis",
+          "label": "散大"
+        },
+        {
+          "value": "unequal",
+          "label": "不等大"
+        }
+      ],
+      "description": "瞳孔大小",
+      "category": "PHYSIOLOGICAL",
+      "default_value": "normal"
+    },
+    {
+      "name": "phys.temperature",
+      "name_cn": "体温",
+      "type": "number",
+      "min": 20,
+      "max": 43,
+      "unit": "°C",
+      "description": "核心体温",
+      "category": "PHYSIOLOGICAL",
+      "default_value": 37
+    },
+    {
+      "name": "phys.bloodGlucose",
+      "name_cn": "血糖",
+      "type": "integer",
+      "min": 0,
+      "max": 600,
+      "unit": "mg/dL",
+      "description": "指尖血糖值",
+      "category": "PHYSIOLOGICAL",
+      "default_value": null
+    },
+    {
+      "name": "phys.skinCondition",
+      "name_cn": "皮肤状况",
+      "type": "string",
+      "enum": [
+        {
+          "value": "warm_dry",
+          "label": "温暖干燥"
+        },
+        {
+          "value": "cool_dry",
+          "label": "湿冷"
+        },
+        {
+          "value": "cool_moist",
+          "label": "湿冷多汗"
+        },
+        {
+          "value": "cold_clammy",
+          "label": "湿冷黏腻"
+        },
+        {
+          "value": "mottled",
+          "label": "花斑"
+        }
+      ],
+      "description": "皮肤颜色、温度、湿度",
+      "category": "PHYSIOLOGICAL",
+      "default_value": "warm_dry"
+    },
+    {
+      "name": "phys.capillaryRefill",
+      "name_cn": "毛细血管充盈时间",
+      "type": "number",
+      "min": 0,
+      "max": 5,
+      "unit": "秒",
+      "description": "末梢毛细血管再充盈时间",
+      "category": "PHYSIOLOGICAL",
+      "default_value": 2
+    },
+    {
+      "name": "phys.chestPain",
+      "name_cn": "胸痛",
+      "type": "boolean",
+      "description": "是否存在胸痛",
+      "category": "PHYSIOLOGICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "有",
+        "false": "无"
       }
     },
     {
-      "name": "asserted_rhythm_regular",
-      "type": "boolean",
-      "description": "学员报告/判断的节律规则性",
-      "category": "LEARNER_STATEMENT",
-      "source": "LEARNER",
-      "writable_by": "CLASSIFIER",
-      "default_value": null,
-      "persistence": true,
-      "scoring": true
+      "name": "phys.chestPainType",
+      "name_cn": "胸痛性质",
+      "type": "string",
+      "enum": [
+        {
+          "value": "pressure",
+          "label": "压榨样"
+        },
+        {
+          "value": "burning",
+          "label": "烧灼样"
+        },
+        {
+          "value": "sharp",
+          "label": "针刺样"
+        },
+        {
+          "value": "tearing",
+          "label": "撕裂样"
+        },
+        {
+          "value": "none",
+          "label": "无"
+        }
+      ],
+      "description": "胸痛的性质描述",
+      "category": "PHYSIOLOGICAL",
+      "default_value": "none"
     },
     {
-      "name": "asserted_stable",
+      "name": "phys.shortnessOfBreath",
+      "name_cn": "呼吸困难",
       "type": "boolean",
-      "description": "学员报告/判断的血流动力学稳定性",
-      "category": "LEARNER_STATEMENT",
-      "source": "LEARNER",
-      "writable_by": "CLASSIFIER",
-      "default_value": null,
-      "persistence": true,
-      "scoring": true
+      "description": "是否存在呼吸困难",
+      "category": "PHYSIOLOGICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "有",
+        "false": "无"
+      }
     },
     {
-      "name": "reported_systolic_bp",
+      "name": "phys.nausea",
+      "name_cn": "恶心呕吐",
+      "type": "boolean",
+      "description": "是否存在恶心或呕吐",
+      "category": "PHYSIOLOGICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "有",
+        "false": "无"
+      }
+    },
+    {
+      "name": "phys.diaphoresis",
+      "name_cn": "大汗",
+      "type": "boolean",
+      "description": "是否大汗淋漓",
+      "category": "PHYSIOLOGICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "有",
+        "false": "无"
+      }
+    },
+    {
+      "name": "phys.anxiety",
+      "name_cn": "焦虑濒死感",
+      "type": "boolean",
+      "description": "是否存在焦虑或濒死感",
+      "category": "PHYSIOLOGICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "有",
+        "false": "无"
+      }
+    },
+    {
+      "name": "phys.qrsDuration",
+      "name_cn": "QRS时限",
+      "type": "number",
+      "min": 0.04,
+      "max": 0.2,
+      "unit": "秒",
+      "description": "QRS波群时限",
+      "category": "PHYSIOLOGICAL",
+      "default_value": 0.1
+    },
+    {
+      "name": "phys.rrIntervalJitter",
+      "name_cn": "RR间期变异度",
+      "type": "number",
+      "min": 0,
+      "max": 0.5,
+      "unit": "秒",
+      "description": "RR间期变异度",
+      "category": "PHYSIOLOGICAL",
+      "default_value": 0.05
+    },
+    {
+      "name": "phys.prInterval",
+      "name_cn": "PR间期",
+      "type": "number",
+      "min": 0.08,
+      "max": 0.3,
+      "unit": "秒",
+      "description": "PR间期时长",
+      "category": "PHYSIOLOGICAL",
+      "default_value": 0.16
+    },
+    {
+      "name": "phys.qtc",
+      "name_cn": "校正QT间期",
+      "type": "number",
+      "min": 300,
+      "max": 600,
+      "unit": "ms",
+      "description": "QTc间期",
+      "category": "PHYSIOLOGICAL",
+      "default_value": null
+    },
+    {
+      "name": "phys.ecgStElevation",
+      "name_cn": "ST段抬高",
+      "type": "boolean",
+      "description": "是否存在ST段抬高",
+      "category": "PHYSIOLOGICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "有",
+        "false": "无"
+      }
+    },
+    {
+      "name": "phys.ecgStElevationLeads",
+      "name_cn": "ST段抬高导联",
+      "type": "string",
+      "description": "ST段抬高的导联位置",
+      "category": "PHYSIOLOGICAL",
+      "default_value": null
+    },
+    {
+      "name": "phys.ecgStDepression",
+      "name_cn": "ST段压低",
+      "type": "boolean",
+      "description": "是否存在ST段压低",
+      "category": "PHYSIOLOGICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "有",
+        "false": "无"
+      }
+    },
+    {
+      "name": "phys.ecgTInversion",
+      "name_cn": "T波倒置",
+      "type": "boolean",
+      "description": "是否存在T波倒置",
+      "category": "PHYSIOLOGICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "有",
+        "false": "无"
+      }
+    },
+    {
+      "name": "phys.ecgDeltaWave",
+      "name_cn": "δ波",
+      "type": "boolean",
+      "description": "是否存在预激综合征δ波",
+      "category": "PHYSIOLOGICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "有",
+        "false": "无"
+      }
+    },
+    {
+      "name": "phys.ecgVoltage",
+      "name_cn": "心电图电压",
+      "type": "string",
+      "enum": [
+        {
+          "value": "normal",
+          "label": "正常"
+        },
+        {
+          "value": "high",
+          "label": "高电压"
+        },
+        {
+          "value": "low",
+          "label": "低电压"
+        }
+      ],
+      "description": "心电图电压高低",
+      "category": "PHYSIOLOGICAL",
+      "default_value": "normal"
+    },
+    {
+      "name": "phys.sceneSafety",
+      "name_cn": "现场安全性",
+      "type": "string",
+      "enum": [
+        {
+          "value": "safe",
+          "label": "安全"
+        },
+        {
+          "value": "unsafe",
+          "label": "不安全"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "现场安全评估",
+      "category": "PHYSIOLOGICAL",
+      "default_value": "unknown"
+    },
+    {
+      "name": "phys.responsiveness",
+      "name_cn": "反应性",
+      "type": "string",
+      "enum": [
+        {
+          "value": "responsive",
+          "label": "有反应"
+        },
+        {
+          "value": "unresponsive",
+          "label": "无反应"
+        },
+        {
+          "value": "unknown",
+          "label": "待判读"
+        }
+      ],
+      "description": "患者对刺激的反应",
+      "category": "PHYSIOLOGICAL",
+      "default_value": "unknown"
+    },
+    {
+      "name": "phys.pulseSite",
+      "name_cn": "脉搏检查部位",
+      "type": "string",
+      "enum": [
+        {
+          "value": "carotid",
+          "label": "颈动脉"
+        },
+        {
+          "value": "radial",
+          "label": "桡动脉"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "脉搏触诊部位",
+      "category": "PHYSIOLOGICAL",
+      "default_value": "unknown"
+    },
+    {
+      "name": "phys.breathingPresent",
+      "name_cn": "有无自主呼吸",
+      "type": "string",
+      "enum": [
+        {
+          "value": "present",
+          "label": "有呼吸"
+        },
+        {
+          "value": "absent",
+          "label": "无呼吸"
+        },
+        {
+          "value": "unknown",
+          "label": "待判读"
+        }
+      ],
+      "description": "自主呼吸存在性",
+      "category": "PHYSIOLOGICAL",
+      "default_value": "unknown"
+    },
+    {
+      "name": "phys.bpLocation",
+      "name_cn": "血压测量部位",
+      "type": "string",
+      "enum": [
+        {
+          "value": "left_arm",
+          "label": "左臂"
+        },
+        {
+          "value": "right_arm",
+          "label": "右臂"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "血压测量侧",
+      "category": "PHYSIOLOGICAL",
+      "default_value": "unknown"
+    },
+    {
+      "name": "phys.rhythmRegularity",
+      "name_cn": "学员判读节律规则性",
+      "type": "string",
+      "enum": [
+        {
+          "value": "regular",
+          "label": "规则"
+        },
+        {
+          "value": "irregular",
+          "label": "不规则"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "学员报告的节律规则性（区别于 derived.rhythmRegular）",
+      "category": "LEARNER_STATEMENT",
+      "default_value": "unknown"
+    },
+    {
+      "name": "phys.onOxygen",
+      "name_cn": "是否吸氧",
+      "type": "boolean",
+      "description": "患者当前是否吸氧",
+      "category": "PHYSIOLOGICAL",
+      "default_value": false
+    },
+    {
+      "name": "phys.respiratoryPattern",
+      "name_cn": "呼吸模式",
+      "type": "string",
+      "enum": [
+        {
+          "value": "regular",
+          "label": "规则"
+        },
+        {
+          "value": "irregular",
+          "label": "不规则"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "呼吸节律模式",
+      "category": "PHYSIOLOGICAL",
+      "default_value": "unknown"
+    },
+    {
+      "name": "phys.glucoseUnit",
+      "name_cn": "血糖单位",
+      "type": "string",
+      "enum": [
+        {
+          "value": "mg_dL",
+          "label": "mg/dL"
+        },
+        {
+          "value": "mmol_L",
+          "label": "mmol/L"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "血糖测量单位",
+      "category": "PHYSIOLOGICAL",
+      "default_value": "unknown"
+    },
+    {
+      "name": "phys.pupilLeft",
+      "name_cn": "左瞳孔反应",
+      "type": "string",
+      "enum": [
+        {
+          "value": "reactive",
+          "label": "有反应"
+        },
+        {
+          "value": "non_reactive",
+          "label": "无反应"
+        },
+        {
+          "value": "unknown",
+          "label": "待判读"
+        }
+      ],
+      "description": "左眼瞳孔对光反应",
+      "category": "PHYSIOLOGICAL",
+      "default_value": "unknown"
+    },
+    {
+      "name": "phys.pupilRight",
+      "name_cn": "右瞳孔反应",
+      "type": "string",
+      "enum": [
+        {
+          "value": "reactive",
+          "label": "有反应"
+        },
+        {
+          "value": "non_reactive",
+          "label": "无反应"
+        },
+        {
+          "value": "unknown",
+          "label": "待判读"
+        }
+      ],
+      "description": "右眼瞳孔对光反应",
+      "category": "PHYSIOLOGICAL",
+      "default_value": "unknown"
+    },
+    {
+      "name": "phys.skinColor",
+      "name_cn": "皮肤颜色",
+      "type": "string",
+      "enum": [
+        {
+          "value": "pink",
+          "label": "红润"
+        },
+        {
+          "value": "pale",
+          "label": "苍白"
+        },
+        {
+          "value": "cyanotic",
+          "label": "紫绀"
+        },
+        {
+          "value": "mottled",
+          "label": "花斑"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "皮肤颜色",
+      "category": "PHYSIOLOGICAL",
+      "default_value": "unknown"
+    },
+    {
+      "name": "phys.skinTemperature",
+      "name_cn": "皮肤温度",
+      "type": "string",
+      "enum": [
+        {
+          "value": "warm",
+          "label": "温暖"
+        },
+        {
+          "value": "cool",
+          "label": "凉"
+        },
+        {
+          "value": "cold",
+          "label": "冰冷"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "皮肤温度",
+      "category": "PHYSIOLOGICAL",
+      "default_value": "unknown"
+    },
+    {
+      "name": "phys.skinMoisture",
+      "name_cn": "皮肤湿度",
+      "type": "string",
+      "enum": [
+        {
+          "value": "dry",
+          "label": "干燥"
+        },
+        {
+          "value": "diaphoretic",
+          "label": "出汗"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "皮肤湿度",
+      "category": "PHYSIOLOGICAL",
+      "default_value": "unknown"
+    },
+    {
+      "name": "phys.orientationPerson",
+      "name_cn": "定向力-人",
+      "type": "boolean",
+      "description": "对人物定向力",
+      "category": "PHYSIOLOGICAL",
+      "default_value": null
+    },
+    {
+      "name": "phys.orientationPlace",
+      "name_cn": "定向力-地",
+      "type": "boolean",
+      "description": "对地点定向力",
+      "category": "PHYSIOLOGICAL",
+      "default_value": null
+    },
+    {
+      "name": "phys.orientationTime",
+      "name_cn": "定向力-时",
+      "type": "boolean",
+      "description": "对时间定向力",
+      "category": "PHYSIOLOGICAL",
+      "default_value": null
+    },
+    {
+      "name": "phys.hypotensionSbpLt90",
+      "name_cn": "低血压征象(SBP<90)",
+      "type": "boolean",
+      "description": "AHA 不稳定五征象之一",
+      "category": "PHYSIOLOGICAL",
+      "default_value": null
+    },
+    {
+      "name": "phys.alteredMentalStatus",
+      "name_cn": "意识改变",
+      "type": "boolean",
+      "description": "AHA 不稳定五征象之一",
+      "category": "PHYSIOLOGICAL",
+      "default_value": null
+    },
+    {
+      "name": "phys.shockSigns",
+      "name_cn": "休克征象",
+      "type": "boolean",
+      "description": "AHA 不稳定五征象之一",
+      "category": "PHYSIOLOGICAL",
+      "default_value": null
+    },
+    {
+      "name": "phys.ischemicChestPain",
+      "name_cn": "缺血性胸痛",
+      "type": "boolean",
+      "description": "AHA 不稳定五征象之一",
+      "category": "PHYSIOLOGICAL",
+      "default_value": null
+    },
+    {
+      "name": "phys.acuteHeartFailure",
+      "name_cn": "急性心衰",
+      "type": "boolean",
+      "description": "AHA 不稳定五征象之一",
+      "category": "PHYSIOLOGICAL",
+      "default_value": null
+    },
+    {
+      "name": "phys.gripLeft",
+      "name_cn": "左侧握力",
+      "type": "string",
+      "enum": [
+        {
+          "value": "strong",
+          "label": "有力"
+        },
+        {
+          "value": "weak",
+          "label": "无力"
+        },
+        {
+          "value": "absent",
+          "label": "消失"
+        },
+        {
+          "value": "unknown",
+          "label": "待判读"
+        }
+      ],
+      "description": "左侧握力评估",
+      "category": "PHYSIOLOGICAL",
+      "default_value": "unknown"
+    },
+    {
+      "name": "phys.gripRight",
+      "name_cn": "右侧握力",
+      "type": "string",
+      "enum": [
+        {
+          "value": "strong",
+          "label": "有力"
+        },
+        {
+          "value": "weak",
+          "label": "无力"
+        },
+        {
+          "value": "absent",
+          "label": "消失"
+        },
+        {
+          "value": "unknown",
+          "label": "待判读"
+        }
+      ],
+      "description": "右侧握力评估",
+      "category": "PHYSIOLOGICAL",
+      "default_value": "unknown"
+    },
+    {
+      "name": "device.defibConnected",
+      "name_cn": "除颤仪已连接",
+      "type": "boolean",
+      "description": "除颤仪是否已连接并开机",
+      "category": "DEVICE_STATUS",
+      "default_value": false,
+      "value_labels": {
+        "true": "已连接",
+        "false": "未连接"
+      }
+    },
+    {
+      "name": "device.defibMode",
+      "name_cn": "除颤仪模式",
+      "type": "string",
+      "enum": [
+        {
+          "value": "monitor",
+          "label": "监护"
+        },
+        {
+          "value": "defib",
+          "label": "除颤"
+        },
+        {
+          "value": "sync",
+          "label": "同步复律"
+        },
+        {
+          "value": "pacing",
+          "label": "起搏"
+        }
+      ],
+      "description": "除颤仪当前工作模式",
+      "category": "DEVICE_STATUS",
+      "default_value": "monitor"
+    },
+    {
+      "name": "device.defibCharged",
+      "name_cn": "除颤仪已充电",
+      "type": "boolean",
+      "description": "除颤仪是否已完成充电",
+      "category": "DEVICE_STATUS",
+      "default_value": false,
+      "value_labels": {
+        "true": "已充电",
+        "false": "未充电"
+      }
+    },
+    {
+      "name": "device.defibEnergy",
+      "name_cn": "当前除颤能量",
+      "type": "integer",
+      "min": 0,
+      "max": 360,
+      "unit": "J",
+      "description": "当前设定的除颤能量",
+      "category": "DEVICE_STATUS",
+      "default_value": null
+    },
+    {
+      "name": "device.defibPadsAttached",
+      "name_cn": "除颤电极片已贴",
+      "type": "boolean",
+      "description": "除颤电极片是否已正确粘贴",
+      "category": "DEVICE_STATUS",
+      "default_value": false,
+      "value_labels": {
+        "true": "已贴",
+        "false": "未贴"
+      }
+    },
+    {
+      "name": "device.defibPadsPosition",
+      "name_cn": "电极片位置",
+      "type": "string",
+      "enum": [
+        {
+          "value": "anterior_anterior",
+          "label": "前后位"
+        },
+        {
+          "value": "anterior_posterior",
+          "label": "前后位（AP）"
+        },
+        {
+          "value": "none",
+          "label": "未贴"
+        }
+      ],
+      "description": "除颤电极片粘贴位置",
+      "category": "DEVICE_STATUS",
+      "default_value": "none"
+    },
+    {
+      "name": "device.lastChargeEnergy",
+      "name_cn": "上次充电能量",
+      "type": "integer",
+      "unit": "J",
+      "description": "上次除颤充电的能量",
+      "category": "DEVICE_STATUS",
+      "default_value": null
+    },
+    {
+      "name": "device.defibSyncMode",
+      "name_cn": "同步模式",
+      "type": "boolean",
+      "description": "除颤仪是否处于同步模式",
+      "category": "DEVICE_STATUS",
+      "default_value": false,
+      "value_labels": {
+        "true": "是",
+        "false": "否"
+      }
+    },
+    {
+      "name": "device.aedOn",
+      "name_cn": "AED已开启",
+      "type": "boolean",
+      "description": "AED是否已开启",
+      "category": "DEVICE_STATUS",
+      "default_value": false,
+      "value_labels": {
+        "true": "已开启",
+        "false": "未开启"
+      }
+    },
+    {
+      "name": "device.pacerOn",
+      "name_cn": "起搏器已开启",
+      "type": "boolean",
+      "description": "临时起搏器是否已开启",
+      "category": "DEVICE_STATUS",
+      "default_value": false,
+      "value_labels": {
+        "true": "已开启",
+        "false": "未开启"
+      }
+    },
+    {
+      "name": "device.pacerMode",
+      "name_cn": "起搏模式",
+      "type": "string",
+      "enum": [
+        {
+          "value": "demand",
+          "label": "按需"
+        },
+        {
+          "value": "fixed",
+          "label": "固定频率"
+        },
+        {
+          "value": "none",
+          "label": "未起搏"
+        }
+      ],
+      "description": "起搏器工作模式",
+      "category": "DEVICE_STATUS",
+      "default_value": "none"
+    },
+    {
+      "name": "device.pacerRate",
+      "name_cn": "起搏频率",
+      "type": "integer",
+      "min": 30,
+      "max": 120,
+      "unit": "bpm",
+      "description": "起搏器设定频率",
+      "category": "DEVICE_STATUS",
+      "default_value": null
+    },
+    {
+      "name": "device.pacerCapture",
+      "name_cn": "起搏夺获",
+      "type": "boolean",
+      "description": "起搏是否夺获",
+      "category": "DEVICE_STATUS",
+      "default_value": false,
+      "value_labels": {
+        "true": "已夺获",
+        "false": "未夺获"
+      }
+    },
+    {
+      "name": "device.pacerThreshold",
+      "name_cn": "起搏阈值",
+      "type": "integer",
+      "min": 0,
+      "max": 20,
+      "unit": "mA",
+      "description": "起搏夺获阈值",
+      "category": "DEVICE_STATUS",
+      "default_value": null
+    },
+    {
+      "name": "device.airwayDevice",
+      "name_cn": "当前气道设备",
+      "type": "string",
+      "enum": [
+        {
+          "value": "none",
+          "label": "无"
+        },
+        {
+          "value": "bvm",
+          "label": "球囊面罩"
+        },
+        {
+          "value": "npa",
+          "label": "鼻咽通气管"
+        },
+        {
+          "value": "opa",
+          "label": "口咽通气管"
+        },
+        {
+          "value": "sga",
+          "label": "声门上气道"
+        },
+        {
+          "value": "ett",
+          "label": "气管插管"
+        },
+        {
+          "value": "cric",
+          "label": "环甲膜切开"
+        }
+      ],
+      "description": "当前使用的气道管理设备",
+      "category": "DEVICE_STATUS",
+      "default_value": "none"
+    },
+    {
+      "name": "device.ettPlaced",
+      "name_cn": "气管插管已放置",
+      "type": "boolean",
+      "description": "气管插管是否已放置",
+      "category": "DEVICE_STATUS",
+      "default_value": false,
+      "value_labels": {
+        "true": "已放置",
+        "false": "未放置"
+      }
+    },
+    {
+      "name": "device.ettDepth",
+      "name_cn": "插管深度",
+      "type": "integer",
+      "min": 16,
+      "max": 26,
+      "unit": "cm",
+      "description": "气管插管深度",
+      "category": "DEVICE_STATUS",
+      "default_value": null
+    },
+    {
+      "name": "device.ettCuffInflated",
+      "name_cn": "气囊已充气",
+      "type": "boolean",
+      "description": "气管插管气囊是否已充气",
+      "category": "DEVICE_STATUS",
+      "default_value": false,
+      "value_labels": {
+        "true": "已充气",
+        "false": "未充气"
+      }
+    },
+    {
+      "name": "device.sgaPlaced",
+      "name_cn": "声门上气道已放置",
+      "type": "boolean",
+      "description": "声门上气道是否已放置",
+      "category": "DEVICE_STATUS",
+      "default_value": false,
+      "value_labels": {
+        "true": "已放置",
+        "false": "未放置"
+      }
+    },
+    {
+      "name": "device.sgaType",
+      "name_cn": "声门上气道类型",
+      "type": "string",
+      "enum": [
+        {
+          "value": "lma",
+          "label": "喉罩"
+        },
+        {
+          "value": "iGel",
+          "label": "iGel"
+        },
+        {
+          "value": "king",
+          "label": "King 喉管"
+        },
+        {
+          "value": "none",
+          "label": "无"
+        }
+      ],
+      "description": "声门上气道具体类型",
+      "category": "DEVICE_STATUS",
+      "default_value": "none"
+    },
+    {
+      "name": "device.bvmSealed",
+      "name_cn": "BVM密封良好",
+      "type": "boolean",
+      "description": "球囊面罩是否密封良好",
+      "category": "DEVICE_STATUS",
+      "default_value": false,
+      "value_labels": {
+        "true": "密封良好",
+        "false": "漏气"
+      }
+    },
+    {
+      "name": "device.ivEstablished",
+      "name_cn": "静脉通路已建立",
+      "type": "boolean",
+      "description": "外周静脉通路是否已建立",
+      "category": "DEVICE_STATUS",
+      "default_value": false,
+      "value_labels": {
+        "true": "已建立",
+        "false": "未建立"
+      }
+    },
+    {
+      "name": "device.ivLocation",
+      "name_cn": "静脉通路位置",
+      "type": "string",
+      "enum": [
+        {
+          "value": "left_arm",
+          "label": "左臂"
+        },
+        {
+          "value": "right_arm",
+          "label": "右臂"
+        },
+        {
+          "value": "left_foot",
+          "label": "左足"
+        },
+        {
+          "value": "right_foot",
+          "label": "右足"
+        },
+        {
+          "value": "none",
+          "label": "未建立"
+        }
+      ],
+      "description": "静脉通路建立位置",
+      "category": "DEVICE_STATUS",
+      "default_value": "none"
+    },
+    {
+      "name": "device.ioEstablished",
+      "name_cn": "骨内通路已建立",
+      "type": "boolean",
+      "description": "骨内通路是否已建立",
+      "category": "DEVICE_STATUS",
+      "default_value": false,
+      "value_labels": {
+        "true": "已建立",
+        "false": "未建立"
+      }
+    },
+    {
+      "name": "device.ioLocation",
+      "name_cn": "骨内通路位置",
+      "type": "string",
+      "enum": [
+        {
+          "value": "tibia",
+          "label": "胫骨"
+        },
+        {
+          "value": "humerus",
+          "label": "肱骨"
+        },
+        {
+          "value": "none",
+          "label": "未建立"
+        }
+      ],
+      "description": "骨内通路建立位置",
+      "category": "DEVICE_STATUS",
+      "default_value": "none"
+    },
+    {
+      "name": "device.leadsPlaced",
+      "name_cn": "心电图导联已连接",
+      "type": "boolean",
+      "description": "心电图导联是否已连接",
+      "category": "DEVICE_STATUS",
+      "default_value": false,
+      "value_labels": {
+        "true": "已连接",
+        "false": "未连接"
+      }
+    },
+    {
+      "name": "device.ecg12LeadDone",
+      "name_cn": "12导联已完成",
+      "type": "boolean",
+      "description": "12导联心电图是否已完成采集",
+      "category": "DEVICE_STATUS",
+      "default_value": false,
+      "value_labels": {
+        "true": "已完成",
+        "false": "未完成"
+      }
+    },
+    {
+      "name": "device.oxygenFlow",
+      "name_cn": "氧流量",
+      "type": "integer",
+      "min": 0,
+      "max": 15,
+      "unit": "L/min",
+      "description": "当前氧流量设定",
+      "category": "DEVICE_STATUS",
+      "default_value": 0
+    },
+    {
+      "name": "device.oxygenDevice",
+      "name_cn": "氧疗设备",
+      "type": "string",
+      "enum": [
+        {
+          "value": "nasal_cannula",
+          "label": "鼻导管"
+        },
+        {
+          "value": "simple_mask",
+          "label": "普通面罩"
+        },
+        {
+          "value": "non_rebreather",
+          "label": "储氧面罩"
+        },
+        {
+          "value": "bvm",
+          "label": "球囊面罩"
+        },
+        {
+          "value": "ventilator",
+          "label": "呼吸机"
+        },
+        {
+          "value": "none",
+          "label": "未给氧"
+        }
+      ],
+      "description": "当前使用的氧疗设备",
+      "category": "DEVICE_STATUS",
+      "default_value": "none"
+    },
+    {
+      "name": "device.suctionReady",
+      "name_cn": "吸引器已就绪",
+      "type": "boolean",
+      "description": "吸引器是否已准备好",
+      "category": "DEVICE_STATUS",
+      "default_value": false,
+      "value_labels": {
+        "true": "已就绪",
+        "false": "未就绪"
+      }
+    },
+    {
+      "name": "device.monitorConnected",
+      "name_cn": "监护仪已连接",
+      "type": "boolean",
+      "description": "监护仪是否已连接到患者",
+      "category": "DEVICE_STATUS",
+      "default_value": false,
+      "value_labels": {
+        "true": "已连接",
+        "false": "未连接"
+      }
+    },
+    {
+      "name": "device.glucometerReady",
+      "name_cn": "血糖仪就绪",
+      "type": "boolean",
+      "description": "血糖仪是否已准备",
+      "category": "DEVICE_STATUS",
+      "default_value": false
+    },
+    {
+      "name": "device.stripReady",
+      "name_cn": "试纸就绪",
+      "type": "boolean",
+      "description": "血糖试纸是否已准备",
+      "category": "DEVICE_STATUS",
+      "default_value": false
+    },
+    {
+      "name": "device.shaveSite",
+      "name_cn": "备皮部位",
+      "type": "string",
+      "enum": [
+        {
+          "value": "chest",
+          "label": "胸部"
+        },
+        {
+          "value": "limbs",
+          "label": "四肢"
+        },
+        {
+          "value": "both",
+          "label": "全身"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "电极片备皮部位",
+      "category": "DEVICE_STATUS",
+      "default_value": "unknown"
+    },
+    {
+      "name": "device.shaveDone",
+      "name_cn": "备皮完成",
+      "type": "boolean",
+      "description": "备皮是否已完成",
+      "category": "DEVICE_STATUS",
+      "default_value": false
+    },
+    {
+      "name": "device.ecgLeadLabel",
+      "name_cn": "导联标签",
+      "type": "string",
+      "enum": [
+        {
+          "value": "LA",
+          "label": "左上肢"
+        },
+        {
+          "value": "RA",
+          "label": "右上肢"
+        },
+        {
+          "value": "LL",
+          "label": "左下肢"
+        },
+        {
+          "value": "RL",
+          "label": "右下肢"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "心电图导联标签",
+      "category": "DEVICE_STATUS",
+      "default_value": "unknown"
+    },
+    {
+      "name": "device.ecgLeadPlaced",
+      "name_cn": "导联已连接",
+      "type": "boolean",
+      "description": "心电图导联是否已连接",
+      "category": "DEVICE_STATUS",
+      "default_value": false
+    },
+    {
+      "name": "device.v1Position",
+      "name_cn": "V1位置",
+      "type": "string",
+      "enum": [
+        {
+          "value": "4th_ics_right_sternal",
+          "label": "胸骨右缘第4肋间"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "V1电极位置",
+      "category": "DEVICE_STATUS",
+      "default_value": "unknown"
+    },
+    {
+      "name": "device.v2Position",
+      "name_cn": "V2位置",
+      "type": "string",
+      "enum": [
+        {
+          "value": "4th_ics_left_sternal",
+          "label": "胸骨左缘第4肋间"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "V2电极位置",
+      "category": "DEVICE_STATUS",
+      "default_value": "unknown"
+    },
+    {
+      "name": "device.v3Position",
+      "name_cn": "V3位置",
+      "type": "string",
+      "enum": [
+        {
+          "value": "between_v2_v4",
+          "label": "V2-V4之间"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "V3电极位置",
+      "category": "DEVICE_STATUS",
+      "default_value": "unknown"
+    },
+    {
+      "name": "device.v4Position",
+      "name_cn": "V4位置",
+      "type": "string",
+      "enum": [
+        {
+          "value": "5th_ics_midclavicular",
+          "label": "第5肋间锁骨中线"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "V4电极位置",
+      "category": "DEVICE_STATUS",
+      "default_value": "unknown"
+    },
+    {
+      "name": "device.v5Position",
+      "name_cn": "V5位置",
+      "type": "string",
+      "enum": [
+        {
+          "value": "anterior_axillary",
+          "label": "腋前线"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "V5电极位置",
+      "category": "DEVICE_STATUS",
+      "default_value": "unknown"
+    },
+    {
+      "name": "device.v6Position",
+      "name_cn": "V6位置",
+      "type": "string",
+      "enum": [
+        {
+          "value": "midaxillary",
+          "label": "腋中线"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "V6电极位置",
+      "category": "DEVICE_STATUS",
+      "default_value": "unknown"
+    },
+    {
+      "name": "device.ecgPower",
+      "name_cn": "心电图机电源",
+      "type": "string",
+      "enum": [
+        {
+          "value": "on",
+          "label": "开机"
+        },
+        {
+          "value": "off",
+          "label": "关机"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "心电图机电源状态",
+      "category": "DEVICE_STATUS",
+      "default_value": "unknown"
+    },
+    {
+      "name": "device.leadsConnected",
+      "name_cn": "导联线已连接心电图机",
+      "type": "boolean",
+      "description": "导联线是否已连接心电图机",
+      "category": "DEVICE_STATUS",
+      "default_value": false
+    },
+    {
+      "name": "device.ecgDeviceName",
+      "name_cn": "心电图机设备名",
+      "type": "string",
+      "description": "心电图机设备名称",
+      "category": "DEVICE_STATUS",
+      "default_value": null
+    },
+    {
+      "name": "device.ecgRecorded",
+      "name_cn": "心电图已采集",
+      "type": "string",
+      "enum": [
+        {
+          "value": "obtained",
+          "label": "已采集"
+        },
+        {
+          "value": "not_obtained",
+          "label": "未采集"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "心电图记录状态",
+      "category": "DEVICE_STATUS",
+      "default_value": "unknown"
+    },
+    {
+      "name": "device.airwayManeuver",
+      "name_cn": "气道开放手法",
+      "type": "string",
+      "enum": [
+        {
+          "value": "head_tilt_chin_lift",
+          "label": "仰头抬颏"
+        },
+        {
+          "value": "jaw_thrust",
+          "label": "下颌托举"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "气道开放手法",
+      "category": "DEVICE_STATUS",
+      "default_value": "unknown"
+    },
+    {
+      "name": "device.airwayPatent",
+      "name_cn": "气道通畅",
+      "type": "string",
+      "enum": [
+        {
+          "value": "yes",
+          "label": "通畅"
+        },
+        {
+          "value": "no",
+          "label": "阻塞"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "气道是否通畅",
+      "category": "DEVICE_STATUS",
+      "default_value": "unknown"
+    },
+    {
+      "name": "device.bvmPlaced",
+      "name_cn": "BVM已放置",
+      "type": "boolean",
+      "description": "球囊面罩已放置",
+      "category": "DEVICE_STATUS",
+      "default_value": false
+    },
+    {
+      "name": "device.npaSize",
+      "name_cn": "NPA尺寸",
+      "type": "string",
+      "description": "鼻咽通气管尺寸",
+      "category": "DEVICE_STATUS",
+      "default_value": null
+    },
+    {
+      "name": "device.npaPlaced",
+      "name_cn": "NPA已插入",
+      "type": "boolean",
+      "description": "鼻咽通气管已插入",
+      "category": "DEVICE_STATUS",
+      "default_value": false
+    },
+    {
+      "name": "intervention.lastDrug",
+      "name_cn": "最后使用药物",
+      "type": "string",
+      "description": "最后推注的药物名称",
+      "category": "TREATMENT_HISTORY",
+      "default_value": null
+    },
+    {
+      "name": "intervention.lastDrugDose",
+      "name_cn": "最后药物剂量",
+      "type": "string",
+      "description": "最后推注的药物剂量",
+      "category": "TREATMENT_HISTORY",
+      "default_value": null
+    },
+    {
+      "name": "intervention.lastDrugTime",
+      "name_cn": "最后给药时间",
+      "type": "long",
+      "unit": "timestamp",
+      "description": "最后给药的时间戳",
+      "category": "TREATMENT_HISTORY",
+      "default_value": null
+    },
+    {
+      "name": "intervention.lastDrugRoute",
+      "name_cn": "最后给药途径",
+      "type": "string",
+      "enum": [
+        {
+          "value": "IV",
+          "label": "静脉注射"
+        },
+        {
+          "value": "IO",
+          "label": "骨内注射"
+        },
+        {
+          "value": "IM",
+          "label": "肌肉注射"
+        },
+        {
+          "value": "IN",
+          "label": "鼻内"
+        },
+        {
+          "value": "SL",
+          "label": "舌下"
+        },
+        {
+          "value": "PO",
+          "label": "口服"
+        },
+        {
+          "value": "ET",
+          "label": "气管内"
+        },
+        {
+          "value": "NEB",
+          "label": "雾化"
+        },
+        {
+          "value": "SC",
+          "label": "皮下"
+        },
+        {
+          "value": "PR",
+          "label": "直肠"
+        }
+      ],
+      "description": "最后给药的途径",
+      "category": "TREATMENT_HISTORY",
+      "default_value": null
+    },
+    {
+      "name": "intervention.epinephrine",
+      "name_cn": "肾上腺素",
+      "type": "object",
+      "description": "status（given/failed/cancelled）、lastTime、count、totalDose、lastDose、lastRoute",
+      "category": "TREATMENT_HISTORY",
+      "writable_by": "EXECUTOR,SYSTEM",
+      "requiredKeys": [
+        "status",
+        "count",
+        "totalDose"
+      ],
+      "default_value": {
+        "status": null,
+        "lastTime": null,
+        "count": 0,
+        "totalDose": 0,
+        "lastDose": null,
+        "lastRoute": null
+      }
+    },
+    {
+      "name": "intervention.amiodarone",
+      "name_cn": "胺碘酮",
+      "type": "object",
+      "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
+      "category": "TREATMENT_HISTORY",
+      "writable_by": "EXECUTOR,SYSTEM",
+      "requiredKeys": [
+        "status",
+        "count",
+        "totalDose"
+      ],
+      "default_value": {
+        "status": null,
+        "lastTime": null,
+        "count": 0,
+        "totalDose": 0,
+        "lastDose": null,
+        "lastRoute": null
+      }
+    },
+    {
+      "name": "intervention.lidocaine",
+      "name_cn": "利多卡因",
+      "type": "object",
+      "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
+      "category": "TREATMENT_HISTORY",
+      "writable_by": "EXECUTOR,SYSTEM",
+      "requiredKeys": [
+        "status",
+        "count",
+        "totalDose"
+      ],
+      "default_value": {
+        "status": null,
+        "lastTime": null,
+        "count": 0,
+        "totalDose": 0,
+        "lastDose": null,
+        "lastRoute": null
+      }
+    },
+    {
+      "name": "intervention.atropine",
+      "name_cn": "阿托品",
+      "type": "object",
+      "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
+      "category": "TREATMENT_HISTORY",
+      "writable_by": "EXECUTOR,SYSTEM",
+      "requiredKeys": [
+        "status",
+        "count",
+        "totalDose"
+      ],
+      "default_value": {
+        "status": null,
+        "lastTime": null,
+        "count": 0,
+        "totalDose": 0,
+        "lastDose": null,
+        "lastRoute": null
+      }
+    },
+    {
+      "name": "intervention.adenosine",
+      "name_cn": "腺苷",
+      "type": "object",
+      "description": "status、lastTime、count、totalDose、lastDose、lastRoute、flushDone",
+      "category": "TREATMENT_HISTORY",
+      "writable_by": "EXECUTOR,SYSTEM",
+      "requiredKeys": [
+        "status",
+        "count",
+        "totalDose",
+        "flushDone"
+      ],
+      "default_value": {
+        "status": null,
+        "lastTime": null,
+        "count": 0,
+        "totalDose": 0,
+        "lastDose": null,
+        "lastRoute": null,
+        "flushDone": false
+      }
+    },
+    {
+      "name": "intervention.diltiazem",
+      "name_cn": "地尔硫卓",
+      "type": "object",
+      "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
+      "category": "TREATMENT_HISTORY",
+      "writable_by": "EXECUTOR,SYSTEM",
+      "requiredKeys": [
+        "status",
+        "count",
+        "totalDose"
+      ],
+      "default_value": {
+        "status": null,
+        "lastTime": null,
+        "count": 0,
+        "totalDose": 0,
+        "lastDose": null,
+        "lastRoute": null
+      }
+    },
+    {
+      "name": "intervention.metoprolol",
+      "name_cn": "美托洛尔",
+      "type": "object",
+      "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
+      "category": "TREATMENT_HISTORY",
+      "writable_by": "EXECUTOR,SYSTEM",
+      "requiredKeys": [
+        "status",
+        "count",
+        "totalDose"
+      ],
+      "default_value": {
+        "status": null,
+        "lastTime": null,
+        "count": 0,
+        "totalDose": 0,
+        "lastDose": null,
+        "lastRoute": null
+      }
+    },
+    {
+      "name": "intervention.esmolol",
+      "name_cn": "艾司洛尔",
+      "type": "object",
+      "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
+      "category": "TREATMENT_HISTORY",
+      "writable_by": "EXECUTOR,SYSTEM",
+      "requiredKeys": [
+        "status",
+        "count",
+        "totalDose"
+      ],
+      "default_value": {
+        "status": null,
+        "lastTime": null,
+        "count": 0,
+        "totalDose": 0,
+        "lastDose": null,
+        "lastRoute": null
+      }
+    },
+    {
+      "name": "intervention.sodiumBicarbonate",
+      "name_cn": "碳酸氢钠",
+      "type": "object",
+      "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
+      "category": "TREATMENT_HISTORY",
+      "writable_by": "EXECUTOR,SYSTEM",
+      "requiredKeys": [
+        "status",
+        "count",
+        "totalDose"
+      ],
+      "default_value": {
+        "status": null,
+        "lastTime": null,
+        "count": 0,
+        "totalDose": 0,
+        "lastDose": null,
+        "lastRoute": null
+      }
+    },
+    {
+      "name": "intervention.magnesium",
+      "name_cn": "硫酸镁",
+      "type": "object",
+      "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
+      "category": "TREATMENT_HISTORY",
+      "writable_by": "EXECUTOR,SYSTEM",
+      "requiredKeys": [
+        "status",
+        "count",
+        "totalDose"
+      ],
+      "default_value": {
+        "status": null,
+        "lastTime": null,
+        "count": 0,
+        "totalDose": 0,
+        "lastDose": null,
+        "lastRoute": null
+      }
+    },
+    {
+      "name": "intervention.dopamine",
+      "name_cn": "多巴胺",
+      "type": "object",
+      "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
+      "category": "TREATMENT_HISTORY",
+      "writable_by": "EXECUTOR,SYSTEM",
+      "requiredKeys": [
+        "status",
+        "count",
+        "totalDose"
+      ],
+      "default_value": {
+        "status": null,
+        "lastTime": null,
+        "count": 0,
+        "totalDose": 0,
+        "lastDose": null,
+        "lastRoute": null
+      }
+    },
+    {
+      "name": "intervention.norepinephrine",
+      "name_cn": "去甲肾上腺素",
+      "type": "object",
+      "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
+      "category": "TREATMENT_HISTORY",
+      "writable_by": "EXECUTOR,SYSTEM",
+      "requiredKeys": [
+        "status",
+        "count",
+        "totalDose"
+      ],
+      "default_value": {
+        "status": null,
+        "lastTime": null,
+        "count": 0,
+        "totalDose": 0,
+        "lastDose": null,
+        "lastRoute": null
+      }
+    },
+    {
+      "name": "intervention.naloxone",
+      "name_cn": "纳洛酮",
+      "type": "object",
+      "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
+      "category": "TREATMENT_HISTORY",
+      "writable_by": "EXECUTOR,SYSTEM",
+      "requiredKeys": [
+        "status",
+        "count",
+        "totalDose"
+      ],
+      "default_value": {
+        "status": null,
+        "lastTime": null,
+        "count": 0,
+        "totalDose": 0,
+        "lastDose": null,
+        "lastRoute": null
+      }
+    },
+    {
+      "name": "intervention.vasopressin",
+      "name_cn": "血管加压素",
+      "type": "object",
+      "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
+      "category": "TREATMENT_HISTORY",
+      "writable_by": "EXECUTOR,SYSTEM",
+      "requiredKeys": [
+        "status",
+        "count",
+        "totalDose"
+      ],
+      "default_value": {
+        "status": null,
+        "lastTime": null,
+        "count": 0,
+        "totalDose": 0,
+        "lastDose": null,
+        "lastRoute": null
+      }
+    },
+    {
+      "name": "intervention.nitro",
+      "name_cn": "硝酸甘油",
+      "type": "object",
+      "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
+      "category": "TREATMENT_HISTORY",
+      "writable_by": "EXECUTOR,SYSTEM",
+      "requiredKeys": [
+        "status",
+        "count",
+        "totalDose"
+      ],
+      "default_value": {
+        "status": null,
+        "lastTime": null,
+        "count": 0,
+        "totalDose": 0,
+        "lastDose": null,
+        "lastRoute": null
+      }
+    },
+    {
+      "name": "intervention.aspirin",
+      "name_cn": "阿司匹林",
+      "type": "object",
+      "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
+      "category": "TREATMENT_HISTORY",
+      "writable_by": "EXECUTOR,SYSTEM",
+      "requiredKeys": [
+        "status",
+        "count",
+        "totalDose"
+      ],
+      "default_value": {
+        "status": null,
+        "lastTime": null,
+        "count": 0,
+        "totalDose": 0,
+        "lastDose": null,
+        "lastRoute": null
+      }
+    },
+    {
+      "name": "intervention.defib",
+      "name_cn": "除颤记录",
+      "type": "object",
+      "description": "status、count、lastTime、lastEnergy、lastSync",
+      "category": "TREATMENT_HISTORY",
+      "writable_by": "EXECUTOR,SYSTEM",
+      "requiredKeys": [
+        "status",
+        "count"
+      ],
+      "default_value": {
+        "status": null,
+        "count": 0,
+        "lastTime": null,
+        "lastEnergy": null,
+        "lastSync": null
+      }
+    },
+    {
+      "name": "intervention.cardioversion",
+      "name_cn": "电复律记录",
+      "type": "object",
+      "description": "status、success、emergency、count、lastTime、lastEnergy",
+      "category": "TREATMENT_HISTORY",
+      "writable_by": "EXECUTOR,SYSTEM",
+      "requiredKeys": [
+        "status",
+        "count"
+      ],
+      "default_value": {
+        "status": null,
+        "success": false,
+        "emergency": false,
+        "count": 0,
+        "lastTime": null,
+        "lastEnergy": null
+      }
+    },
+    {
+      "name": "intervention.pacing",
+      "name_cn": "临时起搏记录",
+      "type": "object",
+      "description": "status、count、lastTime",
+      "category": "TREATMENT_HISTORY",
+      "writable_by": "EXECUTOR,SYSTEM",
+      "requiredKeys": [
+        "status",
+        "count"
+      ],
+      "default_value": {
+        "status": null,
+        "count": 0,
+        "lastTime": null
+      }
+    },
+    {
+      "name": "intervention.intubation",
+      "name_cn": "气管插管记录",
+      "type": "object",
+      "description": "status、count、lastTime",
+      "category": "TREATMENT_HISTORY",
+      "writable_by": "EXECUTOR,SYSTEM",
+      "requiredKeys": [
+        "status",
+        "count"
+      ],
+      "default_value": {
+        "status": null,
+        "count": 0,
+        "lastTime": null
+      }
+    },
+    {
+      "name": "intervention.sga",
+      "name_cn": "声门上气道记录",
+      "type": "object",
+      "description": "status、type、count、lastTime",
+      "category": "TREATMENT_HISTORY",
+      "writable_by": "EXECUTOR,SYSTEM",
+      "requiredKeys": [
+        "status",
+        "count"
+      ],
+      "default_value": {
+        "status": null,
+        "type": null,
+        "count": 0,
+        "lastTime": null
+      }
+    },
+    {
+      "name": "intervention.cpr",
+      "name_cn": "CPR记录",
+      "type": "object",
+      "description": "status、count、startTime、stopTime",
+      "category": "TREATMENT_HISTORY",
+      "writable_by": "EXECUTOR,SYSTEM",
+      "requiredKeys": [
+        "status",
+        "count"
+      ],
+      "default_value": {
+        "status": null,
+        "count": 0,
+        "startTime": null,
+        "stopTime": null
+      }
+    },
+    {
+      "name": "intervention.vagal",
+      "name_cn": "迷走刺激记录",
+      "type": "object",
+      "description": "status（attempted/performed/failed）、effect（pending/success/failure）、count、lastTime",
+      "category": "TREATMENT_HISTORY",
+      "writable_by": "EXECUTOR,SYSTEM",
+      "requiredKeys": [
+        "status",
+        "effect",
+        "count"
+      ],
+      "default_value": {
+        "status": null,
+        "effect": "pending",
+        "count": 0,
+        "lastTime": null
+      }
+    },
+    {
+      "name": "intervention.ttm",
+      "name_cn": "目标温度管理",
+      "type": "object",
+      "description": "status、targetTemp、lastTime",
+      "category": "TREATMENT_HISTORY",
+      "writable_by": "EXECUTOR,SYSTEM",
+      "requiredKeys": [
+        "status"
+      ],
+      "default_value": {
+        "status": null,
+        "targetTemp": null,
+        "lastTime": null
+      }
+    },
+    {
+      "name": "intervention.fluid",
+      "name_cn": "液体治疗记录",
+      "type": "object",
+      "description": "bolusGiven、totalVolume、lastTime",
+      "category": "TREATMENT_HISTORY",
+      "writable_by": "EXECUTOR,SYSTEM",
+      "requiredKeys": [
+        "bolusGiven",
+        "totalVolume"
+      ],
+      "default_value": {
+        "bolusGiven": false,
+        "totalVolume": 0,
+        "lastTime": null
+      }
+    },
+    {
+      "name": "intervention.rhythmConverted",
+      "name_cn": "心律转为窦性",
+      "type": "boolean",
+      "description": "经过治疗后心律是否转为窦性",
+      "category": "CLINICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "已转复",
+        "false": "未转复"
+      }
+    },
+    {
+      "name": "intervention.secondLineFailed",
+      "name_cn": "二线药物无效",
+      "type": "boolean",
+      "description": "二线药物是否无效",
+      "category": "CLINICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "无效",
+        "false": "有效"
+      }
+    },
+    {
+      "name": "intervention.salineFlushDone",
+      "name_cn": "盐水冲管已完成",
+      "type": "boolean",
+      "description": "盐水冲管是否已完成",
+      "category": "TREATMENT_HISTORY",
+      "default_value": false,
+      "value_labels": {
+        "true": "已完成",
+        "false": "未完成"
+      }
+    },
+    {
+      "name": "intervention.drugResponse",
+      "name_cn": "药物反应",
+      "type": "string",
+      "enum": [
+        {
+          "value": "effective",
+          "label": "有效"
+        },
+        {
+          "value": "partial",
+          "label": "部分有效"
+        },
+        {
+          "value": "ineffective",
+          "label": "无效"
+        }
+      ],
+      "description": "最近一次药物的反应效果",
+      "category": "TREATMENT_HISTORY",
+      "default_value": null
+    },
+    {
+      "name": "assert.qrsWidth",
+      "name_cn": "学员判断QRS宽度",
+      "type": "string",
+      "enum": [
+        {
+          "value": "narrow",
+          "label": "窄QRS"
+        },
+        {
+          "value": "wide",
+          "label": "宽QRS"
+        }
+      ],
+      "description": "学员报告或判断的QRS宽度",
+      "category": "LEARNER_STATEMENT",
+      "default_value": null
+    },
+    {
+      "name": "assert.rhythmRegular",
+      "name_cn": "学员判断节律规则性",
+      "type": "boolean",
+      "description": "学员报告或判断的节律规则性",
+      "category": "LEARNER_STATEMENT",
+      "default_value": null,
+      "value_labels": {
+        "true": "规则",
+        "false": "不规则"
+      }
+    },
+    {
+      "name": "assert.stable",
+      "name_cn": "学员判断血流动力学稳定性",
+      "type": "boolean",
+      "description": "学员报告或判断的血流动力学稳定性",
+      "category": "LEARNER_STATEMENT",
+      "default_value": null,
+      "value_labels": {
+        "true": "稳定",
+        "false": "不稳定"
+      }
+    },
+    {
+      "name": "assert.rhythmType",
+      "name_cn": "学员判断心律类型",
+      "type": "string",
+      "enum": [
+        {
+          "value": "sinus",
+          "label": "窦性心律"
+        },
+        {
+          "value": "svt",
+          "label": "室上性心动过速"
+        },
+        {
+          "value": "afib",
+          "label": "心房颤动"
+        },
+        {
+          "value": "aflutter",
+          "label": "心房扑动"
+        },
+        {
+          "value": "vt",
+          "label": "室性心动过速"
+        },
+        {
+          "value": "vf",
+          "label": "心室颤动"
+        },
+        {
+          "value": "pea",
+          "label": "无脉电活动"
+        },
+        {
+          "value": "asystole",
+          "label": "心室停搏"
+        },
+        {
+          "value": "unknown",
+          "label": "未确认"
+        }
+      ],
+      "description": "学员判断的具体心律类型",
+      "category": "LEARNER_STATEMENT",
+      "default_value": "unknown"
+    },
+    {
+      "name": "report.systolicBp",
+      "name_cn": "学员报告收缩压",
       "type": "integer",
       "min": 0,
       "max": 300,
       "unit": "mmHg",
       "description": "学员报告的收缩压值",
       "category": "LEARNER_STATEMENT",
-      "source": "LEARNER",
-      "writable_by": "CLASSIFIER",
-      "default_value": null,
-      "persistence": true,
-      "scoring": true,
-      "scoring_rules": {
-        "compare_with": "systolic_bp",
-        "tolerance": 5
-      }
+      "default_value": null
     },
     {
-      "name": "reported_diastolic_bp",
+      "name": "report.diastolicBp",
+      "name_cn": "学员报告舒张压",
       "type": "integer",
       "min": 0,
       "max": 200,
       "unit": "mmHg",
       "description": "学员报告的舒张压值",
       "category": "LEARNER_STATEMENT",
-      "source": "LEARNER",
-      "writable_by": "CLASSIFIER",
-      "default_value": null,
-      "persistence": true,
-      "scoring": true,
-      "scoring_rules": {
-        "compare_with": "diastolic_bp",
-        "tolerance": 5
-      }
+      "default_value": null
     },
     {
-      "name": "reported_heart_rate",
+      "name": "report.heartRate",
+      "name_cn": "学员报告心率",
       "type": "integer",
       "min": 0,
       "max": 350,
       "unit": "bpm",
       "description": "学员报告的心率值",
       "category": "LEARNER_STATEMENT",
-      "source": "LEARNER",
-      "writable_by": "CLASSIFIER",
-      "default_value": null,
-      "persistence": true,
-      "scoring": true,
-      "scoring_rules": {
-        "compare_with": "heart_rate",
-        "tolerance": 5
-      }
+      "default_value": null
     },
     {
-      "name": "reported_consciousness",
+      "name": "report.consciousness",
+      "name_cn": "学员报告意识状态",
       "type": "string",
       "enum": [
-        { "value": "alert", "label": "清醒" },
-        { "value": "verbal", "label": "对声音有反应" },
-        { "value": "pain", "label": "对疼痛有反应" },
-        { "value": "unresponsive", "label": "无反应" }
+        {
+          "value": "alert",
+          "label": "清醒"
+        },
+        {
+          "value": "verbal",
+          "label": "对呼叫有反应"
+        },
+        {
+          "value": "pain",
+          "label": "对疼痛有反应"
+        },
+        {
+          "value": "unresponsive",
+          "label": "无反应"
+        }
       ],
       "description": "学员报告的意识状态",
       "category": "LEARNER_STATEMENT",
-      "source": "LEARNER",
-      "writable_by": "CLASSIFIER",
-      "default_value": null,
-      "persistence": true,
-      "scoring": true,
-      "scoring_rules": {
-        "compare_with": "consciousness"
-      }
+      "default_value": null
     },
-
     {
-      "name": "cardioversion_attempts",
+      "name": "report.respiratoryRate",
+      "name_cn": "学员报告呼吸频率",
       "type": "integer",
       "min": 0,
-      "max": 5,
-      "description": "电复律尝试次数",
+      "max": 60,
+      "unit": "/min",
+      "description": "学员报告的呼吸频率",
+      "category": "LEARNER_STATEMENT",
+      "default_value": null
+    },
+    {
+      "name": "report.spo2",
+      "name_cn": "学员报告血氧饱和度",
+      "type": "integer",
+      "min": 0,
+      "max": 100,
+      "unit": "%",
+      "description": "学员报告的血氧饱和度",
+      "category": "LEARNER_STATEMENT",
+      "default_value": null
+    },
+    {
+      "name": "process.ecgRecorded",
+      "name_cn": "心电图已记录",
+      "type": "boolean",
+      "description": "12导联心电图是否已完成记录",
       "category": "PROCESS_MARKER",
-      "source": "STATE_MACHINE",
-      "writable_by": "STATE_MACHINE",
-      "default_value": 0,
-      "persistence": true,
-      "scoring": false
+      "default_value": false,
+      "value_labels": {
+        "true": "已记录",
+        "false": "未记录"
+      }
     },
     {
-      "name": "current_state",
+      "name": "process.currentState",
+      "name_cn": "当前状态机状态",
       "type": "string",
-      "description": "当前状态机状态",
+      "description": "当前状态机节点",
       "category": "SYSTEM",
-      "source": "STATE_MACHINE",
-      "writable_by": "STATE_MACHINE",
-      "default_value": "INITIAL_SETUP",
-      "persistence": true,
-      "scoring": false
+      "default_value": "SCENE_START"
     },
     {
-      "name": "operation_status",
+      "name": "process.prevState",
+      "name_cn": "上一个状态",
+      "type": "string",
+      "description": "前一个状态机节点",
+      "category": "SYSTEM",
+      "default_value": null
+    },
+    {
+      "name": "process.stateEnterTime",
+      "name_cn": "状态进入时间",
+      "type": "long",
+      "unit": "timestamp",
+      "description": "当前状态进入时间戳",
+      "category": "SYSTEM",
+      "default_value": null
+    },
+    {
+      "name": "process.stateDuration",
+      "name_cn": "状态停留时长",
+      "type": "integer",
+      "unit": "秒",
+      "description": "在当前状态停留的秒数",
+      "category": "SYSTEM",
+      "default_value": 0
+    },
+    {
+      "name": "process.algorithmBranch",
+      "name_cn": "算法分支",
       "type": "string",
       "enum": [
-        { "value": "start", "label": "已开始" },
-        { "value": "done", "label": "已完成" },
-        { "value": "pending", "label": "待执行" }
+        {
+          "value": "svt",
+          "label": "室上性心动过速"
+        },
+        {
+          "value": "afib",
+          "label": "心房颤动"
+        },
+        {
+          "value": "vt",
+          "label": "室性心动过速"
+        },
+        {
+          "value": "vf",
+          "label": "心室颤动"
+        },
+        {
+          "value": "pea",
+          "label": "无脉电活动"
+        },
+        {
+          "value": "asystole",
+          "label": "心室停搏"
+        },
+        {
+          "value": "bradycardia",
+          "label": "心动过缓"
+        },
+        {
+          "value": "unknown",
+          "label": "未确认"
+        }
       ],
-      "description": "操作执行状态",
-      "category": "PROCESS_MARKER",
-      "source": "STATE_MACHINE",
-      "writable_by": "STATE_MACHINE",
-      "default_value": "pending",
-      "persistence": true,
-      "scoring": false
+      "description": "当前遵循的ACLS算法分支",
+      "category": "SYSTEM",
+      "default_value": "unknown"
     },
     {
-      "name": "case_type",
+      "name": "process.deviationFlag",
+      "name_cn": "偏离标准流程",
+      "type": "boolean",
+      "description": "是否偏离标准流程",
+      "category": "SYSTEM",
+      "default_value": false,
+      "value_labels": {
+        "true": "已偏离",
+        "false": "未偏离"
+      }
+    },
+    {
+      "name": "process.deviationReason",
+      "name_cn": "偏离原因",
+      "type": "string",
+      "description": "偏离标准流程的原因描述",
+      "category": "SYSTEM",
+      "default_value": null
+    },
+    {
+      "name": "process.returnToParent",
+      "name_cn": "返回父级原因",
+      "type": "string",
+      "enum": [
+        {
+          "value": "ROSC",
+          "label": "自主循环恢复"
+        },
+        {
+          "value": "UNSTABLE",
+          "label": "血流动力学不稳定"
+        },
+        {
+          "value": "WIDE_QRS",
+          "label": "宽QRS"
+        },
+        {
+          "value": "IRREGULAR_RHYTHM",
+          "label": "不规则节律"
+        },
+        {
+          "value": "REFRACTORY_SVT",
+          "label": "难治性室上速"
+        },
+        {
+          "value": "PERSISTENT_SVT",
+          "label": "持续性室上速"
+        },
+        {
+          "value": "REFRACTORY_SHOCK",
+          "label": "难治性室颤"
+        },
+        {
+          "value": "WPW_CONTRADICTION",
+          "label": "WPW禁忌"
+        },
+        {
+          "value": "TERMINATE_ARREST",
+          "label": "终止复苏"
+        }
+      ],
+      "description": "子级返回父级的原因",
+      "category": "SYSTEM",
+      "default_value": null
+    },
+    {
+      "name": "process.caseType",
+      "name_cn": "案例类型",
       "type": "string",
       "description": "当前案例类型编码",
       "category": "SYSTEM",
-      "source": "SYSTEM",
-      "writable_by": "SYSTEM",
-      "default_value": null,
-      "persistence": true,
-      "scoring": false
+      "default_value": null
     },
     {
-      "name": "time_elapsed_since_last_intervention",
-      "type": "integer",
-      "unit": "seconds",
-      "description": "距离上次治疗干预的秒数",
-      "category": "SYSTEM",
-      "source": "TIMER",
-      "writable_by": "TIMER",
-      "default_value": 0,
-      "persistence": false,
-      "scoring": false
+      "name": "process.safetyCleared",
+      "name_cn": "安全清场已完成",
+      "type": "boolean",
+      "description": "安全清场是否已完成",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已完成",
+        "false": "未完成"
+      }
     },
     {
-      "name": "session_clock_status",
+      "name": "process.contraindicationsChecked",
+      "name_cn": "禁忌症已检查",
+      "type": "boolean",
+      "description": "操作禁忌症是否已检查",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已检查",
+        "false": "未检查"
+      }
+    },
+    {
+      "name": "process.environmentSafe",
+      "name_cn": "环境安全",
+      "type": "boolean",
+      "description": "操作环境是否安全",
+      "category": "PROCESS_MARKER",
+      "default_value": true,
+      "value_labels": {
+        "true": "安全",
+        "false": "不安全"
+      }
+    },
+    {
+      "name": "process.teamRolesAssigned",
+      "name_cn": "团队角色已分配",
+      "type": "boolean",
+      "description": "团队成员角色是否已分配",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已分配",
+        "false": "未分配"
+      }
+    },
+    {
+      "name": "process.acknowledged",
+      "name_cn": "已确认",
+      "type": "boolean",
+      "description": "闭环确认是否已完成",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已确认",
+        "false": "未确认"
+      }
+    },
+    {
+      "name": "process.timeRecorded",
+      "name_cn": "时间已记录",
+      "type": "boolean",
+      "description": "关键时间点是否已记录",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已记录",
+        "false": "未记录"
+      }
+    },
+    {
+      "name": "process.consultCalled",
+      "name_cn": "已呼叫咨询",
+      "type": "boolean",
+      "description": "专家咨询是否已呼叫",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已呼叫",
+        "false": "未呼叫"
+      }
+    },
+    {
+      "name": "process.strategyOverridden",
+      "name_cn": "策略已覆盖",
+      "type": "boolean",
+      "description": "策略是否已被覆盖",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已覆盖",
+        "false": "未覆盖"
+      }
+    },
+    {
+      "name": "process.operationStarted",
+      "name_cn": "操作已开始",
+      "type": "boolean",
+      "description": "主要操作是否已开始",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已开始",
+        "false": "未开始"
+      }
+    },
+    {
+      "name": "process.familyChecked",
+      "name_cn": "家属已检查",
+      "type": "boolean",
+      "description": "家属情况是否已检查",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已检查",
+        "false": "未检查"
+      }
+    },
+    {
+      "name": "process.transportReady",
+      "name_cn": "转运准备就绪",
+      "type": "boolean",
+      "description": "转运准备是否已完成",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已就绪",
+        "false": "未就绪"
+      }
+    },
+    {
+      "name": "process.reassessed",
+      "name_cn": "已完成重新评估",
+      "type": "boolean",
+      "description": "患者是否已完成重新评估",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已评估",
+        "false": "未评估"
+      }
+    },
+    {
+      "name": "process.bpMeasured",
+      "name_cn": "血压已测量",
+      "type": "boolean",
+      "description": "血压是否已测量",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已测量",
+        "false": "未测量"
+      }
+    },
+    {
+      "name": "process.hrMeasured",
+      "name_cn": "心率已测量",
+      "type": "boolean",
+      "description": "心率是否已测量",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已测量",
+        "false": "未测量"
+      }
+    },
+    {
+      "name": "process.oximetryMeasured",
+      "name_cn": "血氧已测量",
+      "type": "boolean",
+      "description": "血氧饱和度是否已测量",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已测量",
+        "false": "未测量"
+      }
+    },
+    {
+      "name": "process.consciousnessChecked",
+      "name_cn": "意识已检查",
+      "type": "boolean",
+      "description": "意识状态是否已检查",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已检查",
+        "false": "未检查"
+      }
+    },
+    {
+      "name": "process.historyCollected",
+      "name_cn": "病史已采集",
+      "type": "boolean",
+      "description": "病史是否已采集",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已采集",
+        "false": "未采集"
+      }
+    },
+    {
+      "name": "process.errorFixed",
+      "name_cn": "错误已纠正",
+      "type": "boolean",
+      "description": "错误是否已纠正",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已纠正",
+        "false": "未纠正"
+      }
+    },
+    {
+      "name": "process.errorOccurred",
+      "name_cn": "发生错误",
+      "type": "boolean",
+      "description": "是否发生了错误",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已发生",
+        "false": "未发生"
+      }
+    },
+    {
+      "name": "process.errorType",
+      "name_cn": "错误类型",
       "type": "string",
       "enum": [
-        { "value": "RUNNING", "label": "运行中" },
-        { "value": "PAUSED", "label": "已暂停" },
-        { "value": "RESET", "label": "已重置" }
+        {
+          "value": "medication_dose",
+          "label": "药物剂量错误"
+        },
+        {
+          "value": "defib_timing",
+          "label": "除颤时机错误"
+        },
+        {
+          "value": "algorithm_deviation",
+          "label": "流程偏离"
+        },
+        {
+          "value": "communication",
+          "label": "沟通问题"
+        },
+        {
+          "value": "cpr_quality",
+          "label": "CPR质量不达标"
+        },
+        {
+          "value": "airway",
+          "label": "气道管理问题"
+        },
+        {
+          "value": "other",
+          "label": "其他"
+        }
       ],
-      "default_value": "RUNNING",
-      "writable_by": "SYSTEM"
+      "description": "错误的具体类型",
+      "category": "PROCESS_MARKER",
+      "default_value": null
     },
     {
-      "name": "last_error",
-      "type": "string",
-      "description": "最后一次错误信息",
-      "category": "SYSTEM",
-      "source": "SYSTEM",
-      "writable_by": "SYSTEM",
-      "default_value": null,
+      "name": "process.terminateResuscitation",
+      "name_cn": "决定终止复苏",
+      "type": "boolean",
+      "description": "团队决定终止复苏",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已决定",
+        "false": "未决定"
+      }
+    },
+    {
+      "name": "process.timeoutOccurred",
+      "name_cn": "发生超时",
+      "type": "boolean",
+      "description": "是否发生了超时",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已发生",
+        "false": "未发生"
+      }
+    },
+    {
+      "name": "process.symptoms",
+      "name_cn": "症状集合",
+      "type": "array",
+      "description": "从学员陈述中抽取的症状标准编码集合，供血流动力学稳定性判定与审计",
+      "category": "PROCESS_MARKER",
+      "source": "EXTRACTOR",
+      "writable_by": ["PARAM_EXTRACTOR"],
+      "default_value": [],
       "persistence": true,
       "scoring": false
     },
     {
-      "name": "session_start_time",
+      "name": "phys.symptomsPresent",
+      "name_cn": "存在心动过缓相关症状",
+      "type": "boolean",
+      "description": "患者是否存在心动过缓导致的临床症状",
+      "category": "PHYSIOLOGICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "有",
+        "false": "无"
+      }
+    },
+    {
+      "name": "process.terminationDocumented",
+      "name_cn": "终止复苏记录已完成",
+      "type": "boolean",
+      "description": "终止复苏相关记录是否已全部填写完毕",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已完成",
+        "false": "未完成"
+      }
+    },
+    {
+      "name": "process.blsSurveyComplete",
+      "name_cn": "BLS初步评估完成",
+      "type": "boolean",
+      "description": "表示学员已完成BLS初步评估",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已完成",
+        "false": "未完成"
+      }
+    },
+    {
+      "name": "process.timeoutResolved",
+      "name_cn": "超时已解决",
+      "type": "boolean",
+      "description": "超时是否已解决",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已解决",
+        "false": "未解决"
+      }
+    },
+    {
+      "name": "process.lastError",
+      "name_cn": "最后错误信息",
+      "type": "string",
+      "description": "最后一次错误信息",
+      "category": "PROCESS_MARKER",
+      "default_value": null
+    },
+    {
+      "name": "process.approachAction",
+      "name_cn": "接近患者动作",
+      "type": "string",
+      "description": "接近患者的具体动作",
+      "category": "PROCESS_MARKER",
+      "default_value": null
+    },
+    {
+      "name": "process.stimulusType",
+      "name_cn": "刺激类型",
+      "type": "string",
+      "enum": [
+        {
+          "value": "verbal",
+          "label": "呼叫"
+        },
+        {
+          "value": "painful",
+          "label": "疼痛刺激"
+        },
+        {
+          "value": "shake",
+          "label": "摇晃"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "反应评估使用的刺激方式",
+      "category": "PROCESS_MARKER",
+      "default_value": "unknown"
+    },
+    {
+      "name": "process.breathingTechnique",
+      "name_cn": "呼吸评估手法",
+      "type": "string",
+      "enum": [
+        {
+          "value": "look",
+          "label": "看"
+        },
+        {
+          "value": "listen",
+          "label": "听"
+        },
+        {
+          "value": "feel",
+          "label": "感受"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "呼吸评估使用的手法",
+      "category": "PROCESS_MARKER",
+      "default_value": "unknown"
+    },
+    {
+      "name": "process.medicationContext",
+      "name_cn": "用药上下文",
+      "type": "string",
+      "enum": [
+        {
+          "value": "current",
+          "label": "当前"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "用药询问上下文",
+      "category": "PROCESS_MARKER",
+      "default_value": "unknown"
+    },
+    {
+      "name": "process.anticoagulantDrug",
+      "name_cn": "抗凝药类型",
+      "type": "string",
+      "enum": [
+        {
+          "value": "warfarin",
+          "label": "华法林"
+        },
+        {
+          "value": "rivaroxaban",
+          "label": "利伐沙班"
+        },
+        {
+          "value": "apixaban",
+          "label": "阿哌沙班"
+        },
+        {
+          "value": "dabigatran",
+          "label": "达比加群"
+        },
+        {
+          "value": "edoxaban",
+          "label": "依度沙班"
+        },
+        {
+          "value": "none",
+          "label": "未使用"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "抗凝药物类型",
+      "category": "PROCESS_MARKER",
+      "default_value": "unknown"
+    },
+    {
+      "name": "process.hpi",
+      "name_cn": "现病史",
+      "type": "string",
+      "description": "现病史采集结果",
+      "category": "PROCESS_MARKER",
+      "default_value": null
+    },
+    {
+      "name": "process.substanceUse",
+      "name_cn": "物质使用",
+      "type": "string",
+      "enum": [
+        {
+          "value": "alcohol",
+          "label": "酒精"
+        },
+        {
+          "value": "drugs",
+          "label": "毒品"
+        },
+        {
+          "value": "both",
+          "label": "两者"
+        },
+        {
+          "value": "none",
+          "label": "无"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "酒精或药物使用情况",
+      "category": "PROCESS_MARKER",
+      "default_value": "unknown"
+    },
+    {
+      "name": "process.substanceFrequency",
+      "name_cn": "物质使用频率",
+      "type": "string",
+      "description": "物质使用频率描述",
+      "category": "PROCESS_MARKER",
+      "default_value": null
+    },
+    {
+      "name": "process.gripSymmetryChecked",
+      "name_cn": "握力对称性",
+      "type": "string",
+      "enum": [
+        {
+          "value": "symmetric",
+          "label": "对称"
+        },
+        {
+          "value": "asymmetric",
+          "label": "不对称"
+        },
+        {
+          "value": "unknown",
+          "label": "待判读"
+        }
+      ],
+      "description": "双侧握力对称性评估",
+      "category": "PROCESS_MARKER",
+      "default_value": "unknown"
+    },
+    {
+      "name": "process.faceDroopChecked",
+      "name_cn": "面部下垂检查",
+      "type": "string",
+      "enum": [
+        {
+          "value": "symmetric",
+          "label": "对称"
+        },
+        {
+          "value": "asymmetric",
+          "label": "不对称"
+        },
+        {
+          "value": "unknown",
+          "label": "待判读"
+        }
+      ],
+      "description": "面部下垂检查结果",
+      "category": "PROCESS_MARKER",
+      "default_value": "unknown"
+    },
+    {
+      "name": "process.strokeSide",
+      "name_cn": "卒中侧",
+      "type": "string",
+      "enum": [
+        {
+          "value": "left",
+          "label": "左侧"
+        },
+        {
+          "value": "right",
+          "label": "右侧"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "卒中累及侧",
+      "category": "PROCESS_MARKER",
+      "default_value": "unknown"
+    },
+    {
+      "name": "process.armDriftChecked",
+      "name_cn": "手臂下垂检查",
+      "type": "string",
+      "enum": [
+        {
+          "value": "none",
+          "label": "无漂移"
+        },
+        {
+          "value": "left",
+          "label": "左侧下垂"
+        },
+        {
+          "value": "right",
+          "label": "右侧下垂"
+        },
+        {
+          "value": "bilateral",
+          "label": "双侧下垂"
+        },
+        {
+          "value": "unknown",
+          "label": "待判读"
+        }
+      ],
+      "description": "手臂漂移检查结果",
+      "category": "PROCESS_MARKER",
+      "default_value": "unknown"
+    },
+    {
+      "name": "process.armDriftDurationSec",
+      "name_cn": "手臂下垂观察秒数",
+      "type": "integer",
+      "description": "手臂下垂观察时长",
+      "category": "PROCESS_MARKER",
+      "default_value": null
+    },
+    {
+      "name": "process.speechChecked",
+      "name_cn": "语言异常检查",
+      "type": "string",
+      "enum": [
+        {
+          "value": "clear",
+          "label": "清晰"
+        },
+        {
+          "value": "slurred",
+          "label": "含糊"
+        },
+        {
+          "value": "abnormal",
+          "label": "异常"
+        },
+        {
+          "value": "unknown",
+          "label": "待判读"
+        }
+      ],
+      "description": "语言异常检查结果",
+      "category": "PROCESS_MARKER",
+      "default_value": "unknown"
+    },
+    {
+      "name": "process.repeatedPhrase",
+      "name_cn": "重复短语",
+      "type": "string",
+      "description": "语言检查重复短语",
+      "category": "PROCESS_MARKER",
+      "default_value": null
+    },
+    {
+      "name": "process.balanceChecked",
+      "name_cn": "平衡评估",
+      "type": "string",
+      "enum": [
+        {
+          "value": "normal",
+          "label": "正常"
+        },
+        {
+          "value": "abnormal",
+          "label": "异常"
+        },
+        {
+          "value": "unknown",
+          "label": "待判读"
+        }
+      ],
+      "description": "平衡能力评估结果",
+      "category": "PROCESS_MARKER",
+      "default_value": "unknown"
+    },
+    {
+      "name": "process.coordinationChecked",
+      "name_cn": "协调评估",
+      "type": "string",
+      "enum": [
+        {
+          "value": "normal",
+          "label": "正常"
+        },
+        {
+          "value": "abnormal",
+          "label": "异常"
+        },
+        {
+          "value": "unknown",
+          "label": "待判读"
+        }
+      ],
+      "description": "协调能力评估结果",
+      "category": "PROCESS_MARKER",
+      "default_value": "unknown"
+    },
+    {
+      "name": "process.lkwTime",
+      "name_cn": "最后正常知晓时间",
+      "type": "string",
+      "description": "LKW 时间",
+      "category": "PROCESS_MARKER",
+      "default_value": null
+    },
+    {
+      "name": "process.lkwWitness",
+      "name_cn": "LKW目击者",
+      "type": "string",
+      "enum": [
+        {
+          "value": "yes",
+          "label": "有"
+        },
+        {
+          "value": "no",
+          "label": "无"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "LKW 目击者情况",
+      "category": "PROCESS_MARKER",
+      "default_value": "unknown"
+    },
+    {
+      "name": "process.visionDeficit",
+      "name_cn": "视野缺损",
+      "type": "string",
+      "enum": [
+        {
+          "value": "none",
+          "label": "无"
+        },
+        {
+          "value": "left",
+          "label": "左侧"
+        },
+        {
+          "value": "right",
+          "label": "右侧"
+        },
+        {
+          "value": "bilateral",
+          "label": "双侧"
+        },
+        {
+          "value": "unknown",
+          "label": "待判读"
+        }
+      ],
+      "description": "视野缺损评估",
+      "category": "PROCESS_MARKER",
+      "default_value": "unknown"
+    },
+    {
+      "name": "process.visionFieldCut",
+      "name_cn": "视野切割",
+      "type": "string",
+      "enum": [
+        {
+          "value": "yes",
+          "label": "有"
+        },
+        {
+          "value": "no",
+          "label": "无"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "视野切割情况",
+      "category": "PROCESS_MARKER",
+      "default_value": "unknown"
+    },
+    {
+      "name": "process.aphasia",
+      "name_cn": "失语症类型",
+      "type": "string",
+      "enum": [
+        {
+          "value": "expressive",
+          "label": "表达性"
+        },
+        {
+          "value": "receptive",
+          "label": "感受性"
+        },
+        {
+          "value": "global",
+          "label": "完全性"
+        },
+        {
+          "value": "unknown",
+          "label": "待判读"
+        }
+      ],
+      "description": "失语症评估结果",
+      "category": "PROCESS_MARKER",
+      "default_value": "unknown"
+    },
+    {
+      "name": "process.aphasiaSeverity",
+      "name_cn": "失语症严重程度",
+      "type": "string",
+      "enum": [
+        {
+          "value": "mild",
+          "label": "轻度"
+        },
+        {
+          "value": "moderate",
+          "label": "中度"
+        },
+        {
+          "value": "severe",
+          "label": "重度"
+        },
+        {
+          "value": "unknown",
+          "label": "待判读"
+        }
+      ],
+      "description": "失语症严重程度",
+      "category": "PROCESS_MARKER",
+      "default_value": "unknown"
+    },
+    {
+      "name": "process.neglectSigns",
+      "name_cn": "忽略侧",
+      "type": "string",
+      "enum": [
+        {
+          "value": "left",
+          "label": "左侧"
+        },
+        {
+          "value": "right",
+          "label": "右侧"
+        },
+        {
+          "value": "unknown",
+          "label": "待判读"
+        }
+      ],
+      "description": "忽略体征侧",
+      "category": "PROCESS_MARKER",
+      "default_value": "unknown"
+    },
+    {
+      "name": "process.neglectPresent",
+      "name_cn": "存在忽略体征",
+      "type": "boolean",
+      "description": "是否存在忽略体征",
+      "category": "PROCESS_MARKER",
+      "default_value": null
+    },
+    {
+      "name": "process.ecgExplained",
+      "name_cn": "心电图已解释",
+      "type": "boolean",
+      "description": "心电图操作是否已向患者解释",
+      "category": "PROCESS_MARKER",
+      "default_value": false
+    },
+    {
+      "name": "process.ecgConsent",
+      "name_cn": "心电图知情同意",
+      "type": "string",
+      "enum": [
+        {
+          "value": "yes",
+          "label": "同意"
+        },
+        {
+          "value": "no",
+          "label": "拒绝"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "患者是否知情同意",
+      "category": "PROCESS_MARKER",
+      "default_value": "unknown"
+    },
+    {
+      "name": "process.patientStill",
+      "name_cn": "已要求患者不动",
+      "type": "boolean",
+      "description": "已要求患者在记录期间保持不动",
+      "category": "PROCESS_MARKER",
+      "default_value": false
+    },
+    {
+      "name": "process.patientMovement",
+      "name_cn": "患者活动",
+      "type": "string",
+      "enum": [
+        {
+          "value": "none",
+          "label": "不动"
+        },
+        {
+          "value": "moving",
+          "label": "活动"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "记录期间患者活动情况",
+      "category": "PROCESS_MARKER",
+      "default_value": "unknown"
+    },
+    {
+      "name": "process.ecgArtifactId",
+      "name_cn": "心电图工件ID",
+      "type": "string",
+      "description": "心电图记录工件ID",
+      "category": "PROCESS_MARKER",
+      "default_value": null
+    },
+    {
+      "name": "process.ecgInterpretation",
+      "name_cn": "心电图判读",
+      "type": "string",
+      "enum": [
+        {
+          "value": "normal",
+          "label": "正常"
+        },
+        {
+          "value": "abnormal",
+          "label": "异常"
+        },
+        {
+          "value": "stemi",
+          "label": "STEMI"
+        },
+        {
+          "value": "arrhythmia",
+          "label": "心律失常"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "心电图判读结果",
+      "category": "PROCESS_MARKER",
+      "default_value": "unknown"
+    },
+    {
+      "name": "process.ecgReported",
+      "name_cn": "心电图已报告",
+      "type": "boolean",
+      "description": "心电图是否已报告",
+      "category": "PROCESS_MARKER",
+      "default_value": false
+    },
+    {
+      "name": "process.compressionPaused",
+      "name_cn": "按压已暂停",
+      "type": "boolean",
+      "description": "胸外按压是否已暂停",
+      "category": "PROCESS_MARKER",
+      "default_value": false
+    },
+    {
+      "name": "process.compressionContinuous",
+      "name_cn": "持续按压",
+      "type": "boolean",
+      "description": "是否持续胸外按压不停",
+      "category": "PROCESS_MARKER",
+      "default_value": false
+    },
+    {
+      "name": "process.aedRequested",
+      "name_cn": "已请求AED",
+      "type": "boolean",
+      "description": "是否已请求AED",
+      "category": "PROCESS_MARKER",
+      "default_value": false
+    },
+    {
+      "name": "process.aedRequestedTo",
+      "name_cn": "AED请求对象",
+      "type": "string",
+      "description": "向谁请求AED",
+      "category": "PROCESS_MARKER",
+      "default_value": null
+    },
+    {
+      "name": "process.assistanceType",
+      "name_cn": "协助类型",
+      "type": "string",
+      "enum": [
+        {
+          "value": "bystander",
+          "label": "旁观者"
+        },
+        {
+          "value": "team",
+          "label": "团队"
+        },
+        {
+          "value": "code_team",
+          "label": "抢救团队"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "请求协助对象类型",
+      "category": "PROCESS_MARKER",
+      "default_value": "unknown"
+    },
+    {
+      "name": "process.assistanceRequested",
+      "name_cn": "已请求协助",
+      "type": "boolean",
+      "description": "是否已请求协助",
+      "category": "PROCESS_MARKER",
+      "default_value": false
+    },
+    {
+      "name": "process.chestExposed",
+      "name_cn": "胸部已暴露",
+      "type": "boolean",
+      "description": "胸部是否已暴露",
+      "category": "PROCESS_MARKER",
+      "default_value": false
+    },
+    {
+      "name": "process.clearForAnalysis",
+      "name_cn": "分析前清场",
+      "type": "boolean",
+      "description": "分析心律前是否已清场",
+      "category": "PROCESS_MARKER",
+      "default_value": false
+    },
+    {
+      "name": "process.noContactDuringAnalysis",
+      "name_cn": "分析时无人接触",
+      "type": "boolean",
+      "description": "分析时无人接触患者",
+      "category": "PROCESS_MARKER",
+      "default_value": false
+    },
+    {
+      "name": "process.clearForShock",
+      "name_cn": "电击前清场",
+      "type": "boolean",
+      "description": "电击前是否已清场",
+      "category": "PROCESS_MARKER",
+      "default_value": false
+    },
+    {
+      "name": "process.allClearForShock",
+      "name_cn": "所有人已离开",
+      "type": "boolean",
+      "description": "电击前所有人是否已离开",
+      "category": "PROCESS_MARKER",
+      "default_value": false
+    },
+    {
+      "name": "process.ventilationDone",
+      "name_cn": "通气已完成",
+      "type": "boolean",
+      "description": "是否已完成通气",
+      "category": "PROCESS_MARKER",
+      "default_value": false
+    },
+    {
+      "name": "process.suctionDone",
+      "name_cn": "吸引已完成",
+      "type": "boolean",
+      "description": "吸引器清理是否已完成",
+      "category": "PROCESS_MARKER",
+      "default_value": false
+    },
+    {
+      "name": "process.airwaySecretion",
+      "name_cn": "气道分泌物",
+      "type": "string",
+      "enum": [
+        {
+          "value": "blood",
+          "label": "血"
+        },
+        {
+          "value": "vomit",
+          "label": "呕吐物"
+        },
+        {
+          "value": "secretions",
+          "label": "痰液"
+        },
+        {
+          "value": "none",
+          "label": "无"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "气道吸引出的分泌物",
+      "category": "PROCESS_MARKER",
+      "default_value": "unknown"
+    },
+    {
+      "name": "process.transportTarget",
+      "name_cn": "转运目的地",
+      "type": "string",
+      "enum": [
+        {
+          "value": "ambulance",
+          "label": "救护车"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "转运目的地",
+      "category": "PROCESS_MARKER",
+      "default_value": "unknown"
+    },
+    {
+      "name": "process.transportStarted",
+      "name_cn": "转运已开始",
+      "type": "boolean",
+      "description": "转运是否已开始",
+      "category": "PROCESS_MARKER",
+      "default_value": false
+    },
+    {
+      "name": "process.stretcherLoaded",
+      "name_cn": "已上担架",
+      "type": "boolean",
+      "description": "患者是否已上担架",
+      "category": "PROCESS_MARKER",
+      "default_value": false
+    },
+    {
+      "name": "process.transferMethod",
+      "name_cn": "搬运方式",
+      "type": "string",
+      "enum": [
+        {
+          "value": "lift",
+          "label": "抬起"
+        },
+        {
+          "value": "scoop",
+          "label": "铲式"
+        },
+        {
+          "value": "slide",
+          "label": "平移"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "患者搬运方式",
+      "category": "PROCESS_MARKER",
+      "default_value": "unknown"
+    },
+    {
+      "name": "process.patientSecured",
+      "name_cn": "患者已固定",
+      "type": "boolean",
+      "description": "患者是否已固定在担架上",
+      "category": "PROCESS_MARKER",
+      "default_value": false
+    },
+    {
+      "name": "process.strapsCount",
+      "name_cn": "固定带数量",
+      "type": "integer",
+      "description": "固定带使用数量",
+      "category": "PROCESS_MARKER",
+      "default_value": null
+    },
+    {
+      "name": "process.hospitalNotified",
+      "name_cn": "已通知医院",
+      "type": "boolean",
+      "description": "接收医院是否已通知",
+      "category": "PROCESS_MARKER",
+      "default_value": false
+    },
+    {
+      "name": "process.eta",
+      "name_cn": "预计到达时间",
+      "type": "string",
+      "description": "预计到达医院时间",
+      "category": "PROCESS_MARKER",
+      "default_value": null
+    },
+    {
+      "name": "process.patientReport",
+      "name_cn": "患者报告",
+      "type": "string",
+      "description": "向医院的患者报告内容",
+      "category": "PROCESS_MARKER",
+      "default_value": null
+    },
+    {
+      "name": "process.strokeAlertActivated",
+      "name_cn": "卒中警报已激活",
+      "type": "boolean",
+      "description": "卒中警报是否已激活",
+      "category": "PROCESS_MARKER",
+      "default_value": false
+    },
+    {
+      "name": "process.strokeTeamNotified",
+      "name_cn": "卒中团队已通知",
+      "type": "boolean",
+      "description": "卒中团队是否已通知",
+      "category": "PROCESS_MARKER",
+      "default_value": false
+    },
+    {
+      "name": "process.handoffDone",
+      "name_cn": "交接已完成",
+      "type": "boolean",
+      "description": "患者交接是否已完成",
+      "category": "PROCESS_MARKER",
+      "default_value": false
+    },
+    {
+      "name": "process.handoffFormat",
+      "name_cn": "交接形式",
+      "type": "string",
+      "enum": [
+        {
+          "value": "verbal",
+          "label": "口头"
+        },
+        {
+          "value": "written",
+          "label": "书面"
+        },
+        {
+          "value": "structured",
+          "label": "结构化SBAR"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "患者交接形式",
+      "category": "PROCESS_MARKER",
+      "default_value": "unknown"
+    },
+    {
+      "name": "process.sedationGiven",
+      "name_cn": "已镇静",
+      "type": "boolean",
+      "description": "同步电复律前是否已镇静",
+      "category": "PROCESS_MARKER",
+      "default_value": false
+    },
+    {
+      "name": "process.sedationAgent",
+      "name_cn": "镇静药物",
+      "type": "string",
+      "enum": [
+        {
+          "value": "midazolam",
+          "label": "咪达唑仑"
+        },
+        {
+          "value": "etomidate",
+          "label": "依托咪酯"
+        },
+        {
+          "value": "none",
+          "label": "未使用"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        }
+      ],
+      "description": "使用的镇静药物",
+      "category": "PROCESS_MARKER",
+      "default_value": "none"
+    },
+    {
+      "name": "process.firstContactTime",
+      "name_cn": "首次接触时间",
+      "type": "long",
+      "unit": "timestamp",
+      "description": "首次接触患者的时间戳",
+      "category": "TIMELINE",
+      "default_value": null
+    },
+    {
+      "name": "process.firstECGTime",
+      "name_cn": "首次心电图时间",
+      "type": "long",
+      "unit": "timestamp",
+      "description": "首次获取心电图的时间戳",
+      "category": "TIMELINE",
+      "default_value": null
+    },
+    {
+      "name": "process.firstDefibTime",
+      "name_cn": "首次电击时间",
+      "type": "long",
+      "unit": "timestamp",
+      "description": "首次除颤电击的时间戳",
+      "category": "TIMELINE",
+      "default_value": null
+    },
+    {
+      "name": "process.firstDrugTime",
+      "name_cn": "首次给药时间",
+      "type": "long",
+      "unit": "timestamp",
+      "description": "首次推注药物的时间戳",
+      "category": "TIMELINE",
+      "default_value": null
+    },
+    {
+      "name": "process.roscTime",
+      "name_cn": "ROSC时间",
+      "type": "long",
+      "unit": "timestamp",
+      "description": "确认ROSC的时间戳",
+      "category": "TIMELINE",
+      "default_value": null
+    },
+    {
+      "name": "process.sceneExitTime",
+      "name_cn": "离开现场时间",
+      "type": "long",
+      "unit": "timestamp",
+      "description": "离开现场的时间戳",
+      "category": "TIMELINE",
+      "default_value": null
+    },
+    {
+      "name": "process.hospitalArrivalTime",
+      "name_cn": "到达医院时间",
+      "type": "long",
+      "unit": "timestamp",
+      "description": "到达医院的时间戳",
+      "category": "TIMELINE",
+      "default_value": null
+    },
+    {
+      "name": "process.cprStartTime",
+      "name_cn": "CPR开始时间",
+      "type": "long",
+      "unit": "timestamp",
+      "description": "胸外按压开始时间戳",
+      "category": "TIMELINE",
+      "default_value": null
+    },
+    {
+      "name": "process.cprStopTime",
+      "name_cn": "CPR结束时间",
+      "type": "long",
+      "unit": "timestamp",
+      "description": "胸外按压结束时间戳",
+      "category": "TIMELINE",
+      "default_value": null
+    },
+    {
+      "name": "process.cprCycles",
+      "name_cn": "CPR周期数",
+      "type": "integer",
+      "description": "已完成的CPR周期数",
+      "category": "CPR_QUALITY",
+      "default_value": 0
+    },
+    {
+      "name": "process.cprInterruptions",
+      "name_cn": "按压中断次数",
+      "type": "integer",
+      "description": "胸外按压中断的总次数",
+      "category": "CPR_QUALITY",
+      "default_value": 0
+    },
+    {
+      "name": "process.cprInterruptionDuration",
+      "name_cn": "按压中断总时长",
+      "type": "integer",
+      "unit": "秒",
+      "description": "按压中断累计时长",
+      "category": "CPR_QUALITY",
+      "default_value": 0
+    },
+    {
+      "name": "process.cprFraction",
+      "name_cn": "CPR分数",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "description": "按压时间占总复苏时间的比例",
+      "category": "CPR_QUALITY",
+      "default_value": 0
+    },
+    {
+      "name": "process.compressionDepth",
+      "name_cn": "当前按压深度",
+      "type": "number",
+      "min": 0,
+      "max": 10,
+      "unit": "cm",
+      "description": "胸外按压深度",
+      "category": "CPR_QUALITY",
+      "default_value": 5.5
+    },
+    {
+      "name": "process.compressionDepthAvg",
+      "name_cn": "平均按压深度",
+      "type": "number",
+      "min": 0,
+      "max": 10,
+      "unit": "cm",
+      "description": "平均按压深度",
+      "category": "CPR_QUALITY",
+      "default_value": null
+    },
+    {
+      "name": "process.compressionRate",
+      "name_cn": "当前按压频率",
+      "type": "integer",
+      "min": 0,
+      "max": 200,
+      "unit": "/min",
+      "description": "胸外按压频率",
+      "category": "CPR_QUALITY",
+      "default_value": 110
+    },
+    {
+      "name": "process.compressionRateAvg",
+      "name_cn": "平均按压频率",
+      "type": "integer",
+      "min": 0,
+      "max": 200,
+      "unit": "/min",
+      "description": "平均按压频率",
+      "category": "CPR_QUALITY",
+      "default_value": null
+    },
+    {
+      "name": "process.ventilationRate",
+      "name_cn": "通气频率",
+      "type": "integer",
+      "min": 0,
+      "max": 30,
+      "unit": "/min",
+      "description": "人工通气频率",
+      "category": "CPR_QUALITY",
+      "default_value": null
+    },
+    {
+      "name": "process.chestRecoil",
+      "name_cn": "胸廓回弹完整",
+      "type": "boolean",
+      "description": "胸廓是否完全回弹",
+      "category": "CPR_QUALITY",
+      "default_value": true,
+      "value_labels": {
+        "true": "完整回弹",
+        "false": "回弹不完整"
+      }
+    },
+    {
+      "name": "process.shockCount",
+      "name_cn": "电击次数",
+      "type": "integer",
+      "description": "除颤电击累计次数",
+      "category": "TREATMENT_HISTORY",
+      "default_value": 0
+    },
+    {
+      "name": "process.shockDone",
+      "name_cn": "电击已完成",
+      "type": "boolean",
+      "description": "最近一次电击是否已完成",
+      "category": "TREATMENT_HISTORY",
+      "default_value": false,
+      "value_labels": {
+        "true": "已完成",
+        "false": "未完成"
+      }
+    },
+    {
+      "name": "process.shockTiming",
+      "name_cn": "电击时间序列",
+      "type": "array",
+      "description": "每次电击的时间戳序列",
+      "category": "TREATMENT_HISTORY",
+      "default_value": []
+    },
+    {
+      "name": "process.shockEnergySequence",
+      "name_cn": "电击能量序列",
+      "type": "array",
+      "description": "每次电击的能量设置序列",
+      "category": "TREATMENT_HISTORY",
+      "default_value": []
+    },
+    {
+      "name": "process.shockOutcomeSequence",
+      "name_cn": "电击结果序列",
+      "type": "array",
+      "description": "每次电击的结果序列",
+      "category": "TREATMENT_HISTORY",
+      "default_value": []
+    },
+    {
+      "name": "process.postShockElapsed",
+      "name_cn": "电击后已过秒数",
+      "type": "integer",
+      "description": "最近一次电击后已过的秒数",
+      "category": "TIMELINE",
+      "default_value": 0
+    },
+    {
+      "name": "process.patientUnstable",
+      "name_cn": "患者不稳定",
+      "type": "boolean",
+      "description": "患者是否处于不稳定状态",
+      "category": "CLINICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "不稳定",
+        "false": "稳定"
+      }
+    },
+    {
+      "name": "process.patientStable",
+      "name_cn": "患者稳定",
+      "type": "boolean",
+      "description": "患者是否处于稳定状态",
+      "category": "CLINICAL",
+      "default_value": true,
+      "value_labels": {
+        "true": "稳定",
+        "false": "不稳定"
+      }
+    },
+    {
+      "name": "process.suspectedRhythm",
+      "name_cn": "疑似心律",
+      "type": "string",
+      "description": "学员疑似的心律类型",
+      "category": "LEARNER_STATEMENT",
+      "default_value": null
+    },
+    {
+      "name": "process.suspectedHyperkalemia",
+      "name_cn": "疑似高钾血症",
+      "type": "boolean",
+      "description": "是否疑似高钾血症",
+      "category": "CLINICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "疑似",
+        "false": "非疑似"
+      }
+    },
+    {
+      "name": "process.suspectedAcidosis",
+      "name_cn": "疑似酸中毒",
+      "type": "boolean",
+      "description": "是否疑似酸中毒",
+      "category": "CLINICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "疑似",
+        "false": "非疑似"
+      }
+    },
+    {
+      "name": "process.suspectedHypovolemia",
+      "name_cn": "疑似低血容量",
+      "type": "boolean",
+      "description": "是否疑似低血容量",
+      "category": "CLINICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "疑似",
+        "false": "非疑似"
+      }
+    },
+    {
+      "name": "process.suspectedTensionPneumothorax",
+      "name_cn": "疑似张力性气胸",
+      "type": "boolean",
+      "description": "是否疑似张力性气胸",
+      "category": "CLINICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "疑似",
+        "false": "非疑似"
+      }
+    },
+    {
+      "name": "process.suspectedTamponade",
+      "name_cn": "疑似心包填塞",
+      "type": "boolean",
+      "description": "是否疑似心包填塞",
+      "category": "CLINICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "疑似",
+        "false": "非疑似"
+      }
+    },
+    {
+      "name": "process.suspectedPe",
+      "name_cn": "疑似肺栓塞",
+      "type": "boolean",
+      "description": "是否疑似肺栓塞",
+      "category": "CLINICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "疑似",
+        "false": "非疑似"
+      }
+    },
+    {
+      "name": "process.suspectedHypothermia",
+      "name_cn": "疑似低体温",
+      "type": "boolean",
+      "description": "是否疑似低体温",
+      "category": "CLINICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "疑似",
+        "false": "非疑似"
+      }
+    },
+    {
+      "name": "process.suspectedToxicity",
+      "name_cn": "疑似中毒",
+      "type": "boolean",
+      "description": "是否疑似药物或毒物中毒",
+      "category": "CLINICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "疑似",
+        "false": "非疑似"
+      }
+    },
+    {
+      "name": "process.initialRhythm",
+      "name_cn": "初始心律",
+      "type": "string",
+      "description": "首次记录的心律",
+      "category": "CLINICAL",
+      "default_value": null
+    },
+    {
+      "name": "process.rhythmAtROSC",
+      "name_cn": "ROSC时心律",
+      "type": "string",
+      "description": "ROSC时的心律",
+      "category": "CLINICAL",
+      "default_value": null
+    },
+    {
+      "name": "process.finalRhythm",
+      "name_cn": "最终心律",
+      "type": "string",
+      "description": "场景结束时的心律",
+      "category": "CLINICAL",
+      "default_value": null
+    },
+    {
+      "name": "process.defibAttemptsBeforeROSC",
+      "name_cn": "ROSC前电击次数",
+      "type": "integer",
+      "description": "ROSC前的除颤电击次数",
+      "category": "CLINICAL",
+      "default_value": 0
+    },
+    {
+      "name": "process.drugsBeforeROSC",
+      "name_cn": "ROSC前给药次数",
+      "type": "integer",
+      "description": "ROSC前的给药次数",
+      "category": "CLINICAL",
+      "default_value": 0
+    },
+    {
+      "name": "process.totalInterventions",
+      "name_cn": "总干预次数",
+      "type": "integer",
+      "description": "总干预操作次数",
+      "category": "PROCESS_MARKER",
+      "default_value": 0
+    },
+    {
+      "name": "process.operationStatus",
+      "name_cn": "操作执行状态",
+      "type": "string",
+      "enum": [
+        {
+          "value": "start",
+          "label": "已开始"
+        },
+        {
+          "value": "done",
+          "label": "已完成"
+        },
+        {
+          "value": "pending",
+          "label": "待执行"
+        }
+      ],
+      "description": "当前操作执行状态",
+      "category": "PROCESS_MARKER",
+      "default_value": "pending"
+    },
+    {
+      "name": "process.sessionClockStatus",
+      "name_cn": "会话时钟状态",
+      "type": "string",
+      "enum": [
+        {
+          "value": "RUNNING",
+          "label": "运行中"
+        },
+        {
+          "value": "PAUSED",
+          "label": "已暂停"
+        },
+        {
+          "value": "RESET",
+          "label": "已重置"
+        }
+      ],
+      "description": "会话时钟状态",
+      "category": "SYSTEM",
+      "default_value": "RUNNING"
+    },
+    {
+      "name": "process.sessionStartTime",
+      "name_cn": "会话开始时间",
       "type": "datetime",
       "description": "会话开始时间",
       "category": "SYSTEM",
-      "source": "SYSTEM",
-      "writable_by": "SYSTEM",
+      "default_value": null
+    },
+    {
+      "name": "process.timeElapsedSinceLastIntervention",
+      "name_cn": "距上次干预时间",
+      "type": "integer",
+      "unit": "秒",
+      "description": "距离上次治疗干预的秒数",
+      "category": "TIMELINE",
+      "default_value": 0
+    },
+    {
+      "name": "process.lastInterventionTime",
+      "name_cn": "上次干预时间",
+      "type": "long",
+      "unit": "timestamp",
+      "description": "上次干预的时间戳",
+      "category": "TIMELINE",
+      "default_value": null
+    },
+    {
+      "name": "process.lastFlushTime",
+      "name_cn": "上次冲管时间",
+      "type": "long",
+      "unit": "timestamp",
+      "description": "上次冲管的时间戳",
+      "category": "TIMELINE",
+      "default_value": null
+    },
+    {
+      "name": "process.lastShockTime",
+      "name_cn": "上次电击时间",
+      "type": "long",
+      "unit": "timestamp",
+      "description": "上次电击的时间戳",
+      "category": "TIMELINE",
+      "default_value": null
+    },
+    {
+      "name": "process.instabilityTriggered",
+      "name_cn": "触发不稳定标志",
+      "type": "boolean",
+      "description": "是否触发了不稳定标志",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已触发",
+        "false": "未触发"
+      }
+    },
+    {
+      "name": "process.wpwAlertTriggered",
+      "name_cn": "WPW警报触发",
+      "type": "boolean",
+      "description": "WPW警报是否已触发",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已触发",
+        "false": "未触发"
+      }
+    },
+    {
+      "name": "process.hemodynamicDeteriorationAlert",
+      "name_cn": "血流动力学恶化警报",
+      "type": "boolean",
+      "description": "血流动力学恶化警报是否已触发",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已触发",
+        "false": "未触发"
+      }
+    },
+    {
+      "name": "process.emergencyMode",
+      "name_cn": "紧急模式",
+      "type": "boolean",
+      "description": "是否处于紧急处理模式",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已启用",
+        "false": "未启用"
+      }
+    },
+    {
+      "name": "process.wpwAlertShown",
+      "name_cn": "WPW警报已显示",
+      "type": "boolean",
+      "description": "WPW警报是否已显示",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已显示",
+        "false": "未显示"
+      }
+    },
+    {
+      "name": "process.treatmentResultReported",
+      "name_cn": "治疗效果已报告",
+      "type": "boolean",
+      "description": "治疗效果是否已报告",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已报告",
+        "false": "未报告"
+      }
+    },
+    {
+      "name": "process.anticoagulationAssessed",
+      "name_cn": "抗凝情况已评估",
+      "type": "boolean",
+      "description": "抗凝治疗情况是否已评估",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已评估",
+        "false": "未评估"
+      }
+    },
+    {
+      "name": "process.drugInducedVfAlertShown",
+      "name_cn": "药物诱发室颤警报已显示",
+      "type": "boolean",
+      "description": "药物诱发室颤警报是否已显示",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已显示",
+        "false": "未显示"
+      }
+    },
+    {
+      "name": "process.unsynchronizedShockVfAlertShown",
+      "name_cn": "非同步电击室颤警报已显示",
+      "type": "boolean",
+      "description": "非同步电击室颤警报是否已显示",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已显示",
+        "false": "未显示"
+      }
+    },
+    {
+      "name": "process.peaAsystoleAlertShown",
+      "name_cn": "PEA停搏警报已显示",
+      "type": "boolean",
+      "description": "PEA停搏警报是否已显示",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已显示",
+        "false": "未显示"
+      }
+    },
+    {
+      "name": "process.contraindicationBlockTriggered",
+      "name_cn": "禁忌拦截已触发",
+      "type": "boolean",
+      "description": "禁忌操作拦截是否已触发",
+      "category": "PROCESS_MARKER",
+      "default_value": false,
+      "value_labels": {
+        "true": "已触发",
+        "false": "未触发"
+      }
+    },
+    {
+      "name": "derived.qrsWidth",
+      "name_cn": "派生QRS宽度",
+      "type": "string",
+      "enum": [
+        {
+          "value": "narrow",
+          "label": "窄QRS"
+        },
+        {
+          "value": "wide",
+          "label": "宽QRS"
+        }
+      ],
+      "description": "由客观心律推导的QRS宽度",
+      "category": "DERIVED",
+      "default_value": null
+    },
+    {
+      "name": "derived.rhythmRegular",
+      "name_cn": "派生节律规则性",
+      "type": "boolean",
+      "description": "由客观心律推导的节律规则性",
+      "category": "DERIVED",
       "default_value": null,
-      "persistence": true,
-      "scoring": false
+      "value_labels": {
+        "true": "规则",
+        "false": "不规则"
+      }
+    },
+    {
+      "name": "derived.stable",
+      "name_cn": "派生血流动力学稳定性",
+      "type": "boolean",
+      "description": "由 5 个不稳定征象推导的血流动力学稳定性",
+      "category": "DERIVED",
+      "default_value": null,
+      "value_labels": {
+        "true": "稳定",
+        "false": "不稳定"
+      }
+    },
+    {
+      "name": "derived.isSinusRhythm",
+      "name_cn": "派生是否窦性心律",
+      "type": "boolean",
+      "description": "是否窦性心律",
+      "category": "DERIVED",
+      "default_value": null,
+      "value_labels": {
+        "true": "是",
+        "false": "否"
+      }
+    },
+    {
+      "name": "derived.isNarrowRegularStable",
+      "name_cn": "派生稳定窄QRS规则",
+      "type": "boolean",
+      "description": "是否满足稳定+窄QRS+规则节律",
+      "category": "DERIVED",
+      "default_value": null,
+      "value_labels": {
+        "true": "是",
+        "false": "否"
+      }
+    },
+    {
+      "name": "derived.shockableRhythm",
+      "name_cn": "派生可电击心律",
+      "type": "boolean",
+      "description": "当前心律是否可电击",
+      "category": "DERIVED",
+      "default_value": null,
+      "value_labels": {
+        "true": "可电击",
+        "false": "不可电击"
+      }
+    },
+    {
+      "name": "derived.cprQualityGood",
+      "name_cn": "派生CPR质量良好",
+      "type": "boolean",
+      "description": "CPR质量是否达标",
+      "category": "DERIVED",
+      "default_value": null,
+      "value_labels": {
+        "true": "达标",
+        "false": "不达标"
+      }
+    },
+    {
+      "name": "clinical.rosc",
+      "name_cn": "自主循环恢复",
+      "type": "boolean",
+      "description": "是否已恢复自主循环",
+      "category": "CLINICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "已恢复",
+        "false": "未恢复"
+      }
+    },
+    {
+      "name": "clinical.roscStabilized",
+      "name_cn": "ROSC后血流动力学稳定",
+      "type": "boolean",
+      "description": "ROSC后血流动力学是否稳定",
+      "category": "CLINICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "稳定",
+        "false": "不稳定"
+      }
+    },
+    {
+      "name": "clinical.postRoscComplete",
+      "name_cn": "复苏后护理已完成",
+      "type": "boolean",
+      "description": "复苏后护理是否完成",
+      "category": "CLINICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "已完成",
+        "false": "未完成"
+      }
+    },
+    {
+      "name": "clinical.roscConfirmed",
+      "name_cn": "ROSC已确认",
+      "type": "boolean",
+      "description": "ROSC是否已确认",
+      "category": "CLINICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "已确认",
+        "false": "未确认"
+      }
+    },
+    {
+      "name": "clinical.isWpw",
+      "name_cn": "WPW患者",
+      "type": "boolean",
+      "description": "是否为WPW预激综合征患者",
+      "category": "CLINICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "是",
+        "false": "否"
+      }
+    },
+    {
+      "name": "clinical.isPregnant",
+      "name_cn": "妊娠患者",
+      "type": "boolean",
+      "description": "是否为妊娠患者",
+      "category": "CLINICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "是",
+        "false": "否"
+      }
+    },
+    {
+      "name": "clinical.obesity",
+      "name_cn": "肥胖患者",
+      "type": "boolean",
+      "description": "是否为肥胖患者",
+      "category": "CLINICAL",
+      "default_value": false,
+      "value_labels": {
+        "true": "是",
+        "false": "否"
+      }
+    },
+    {
+      "name": "clinical.age",
+      "name_cn": "患者年龄",
+      "type": "integer",
+      "min": 0,
+      "max": 120,
+      "description": "患者年龄",
+      "category": "CLINICAL",
+      "default_value": null
+    },
+    {
+      "name": "clinical.gender",
+      "name_cn": "患者性别",
+      "type": "string",
+      "enum": [
+        {
+          "value": "male",
+          "label": "男"
+        },
+        {
+          "value": "female",
+          "label": "女"
+        },
+        {
+          "value": "unknown",
+          "label": "未确认"
+        }
+      ],
+      "description": "患者性别",
+      "category": "CLINICAL",
+      "default_value": "unknown"
+    },
+    {
+      "name": "clinical.allergies",
+      "name_cn": "过敏史",
+      "type": "string",
+      "description": "患者过敏史",
+      "category": "CLINICAL",
+      "default_value": null
+    },
+    {
+      "name": "clinical.medicationList",
+      "name_cn": "用药清单",
+      "type": "string",
+      "description": "患者当前用药清单",
+      "category": "CLINICAL",
+      "default_value": null
+    },
+    {
+      "name": "clinical.pastMedicalHistory",
+      "name_cn": "既往病史",
+      "type": "string",
+      "description": "患者既往病史",
+      "category": "CLINICAL",
+      "default_value": null
+    },
+    {
+      "name": "evaluation.rhythmInterpretationScore",
+      "name_cn": "心律判读得分",
+      "type": "integer",
+      "min": 0,
+      "max": 100,
+      "description": "心律判读能力评分",
+      "category": "EVALUATION",
+      "default_value": null
+    },
+    {
+      "name": "evaluation.cprQualityScore",
+      "name_cn": "CPR质量得分",
+      "type": "integer",
+      "min": 0,
+      "max": 100,
+      "description": "CPR质量评分",
+      "category": "EVALUATION",
+      "default_value": null
+    },
+    {
+      "name": "evaluation.medicationScore",
+      "name_cn": "药物管理得分",
+      "type": "integer",
+      "min": 0,
+      "max": 100,
+      "description": "药物管理能力评分",
+      "category": "EVALUATION",
+      "default_value": null
+    },
+    {
+      "name": "evaluation.teamworkScore",
+      "name_cn": "团队协作得分",
+      "type": "integer",
+      "min": 0,
+      "max": 100,
+      "description": "团队协作能力评分",
+      "category": "EVALUATION",
+      "default_value": null
+    },
+    {
+      "name": "evaluation.leadershipScore",
+      "name_cn": "领导力得分",
+      "type": "integer",
+      "min": 0,
+      "max": 100,
+      "description": "领导力评分",
+      "category": "EVALUATION",
+      "default_value": null
+    },
+    {
+      "name": "evaluation.overallScore",
+      "name_cn": "总体得分",
+      "type": "integer",
+      "min": 0,
+      "max": 100,
+      "description": "总体表现评分",
+      "category": "EVALUATION",
+      "default_value": null
+    },
+    {
+      "name": "evaluation.majorErrors",
+      "name_cn": "重大错误",
+      "type": "array",
+      "description": "重大错误列表",
+      "category": "EVALUATION",
+      "default_value": []
+    },
+    {
+      "name": "evaluation.minorErrors",
+      "name_cn": "轻微错误",
+      "type": "array",
+      "description": "轻微错误列表",
+      "category": "EVALUATION",
+      "default_value": []
+    },
+    {
+      "name": "evaluation.errorCount",
+      "name_cn": "错误总数",
+      "type": "integer",
+      "description": "错误总次数",
+      "category": "EVALUATION",
+      "default_value": 0
+    },
+    {
+      "name": "evaluation.majorErrorCount",
+      "name_cn": "重大错误数",
+      "type": "integer",
+      "description": "重大错误次数",
+      "category": "EVALUATION",
+      "default_value": 0
+    },
+    {
+      "name": "evaluation.minorErrorCount",
+      "name_cn": "轻微错误数",
+      "type": "integer",
+      "description": "轻微错误次数",
+      "category": "EVALUATION",
+      "default_value": 0
+    },
+    {
+      "name": "evaluation.timeToFirstIntervention",
+      "name_cn": "首次干预时间",
+      "type": "integer",
+      "unit": "秒",
+      "description": "从接触患者到首次干预的秒数",
+      "category": "EVALUATION",
+      "default_value": null
+    },
+    {
+      "name": "evaluation.timeToFirstDefib",
+      "name_cn": "首次电击时间",
+      "type": "integer",
+      "unit": "秒",
+      "description": "从接触患者到首次电击的秒数",
+      "category": "EVALUATION",
+      "default_value": null
+    },
+    {
+      "name": "evaluation.timeToROSC",
+      "name_cn": "ROSC时间",
+      "type": "integer",
+      "unit": "秒",
+      "description": "从接触患者到ROSC的秒数",
+      "category": "EVALUATION",
+      "default_value": null
+    },
+    {
+      "name": "case.eventLog",
+      "name_cn": "事件日志",
+      "type": "array",
+      "description": "记录所有操作的时间戳、类型、参数。每次操作 append 一条。",
+      "category": "SYSTEM",
+      "writable_by": "EXECUTOR,SYSTEM",
+      "default_value": []
     }
   ],
-
   "slot_mappings": {
-    "description": "分类器槽位 → 变量名映射",
+    "description": "分类器槽位到变量名映射（通用部分）",
     "mappings": {
-      "qrs_width": "asserted_qrs_width",
-      "rhythm_regular": "asserted_rhythm_regular",
-      "is_stable": "asserted_stable",
-      "systolic_bp": "reported_systolic_bp",
-      "diastolic_bp": "reported_diastolic_bp",
-      "heart_rate": "reported_heart_rate",
-      "consciousness": "reported_consciousness"
+      "qrs_width": "assert.qrsWidth",
+      "rhythm_regular": "assert.rhythmRegular",
+      "is_stable": "assert.stable",
+      "rhythm_type": "assert.rhythmType",
+      "systolic_bp": "report.systolicBp",
+      "diastolic_bp": "report.diastolicBp",
+      "heart_rate": "report.heartRate",
+      "consciousness": "report.consciousness",
+      "respiratory_rate": "report.respiratoryRate",
+      "spo2": "report.spo2",
+      "suspected_rhythm": "process.suspectedRhythm",
+      "drug": "intervention.lastDrug",
+      "dose": "intervention.lastDrugDose"
     }
   },
-
   "auto_derived_rules": {
-    "description": "自动派生规则：由客观事实推导派生变量",
+    "description": "自动派生规则",
     "rules": [
       {
-        "source_var": "current_rhythm",
-        "target_var": "derived_qrs_width",
+        "source_var": "phys.rhythm",
+        "target_var": "derived.qrsWidth",
         "mapping": {
           "SVT": "narrow",
           "AFib": "narrow",
@@ -358,8 +5182,18 @@
         }
       },
       {
-        "source_var": "current_rhythm",
-        "target_var": "derived_rhythm_regular",
+        "source_vars": [
+          "phys.consciousness",
+          "phys.hasPulse",
+          "phys.respiratoryRate",
+          "process.environmentSafe"
+        ],
+        "target_var": "process.blsSurveyComplete",
+        "rule": "((#phys.consciousness != null ? 1 : 0) + (#phys.hasPulse != null ? 1 : 0) + (#phys.respiratoryRate != null ? 1 : 0) + (#process.environmentSafe != null ? 1 : 0)) >= 2"
+      },
+      {
+        "source_var": "phys.rhythm",
+        "target_var": "derived.rhythmRegular",
         "mapping": {
           "SVT": true,
           "Sinus": true,
@@ -372,9 +5206,61 @@
         }
       },
       {
-        "source_vars": ["systolic_bp", "consciousness"],
-        "target_var": "derived_stable",
-        "rule": "#systolic_bp >= 90 and #consciousness == 'alert'"
+        "source_vars": [
+          "phys.hypotensionSbpLt90",
+          "phys.alteredMentalStatus",
+          "phys.shockSigns",
+          "phys.ischemicChestPain",
+          "phys.acuteHeartFailure"
+        ],
+        "target_var": "derived.stable",
+        "rule": "#phys.hypotensionSbpLt90 != true and #phys.alteredMentalStatus != true and #phys.shockSigns != true and #phys.ischemicChestPain != true and #phys.acuteHeartFailure != true"
+      },
+      {
+        "source_var": "phys.rhythm",
+        "target_var": "derived.isSinusRhythm",
+        "mapping": {
+          "Sinus": true,
+          "SVT": false,
+          "AFib": false,
+          "AFlutter": false,
+          "VT": false,
+          "VF": false,
+          "PEA": false,
+          "Asystole": false
+        }
+      },
+      {
+        "source_vars": [
+          "derived.stable",
+          "derived.qrsWidth",
+          "derived.rhythmRegular"
+        ],
+        "target_var": "derived.isNarrowRegularStable",
+        "rule": "#derived.stable == true and #derived.qrsWidth == 'narrow' and #derived.rhythmRegular == true"
+      },
+      {
+        "source_var": "phys.rhythm",
+        "target_var": "derived.shockableRhythm",
+        "mapping": {
+          "VF": true,
+          "VT": true,
+          "SVT": false,
+          "AFib": false,
+          "AFlutter": false,
+          "Sinus": false,
+          "PEA": false,
+          "Asystole": false
+        }
+      },
+      {
+        "source_vars": [
+          "process.compressionDepth",
+          "process.compressionRate",
+          "process.chestRecoil"
+        ],
+        "target_var": "derived.cprQualityGood",
+        "rule": "#process.compressionDepth >= 5 and #process.compressionDepth <= 6 and #process.compressionRate >= 100 and #process.compressionRate <= 120 and #process.chestRecoil == true"
       }
     ]
   }

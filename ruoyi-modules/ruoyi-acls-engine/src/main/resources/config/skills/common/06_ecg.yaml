@@ -1,0 +1,168 @@
+# ============================================================================
+# 06_ecg.yaml - 12导联心电图（所有案例共享）
+# 对应 EgoEMS #27~#44
+# ============================================================================
+
+skills:
+  # -------- 解释与准备 --------
+  - id: explain_ecg_procedure
+    duty: MONITOR_DEFIB
+    type: query
+    params:
+      targetVar: process.ecgExplained
+      responseTemplate: "已向患者解释心电图操作。"
+      valueMap:
+        true: "已完成"
+        false: "未完成"
+
+  - id: shave_patient
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "SHAVE_SKIN"
+      durationSeconds: 5
+      successVar: process.skinShaved
+      successSpeech: "皮肤已剃除，电极接触良好。"
+
+  # -------- 肢体导联 --------
+  - id: place_lead_la
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "PLACE_LEAD_LA"
+      durationSeconds: 2
+      successVar: process.leadLaPlaced
+      successSpeech: "左臂导联已连接。"
+
+  - id: place_lead_ra
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "PLACE_LEAD_RA"
+      durationSeconds: 2
+      successVar: process.leadRaPlaced
+      successSpeech: "右臂导联已连接。"
+
+  - id: place_lead_ll
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "PLACE_LEAD_LL"
+      durationSeconds: 2
+      successVar: process.leadLlPlaced
+      successSpeech: "左腿导联已连接。"
+
+  - id: place_lead_rl
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "PLACE_LEAD_RL"
+      durationSeconds: 2
+      successVar: process.leadRlPlaced
+      successSpeech: "右腿导联已连接。"
+
+  # -------- 胸导联 --------
+  - id: place_lead_v1
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "PLACE_LEAD_V1"
+      durationSeconds: 3
+      successVar: process.leadV1Placed
+      successSpeech: "V1 导联已放置（第4肋间胸骨右缘）。"
+
+  - id: place_lead_v2
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "PLACE_LEAD_V2"
+      durationSeconds: 3
+      successVar: process.leadV2Placed
+      successSpeech: "V2 导联已放置（第4肋间胸骨左缘）。"
+
+  - id: place_lead_v3
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "PLACE_LEAD_V3"
+      durationSeconds: 3
+      successVar: process.leadV3Placed
+      successSpeech: "V3 导联已放置（V2与V4之间）。"
+
+  - id: place_lead_v4
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "PLACE_LEAD_V4"
+      durationSeconds: 3
+      successVar: process.leadV4Placed
+      successSpeech: "V4 导联已放置（第5肋间锁骨中线）。"
+
+  - id: place_lead_v5
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "PLACE_LEAD_V5"
+      durationSeconds: 3
+      successVar: process.leadV5Placed
+      successSpeech: "V5 导联已放置（腋前线）。"
+
+  - id: place_lead_v6
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "PLACE_LEAD_V6"
+      durationSeconds: 3
+      successVar: process.leadV6Placed
+      successSpeech: "V6 导联已放置（腋中线）。"
+
+  # -------- 采集与判读 --------
+  - id: request_patient_not_move
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "REQUEST_NOT_MOVE"
+      durationSeconds: 1
+      successVar: process.patientStill
+      successSpeech: "请患者保持不动。"
+
+  - id: turn_on_ecg
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "TURN_ON_ECG"
+      durationSeconds: 1
+      successVar: device.ecgOn
+      successSpeech: "心电图机已开启。"
+
+  - id: connect_leads_to_ecg
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "CONNECT_LEADS_TO_ECG"
+      durationSeconds: 2
+      successVar: device.leadsConnected
+      successSpeech: "导联已连接到心电图机。"
+
+  - id: ask_patient_age_sex
+    duty: MONITOR_DEFIB
+    type: query
+    params:
+      targetVar: process.patientAgeSex
+      responseTemplate: "患者年龄和性别：{value}。"
+
+  - id: obtain_ecg_recording
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "OBTAIN_ECG"
+      durationSeconds: 5
+      successVar: process.ecgRecorded
+      successSpeech: "心电图已记录。"
+
+  - id: interpret_ecg
+    duty: MONITOR_DEFIB
+    type: query
+    params:
+      targetVar: process.ecgInterpretation
+      responseTemplate: "心电图判读结果：{value}。"

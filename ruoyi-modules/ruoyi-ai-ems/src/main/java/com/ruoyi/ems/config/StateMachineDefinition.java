@@ -1,5 +1,10 @@
 package com.ruoyi.ems.config;
 
+
+
+import com.ruoyi.ems.domain.PhaseDefinition;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -12,13 +17,34 @@ import java.util.Set;
 public class StateMachineDefinition {
 
     private String initial;
-    private boolean allowUnlistedTransitions;          // 改为 boolean
+    private boolean allowUnlistedTransitions;
     private String defaultTransitionAction;
     private Map<String, String> intentToStateMapping;
     private Set<String> globalEventIntents;
+
+    // ★ 新增：本案例独有的“始终允许”意图（用于构建 LLM 提示词白名单）
+    private Set<String> alwaysAllowedIntents;
+
     private List<String> states;
     private List<String> endStates;
     private List<TransitionRule> transitions;
+    private List<String> overviewExcludeStates = new ArrayList<>();
+
+
+    // ==================== ★ Phase SM 新增字段 ====================
+    public List<String> getOverviewExcludeStates() { return overviewExcludeStates; }
+    public void setOverviewExcludeStates(List<String> v) { this.overviewExcludeStates = v; }
+    /**
+     * 初始主阶段编码（可选）。
+     * 为空时，由 ResolvedCaseTypeConfig.Builder 按 priority 最高者自动推导。
+     */
+    private String initialPhase;
+
+    /**
+     * 阶段定义列表（YAML 中的 stateMachine.phases）。
+     * 子级通过相同的 id 覆盖父级的同 id 定义。
+     */
+    private List<PhaseDefinition> phases;
 
     // ==================== Getter ====================
 
@@ -26,7 +52,7 @@ public class StateMachineDefinition {
         return initial;
     }
 
-    public boolean isAllowUnlistedTransitions() {       // 对于 boolean 类型 getter 为 isXxx
+    public boolean isAllowUnlistedTransitions() {
         return allowUnlistedTransitions;
     }
 
@@ -42,6 +68,10 @@ public class StateMachineDefinition {
         return globalEventIntents;
     }
 
+    public Set<String> getAlwaysAllowedIntents() {
+        return alwaysAllowedIntents;
+    }
+
     public List<String> getStates() {
         return states;
     }
@@ -52,6 +82,15 @@ public class StateMachineDefinition {
 
     public List<TransitionRule> getTransitions() {
         return transitions;
+    }
+
+    // ★ Phase SM 新增 getter
+    public String getInitialPhase() {
+        return initialPhase;
+    }
+
+    public List<PhaseDefinition> getPhases() {
+        return phases;
     }
 
     // ==================== Setter（SnakeYAML 需要） ====================
@@ -76,6 +115,10 @@ public class StateMachineDefinition {
         this.globalEventIntents = globalEventIntents;
     }
 
+    public void setAlwaysAllowedIntents(Set<String> alwaysAllowedIntents) {
+        this.alwaysAllowedIntents = alwaysAllowedIntents;
+    }
+
     public void setStates(List<String> states) {
         this.states = states;
     }
@@ -86,5 +129,14 @@ public class StateMachineDefinition {
 
     public void setTransitions(List<TransitionRule> transitions) {
         this.transitions = transitions;
+    }
+
+    // ★ Phase SM 新增 setter
+    public void setInitialPhase(String initialPhase) {
+        this.initialPhase = initialPhase;
+    }
+
+    public void setPhases(List<PhaseDefinition> phases) {
+        this.phases = phases;
     }
 }

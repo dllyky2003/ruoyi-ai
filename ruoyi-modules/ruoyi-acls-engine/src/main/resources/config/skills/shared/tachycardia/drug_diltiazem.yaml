@@ -1,0 +1,14 @@
+# ============================================================================
+# drug_diltiazem.yaml - 地尔硫卓静注（心动过速家族共享）
+# 对应 S-101-2-5：窄QRS心动过速的二线药物
+# ============================================================================
+
+skills:
+  - id: drug_push_diltiazem
+    duty: IV_MED
+    type: standard
+    params:
+      vrActionCode: "PUSH_DRUG"
+      durationSeconds: 2
+      successVar: intervention.diltiazem.status
+      successSpeech: "地尔硫卓静注已完成。"

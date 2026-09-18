@@ -28,24 +28,43 @@ public record ActionChainConfig(String type, List<StepConfig> steps, Map<String,
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record StepConfig(String stepId, String refAtomic, String duty, Integer durationSec, String vrAnimation,
-                             String description, Boolean optional) {
+    public record StepConfig(
+        String stepId,
+        String procedure,              // ★ 新增：操作类型 (ATOMIC/DEFIB/DRUG/AIRWAY)
+        String refAtomic,
+        String duty,
+        Integer durationSec,
+        String vrAnimation,
+        String description,
+        Boolean optional,
+        String speech,                 // ★ 新增：语音提示
+        Map<String, Object> params,     // ★ 新增：输入参数
+        Map<String, Object> outputs    // ★ 新增：输出映射（声明式状态变更）
+    ) {
         @JsonCreator
         public StepConfig(
             @JsonProperty("step_id") String stepId,
+            @JsonProperty("procedure") String procedure,
             @JsonProperty("ref_atomic") String refAtomic,
             @JsonProperty("duty") String duty,
             @JsonProperty("duration_sec") Integer durationSec,
             @JsonProperty("vr_animation") String vrAnimation,
             @JsonProperty("description") String description,
-            @JsonProperty("optional") Boolean optional) {
+            @JsonProperty("optional") Boolean optional,
+            @JsonProperty("speech") String speech,
+            @JsonProperty("params") Map<String, Object> params,
+            @JsonProperty("outputs") Map<String, Object> outputs) {
             this.stepId = stepId;
+            this.procedure = procedure;
             this.refAtomic = refAtomic;
             this.duty = duty;
             this.durationSec = durationSec;
             this.vrAnimation = vrAnimation;
             this.description = description;
             this.optional = optional != null && optional;
+            this.speech = speech;
+            this.params = params != null ? params : Map.of();
+            this.outputs = outputs != null ? outputs : Map.of();
         }
     }
 

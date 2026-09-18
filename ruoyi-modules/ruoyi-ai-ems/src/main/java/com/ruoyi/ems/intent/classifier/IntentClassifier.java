@@ -21,4 +21,6 @@ public interface IntentClassifier {
     String getMode();
 
     IntentCommand classify(String asrText, ClassificationContext context);
+
+    void warmUp();
 }

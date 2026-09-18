@@ -3,7 +3,7 @@ package com.ruoyi.ems.intent.test;
 import com.ruoyi.ems.config.ResolvedCaseTypeConfig;
 import com.ruoyi.ems.config.TransitionRule;
 import com.ruoyi.ems.config.loader.YamlStateMachineLoader;
-import com.ruoyi.ems.context.VariableMetaManager;
+import com.ruoyi.ems.config.loader.VariableMetaLoader;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -117,8 +117,8 @@ class YamlStateMachineLoaderTest {
     // 如果您仍希望保留对父流程存在的检查，可改为条件化：
     @Test
     void shouldLoadGeneralAclsIfExists() {
-        if (loader.exists("GENERAL_ACLS")) {
-            ResolvedCaseTypeConfig general = loader.getConfig("GENERAL_ACLS");
+        if (loader.exists("GLOBAL")) {
+            ResolvedCaseTypeConfig general = loader.getConfig("GLOBAL");
             assertThat(general).isNotNull();
             assertThat(general.getStates()).contains("INITIAL_SETUP", "ASSESS_STABILITY");
             assertThat(general.getGlobalEventIntents()).isNotEmpty();
@@ -130,7 +130,7 @@ class YamlStateMachineLoaderTest {
     // ==================== 测试配置 ====================
 
     @Configuration
-    @Import({YamlStateMachineLoader.class, VariableMetaManager.class})
+    @Import({YamlStateMachineLoader.class, VariableMetaLoader.class})
     static class TestConfig {
         @Bean
         public ResourcePatternResolver resourcePatternResolver() {

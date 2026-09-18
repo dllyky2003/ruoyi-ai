@@ -1,0 +1,45 @@
+# ============================================================
+# stable_narrow（窄QRS稳定心动过速）案例专属异常规则
+# 案例编号：101
+# 存放位置：cases/stable_narrow/_exceptions.yaml
+# 父级：GLOBAL
+# ============================================================
+
+exceptions:
+
+  # ============================================================
+  # 稳定窄QRS患者执行绝对禁忌操作
+  #
+  # 触发意图：S-101-4-4（safety_clear，"稳定窄QRS禁忌操作拦截"）
+  #   → 正例：开始胸外按压 / 做CPR / 准备除颤 / 非同步放电 /
+  #           推肾上腺素 / 给阿托品 / 利多卡因
+  #   → 负例（合法指令，不触发）：同步电复律 / 推注腺苷
+  #
+  # AHA 依据（2025）：
+  #   稳定窄QRS心动过速的首选是迷走神经刺激 → 腺苷阶梯治疗。
+  #   此类患者血流动力学稳定、有脉搏，胸外按压与非同步电击
+  #   属明确禁忌；肾上腺素、阿托品、利多卡因亦无指征。
+  #
+  # 拦截语义：状态机原地不动，仅记录 errorChain + 反馈。
+  # ============================================================
+  - id: "CONTRAINDICATED_ACTION_FOR_STABLE_SVT"
+    description: "稳定窄QRS心动过速患者执行绝对禁忌操作（CPR / 非同步除颤 / 肾上腺素 / 阿托品等）。AHA 2025：稳定心动过速首选迷走神经刺激→腺苷阶梯；患者有脉搏、血流动力学稳定时，胸外按压与非同步电击均属禁忌。"
+    # phase 不写 = 不限阶段；S-101-4-4 可能在 SVT 路径任一阶段被说出
+    triggerIntent: "S-101-4-4"
+    condition: |
+      #derived.stable == true &&
+      #phys.hasPulse == true
+    severity: "CRITICAL"
+    keepCurrent: true
+    unityStateName: "室上速(SVT)"       # 维持原状态
+    effects:
+      - var: "process.contraindicationBlockTriggered"
+        value: true
+    feedback:
+      teaching:
+        tts: "注意：该患者血流动力学稳定、有脉搏。稳定窄QRS心动过速应走迷走神经刺激 → 腺苷阶梯。胸外按压、非同步除颤、肾上腺素都是禁忌，会对患者造成伤害。"
+      learning:
+        tts: "患者有脉搏、血流动力学稳定，不需要胸外按压！继续按 SVT 流程处理。"
+        interruptCurrentTts: true
+      exam:
+      # 空 = 考核模式静默

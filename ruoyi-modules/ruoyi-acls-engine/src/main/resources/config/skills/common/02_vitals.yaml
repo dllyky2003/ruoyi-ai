@@ -1,0 +1,86 @@
+# ============================================================================
+# 02_vitals.yaml - 生命体征评估（所有案例共享）
+# 对应 EgoEMS #9~#17
+# ============================================================================
+
+skills:
+  - id: check_blood_pressure
+    duty: ASSESS
+    type: query
+    params:
+      targetVar: phys.bloodPressure
+      responseTemplate: "血压 {value} mmHg。"
+
+  - id: check_heart_rate
+    duty: ASSESS
+    type: query
+    params:
+      targetVar: phys.heartRate
+      responseTemplate: "心率 {value} 次/分。"
+
+  - id: check_oxygen_saturation
+    duty: ASSESS
+    type: query
+    params:
+      targetVar: phys.spo2
+      responseTemplate: "血氧饱和度 {value}%。"
+
+  - id: check_respiratory_rate
+    duty: ASSESS
+    type: query
+    params:
+      targetVar: phys.respiratoryRate
+      responseTemplate: "呼吸频率 {value} 次/分。"
+
+  - id: prepare_glucometer_and_strip
+    duty: ASSESS
+    type: standard
+    params:
+      vrActionCode: "PREPARE_GLUCOMETER"
+      durationSeconds: 2
+      successVar: device.glucometerReady
+      successSpeech: "血糖仪和试纸已准备就绪。"
+
+  - id: read_and_record_glucose_level
+    duty: ASSESS
+    type: query
+    params:
+      targetVar: phys.glucoseLevel
+      responseTemplate: "血糖读数 {value} mg/dL。"
+
+  - id: check_perrl
+    duty: ASSESS
+    type: query
+    params:
+      targetVar: phys.perrl
+      responseTemplate: "瞳孔对光反射 {value}。"
+      valueMap:
+        brisk: "灵敏"
+        sluggish: "迟钝"
+        fixed: "固定"
+        unequal: "不等大"
+
+  - id: check_skin_condition
+    duty: ASSESS
+    type: query
+    params:
+      targetVar: phys.skinCondition
+      responseTemplate: "皮肤状况：{value}。"
+      valueMap:
+        warm_dry: "温暖干燥"
+        cool_dry: "凉爽干燥"
+        cool_moist: "凉湿"
+        cold_clammy: "湿冷"
+        mottled: "花斑"
+
+  - id: check_ao
+    duty: ASSESS
+    type: query
+    params:
+      targetVar: process.alertOrientation
+      responseTemplate: "清醒程度和定向力：{value}。"
+      valueMap:
+        alert: "清醒，定向力完整"
+        confused: "模糊，定向力障碍"
+        disoriented: "定向障碍"
+        unresponsive: "无反应"

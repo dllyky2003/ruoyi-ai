@@ -1,0 +1,21 @@
+# ============================================================================
+# drug_adenosine.yaml - 腺苷推注（心动过速家族共享）
+# 对应 S-101-2-2：规则性窄QRS心动过速的一线治疗
+# ============================================================================
+
+skills:
+  - id: drug_push_adenosine
+    duty: IV_MED
+    type: complex
+    params:
+      beanName: "adenosinePushSkill"
+
+  # 腺苷冲管（紧跟在推注后）
+  - id: flush_adenosine
+    duty: IV_MED
+    type: standard
+    params:
+      vrActionCode: "FLUSH_LINE"
+      durationSeconds: 2
+      successVar: intervention.adenosineFlushDone
+      successSpeech: "生理盐水冲管已完成。"

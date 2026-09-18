@@ -1,0 +1,71 @@
+# ============================================================================
+# 05_defibrillation.yaml - 除颤（所有案例共享）
+# 对应 EgoEMS #50~#56
+# ============================================================================
+
+skills:
+  - id: request_aed
+    duty: MONITOR_DEFIB
+    type: query
+    params:
+      targetVar: process.aedRequested
+      responseTemplate: "已请求 AED。"
+      valueMap:
+        true: "已请求"
+        false: "未请求"
+
+  - id: request_assistance
+    duty: MONITOR_DEFIB
+    type: query
+    params:
+      targetVar: process.assistanceRequested
+      responseTemplate: "已呼叫协助。"
+      valueMap:
+        true: "已呼叫"
+        false: "未呼叫"
+
+  - id: turn_on_aed
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "TURN_ON_AED"
+      durationSeconds: 1
+      successVar: device.aedOn
+      successSpeech: "AED 已开启。"
+
+  - id: attach_defib_pads
+    duty: MONITOR_DEFIB
+    type: generic
+    params:
+      vrActionCode: "ATTACH_DEFIB_PADS"
+      durationSeconds: 4
+      successSpeech: "除颤电极片已贴好。"
+      outputs:
+        - var: device.defibPadsAttached
+          value: true
+        - var: device.defibConnected
+          value: true
+
+  - id: clear_for_analysis
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "CLEAR_FOR_ANALYSIS"
+      durationSeconds: 2
+      successVar: process.analysisClear
+      successSpeech: "分析心律，请勿接触患者。"
+
+  - id: clear_for_shock
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "CLEAR_FOR_SHOCK"
+      durationSeconds: 2
+      successVar: process.shockClear
+      successSpeech: "所有人离开，准备电击。"
+
+  - id: administer_shock_aed
+    duty: MONITOR_DEFIB
+    type: complex
+    params:
+      beanName: "defibrillationSkill"

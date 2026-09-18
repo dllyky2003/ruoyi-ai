@@ -1,5 +1,7 @@
 package com.ruoyi.ems.intent.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,9 +11,43 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class IntentCandidate {
-    private String intentCode;          // 候选意图码
-    private Double confidence;          // 该候选的置信度 "high"/"medium"/"low" 或分数 "0.85"
-    private String reason;              // 可选：匹配原因（供调试/日志）
-    private Double score;               // 可选：数值分数，便于精确排序
+    private String intentCode;
+    private String nameCn;
+    private Double confidence;
+    private String reason;
+    private Double score;
+    private Boolean valid;
+    /**
+     * 从分数构建候选（用于向量分类）
+     */
+    public IntentCandidate(String intentCode, double score) {
+        this.intentCode = intentCode;
+        this.score = score;
+        this.confidence = score;
+        this.reason = String.format("相似度: %.3f", score);
+    }
+
+    /**
+     * 从分数构建候选（静态工厂方法）
+     */
+    public static IntentCandidate fromScore(String intentCode, double score) {
+        return new IntentCandidate(intentCode, score);
+    }
+
+    /**
+     * 构建排名描述
+     */
+    public String getRankDescription(int rank) {
+        return String.format("#%d %s (%.3f)", rank, intentCode, score != null ? score : 0);
+    }
+
+    /**
+     * 判断候选是否有效（分数存在且大于 0）
+     */
+    @JsonIgnore
+    public boolean isValid() {
+        return score != null && score > 0;
+    }
 }

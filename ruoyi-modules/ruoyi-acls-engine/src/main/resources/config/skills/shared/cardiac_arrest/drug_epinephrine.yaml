@@ -1,0 +1,11 @@
+# ============================================================================
+# drug_epinephrine.yaml - 肾上腺素推注（心脏骤停家族共享）
+# 心脏骤停核心用药
+# ============================================================================
+
+skills:
+  - id: drug_push_epinephrine
+    duty: IV_MED
+    type: complex
+    params:
+      beanName: "epinephrinePushSkill"

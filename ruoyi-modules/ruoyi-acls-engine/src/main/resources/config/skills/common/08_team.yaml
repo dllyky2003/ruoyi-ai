@@ -1,0 +1,55 @@
+# ============================================================================
+# 08_team.yaml - 团队协作（所有案例共享）
+# 对应 G类团队意图
+# ============================================================================
+
+skills:
+  - id: assign_role
+    duty: TEAM_LEADER
+    type: query
+    params:
+      targetVar: process.teamRolesAssigned
+      responseTemplate: "团队角色已分配。"
+      valueMap:
+        true: "已分配"
+        false: "未分配"
+
+  - id: confirm_ack
+    duty: ASSIST
+    type: query
+    params:
+      targetVar: process.acknowledged
+      responseTemplate: "已确认收到。"
+      valueMap:
+        true: "已确认"
+        false: "未确认"
+
+  - id: record_time
+    duty: RECORD
+    type: query
+    params:
+      targetVar: process.timeRecorded
+      responseTemplate: "时间已记录。"
+      valueMap:
+        true: "已记录"
+        false: "未记录"
+
+  - id: consult_expert
+    duty: TEAM_LEADER
+    type: query
+    params:
+      targetVar: process.consultCalled
+      responseTemplate: "已呼叫专家会诊。"
+      valueMap:
+        true: "已呼叫"
+        false: "未呼叫"
+
+  - id: check_family
+    duty: ASSESS
+    type: query
+    params:
+      targetVar: process.familyChecked
+      responseTemplate: "家属情况已确认。"
+      valueMap:
+        true: "已确认"
+        false: "未确认"

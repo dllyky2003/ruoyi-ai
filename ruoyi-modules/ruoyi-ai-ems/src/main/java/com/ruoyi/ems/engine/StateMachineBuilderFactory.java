@@ -8,15 +8,20 @@ import com.ruoyi.ems.rule.IRuleEvaluator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.statemachine.StateContext;
 import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.action.Action;
 import org.springframework.statemachine.config.StateMachineBuilder;
 import org.springframework.statemachine.guard.Guard;
 import org.springframework.statemachine.support.DefaultStateMachineContext;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -34,40 +39,30 @@ public class StateMachineBuilderFactory {
     private IRuleEvaluator ruleEvaluator;
 
     private final Map<String, StateMachineBuilder.Builder<String, String>> builderCache = new ConcurrentHashMap<>();
-    // 每个 caseType 单独锁对象，避免全局锁竞争
     private final Map<String, Object> buildLocks = new ConcurrentHashMap<>();
 
-    // ==================== 核心方法（已修复递归更新问题） ====================
+    // ==================== 核心方法 ====================
 
-    /**
-     * 获取或创建状态机构建器（线程安全，使用双重检查锁）
-     */
     public StateMachineBuilder.Builder<String, String> getOrCreateBuilder(ResolvedCaseTypeConfig config) {
-        String caseType = config.getCode(); // 作为缓存键
+        String caseType = config.getCode();
 
-        // 第一步：无锁快速检查
         StateMachineBuilder.Builder<String, String> builder = builderCache.get(caseType);
         if (builder != null) {
             return builder;
         }
 
-        // 第二步：获取锁（每个 caseType 独立锁）
         Object lock = buildLocks.computeIfAbsent(caseType, k -> new Object());
         synchronized (lock) {
-            // 第三步：双重检查，防止其他线程已经构建完成
             builder = builderCache.get(caseType);
             if (builder != null) {
                 return builder;
             }
 
-            // 第四步：真正构建
             log.info("🏗️ 构建状态机定义: {} (状态: {}, 转移: {})",
                 caseType, config.getStates().size(), config.getTransitions().size());
             builder = buildStateMachine(config);
 
-            // 第五步：放入缓存
             builderCache.put(caseType, builder);
-            // 可选：移除锁对象，节省内存（但保留也无妨）
             buildLocks.remove(caseType);
             return builder;
         }
@@ -85,20 +80,30 @@ public class StateMachineBuilderFactory {
     public StateMachine<String, String> buildMachine(ResolvedCaseTypeConfig config, String caseInstanceId) {
         StateMachine<String, String> stateMachine = buildMachine(config);
 
+        // ★ 注入 sessionId 到 extendedState
+        stateMachine.getExtendedState().getVariables().put("sessionId", caseInstanceId);
+
+        String targetState = null;
         CaseContext context = contextManager.getSnapshot(caseInstanceId);
         if (context != null && context.getCurrentState() != null) {
+            String savedState = context.getCurrentState();
+            if (config.getStates().contains(savedState)) {
+                targetState = savedState;
+                log.debug("📂 状态机恢复: {} -> {}", caseInstanceId, savedState);
+            }
+        }
+
+        if (targetState != null) {
+            final String finalState = targetState;
             try {
-                String savedState = context.getCurrentState();
-                if (config.getStates().contains(savedState)) {
-                    stateMachine.getStateMachineAccessor().doWithAllRegions(access -> {
-                        access.resetStateMachine(
-                            new DefaultStateMachineContext<>(savedState, null, null, null, null)
-                        );
-                    });
-                    log.debug("📂 状态机恢复: {} -> {}", caseInstanceId, savedState);
-                }
+                stateMachine.getStateMachineAccessor().doWithAllRegions(access -> {
+                    access.resetStateMachine(
+                        new DefaultStateMachineContext<>(finalState, null, null, null)
+                    );
+                });
             } catch (Exception e) {
-                log.warn("状态恢复失败，使用初始状态: {}", e.getMessage());
+                log.warn("状态机恢复失败: caseInstanceId={}, targetState={}, err={}",
+                    caseInstanceId, finalState, e.getMessage());
             }
         }
 
@@ -117,15 +122,13 @@ public class StateMachineBuilderFactory {
         log.info("🔄 清除案例缓存: {}", caseType);
     }
 
-    // ==================== 私有构建方法（保持不变） ====================
+    // ==================== 私有构建方法 ====================
 
     private StateMachineBuilder.Builder<String, String> buildStateMachine(ResolvedCaseTypeConfig config) {
         try {
             StateMachineBuilder.Builder<String, String> builder = StateMachineBuilder.builder();
-
             configureStates(builder, config);
             configureTransitions(builder, config);
-
             return builder;
         } catch (Exception e) {
             log.error("❌ 状态机构建失败: {}", config.getCode(), e);
@@ -158,34 +161,42 @@ public class StateMachineBuilderFactory {
 
             var transition = transitionConfigurer.withExternal()
                 .source(rule.getSource())
-                .target(rule.getTarget())
-                .event(rule.getEvent());
+                .target(rule.getTarget());
+
+            if (StringUtils.hasText(rule.getEvent())) {
+                transition.event(rule.getEvent());
+            }
 
             if (rule.hasCondition()) {
                 transition.guard(createGuard(rule));
             }
-
             if (rule.hasAction()) {
                 transition.action(createAction(rule));
             }
-
             if (rule.getSystemActionType() != null && !rule.getSystemActionType().isEmpty()) {
                 transition.action(createSystemAction(rule));
             }
         }
     }
 
-    // ==================== Guard 和 Action 创建（保持不变） ====================
+    // ==================== Guard 和 Action 创建 ====================
 
     private Guard<String, String> createGuard(TransitionRule rule) {
         String expression = rule.getCondition();
         return context -> {
-            String instanceId = context.getStateMachine().getId();
-            CaseContext caseContext = contextManager.getSnapshot(instanceId);
-            if (caseContext == null) {
-                log.warn("Guard 执行时找不到上下文: {}, 使用默认值 false", instanceId);
+            // ★ context 是 StateContext，不是 StateMachineContext
+            String instanceId = resolveInstanceId(context);
+            if (instanceId == null) {
+                log.warn("Guard 执行时无法获取 sessionId: rule={}", rule.getDisplayName());
                 return false;
             }
+
+            CaseContext caseContext = contextManager.getSnapshot(instanceId);
+            if (caseContext == null) {
+                log.warn("Guard 执行时找不到上下文: {}, rule={}", instanceId, rule.getDisplayName());
+                return false;
+            }
+
             try {
                 boolean result = ruleEvaluator.evaluateCondition(expression, caseContext);
                 log.trace("Guard 评估: {} → {}", expression, result);
@@ -200,15 +211,22 @@ public class StateMachineBuilderFactory {
     private Action<String, String> createAction(TransitionRule rule) {
         String expression = rule.getAction();
         return context -> {
-            String instanceId = context.getStateMachine().getId();
+            String instanceId = resolveInstanceId(context);
+            if (instanceId == null) {
+                log.warn("Action 执行时无法获取 sessionId: rule={}", rule.getDisplayName());
+                return;
+            }
+
             CaseContext caseContext = contextManager.getSnapshot(instanceId);
             if (caseContext == null) {
                 log.warn("Action 执行时找不到上下文: {}", instanceId);
                 return;
             }
+
             try {
+                Map<String, Object> beforeVars = new HashMap<>(caseContext.getVariables());
                 ruleEvaluator.executeAction(expression, caseContext);
-                contextManager.update(instanceId, caseContext);
+                persistCtxChanges(instanceId, beforeVars, caseContext);
                 log.trace("Action 执行成功: {}", expression);
             } catch (Exception e) {
                 log.warn("Action 执行异常: {}", expression, e);
@@ -220,18 +238,88 @@ public class StateMachineBuilderFactory {
         String systemActionType = rule.getSystemActionType();
         Map<String, Object> params = rule.getSystemActionParams();
         return context -> {
-            String instanceId = context.getStateMachine().getId();
-            CaseContext caseContext = contextManager.getSnapshot(instanceId);
-            if (caseContext == null) {
-                log.warn("系统Action 执行时找不到上下文: {}", instanceId);
+            String instanceId = resolveInstanceId(context);
+            if (instanceId == null) {
+                log.warn("系统Action 执行时无法获取 sessionId: type={}", systemActionType);
                 return;
             }
             try {
-                log.debug("📤 系统动作: type={}, params={}", systemActionType, params);
+                log.debug("📤 系统动作: sessionId={}, type={}, params={}",
+                    instanceId, systemActionType, params);
             } catch (Exception e) {
                 log.warn("系统Action 执行异常: {}", systemActionType, e);
             }
         };
+    }
+
+    // ==================== 辅助方法 ====================
+
+    /**
+     * 从 StateContext 的 extendedState 中解析 sessionId。
+     *
+     * <p>Guard / Action 的 lambda 参数是 {@link StateContext}，不是 StateMachineContext。</p>
+     */
+    private String resolveInstanceId(StateContext<String, String> context) {
+        StateMachine<String, String> sm = context.getStateMachine();
+        if (sm == null) return null;
+
+        Map<Object, Object> vars = sm.getExtendedState().getVariables();
+        if (vars != null) {
+            Object id = vars.get("sessionId");
+            if (id != null) return id.toString();
+        }
+
+        String smId = sm.getId();
+        if (smId != null && !"null".equals(smId)) {
+            return smId;
+        }
+        return null;
+    }
+
+    private void persistCtxChanges(String instanceId,
+                                   Map<String, Object> beforeVars,
+                                   CaseContext ctx) {
+        if (ctx == null) return;
+
+        Map<String, Object> afterVars = ctx.getVariables();
+        Map<String, Object> changes = new LinkedHashMap<>();
+
+        for (Map.Entry<String, Object> e : afterVars.entrySet()) {
+            Object before = beforeVars.get(e.getKey());
+            if (!Objects.equals(before, e.getValue())) {
+                changes.put(e.getKey(), e.getValue());
+            }
+        }
+        for (String k : beforeVars.keySet()) {
+            if (!afterVars.containsKey(k)) {
+                changes.put(k, null);
+            }
+        }
+
+        if (changes.isEmpty()) {
+            log.trace("Action 无变量变更: session={}", instanceId);
+            return;
+        }
+
+        long version = ctx.getVersion();
+        boolean ok = contextManager.batchSetVarsWithVersion(
+            instanceId, changes, "SYSTEM", version);
+
+        if (!ok) {
+            CaseContext latest = contextManager.getSnapshot(instanceId);
+            if (latest != null) {
+                ok = contextManager.batchSetVarsWithVersion(
+                    instanceId, changes, "SYSTEM", latest.getVersion());
+            }
+        }
+
+        if (ok) {
+            log.debug("Action 上下文变更已写入: session={}, changes={}",
+                instanceId, changes.keySet());
+        } else {
+            log.warn("Action 上下文变更写入失败（重试后仍失败）: session={}, changes={}",
+                instanceId, changes.keySet());
+        }
     }
 
     // ==================== 静态辅助方法 ====================

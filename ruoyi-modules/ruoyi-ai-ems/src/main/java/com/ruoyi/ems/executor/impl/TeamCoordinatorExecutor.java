@@ -6,6 +6,7 @@ import com.ruoyi.ems.executor.IntentExecutor;
 import com.ruoyi.ems.npc.Duty;
 import com.ruoyi.ems.npc.TeamManager;
 import com.ruoyi.ems.npc.TeamMember;
+import com.ruoyi.ems.npc.TeamSize;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -60,7 +61,7 @@ public class TeamCoordinatorExecutor implements IntentExecutor {
         Map<String, Object> slots = command.getSlots();
 
         // 确保团队已初始化
-        teamManager.initializeTeam(sessionId, "3MAN"); // 默认三人组，可由前端传入
+        teamManager.initializeTeam(sessionId, TeamSize.TEAM_3MAN); // 默认三人组，可由前端传入
 
         switch (intentCode) {
             case "G2-1":

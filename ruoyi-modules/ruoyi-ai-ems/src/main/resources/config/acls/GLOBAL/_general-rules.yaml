@@ -1,0 +1,18 @@
+# 全局规则（适用于所有案例）
+# 变量名已迁移至分层命名体系
+rules:
+  - id: "global_defib_energy"
+    intent: "S2-06"
+    allowedStates: ["V-FIB", "V-TACH_PULSELESS"]
+    conditions:
+      - "#device.energy >= 120 && #device.energy <= 200"
+    denyMessage: "除颤能量必须在120-200焦耳之间，当前为 {energy}J"
+    priority: 10
+
+  - id: "global_epinephrine_dose"
+    intent: "S2-01"
+    allowedStates: ["ASYSTOLE", "PEA", "V-FIB", "V-TACH_PULSELESS"]
+    conditions:
+      - "#intervention.dose == 1.0"
+    denyMessage: "肾上腺素剂量应为1mg，当前为 {dose}mg"
+    priority: 10

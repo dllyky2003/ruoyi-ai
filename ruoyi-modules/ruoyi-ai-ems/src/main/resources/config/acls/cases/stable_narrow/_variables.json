@@ -1,0 +1,237 @@
+{
+  "caseType": "stable_narrow",
+  "description": "窄QRS稳定心动过速专属变量。此文件只包含本案例（及未来同类窄QRS心动过速案例）使用的变量，通用 ACLS 变量在 GLOBAL/_variables.json。",
+
+  "resetDefaults": {
+    "intervention.rhythmConverted": false,
+    "intervention.vagal": {
+      "status": null,
+      "effect": "pending",
+      "count": 0,
+      "lastTime": null
+    },
+    "intervention.adenosine": {
+      "count": 0,
+      "status": null,
+      "lastTime": null
+    },
+    "intervention.diltiazem": {
+      "count": 0,
+      "status": null,
+      "lastTime": null
+    },
+    "intervention.cardioversion": {
+      "count": 0,
+      "success": false,
+      "lastEnergy": null
+    },
+    "phys.systolicBp": 145,
+    "phys.consciousness": "alert",
+    "phys.respiratoryRate": 22,
+    "phys.qrsDuration": 0.1,
+    "phys.rrIntervalJitter": 0.05,
+    "phys.heartRate": 151,
+    "phys.hasPulse": true
+  },
+
+  "variables": [
+    {
+      "name": "process.qrsWidthChecked",
+      "name_cn": "QRS宽度已检查",
+      "type": "boolean",
+      "description": "QRS宽度是否已检查（稳定窄QRS场景）",
+      "category": "PROCESS_MARKER",
+      "source": "EXECUTOR",
+      "writable_by": "EXECUTOR",
+      "default_value": false,
+      "persistence": true,
+      "scoring": false
+    },
+    {
+      "name": "process.rhythmRegularityChecked",
+      "name_cn": "节律规则性已检查",
+      "type": "boolean",
+      "description": "节律规则性是否已检查（稳定窄QRS场景）",
+      "category": "PROCESS_MARKER",
+      "source": "EXECUTOR",
+      "writable_by": "EXECUTOR",
+      "default_value": false,
+      "persistence": true,
+      "scoring": false
+    },
+    {
+      "name": "process.hemodynamicsAssessed",
+      "name_cn": "血流动力学已评估",
+      "type": "boolean",
+      "description": "血流动力学稳定性是否已评估",
+      "category": "PROCESS_MARKER",
+      "source": "EXECUTOR",
+      "writable_by": "EXECUTOR",
+      "default_value": false,
+      "persistence": true,
+      "scoring": false
+    },
+    {
+      "name": "process.rhythmInterpretationRequested",
+      "name_cn": "心律解读已请求",
+      "type": "boolean",
+      "description": "心律解读是否已请求",
+      "category": "PROCESS_MARKER",
+      "source": "EXECUTOR",
+      "writable_by": "EXECUTOR",
+      "default_value": false,
+      "persistence": true,
+      "scoring": false
+    },
+    {
+      "name": "intervention.rhythmConfirmed",
+      "name_cn": "确认的心律类型",
+      "type": "string",
+      "enum": [
+        { "value": "afib", "label": "房颤（AFib）" },
+        { "value": "aflutter", "label": "房扑（AFlutter）" },
+        { "value": "unknown", "label": "未知" }
+      ],
+      "description": "确认的心律类型",
+      "category": "LEARNER_STATEMENT",
+      "source": "LEARNER",
+      "writable_by": "CLASSIFIER",
+      "default_value": "unknown",
+      "persistence": true,
+      "scoring": true
+    },
+    {
+      "name": "device.lastShockEnergy",
+      "name_cn": "上次电击能量",
+      "type": "integer",
+      "unit": "J",
+      "min": 0,
+      "max": 360,
+      "description": "上次电击的能量设置",
+      "category": "TREATMENT_HISTORY",
+      "source": "EXECUTOR",
+      "writable_by": "EXECUTOR",
+      "default_value": null,
+      "persistence": true,
+      "scoring": false
+    },
+    {
+      "name": "device.lastShockSync",
+      "name_cn": "上次电击是否同步",
+      "type": "boolean",
+      "description": "上次电击是否为同步模式",
+      "category": "TREATMENT_HISTORY",
+      "source": "EXECUTOR",
+      "writable_by": "EXECUTOR",
+      "default_value": false,
+      "persistence": true,
+      "scoring": false
+    },
+    {
+      "name": "process.vagalManeuverPerformed",
+      "name_cn": "迷走动作已执行",
+      "type": "boolean",
+      "description": "Valsalva 或颈动脉窦按摩是否已执行（窄QRS规则首选）",
+      "category": "PROCESS_MARKER",
+      "source": "EXECUTOR",
+      "writable_by": "EXECUTOR",
+      "default_value": false,
+      "persistence": true,
+      "scoring": true
+    },
+    {
+      "name": "process.vagalEffectObserved",
+      "name_cn": "迷走动作效果",
+      "type": "string",
+      "enum": [
+        { "value": "pending", "label": "待观察" },
+        { "value": "success", "label": "转复成功" },
+        { "value": "failure", "label": "无效" }
+      ],
+      "description": "迷走神经刺激的转复效果",
+      "category": "PROCESS_MARKER",
+      "source": "EXECUTOR",
+      "writable_by": "EXECUTOR",
+      "default_value": "pending",
+      "persistence": true,
+      "scoring": true
+    },
+    {
+      "name": "intervention.adenosineDoseSequence",
+      "name_cn": "腺苷剂量序列",
+      "type": "string",
+      "enum": [
+        { "value": "first", "label": "首剂 6mg" },
+        { "value": "second", "label": "次剂 12mg" },
+        { "value": "none", "label": "未给药" }
+      ],
+      "description": "腺苷处于首剂还是次剂阶段（AHA 2025 阶梯：6mg → 12mg）",
+      "category": "TREATMENT_HISTORY",
+      "source": "EXECUTOR",
+      "writable_by": "EXECUTOR",
+      "default_value": "none",
+      "persistence": true,
+      "scoring": true
+    },
+    {
+      "name": "process.cardioversionPerformed",
+      "name_cn": "同步电复律已执行",
+      "type": "boolean",
+      "description": "是否已执行同步电复律（稳定但药物无效后的选择）",
+      "category": "PROCESS_MARKER",
+      "source": "EXECUTOR",
+      "writable_by": "EXECUTOR",
+      "default_value": false,
+      "persistence": true,
+      "scoring": true
+    },
+    {
+      "name": "process.emergencyCardioversionPerformed",
+      "name_cn": "紧急同步电复律已执行",
+      "type": "boolean",
+      "description": "是否因血流动力学不稳定而执行紧急同步电复律",
+      "category": "PROCESS_MARKER",
+      "source": "EXECUTOR",
+      "writable_by": "EXECUTOR",
+      "default_value": false,
+      "persistence": true,
+      "scoring": true
+    },
+    {
+      "name": "process.anticoagulationDecisionTriggered",
+      "name_cn": "抗凝评估已触发",
+      "type": "boolean",
+      "description": "识别到窄QRS不规则（房颤/房扑）时系统置位，提示学员评估抗凝",
+      "category": "PROCESS_MARKER",
+      "source": "SYSTEM",
+      "writable_by": "SYSTEM",
+      "default_value": false,
+      "persistence": true,
+      "scoring": true
+    }
+  ],
+
+  "slot_mappings": {
+    "description": "窄QRS稳定心动过速槽位映射（仅案例专属部分，通用映射在 GLOBAL/_variables.json）",
+    "mappings": {
+      "outcome": "process.vagalEffectObserved",
+      "rhythm_type": "intervention.rhythmConfirmed",
+      "wpw": "clinical.isWpw",
+      "dose_sequence": "intervention.adenosineDoseSequence",
+      "cardioversion_performed": "process.cardioversionPerformed",
+      "emergency_cardioversion": "process.emergencyCardioversionPerformed",
+      "vagal_performed": "process.vagalManeuverPerformed"
+    }
+  },
+
+  "auto_derived_rules": {
+    "description": "案例专属派生规则",
+    "rules": [
+      {
+        "source_vars": ["assert.qrsWidth", "assert.rhythmRegular"],
+        "target_var": "process.anticoagulationDecisionTriggered",
+        "rule": "#assert.qrsWidth == 'narrow' and #assert.rhythmRegular == false"
+      }
+    ]
+  }
+}

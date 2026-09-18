@@ -1,15 +1,21 @@
 package com.ruoyi.ems.npc;
 
+
 import com.ruoyi.ems.event.TaskCompletedEvent;
 import com.ruoyi.ems.event.TaskProgressUpdatedEvent;
 import com.ruoyi.ems.event.TaskStartedEvent;
 import com.ruoyi.ems.orchestrator.model.ActionChainRuntime;
+import com.ruoyi.ems.room.event.ClockPausedEvent;
+import com.ruoyi.ems.room.event.ClockResumedEvent;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -17,21 +23,22 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class TeamManager {
 
     private final Map<String, TeamConfigInstance> sessionTeamMap = new ConcurrentHashMap<>();
-    private final Map<String, TeamTemplate> templateCache = new ConcurrentHashMap<>();
+    private final Map<TeamSize, TeamTemplate> templateCache = new ConcurrentHashMap<>();
     private final Map<String, ActionChainRuntime> chainRuntimes = new ConcurrentHashMap<>();
-    @Autowired
-    private ApplicationEventPublisher eventPublisher;
+    private final NpcUnityBridgeService npcUnityBridge;
+    private final ApplicationEventPublisher eventPublisher;
 
     private final List<Consumer<TaskCompletedEvent>> taskCompletionListeners = new ArrayList<>();
 
     @PostConstruct
     public void initTemplates() {
-        templateCache.put("3MAN", TeamTemplate.china3Man());
-        templateCache.put("4MAN", TeamTemplate.china4Man());
-        templateCache.put("5MAN", TeamTemplate.china5Man());
+        templateCache.put(TeamSize.TEAM_3MAN, TeamTemplate.china3Man());
+        templateCache.put(TeamSize.TEAM_4MAN, TeamTemplate.china4Man());
+        templateCache.put(TeamSize.TEAM_5MAN, TeamTemplate.china5Man());
         log.info("📋 已加载团队模板: {}", templateCache.keySet());
     }
 
@@ -39,7 +46,15 @@ public class TeamManager {
         taskCompletionListeners.add(listener);
     }
 
-    public synchronized void initializeTeam(String sessionId, String templateId) {
+    public synchronized void initializeTeam(String sessionId, TeamSize templateId) {
+
+        TeamConfigInstance existing = sessionTeamMap.get(sessionId);
+        if (existing != null && existing.templateId() == templateId) {
+            log.info("♻️ 团队已存在，跳过重复初始化: session={}, template={}",
+                sessionId, templateId);
+            return;
+        }
+
         TeamTemplate template = templateCache.get(templateId);
         if (template == null) {
             log.warn("未知模板: {}，使用默认三人组", templateId);
@@ -47,19 +62,24 @@ public class TeamManager {
         }
         List<TeamMember> members = new ArrayList<>();
         for (MemberSlot slot : template.getSlots()) {
+            boolean human = slot.getDuties() != null
+                && slot.getDuties().contains(Duty.TEAM_LEADER);
             TeamMember member = TeamMember.builder()
                 .id(UUID.randomUUID().toString().replace("-", ""))
                 .name(slot.getName())
                 .title(slot.getTitle())
                 .duties(slot.getDuties())
                 .status(Status.IDLE)
-                .onDuty(true)
+                .onDuty(!human)
                 .skillLevel(0.85 + Math.random() * 0.1)
                 .build();
             members.add(member);
         }
         TeamConfigInstance instance = new TeamConfigInstance(templateId, members);
         sessionTeamMap.put(sessionId, instance);
+
+
+        npcUnityBridge.pushSpawn(sessionId, members);
         log.info("🏥 虚拟团队已组建（{}人{}）：{}", members.size(), templateId,
             members.stream().map(TeamMember::getTitleName).collect(Collectors.joining("、")));
     }
@@ -67,7 +87,7 @@ public class TeamManager {
     private TeamConfigInstance getOrCreate(String sessionId) {
         TeamConfigInstance instance = sessionTeamMap.get(sessionId);
         if (instance == null) {
-            initializeTeam(sessionId, "3MAN");
+            initializeTeam(sessionId, TeamSize.defaultSize());
             instance = sessionTeamMap.get(sessionId);
         }
         return instance;
@@ -76,6 +96,14 @@ public class TeamManager {
     public List<TeamMember> getTeamMembers(String sessionId) {
         TeamConfigInstance instance = getOrCreate(sessionId);
         return new ArrayList<>(instance.members);
+    }
+
+    /**
+     * 获取指定会话使用的团队模板。未初始化时返回 null。
+     */
+    public TeamSize getTeamTemplateId(String sessionId) {
+        TeamConfigInstance instance = sessionTeamMap.get(sessionId);
+        return instance != null ? instance.templateId() : null;
     }
 
     public Optional<TeamMember> findMemberByName(String sessionId, String name) {
@@ -129,6 +157,7 @@ public class TeamManager {
         List<TaskCompletedEvent> completedEvents = new ArrayList<>();
 
         for (TeamMember member : instance.members) {
+            member.tickProgress();
             if (!member.isExecuting()) continue;
 
             double progress = member.getTaskProgress();
@@ -254,6 +283,59 @@ public class TeamManager {
         chainRuntimes.remove(sessionId);
     }
 
-    private record TeamConfigInstance(String templateId, List<TeamMember> members) {
+    // ==================== ★ 时钟暂停/恢复补偿 ====================
+
+    /**
+     * 时钟暂停：冻结正在执行任务的成员的 taskStartTime 基准。
+     * <p>
+     * tickProgress / isTaskTimeout 都基于 taskStartTime + LocalDateTime.now() 计算 elapsed。
+     * 暂停期间若不冻结，恢复后 elapsed 会突然跳进一段，进度突变。
+     * </p>
+     */
+    @EventListener
+    public void onClockPaused(ClockPausedEvent evt) {
+        TeamConfigInstance instance = sessionTeamMap.get(evt.sessionId());
+        if (instance == null) {
+            log.debug("时钟暂停：会话 {} 无团队，跳过", evt.sessionId());
+            return;
+        }
+
+        int frozen = 0;
+        for (TeamMember m : instance.members) {
+            if (m.isExecuting() && m.getPausedAt() == null) {
+                m.setPausedAt(LocalDateTime.now());
+                frozen++;
+            }
+        }
+        log.info("⏸️ 团队任务时间戳已冻结: session={}, count={}", evt.sessionId(), frozen);
+    }
+
+    /**
+     * 时钟恢复：把冻结期间的时长补偿到 taskStartTime，等价于暂停期间时间"没走"。
+     */
+    @EventListener
+    public void onClockResumed(ClockResumedEvent evt) {
+        TeamConfigInstance instance = sessionTeamMap.get(evt.sessionId());
+        if (instance == null) {
+            log.debug("时钟恢复：会话 {} 无团队，跳过", evt.sessionId());
+            return;
+        }
+
+        long pauseSec = evt.pauseDurationMs() / 1000;
+        int adjusted = 0;
+        for (TeamMember m : instance.members) {
+            if (m.isExecuting() && m.getPausedAt() != null) {
+                if (m.getTaskStartTime() != null && pauseSec > 0) {
+                    m.setTaskStartTime(m.getTaskStartTime().plusSeconds(pauseSec));
+                }
+                m.setPausedAt(null);
+                adjusted++;
+            }
+        }
+        log.info("▶️ 团队任务时间戳已恢复: session={}, count={}, 补偿={}s",
+            evt.sessionId(), adjusted, pauseSec);
+    }
+
+    private record TeamConfigInstance(TeamSize templateId, List<TeamMember> members) {
     }
 }

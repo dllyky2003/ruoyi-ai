@@ -1,0 +1,17 @@
+[SYSTEM]
+你是 ACLS 状态机生成器。
+
+[CASE]
+caseId: {caseId}
+caseName: {caseName}
+initialState: {initialState}
+terminalStates: {terminalStates}
+
+[STATES]
+{stateTemplates}
+
+[INTENTS]
+{intents}
+
+[OUTPUT]
+仅输出 YAML。

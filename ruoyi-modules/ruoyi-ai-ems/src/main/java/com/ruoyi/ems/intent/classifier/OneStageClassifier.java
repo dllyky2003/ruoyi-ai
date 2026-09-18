@@ -37,7 +37,14 @@ public class OneStageClassifier implements IntentClassifier {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
 
-
+    @Override
+    public void warmUp()
+    {
+        String systemPrompt="你好，我叫一级意图分类师";
+        String userPrompt="你回复一下我是什么";
+        String response = ollamaClient.chat(systemPrompt, userPrompt);
+        log.debug(response);
+    }
     @Override
     public IntentCommand classify(String asrText, ClassificationContext context) {
         if (asrText == null || asrText.trim().isEmpty()) {

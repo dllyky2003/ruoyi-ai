@@ -1,0 +1,234 @@
+# ============================================================================
+# 03_circulation.yaml - 循环类技能
+# 对应 EgoEMS #27~#56：12导联 ECG、CPR、除颤
+# 职责：MONITOR_DEFIB（护士）、CPR（医生/司机）
+# ============================================================================
+
+skills:
+  # -------- 12 导联心电图 --------
+  - id: explain_procedure
+    duty: MONITOR_DEFIB
+    type: query
+    params:
+      targetVar: process.procedureExplained
+      responseTemplate: "已向患者解释心电图操作。"
+
+  - id: shave_patient
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "SHAVE_SKIN"
+      durationSeconds: 5
+      successVar: process.skinShaved
+      successSpeech: "皮肤已剃除，电极接触良好。"
+
+  - id: place_left_arm_lead
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "PLACE_LEAD_LA"
+      durationSeconds: 2
+      successVar: process.leadLaPlaced
+      successSpeech: "左臂导联已连接。"
+
+  - id: place_right_arm_lead
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "PLACE_LEAD_RA"
+      durationSeconds: 2
+      successVar: process.leadRaPlaced
+      successSpeech: "右臂导联已连接。"
+
+  - id: place_left_leg_lead
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "PLACE_LEAD_LL"
+      durationSeconds: 2
+      successVar: process.leadLlPlaced
+      successSpeech: "左腿导联已连接。"
+
+  - id: place_right_leg_lead
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "PLACE_LEAD_RL"
+      durationSeconds: 2
+      successVar: process.leadRlPlaced
+      successSpeech: "右腿导联已连接。"
+
+  - id: place_v1_lead
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "PLACE_LEAD_V1"
+      durationSeconds: 3
+      successVar: process.leadV1Placed
+      successSpeech: "V1 导联已放置在第四肋间胸骨右缘。"
+
+  - id: place_v2_lead
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "PLACE_LEAD_V2"
+      durationSeconds: 3
+      successVar: process.leadV2Placed
+      successSpeech: "V2 导联已放置在第四肋间胸骨左缘。"
+
+  - id: place_v3_lead
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "PLACE_LEAD_V3"
+      durationSeconds: 3
+      successVar: process.leadV3Placed
+      successSpeech: "V3 导联已放置在 V2 和 V4 之间。"
+
+  - id: place_v4_lead
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "PLACE_LEAD_V4"
+      durationSeconds: 3
+      successVar: process.leadV4Placed
+      successSpeech: "V4 导联已放置在第五肋间锁骨中线。"
+
+  - id: place_v5_lead
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "PLACE_LEAD_V5"
+      durationSeconds: 3
+      successVar: process.leadV5Placed
+      successSpeech: "V5 导联已放置在腋前线。"
+
+  - id: place_v6_lead
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "PLACE_LEAD_V6"
+      durationSeconds: 3
+      successVar: process.leadV6Placed
+      successSpeech: "V6 导联已放置在腋中线。"
+
+  - id: request_patient_to_not_move
+    duty: MONITOR_DEFIB
+    type: query
+    params:
+      targetVar: process.patientStill
+      responseTemplate: "已要求患者保持不动。"
+
+  - id: turn_on_ecg
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "TURN_ON_ECG"
+      durationSeconds: 1
+      successVar: device.ecgOn
+      successSpeech: "心电图机已开启。"
+
+  - id: connect_leads_to_ecg
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "CONNECT_LEADS_TO_ECG"
+      durationSeconds: 2
+      successVar: device.leadsConnected
+      successSpeech: "导联已连接到心电图机。"
+
+  - id: ask_patient_age_sex
+    duty: MONITOR_DEFIB
+    type: query
+    params:
+      targetVar: process.patientAgeSex
+      responseTemplate: "患者年龄和性别：{value}。"
+
+  - id: obtain_ecg_recording
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "OBTAIN_ECG"
+      durationSeconds: 5
+      successVar: process.ecgRecorded
+      successSpeech: "心电图已记录。"
+
+  - id: interpret_and_report
+    duty: MONITOR_DEFIB
+    type: query
+    params:
+      targetVar: process.ecgInterpretation
+      responseTemplate: "心电图判读结果：{value}。"
+
+  # -------- CPR --------
+  - id: chest_compressions
+    duty: CPR
+    type: complex
+    params:
+      beanName: "cprSkill"
+
+  - id: assess_patient
+    duty: ASSESS
+    type: query
+    params:
+      targetVar: process.patientStatus
+      responseTemplate: "患者当前状况：{value}。"
+
+  # check_responsiveness, check_pulse, check_breathing 已在 01_assessment.yaml 中定义，不重复
+
+  # -------- 除颤 --------
+  - id: request_aed
+    duty: MONITOR_DEFIB
+    type: query
+    params:
+      targetVar: process.aedRequested
+      responseTemplate: "已请求 AED。"
+
+  - id: request_assistance
+    duty: MONITOR_DEFIB
+    type: query
+    params:
+      targetVar: process.assistanceRequested
+      responseTemplate: "已呼叫协助。"
+
+  - id: turn_on_aed
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "TURN_ON_AED"
+      durationSeconds: 1
+      successVar: device.aedOn
+      successSpeech: "AED 已开启。"
+
+  - id: attach_defib_pads
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "ATTACH_DEFIB_PADS"
+      durationSeconds: 4
+      successVar: device.defibPadsAttached
+      successSpeech: "除颤电极片已贴好，位置正确。"
+
+  - id: clear_for_analysis
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "CLEAR_FOR_ANALYSIS"
+      durationSeconds: 2
+      successVar: process.analysisClear
+      successSpeech: "所有人离开，心律分析开始。"
+
+  - id: clear_for_shock
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "CLEAR_FOR_SHOCK"
+      durationSeconds: 2
+      successVar: process.shockClear
+      successSpeech: "确认所有人员已离开，准备电击。"
+
+  - id: administer_shock_aed
+    duty: MONITOR_DEFIB
+    type: complex
+    params:
+      beanName: "defibrillationSkill"

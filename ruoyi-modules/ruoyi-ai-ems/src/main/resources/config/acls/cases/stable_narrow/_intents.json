@@ -1,0 +1,2097 @@
+{
+  "dict_version": "2.2.0",
+  "last_updated": "2026-09-12",
+  "description": "ACLS Megacode 案例特定意图层（S类），混合结构：同时支持通用路由特征（h/act/obj/trg/negative_policy/out/route_guard）与 Java processor 参数抽取（extraction）。专用于『窄QRS稳定心动过速』案例。target_params 已与 stable_narrow 案例变量定义对齐。",
+  "layers": [
+    {
+      "layer_code": "SPECIFIC",
+      "layer_name": "案例特定意图层",
+      "layer_description": "专用于『窄QRS稳定心动过速』案例的鉴别诊断、阶梯治疗、不稳定转换及错误应激等特定指令。已扩展通用路由字段。",
+      "sub_domains": [
+        {
+          "sub_domain_name": "窄QRS专属鉴别诊断",
+          "domain_code": "诊断",
+          "sub_domain_description": "本子域涵盖对窄QRS心动过速患者进行心电图特征（QRS宽度、节律规则性）和血流动力学稳定性评估的诊断性询问。",
+          "intents": [
+            {
+              "intent_code": "S-101-1-1",
+              "name_cn": "QRS宽度判读指令",
+              "h": [
+                "SPECIFIC",
+                "诊断",
+                "窄QRS专属鉴别诊断"
+              ],
+              "act": "assess_check",
+              "act_type": "探查性询问",
+              "obj": {
+                "type": "心电图",
+                "name": "QRS宽度"
+              },
+              "description_cn": "要求确认心电图QRS波群时限是否≤0.12秒，以区分窄QRS与宽QRS心动过速。",
+              "trg": {
+                "regex": [
+                  "QRS宽吗",
+                  "窄QRS吗",
+                  "QRS时限多少",
+                  "量QRS宽度",
+                  "是窄QRS吗",
+                  "QRS超过多少",
+                  "量一下QRS",
+                  "QRS宽度",
+                  "QRS波群",
+                  "QRS时限",
+                  "QRS超过",
+                  "窄QRS",
+                  "宽QRS",
+                  "QRS是宽",
+                  "QRS是窄"
+                ],
+                "negative_regex": [
+                  "心律规则吗",
+                  "预激",
+                  "WPW",
+                  "δ波"
+                ],
+                "slots": {},
+                "evidence_policy": {
+                  "min_regex_hit": 1,
+                  "slot_required": [],
+                  "on_slot_missing": {
+                    "mode": "downweight",
+                    "factor": 0.5
+                  },
+                  "required_slot_policy": {
+                    "mode": "downweight",
+                    "downweight_factor": 0.3
+                  },
+                  "slot_confidence_threshold": 0.5
+                }
+              },
+              "negative_policy": {
+                "mode": "soft",
+                "block_on_any_hit": false,
+                "downweight_factor": 0.1,
+                "negative_scope": "same_turn"
+              },
+              "out": {
+                "artifact_type": "评估结果",
+                "artifact": "QRS宽度判读结果",
+                "downstream": "窄/宽QRS路径决策",
+                "route_evidence": false
+              },
+              "route_guard": {
+                "guard_mode": "soft",
+                "requires_context": {
+                  "state_tags_all": [],
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "excludes_context": {
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "confusion_pairs": []
+              },
+              "keywords": [
+                "QRS宽吗",
+                "窄QRS吗",
+                "QRS时限多少",
+                "量QRS宽度"
+              ],
+              "pattern_hints": [
+                "是窄QRS吗",
+                "QRS超过多少"
+              ],
+              "examples": [
+                "看看心电图QRS宽吗",
+                "是窄QRS吗",
+                "QRS时限多少",
+                "量一下QRS宽度",
+                "不是窄QRS是宽的",
+                "QRS超过[NUM]秒了",
+                "QRS宽度是多少",
+                "QRS 0.14秒，是宽的",
+                "窄QRS，小于0.12",
+                "【负例】心律规则吗"
+              ],
+              "standard_script": "看看心电图，QRS波群时限是否≤0.12秒？是窄QRS还是宽QRS？",
+              "extraction": {
+                "target_params": [
+                  "assert.qrsWidth"
+                ],
+                "rules": {
+                  "processor": "#{thresholdParser.parseQrsWidth(#ctx)}"
+                }
+              }
+            },
+            {
+              "intent_code": "S-101-1-2",
+              "name_cn": "节律规则性判读指令",
+              "h": [
+                "SPECIFIC",
+                "诊断",
+                "窄QRS专属鉴别诊断"
+              ],
+              "act": "assess_check",
+              "act_type": "探查性询问",
+              "obj": {
+                "type": "心电图",
+                "name": "节律规则性"
+              },
+              "description_cn": "成人患者在院前/院内抢救中，团队需要基于心电监护结果判断心律是否规则，以便决定后续是否按相应的心律处置路径推进。",
+              "trg": {
+                "regex": [
+                  "R-R间期齐不齐",
+                  "心律规则吗",
+                  "规则的还是乱的",
+                  "R-R间期不规则",
+                  "心律是规则",
+                  "RR间期",
+                  "R-R间期",
+                  "心律规则",
+                  "规不规则",
+                  "不齐",
+                  "规则.*乱"
+                ],
+                "negative_regex": [
+                  "QRS宽吗"
+                ],
+                "slots": {},
+                "evidence_policy": {
+                  "min_regex_hit": 1,
+                  "slot_required": [],
+                  "on_slot_missing": {
+                    "mode": "downweight",
+                    "factor": 0.5
+                  },
+                  "required_slot_policy": {
+                    "mode": "downweight",
+                    "downweight_factor": 0.3
+                  },
+                  "slot_confidence_threshold": 0.5
+                }
+              },
+              "negative_policy": {
+                "mode": "soft",
+                "block_on_any_hit": false,
+                "downweight_factor": 0.1,
+                "negative_scope": "same_turn"
+              },
+              "out": {
+                "artifact_type": "评估结果",
+                "artifact": "节律规则性判读结果",
+                "downstream": "规则/不规则窄QRS路径决策",
+                "route_evidence": false
+              },
+              "route_guard": {
+                "guard_mode": "soft",
+                "requires_context": {
+                  "state_tags_all": [],
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "excludes_context": {
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "confusion_pairs": []
+              },
+              "keywords": [
+                "R-R间期齐不齐",
+                "心律规则吗",
+                "规则的还是乱的"
+              ],
+              "pattern_hints": [
+                "心律规则吗",
+                "R-R间期不规则"
+              ],
+              "examples": [
+                "R-R间期齐不齐",
+                "这个心律规则吗",
+                "看是规则的还是乱的",
+                "R-R间期不规则是房颤",
+                "心律是规则的",
+                "RR间期整齐吗",
+                "不齐，房颤",
+                "【负例】QRS宽吗"
+              ],
+              "standard_script": "R-R间期是否规则？心律是规则的还是不规则的？",
+              "extraction": {
+                "target_params": [
+                  "assert.rhythmRegular"
+                ],
+                "rules": {
+                  "processor": "#{rhythmParser.parseRegularity(#ctx)}"
+                }
+              }
+            },
+            {
+              "intent_code": "S-101-1-3",
+              "name_cn": "血流动力学稳定性评估",
+              "h": [
+                "SPECIFIC",
+                "诊断",
+                "窄QRS专属鉴别诊断"
+              ],
+              "act": "assess_check",
+              "act_type": "探查性询问",
+              "obj": {
+                "type": "患者",
+                "name": "血流动力学稳定性"
+              },
+              "description_cn": "评估患者是否存在不稳定征象，包括：低血压（SBP<90）、意识改变、缺血性胸痛、休克征象、急性心衰（肺水肿/呼吸困难）。当学员发起评估时（疑问句），只记录评估动作；当学员报告结论时（断言句），写 assert.stable。",
+              "trg": {
+                "regex": [
+                  "胸痛吗",
+                  "意识清楚吗",
+                  "有没有休克",
+                  "有无脉搏",
+                  "稳定没有低血压",
+                  "有没有肺水肿",
+                  "血流动力学",
+                  "低血压",
+                  "意识改变",
+                  "休克",
+                  "缺血性胸痛",
+                  "急性心衰",
+                  "肺水肿",
+                  "皮肤湿冷",
+                  "末梢循环",
+                  "血压稳定",
+                  "胸痛",
+                  "气紧",
+                  "啰音"
+                ],
+                "negative_regex": [
+                  "血压多少"
+                ],
+                "slots": {},
+                "evidence_policy": {
+                  "min_regex_hit": 1,
+                  "slot_required": [],
+                  "on_slot_missing": {
+                    "mode": "downweight",
+                    "factor": 0.5
+                  },
+                  "required_slot_policy": {
+                    "mode": "downweight",
+                    "downweight_factor": 0.3
+                  },
+                  "slot_confidence_threshold": 0.5
+                }
+              },
+
+              "act_type_rules": [
+                {
+                  "actType": "PROBE",
+                  "pattern": "是否|有没有|有无|吗$|吗[?？]|呢$|呢[?？]|如何|怎么样|多少|对不对|哪[些一]"
+                },
+                {
+                  "actType": "ANNOUNCEMENT",
+                  "pattern": "患者.{0,4}(稳定|不稳定)|血压(稳定|不稳|骤降|掉到)|(出现|存在|发现|确认).{0,6}(胸痛|意识改变|意识模糊|休克|肺水肿|湿啰音)|血流动力学(稳定|不稳定)"
+                }
+              ],
+
+              "negative_policy": {
+                "mode": "soft",
+                "block_on_any_hit": false,
+                "downweight_factor": 0.1,
+                "negative_scope": "same_turn"
+              },
+              "out": {
+                "artifact_type": "评估结果",
+                "artifact": "血流动力学稳定性评估",
+                "downstream": "稳定/不稳定处理决策",
+                "route_evidence": false
+              },
+              "route_guard": {
+                "guard_mode": "soft",
+                "requires_context": {
+                  "state_tags_all": [],
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "excludes_context": {
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "confusion_pairs": []
+              },
+              "keywords": [
+                "胸痛吗",
+                "意识清楚吗",
+                "有没有休克",
+                "有无脉搏"
+              ],
+              "pattern_hints": [
+                "稳定没有低血压",
+                "有没有肺水肿"
+              ],
+              "examples": [
+                "患者还胸痛吗",
+                "稳定没有低血压和意识改变",
+                "意识清楚吗有没有气紧",
+                "看看有没有肺水肿或啰音",
+                "有没有休克征象",
+                "皮肤湿冷吗末梢循环怎么样",
+                "确认患者有无脉搏",
+                "判断血流动力学是否稳定",
+                "有无低血压、意识改变、休克征象、缺血性胸痛、急性心衰",
+                "血压稳定吗",
+                "有没有胸痛",
+                "患者稳定，血压正常",
+                "患者不稳定，血压骤降",
+                "出现了意识改变和休克征象",
+                "【负例】血压多少"
+              ],
+              "standard_script": "患者有没有低血压（SBP<90）、意识改变、缺血性胸痛、气促/肺水肿或休克征象？",
+              "extraction": {
+                "target_params": [
+                  "process.hemodynamicsAssessed",
+                  "assert.stable",
+                  "phys.symptomsPresent"
+                ],
+                "rules": {
+                  "processor": "#{symptomParser.extractSymptoms(#ctx)}"
+                }
+              }
+            },
+            {
+              "intent_code": "S-101-1-4",
+              "name_cn": "请求心律综合判读",
+              "h": [
+                "SPECIFIC",
+                "诊断",
+                "窄QRS专属鉴别诊断"
+              ],
+              "act": "assess_check",
+              "act_type": "探查性询问",
+              "obj": {
+                "type": "心电图",
+                "name": "心律类型"
+              },
+              "description_cn": "当团队对当前心律不确定时，请求上级或专家帮助识别或确认心律失常类型。",
+              "trg": {
+                "regex": [
+                  "这是什么心律",
+                  "帮忙看心电图",
+                  "是房颤吗",
+                  "确认心律失常",
+                  "能确认吗",
+                  "帮忙看",
+                  "房颤",
+                  "房扑",
+                  "室上速",
+                  "什么心律失常",
+                  "确认.*心律",
+                  "看一下心电图"
+                ],
+                "negative_regex": [
+                  "QRS宽吗",
+                  "转复为",
+                  "R-R间期",
+                  "RR间期",
+                  "不齐",
+                  "变成室颤",
+                  "推完",
+                  "腺苷后室颤",
+                  "变宽QRS",
+                  "没脉搏"
+                ],
+                "slots": {},
+                "evidence_policy": {
+                  "min_regex_hit": 1,
+                  "slot_required": [],
+                  "on_slot_missing": {
+                    "mode": "downweight",
+                    "factor": 0.5
+                  },
+                  "required_slot_policy": {
+                    "mode": "downweight",
+                    "downweight_factor": 0.3
+                  },
+                  "slot_confidence_threshold": 0.5
+                }
+              },
+              "negative_policy": {
+                "mode": "soft",
+                "block_on_any_hit": false,
+                "downweight_factor": 0.1,
+                "negative_scope": "same_turn"
+              },
+              "out": {
+                "artifact_type": "评估结果",
+                "artifact": "心律综合判读",
+                "downstream": "确定心律失常类型",
+                "route_evidence": false
+              },
+              "route_guard": {
+                "guard_mode": "soft",
+                "requires_context": {
+                  "state_tags_all": [],
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "excludes_context": {
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "confusion_pairs": []
+              },
+              "keywords": [
+                "这是什么心律",
+                "帮忙看心电图",
+                "是房颤吗"
+              ],
+              "pattern_hints": [
+                "确认心律失常",
+                "能确认吗"
+              ],
+              "examples": [
+                "这是什么心律",
+                "帮忙看一下心电图",
+                "这个心律是房颤吗",
+                "能确认一下是什么心律失常吗",
+                "帮忙确认一下这是不是房扑",
+                "这是什么心律失常",
+                "【负例】QRS宽吗"
+              ],
+              "standard_script": "这是什么心律？帮忙看心电图，是窄QRS规则、窄QRS不规则（房颤/房扑）还是宽QRS？",
+              "extraction": {
+                "target_params": [
+                  "process.suspectedRhythm"
+                ],
+                "rules": {
+                  "processor": "#{rhythmParser.parseGuess(#ctx)}"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "sub_domain_name": "阶梯式治疗执行",
+          "domain_code": "治疗",
+          "sub_domain_description": "本子域包含从迷走神经刺激、药物（腺苷、二线药物）推注、盐水冲管、同步电复律，到治疗结果报告及抗凝评估的全链条治疗执行指令和宣告。",
+          "intents": [
+            {
+              "intent_code": "S-101-2-1",
+              "name_cn": "迷走神经刺激执行",
+              "h": [
+                "SPECIFIC",
+                "治疗",
+                "阶梯式治疗执行"
+              ],
+              "act": "treatment_intervention",
+              "act_type": "发令性指令",
+              "obj": {
+                "type": "治疗",
+                "name": "迷走神经刺激"
+              },
+              "description_cn": "指导患者进行Valsalva动作（屏气用力）或执行颈动脉窦按摩等迷走神经刺激方法。",
+              "trg": {
+                "regex": [
+                  "做Valsalva",
+                  "屏气用力",
+                  "按摩颈动脉窦",
+                  "做Valsalva动作",
+                  "使劲屏气"
+                ],
+                "negative_regex": [
+                  "推腺苷"
+                ],
+                "slots": {},
+                "evidence_policy": {
+                  "min_regex_hit": 1,
+                  "slot_required": [],
+                  "on_slot_missing": {
+                    "mode": "downweight",
+                    "factor": 0.5
+                  },
+                  "required_slot_policy": {
+                    "mode": "downweight",
+                    "downweight_factor": 0.3
+                  },
+                  "slot_confidence_threshold": 0.5
+                }
+              },
+              "negative_policy": {
+                "mode": "soft",
+                "block_on_any_hit": false,
+                "downweight_factor": 0.1,
+                "negative_scope": "same_turn"
+              },
+              "out": {
+                "artifact_type": "治疗执行",
+                "artifact": "迷走神经刺激执行",
+                "downstream": "观察转复效果",
+                "route_evidence": false
+              },
+              "route_guard": {
+                "guard_mode": "soft",
+                "requires_context": {
+                  "state_tags_all": [],
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "excludes_context": {
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "confusion_pairs": []
+              },
+              "keywords": [
+                "做Valsalva",
+                "屏气用力",
+                "按摩颈动脉窦"
+              ],
+              "pattern_hints": [
+                "做Valsalva动作",
+                "使劲屏气"
+              ],
+              "examples": [
+                "做Valsalva动作憋住气用力鼓肚子",
+                "让他使劲屏气",
+                "按摩颈动脉窦确认无杂音后",
+                "让患者做Valsalva",
+                "屏气用力",
+                "【负例】推腺苷"
+              ],
+              "standard_script": "取平卧位，做Valsalva动作（紧闭声门屏气10-30秒用力）；确认无颈动脉杂音后单侧按摩颈动脉窦5-10秒。",
+              "extraction": {
+                "target_params": [
+                  "intervention.vagalManeuverPerformed",
+                  "intervention.vagalEffectObserved"
+                ],
+                "rules": {
+                  "processor": "#{vagalParser.parse(#ctx)}"
+                }
+              }
+            },
+            {
+              "intent_code": "S-101-2-2",
+              "name_cn": "腺苷推注执行",
+              "h": [
+                "SPECIFIC",
+                "治疗",
+                "阶梯式治疗执行"
+              ],
+              "act": "treatment_intervention",
+              "act_type": "发令性指令",
+              "obj": {
+                "type": "药物",
+                "name": "腺苷"
+              },
+              "description_cn": "快速静脉推注腺苷，用于终止规则性窄QRS心动过速。剂量根据首剂/次剂动态调整（首剂6mg，次剂12mg）。给药后需立即快速冲管（20ml生理盐水）。",
+              "trg": {
+                "regex": [
+                  "腺苷推注",
+                  "快速静推",
+                  "首剂腺苷",
+                  "次剂腺苷",
+                  "推腺苷",
+                  "再推一支",
+                  "静推腺苷",
+                  "腺苷.*(静推|推|给)",
+                  "推.*腺苷",
+                  "再给.*毫克",
+                  "IV push",
+                  "再推一次"
+                ],
+                "negative_regex": [
+                  "冲管",
+                  "盐水冲管"
+                ],
+                "slots": {},
+                "evidence_policy": {
+                  "min_regex_hit": 1,
+                  "slot_required": [],
+                  "on_slot_missing": {
+                    "mode": "downweight",
+                    "factor": 0.5
+                  },
+                  "required_slot_policy": {
+                    "mode": "downweight",
+                    "downweight_factor": 0.3
+                  },
+                  "slot_confidence_threshold": 0.5
+                }
+              },
+              "negative_policy": {
+                "mode": "soft",
+                "block_on_any_hit": false,
+                "downweight_factor": 0.1,
+                "negative_scope": "same_turn"
+              },
+              "out": {
+                "artifact_type": "治疗执行",
+                "artifact": "腺苷推注执行",
+                "downstream": "观察转复与冲管",
+                "route_evidence": false
+              },
+              "route_guard": {
+                "guard_mode": "soft",
+                "requires_context": {
+                  "state_tags_all": [],
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "excludes_context": {
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "confusion_pairs": []
+              },
+              "keywords": [
+                "腺苷推注",
+                "快速静推",
+                "首剂腺苷",
+                "次剂腺苷"
+              ],
+              "pattern_hints": [
+                "推腺苷",
+                "再推一支",
+                "静推腺苷"
+              ],
+              "examples": [
+                "腺苷6毫克快速静推",
+                "腺苷12毫克再推一次",
+                "推腺苷",
+                "首剂腺苷快推",
+                "再推一支腺苷",
+                "腺苷[NUM]毫克 IV push",
+                "快速静推腺苷6毫克",
+                "再给12毫克",
+                "推腺苷快",
+                "【负例】冲管"
+              ],
+              "standard_script": "准备腺苷6mg经大外周静脉快速静推，推完立即冲20ml生理盐水；若无效可再给12mg。",
+              "extraction": {
+                "target_params": [
+                  "intervention.adenosineGiven",
+                  "intervention.adenosineDoseCount",
+                  "intervention.lastDrugDose",
+                  "intervention.operationStatus"
+                ],
+                "rules": {
+                  "processor": "#{drugParser.parseSequenceDrug(#ctx)}"
+                }
+              }
+            },
+            {
+              "intent_code": "S-101-2-4",
+              "name_cn": "生理盐水快速冲管指令",
+              "h": [
+                "SPECIFIC",
+                "治疗",
+                "阶梯式治疗执行"
+              ],
+              "act": "treatment_intervention",
+              "act_type": "发令性指令",
+              "obj": {
+                "type": "药物",
+                "name": "生理盐水冲管"
+              },
+              "description_cn": "在腺苷推注后立即快速推注20ml生理盐水，确保药物快速进入中心循环，缩短半衰期影响。",
+              "trg": {
+                "regex": [
+                  "盐水冲管",
+                  "快速冲管",
+                  "冲管快",
+                  "马上推盐水",
+                  "冲管"
+                ],
+                "negative_regex": [
+                  "推腺苷"
+                ],
+                "slots": {},
+                "evidence_policy": {
+                  "min_regex_hit": 1,
+                  "slot_required": [],
+                  "on_slot_missing": {
+                    "mode": "downweight",
+                    "factor": 0.5
+                  },
+                  "required_slot_policy": {
+                    "mode": "downweight",
+                    "downweight_factor": 0.3
+                  },
+                  "slot_confidence_threshold": 0.5
+                }
+              },
+              "negative_policy": {
+                "mode": "soft",
+                "block_on_any_hit": false,
+                "downweight_factor": 0.1,
+                "negative_scope": "same_turn"
+              },
+              "out": {
+                "artifact_type": "治疗执行",
+                "artifact": "生理盐水冲管",
+                "downstream": "确保药物快速进入中心循环",
+                "route_evidence": false
+              },
+              "route_guard": {
+                "guard_mode": "soft",
+                "requires_context": {
+                  "state_tags_all": [],
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "excludes_context": {
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "confusion_pairs": []
+              },
+              "keywords": [
+                "盐水冲管",
+                "快速冲管",
+                "冲管快"
+              ],
+              "pattern_hints": [
+                "马上推盐水",
+                "冲管"
+              ],
+              "examples": [
+                "马上推[NUM]毫升盐水冲管",
+                "快速冲管生理盐水[NUM]毫升",
+                "冲管快",
+                "快速冲管",
+                "盐水冲管",
+                "【负例】推腺苷"
+              ],
+              "standard_script": "立即快速推注20ml生理盐水冲管。",
+              "extraction": {
+                "target_params": [
+                  "intervention.salineFlushDone",
+                  "intervention.lastDrugDose",
+                  "intervention.operationStatus"
+                ],
+                "rules": {
+                  "processor": "#{drugParser.parseSaline(#ctx)}"
+                }
+              }
+            },
+            {
+              "intent_code": "S-101-2-5",
+              "name_cn": "不规则/规则窄QRS二线药物执行",
+              "h": [
+                "SPECIFIC",
+                "治疗",
+                "阶梯式治疗执行"
+              ],
+              "act": "treatment_intervention",
+              "act_type": "发令性指令",
+              "obj": {
+                "type": "药物",
+                "name": "β受体阻滞剂或CCB"
+              },
+              "description_cn": "针对不规则窄QRS心动过速（房颤/房扑）使用β受体阻滞剂或钙通道阻滞剂（CCB）控制心室率；也可作为腺苷无效的规则窄QRS（SVT）二线用药。",
+              "trg": {
+                "regex": [
+                  "地尔硫卓静注",
+                  "美托洛尔静推",
+                  "房颤控制心率",
+                  "用艾司洛尔",
+                  "控制心率",
+                  "地尔硫卓",
+                  "美托洛尔",
+                  "艾司洛尔",
+                  "mg/kg",
+                  "二线药物",
+                  "二线用药",
+                  "β阻滞剂",
+                  "β受体阻滞剂",
+                  "贝塔阻滞剂",
+                  "钙拮抗剂",
+                  "钙通道阻滞剂",
+                  "CCB"
+                ],
+                "negative_regex": [
+                  "推腺苷",
+                  "预激",
+                  "WPW",
+                  "宽QRS"
+                ],
+                "slots": {},
+                "evidence_policy": {
+                  "min_regex_hit": 1,
+                  "slot_required": [],
+                  "on_slot_missing": {
+                    "mode": "downweight",
+                    "factor": 0.5
+                  },
+                  "required_slot_policy": {
+                    "mode": "downweight",
+                    "downweight_factor": 0.3
+                  },
+                  "slot_confidence_threshold": 0.5
+                }
+              },
+              "negative_policy": {
+                "mode": "soft",
+                "block_on_any_hit": false,
+                "downweight_factor": 0.1,
+                "negative_scope": "same_turn"
+              },
+              "out": {
+                "artifact_type": "治疗执行",
+                "artifact": "二线药物执行",
+                "downstream": "控制心室率",
+                "route_evidence": false
+              },
+              "route_guard": {
+                "guard_mode": "soft",
+                "requires_context": {
+                  "state_tags_all": [],
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "excludes_context": {
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "confusion_pairs": []
+              },
+              "keywords": [
+                "地尔硫卓静注",
+                "美托洛尔静推",
+                "房颤控制心率",
+                "二线药物",
+                "二线用药",
+                "β阻滞剂",
+                "β受体阻滞剂",
+                "钙拮抗剂",
+                "钙通道阻滞剂",
+                "CCB"
+              ],
+              "pattern_hints": [
+                "用艾司洛尔",
+                "控制心率"
+              ],
+              "examples": [
+                "地尔硫卓[NUM]毫克千克静注",
+                "美托洛尔[NUM]毫克静推",
+                "房颤控制心率用艾司洛尔",
+                "艾司洛尔0.5mg/kg",
+                "美托洛尔5mg",
+                "用二线药物",
+                "用二线药物，比如β阻滞剂或钙拮抗剂",
+                "上β受体阻滞剂",
+                "用钙拮抗剂控制心率",
+                "【负例】推腺苷"
+              ],
+              "standard_script": "地尔硫卓0.25mg/kg缓慢静注控制心室率（适用于无预激的房颤/房扑）；预激合并房颤/宽QRS禁用CCB、β阻滞剂、腺苷、地高辛和IV胺碘酮。",
+              "extraction": {
+                "target_params": [
+                  "intervention.lastDrug",
+                  "intervention.lastDrugDose",
+                  "intervention.operationStatus"
+                ],
+                "rules": {
+                  "processor": "#{drugParser.parseWeightBasedDrug(#ctx)}"
+                }
+              }
+            },
+            {
+              "intent_code": "S-101-2-6",
+              "name_cn": "同步电复律序列执行",
+              "h": [
+                "SPECIFIC",
+                "治疗",
+                "阶梯式治疗执行"
+              ],
+              "act": "treatment_intervention",
+              "act_type": "发令性指令",
+              "obj": {
+                "type": "治疗",
+                "name": "同步电复律"
+              },
+              "description_cn": "执行同步电复律，包括：设置同步模式、选择能量（50-100J双相波）、电复律前镇静、充电、清场、放电。",
+              "trg": {
+                "regex": [
+                  "同步电复律",
+                  "调成同步模式",
+                  "准备放电",
+                  "焦耳充电",
+                  "同步模式充电",
+                  "充电",
+                  "放电",
+                  "准备镇静",
+                  "镇静药",
+                  "咪达唑仑",
+                  "依托咪酯",
+                  "同步模式",
+                  "焦耳",
+                  "电复律"
+                ],
+                "negative_regex": [
+                  "准备非同步除颤",
+                  "电击键",
+                  "可以放电",
+                  "清场不彻底"
+                ],
+                "slots": {},
+                "evidence_policy": {
+                  "min_regex_hit": 1,
+                  "slot_required": [],
+                  "on_slot_missing": {
+                    "mode": "downweight",
+                    "factor": 0.5
+                  },
+                  "required_slot_policy": {
+                    "mode": "downweight",
+                    "downweight_factor": 0.3
+                  },
+                  "slot_confidence_threshold": 0.5
+                }
+              },
+              "negative_policy": {
+                "mode": "soft",
+                "block_on_any_hit": false,
+                "downweight_factor": 0.1,
+                "negative_scope": "same_turn"
+              },
+              "out": {
+                "artifact_type": "治疗执行",
+                "artifact": "同步电复律",
+                "downstream": "转复心律",
+                "route_evidence": false
+              },
+              "route_guard": {
+                "guard_mode": "soft",
+                "requires_context": {
+                  "state_tags_all": [],
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "excludes_context": {
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "confusion_pairs": []
+              },
+              "keywords": [
+                "同步电复律",
+                "调成同步模式",
+                "准备放电",
+                "焦耳充电"
+              ],
+              "pattern_hints": [
+                "同步模式充电",
+                "准备放电"
+              ],
+              "examples": [
+                "调成同步模式[NUM]焦耳充电",
+                "同步电复律[NUM]焦耳准备放电",
+                "充电完成大家离开放电",
+                "准备好镇静药物咪达唑仑",
+                "给镇静准备电复律",
+                "准备镇静药物（咪达唑仑/依托咪酯）",
+                "同步电复律100J准备",
+                "给镇静药",
+                "【负例】准备非同步除颤"
+              ],
+              "standard_script": "调至同步模式；窄QRS规则心动过速选择50-100J，房颤双相至少200J、房扑可50-100J（或按设备推荐）；充电，准备镇静药物，大家离开放电。",
+              "extraction": {
+                "target_params": [
+                  "intervention.cardioversionPerformed",
+                  "device.lastShockEnergy",
+                  "intervention.operationStatus",
+                  "intervention.lastDrug"
+                ],
+                "rules": {
+                  "processor": "#{cardioversionParser.parse(#ctx)}"
+                }
+              }
+            },
+            {
+              "intent_code": "S-101-2-7",
+              "name_cn": "WPW/预激综合征警示",
+              "h": [
+                "SPECIFIC",
+                "治疗",
+                "阶梯式治疗执行"
+              ],
+              "act": "safety_clear",
+              "act_type": "宣告",
+              "obj": {
+                "type": "临床",
+                "name": "WPW/预激综合征"
+              },
+              "description_cn": "当识别到宽QRS伴预激波、δ波或已知WPW综合征病史时，警示禁用腺苷、CCB、β受体阻滞剂、地高辛。",
+              "trg": {
+                "regex": [
+                  "预激综合征",
+                  "禁用腺苷",
+                  "CCB禁用",
+                  "δ波阳性",
+                  "不能用腺苷",
+                  "WPW患者",
+                  "预激",
+                  "别用腺苷",
+                  "WPW",
+                  "δ波",
+                  "禁用"
+                ],
+                "negative_regex": [
+                  "推腺苷"
+                ],
+                "slots": {},
+                "evidence_policy": {
+                  "min_regex_hit": 1,
+                  "slot_required": [],
+                  "on_slot_missing": {
+                    "mode": "downweight",
+                    "factor": 0.5
+                  },
+                  "required_slot_policy": {
+                    "mode": "downweight",
+                    "downweight_factor": 0.3
+                  },
+                  "slot_confidence_threshold": 0.5
+                }
+              },
+              "negative_policy": {
+                "mode": "soft",
+                "block_on_any_hit": false,
+                "downweight_factor": 0.1,
+                "negative_scope": "same_turn"
+              },
+              "out": {
+                "artifact_type": "警示",
+                "artifact": "WPW警示",
+                "downstream": "禁用房室结阻滞剂",
+                "route_evidence": false
+              },
+              "route_guard": {
+                "guard_mode": "soft",
+                "requires_context": {
+                  "state_tags_all": [],
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "excludes_context": {
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "confusion_pairs": []
+              },
+              "keywords": [
+                "预激综合征",
+                "禁用腺苷",
+                "CCB禁用",
+                "δ波阳性"
+              ],
+              "pattern_hints": [
+                "不能用腺苷",
+                "WPW患者"
+              ],
+              "examples": [
+                "注意有预激综合征不能用腺苷和地尔硫卓",
+                "这个宽QRS是预激CCB禁用",
+                "WPW患者只能用胺碘酮或电复律",
+                "δ波阳性避免使用房室结阻滞剂",
+                "有预激，别用腺苷",
+                "【负例】推腺苷"
+              ],
+              "standard_script": "注意！预激合并房颤/宽QRS心动过速时，禁用腺苷、CCB、β阻滞剂、地高辛和IV胺碘酮；预激合并窄QRS（顺向型AVRT）时腺苷可谨慎使用。",
+              "extraction": {
+                "target_params": [
+                  "clinical.isWpw",
+                  "process.wpwAlertTriggered"
+                ],
+                "rules": {
+                  "processor": "#{wpwParser.parse(#ctx)}"
+                }
+              }
+            },
+            {
+              "intent_code": "S-101-2-8",
+              "name_cn": "治疗结果报告",
+              "h": [
+                "SPECIFIC",
+                "治疗",
+                "阶梯式治疗执行"
+              ],
+              "act": "interpret_report",
+              "act_type": "宣告",
+              "obj": {
+                "type": "治疗",
+                "name": "治疗结果"
+              },
+              "description_cn": "报告药物或电击干预后的结果，如转复成功、未转复、无效等。",
+              "trg": {
+                "regex": [
+                  "转复为窦性",
+                  "未转复",
+                  "转复成功",
+                  "无效",
+                  "恢复了窦性心律"
+                ],
+                "negative_regex": [
+                  "准备电复律"
+                ],
+                "slots": {},
+                "evidence_policy": {
+                  "min_regex_hit": 1,
+                  "slot_required": [],
+                  "on_slot_missing": {
+                    "mode": "downweight",
+                    "factor": 0.5
+                  },
+                  "required_slot_policy": {
+                    "mode": "downweight",
+                    "downweight_factor": 0.3
+                  },
+                  "slot_confidence_threshold": 0.5
+                }
+              },
+              "negative_policy": {
+                "mode": "soft",
+                "block_on_any_hit": false,
+                "downweight_factor": 0.1,
+                "negative_scope": "same_turn"
+              },
+              "out": {
+                "artifact_type": "报告结果",
+                "artifact": "治疗结果报告",
+                "downstream": "后续决策",
+                "route_evidence": false
+              },
+              "route_guard": {
+                "guard_mode": "soft",
+                "requires_context": {
+                  "state_tags_all": [],
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "excludes_context": {
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "confusion_pairs": []
+              },
+              "keywords": [
+                "转复为窦性",
+                "未转复",
+                "转复成功",
+                "无效"
+              ],
+              "pattern_hints": [
+                "转复成功",
+                "恢复了窦性心律"
+              ],
+              "examples": [
+                "转复为窦性",
+                "未转复",
+                "仍未转复",
+                "转复成功",
+                "无效",
+                "转复为房颤",
+                "恢复了窦性心律",
+                "转复成功，现窦性",
+                "无效",
+                "【负例】准备电复律"
+              ],
+              "standard_script": "心律已转复为窦性，血压稳定，持续监测心律变化。",
+              "extraction": {
+                "target_params": [
+                  "intervention.vagalEffectObserved",
+                  "intervention.rhythmConfirmed",
+                  "intervention.rhythmConverted"
+                ],
+                "rules": {
+                  "processor": "#{resultParser.parse(#ctx)}"
+                }
+              }
+            },
+            {
+              "intent_code": "S-101-2-9",
+              "name_cn": "抗凝评估与决策",
+              "h": [
+                "SPECIFIC",
+                "治疗",
+                "阶梯式治疗执行"
+              ],
+              "act": "assess_check",
+              "act_type": "探查性询问",
+              "obj": {
+                "type": "临床",
+                "name": "抗凝指征"
+              },
+              "description_cn": "针对房颤/房扑等心律不齐患者，评估CHADS2-VASc评分及抗凝指征，并决定抗凝治疗方案。",
+              "trg": {
+                "regex": [
+                  "评估抗凝",
+                  "CHADS2评分",
+                  "需要抗凝吗",
+                  "抗凝指征",
+                  "抗凝禁忌",
+                  "CHA2DS2-VASc评分",
+                  "抗凝治疗",
+                  "准备抗凝",
+                  "考虑抗凝"
+                ],
+                "negative_regex": [
+                  "推腺苷"
+                ],
+                "slots": {},
+                "evidence_policy": {
+                  "min_regex_hit": 1,
+                  "slot_required": [],
+                  "on_slot_missing": {
+                    "mode": "downweight",
+                    "factor": 0.5
+                  },
+                  "required_slot_policy": {
+                    "mode": "downweight",
+                    "downweight_factor": 0.3
+                  },
+                  "slot_confidence_threshold": 0.5
+                }
+              },
+              "negative_policy": {
+                "mode": "soft",
+                "block_on_any_hit": false,
+                "downweight_factor": 0.1,
+                "negative_scope": "same_turn"
+              },
+              "out": {
+                "artifact_type": "评估结果",
+                "artifact": "抗凝评估",
+                "downstream": "抗凝治疗决策",
+                "route_evidence": false
+              },
+              "route_guard": {
+                "guard_mode": "soft",
+                "requires_context": {
+                  "state_tags_all": [],
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "excludes_context": {
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "confusion_pairs": []
+              },
+              "keywords": [
+                "评估抗凝",
+                "CHADS2评分",
+                "需要抗凝吗"
+              ],
+              "pattern_hints": [
+                "抗凝指征",
+                "抗凝禁忌"
+              ],
+              "examples": [
+                "评估抗凝指征",
+                "准备抗凝治疗",
+                "CHADS2评分多少",
+                "患者需要抗凝吗",
+                "有没有抗凝禁忌",
+                "CHA2DS2-VASc评分",
+                "考虑抗凝",
+                "【负例】推腺苷"
+              ],
+              "standard_script": "评估CHA₂DS₂-VASc评分（男性≥2分、女性≥3分为高危），患者需要抗凝吗？有无禁忌？",
+              "extraction": {
+                "target_params": [
+                  "process.anticoagulationAssessed",
+                  "process.operationStatus"
+                ],
+                "rules": {
+                  "processor": "#{anticoagulantParser.parse(#ctx)}"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "sub_domain_name": "稳定转换不稳定",
+          "domain_code": "危急",
+          "sub_domain_description": "本子域专门处理患者血流动力学从稳定转为不稳定的紧急情况，包括明确的不稳定征象宣告和紧急电复律决策指令。",
+          "intents": [
+            {
+              "intent_code": "S-101-3-1",
+              "name_cn": "血流动力学恶化宣告",
+              "h": [
+                "SPECIFIC",
+                "危急",
+                "稳定转换不稳定"
+              ],
+              "act": "record_document",
+              "act_type": "宣告",
+              "obj": {
+                "type": "患者",
+                "name": "血流动力学恶化"
+              },
+              "description_cn": "【紧急】报告患者已出现明确不稳定征象：低血压（SBP<90）、意识水平下降、缺血性胸痛加重、休克征象、急性心衰（肺水肿/呼吸窘迫）。",
+              "trg": {
+                "regex": [
+                  "血压掉到",
+                  "不清醒了",
+                  "胸痛加重",
+                  "休克了",
+                  "血压掉到了",
+                  "不稳定了",
+                  "血压骤降",
+                  "意识模糊",
+                  "喘不上气",
+                  "肺里有啰音",
+                  "末梢湿冷",
+                  "收缩压只有",
+                  "不稳定"
+                ],
+                "negative_regex": [
+                  "血压稳定"
+                ],
+                "slots": {},
+                "evidence_policy": {
+                  "min_regex_hit": 1,
+                  "slot_required": [],
+                  "on_slot_missing": {
+                    "mode": "downweight",
+                    "factor": 0.5
+                  },
+                  "required_slot_policy": {
+                    "mode": "downweight",
+                    "downweight_factor": 0.3
+                  },
+                  "slot_confidence_threshold": 0.5
+                }
+              },
+              "negative_policy": {
+                "mode": "soft",
+                "block_on_any_hit": false,
+                "downweight_factor": 0.1,
+                "negative_scope": "same_turn"
+              },
+              "out": {
+                "artifact_type": "紧急宣告",
+                "artifact": "血流动力学恶化",
+                "downstream": "启动紧急电复律",
+                "route_evidence": false
+              },
+              "route_guard": {
+                "guard_mode": "soft",
+                "requires_context": {
+                  "state_tags_all": [],
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "excludes_context": {
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "confusion_pairs": []
+              },
+              "keywords": [
+                "血压掉到",
+                "不清醒了",
+                "胸痛加重",
+                "休克了"
+              ],
+              "pattern_hints": [
+                "血压掉到了",
+                "不稳定了"
+              ],
+              "examples": [
+                "血压掉到[NUM]了",
+                "人不清醒了",
+                "胸痛加重不稳定了",
+                "收缩压只有[NUM]快处理",
+                "患者喘不上气肺里有啰音",
+                "末梢湿冷休克了",
+                "血压骤降",
+                "意识模糊",
+                "【负例】血压稳定"
+              ],
+              "standard_script": "患者血压掉到85/50，意识模糊，不稳定了，立即准备电复律。",
+              "extraction": {
+                "target_params": [
+                  "phys.symptomsPresent",
+                  "assert.stable",
+                  "report.systolicBp",
+                  "process.instabilityTriggered"
+                ],
+                "rules": {
+                  "processor": "#{deteriorationParser.parse(#ctx)}"
+                }
+              }
+            },
+            {
+              "intent_code": "S-101-3-2",
+              "name_cn": "启动紧急电复律决策",
+              "h": [
+                "SPECIFIC",
+                "危急",
+                "稳定转换不稳定"
+              ],
+              "act": "treatment_intervention",
+              "act_type": "发令性指令",
+              "obj": {
+                "type": "治疗",
+                "name": "紧急同步电复律"
+              },
+              "description_cn": "在患者转为不稳定时，立即决定执行紧急同步电复律。",
+              "trg": {
+                "regex": [
+                  "马上同步电复律",
+                  "准备紧急电击",
+                  "立刻电复律",
+                  "直接电复律",
+                  "别推药了直接电",
+                  "同步电复律",
+                  "紧急电复律",
+                  "马上电",
+                  "开启同步模式",
+                  "选择能量"
+                ],
+                "negative_regex": [
+                  "推腺苷"
+                ],
+                "slots": {},
+                "evidence_policy": {
+                  "min_regex_hit": 1,
+                  "slot_required": [],
+                  "on_slot_missing": {
+                    "mode": "downweight",
+                    "factor": 0.5
+                  },
+                  "required_slot_policy": {
+                    "mode": "downweight",
+                    "downweight_factor": 0.3
+                  },
+                  "slot_confidence_threshold": 0.5
+                }
+              },
+              "negative_policy": {
+                "mode": "soft",
+                "block_on_any_hit": false,
+                "downweight_factor": 0.1,
+                "negative_scope": "same_turn"
+              },
+              "out": {
+                "artifact_type": "治疗执行",
+                "artifact": "紧急电复律",
+                "downstream": "转复心律",
+                "route_evidence": false
+              },
+              "route_guard": {
+                "guard_mode": "soft",
+                "requires_context": {
+                  "state_tags_all": [],
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "excludes_context": {
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "confusion_pairs": []
+              },
+              "keywords": [
+                "马上同步电复律",
+                "准备紧急电击",
+                "立刻电复律"
+              ],
+              "pattern_hints": [
+                "直接电复律",
+                "别推药了直接电"
+              ],
+              "examples": [
+                "马上同步电复律",
+                "准备紧急电击",
+                "不稳定了立刻电复律",
+                "别推药了直接电复律",
+                "开启同步模式，选择能量",
+                "紧急电复律",
+                "马上电",
+                "【负例】推腺苷"
+              ],
+              "standard_script": "马上同步电复律：确认SYNC模式开启，选择100J，准备镇静，充电。",
+              "extraction": {
+                "target_params": [
+                  "intervention.emergencyCardioversionPerformed",
+                  "intervention.operationStatus"
+                ],
+                "rules": {
+                  "processor": "#{cardioversionParser.parseEmergency(#ctx)}"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "sub_domain_name": "错误应激与病情跃迁",
+          "domain_code": "警示",
+          "sub_domain_description": "本子域报告因用药不当、误电击或病情急剧恶化导致的致命性心律失常（室颤、无脉室速）、PEA或停搏等安全红线事件，以及稳定场景下的禁忌操作拦截。",
+          "intents": [
+            {
+              "intent_code": "S-101-4-1",
+              "name_cn": "药物诱发室颤或致命心律失常宣告",
+              "h": [
+                "SPECIFIC",
+                "警示",
+                "错误应激与病情跃迁"
+              ],
+              "act": "record_document",
+              "act_type": "宣告",
+              "obj": {
+                "type": "患者",
+                "name": "药物诱发致命心律失常"
+              },
+              "description_cn": "报告因用药不当（如WPW误用腺苷/CCB/地高辛，或房颤误用腺苷）导致患者突变宽QRS心动过速或无脉性室颤/室速。",
+              "trg": {
+                "regex": [
+                  "变成宽QRS室速",
+                  "蜕变为室颤",
+                  "推完药心脏停了",
+                  "变成室颤了",
+                  "诱发室速",
+                  "变宽QRS",
+                  "变成室颤",
+                  "诱发.*室速",
+                  "推完.*心脏停",
+                  "预激合并房颤",
+                  "没脉搏",
+                  "诱发出了"
+                ],
+                "negative_regex": [
+                  "转复成功",
+                  "非同步",
+                  "R-on-T",
+                  "尖端扭转"
+                ],
+                "slots": {},
+                "evidence_policy": {
+                  "min_regex_hit": 1,
+                  "slot_required": [],
+                  "on_slot_missing": {
+                    "mode": "downweight",
+                    "factor": 0.5
+                  },
+                  "required_slot_policy": {
+                    "mode": "downweight",
+                    "downweight_factor": 0.3
+                  },
+                  "slot_confidence_threshold": 0.5
+                }
+              },
+              "negative_policy": {
+                "mode": "soft",
+                "block_on_any_hit": false,
+                "downweight_factor": 0.1,
+                "negative_scope": "same_turn"
+              },
+              "out": {
+                "artifact_type": "安全事件",
+                "artifact": "药物诱发室颤/室速",
+                "downstream": "启动ACLS",
+                "route_evidence": false
+              },
+              "route_guard": {
+                "guard_mode": "soft",
+                "requires_context": {
+                  "state_tags_all": [],
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "excludes_context": {
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "confusion_pairs": []
+              },
+              "keywords": [
+                "变成宽QRS室速",
+                "蜕变为室颤",
+                "推完药心脏停了"
+              ],
+              "pattern_hints": [
+                "变成室颤了",
+                "诱发室速"
+              ],
+              "examples": [
+                "完了变成宽QRS室速了没脉搏了",
+                "患者出现预激合并房颤蜕变为室颤",
+                "推完地尔硫卓心脏停了",
+                "不好腺苷诱发出了多形性室速",
+                "房颤用腺苷后变成室颤了",
+                "腺苷后室颤",
+                "变宽QRS",
+                "【负例】转复成功"
+              ],
+              "standard_script": "推完腺苷变成宽QRS室速，没脉搏了，立即CPR并准备除颤。",
+              "extraction": {
+                "target_params": [
+                  "process.drugInducedVfAlertShown",
+                  "intervention.lastDrug"
+                ],
+                "rules": {
+                  "processor": "#{errorParser.parseDrugInduced(#ctx)}"
+                }
+              }
+            },
+            {
+              "intent_code": "S-101-4-2",
+              "name_cn": "非同步误电击致室颤宣告",
+              "h": [
+                "SPECIFIC",
+                "警示",
+                "错误应激与病情跃迁"
+              ],
+              "act": "record_document",
+              "act_type": "宣告",
+              "obj": {
+                "type": "患者",
+                "name": "非同步误电击致室颤"
+              },
+              "description_cn": "报告因未开启同步模式或能量选择不当导致诱发R-on-T或室颤。",
+              "trg": {
+                "regex": [
+                  "非同步放电",
+                  "打完变室颤",
+                  "没开同步",
+                  "非同步后室颤",
+                  "R-on-T了",
+                  "非同步.*室颤",
+                  "非同步.*放电",
+                  "R-on-T",
+                  "尖端扭转型"
+                ],
+                "negative_regex": [
+                  "同步电复律成功"
+                ],
+                "slots": {},
+                "evidence_policy": {
+                  "min_regex_hit": 1,
+                  "slot_required": [],
+                  "on_slot_missing": {
+                    "mode": "downweight",
+                    "factor": 0.5
+                  },
+                  "required_slot_policy": {
+                    "mode": "downweight",
+                    "downweight_factor": 0.3
+                  },
+                  "slot_confidence_threshold": 0.5
+                }
+              },
+              "negative_policy": {
+                "mode": "soft",
+                "block_on_any_hit": false,
+                "downweight_factor": 0.1,
+                "negative_scope": "same_turn"
+              },
+              "out": {
+                "artifact_type": "安全事件",
+                "artifact": "非同步误电击致室颤",
+                "downstream": "立即除颤",
+                "route_evidence": false
+              },
+              "route_guard": {
+                "guard_mode": "soft",
+                "requires_context": {
+                  "state_tags_all": [],
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "excludes_context": {
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "confusion_pairs": []
+              },
+              "keywords": [
+                "非同步放电",
+                "打完变室颤",
+                "没开同步"
+              ],
+              "pattern_hints": [
+                "非同步后室颤",
+                "R-on-T了"
+              ],
+              "examples": [
+                "糟糕非同步放电后室颤了",
+                "打完变室颤了快除颤",
+                "能量太高诱发尖端扭转型室速",
+                "没开同步R-on-T了",
+                "非同步电击后室颤",
+                "【负例】同步电复律成功"
+              ],
+              "standard_script": "非同步放电后室颤，立即除颤。",
+              "extraction": {
+                "target_params": [
+                  "process.unsynchronizedShockVfAlertShown",
+                  "device.lastShockEnergy"
+                ],
+                "rules": {
+                  "processor": "#{errorParser.parseShockInduced(#ctx)}"
+                }
+              }
+            },
+            {
+              "intent_code": "S-101-4-3",
+              "name_cn": "血流动力学崩溃或PEA宣告",
+              "h": [
+                "SPECIFIC",
+                "警示",
+                "错误应激与病情跃迁"
+              ],
+              "act": "record_document",
+              "act_type": "宣告",
+              "obj": {
+                "type": "患者",
+                "name": "PEA/停搏"
+              },
+              "description_cn": "报告因延迟处置、药物过度抑制或病情急剧恶化导致严重低血压、无脉性电活动（PEA）或全心停搏。",
+              "trg": {
+                "regex": [
+                  "血压测不到",
+                  "心电直线",
+                  "PEA",
+                  "停搏了",
+                  "成无脉电活动",
+                  "直接停搏了",
+                  "无脉电活动",
+                  "心脏停搏",
+                  "停搏"
+                ],
+                "negative_regex": [
+                  "血压恢复"
+                ],
+                "slots": {},
+                "evidence_policy": {
+                  "min_regex_hit": 1,
+                  "slot_required": [],
+                  "on_slot_missing": {
+                    "mode": "downweight",
+                    "factor": 0.5
+                  },
+                  "required_slot_policy": {
+                    "mode": "downweight",
+                    "downweight_factor": 0.3
+                  },
+                  "slot_confidence_threshold": 0.5
+                }
+              },
+              "negative_policy": {
+                "mode": "soft",
+                "block_on_any_hit": false,
+                "downweight_factor": 0.1,
+                "negative_scope": "same_turn"
+              },
+              "out": {
+                "artifact_type": "安全事件",
+                "artifact": "PEA/停搏",
+                "downstream": "开始CPR",
+                "route_evidence": false
+              },
+              "route_guard": {
+                "guard_mode": "soft",
+                "requires_context": {
+                  "state_tags_all": [],
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "excludes_context": {
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "confusion_pairs": []
+              },
+              "keywords": [
+                "血压测不到",
+                "心电直线",
+                "PEA",
+                "停搏了"
+              ],
+              "pattern_hints": [
+                "成无脉电活动",
+                "直接停搏了"
+              ],
+              "examples": [
+                "血压测不到了成无脉电活动了",
+                "人没反应了心电直线了",
+                "美托洛尔推完直接停搏了",
+                "脉搏消失PEA",
+                "停搏了快按压",
+                "无脉电活动",
+                "心脏停搏",
+                "【负例】血压恢复"
+              ],
+              "standard_script": "血压测不到，无脉电活动，立即CPR，肾上腺素1mg静推，每3-5分钟重复。",
+              "extraction": {
+                "target_params": [
+                  "process.peaAsystoleAlertShown"
+                ],
+                "rules": {
+                  "processor": "#{errorParser.parsePEA(#ctx)}"
+                }
+              }
+            },
+            {
+              "intent_code": "S-101-4-4",
+              "name_cn": "稳定窄QRS禁忌操作拦截",
+              "h": [
+                "SPECIFIC",
+                "警示",
+                "错误应激与病情跃迁"
+              ],
+              "act": "safety_clear",
+              "act_type": "宣告",
+              "obj": {
+                "type": "安全",
+                "name": "禁忌操作拦截"
+              },
+              "description_cn": "识别并拦截学员下达的、针对当前稳定血流动力学状态的绝对禁忌操作。",
+              "trg": {
+                "regex": [
+                  "开始胸外按压",
+                  "准备除颤",
+                  "非同步",
+                  "肾上腺素",
+                  "阿托品",
+                  "利多卡因",
+                  "开始按压",
+                  "做CPR",
+                  "非同步放电",
+                  "推肾上腺素",
+                  "给阿托品"
+                ],
+                "negative_regex": [
+                  "准备同步电复律",
+                  "推注腺苷",
+                  "同步电复律100J"
+                ],
+                "slots": {},
+                "evidence_policy": {
+                  "min_regex_hit": 1,
+                  "slot_required": [],
+                  "on_slot_missing": {
+                    "mode": "downweight",
+                    "factor": 0.5
+                  },
+                  "required_slot_policy": {
+                    "mode": "downweight",
+                    "downweight_factor": 0.3
+                  },
+                  "slot_confidence_threshold": 0.5
+                }
+              },
+              "negative_policy": {
+                "mode": "hard",
+                "block_on_any_hit": true,
+                "downweight_factor": 0.1,
+                "negative_scope": "same_turn"
+              },
+              "out": {
+                "artifact_type": "安全拦截",
+                "artifact": "禁忌操作拦截",
+                "downstream": "阻止错误操作",
+                "route_evidence": false
+              },
+              "route_guard": {
+                "guard_mode": "soft",
+                "requires_context": {
+                  "state_tags_all": [],
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "excludes_context": {
+                  "state_tags_any": [],
+                  "context_vars": {},
+                  "history_window": {
+                    "seconds": 0,
+                    "state_tags_any": []
+                  }
+                },
+                "confusion_pairs": []
+              },
+              "keywords": [
+                "开始胸外按压",
+                "准备除颤",
+                "非同步",
+                "肾上腺素",
+                "阿托品",
+                "利多卡因"
+              ],
+              "pattern_hints": [
+                "开始按压",
+                "做CPR",
+                "非同步放电",
+                "推肾上腺素",
+                "给阿托品"
+              ],
+              "examples": [
+                "【正例】开始胸外按压",
+                "【正例】准备1mg肾上腺素静推",
+                "【正例】把除颤仪调到非同步模式",
+                "【正例】赶紧准备除颤",
+                "【正例】开始CPR",
+                "【正例】推肾上腺素",
+                "【正例】非同步除颤",
+                "【负例-禁止匹配】准备同步电复律（此为S2-6合法指令）",
+                "【负例-禁止匹配】推注腺苷（此为S2-2合法指令）",
+                "【负例-禁止匹配】同步电复律100J"
+              ],
+              "standard_script": "（错误指令示例，应被拦截）开始胸外按压。",
+              "extraction": {
+                "target_params": [
+                  "process.contraindicationBlockTriggered",
+                  "intervention.lastDrug"
+                ],
+                "rules": {
+                  "processor": "#{errorInterceptorParser.parse(#ctx)}"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

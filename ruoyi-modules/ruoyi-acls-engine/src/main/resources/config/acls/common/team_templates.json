@@ -1,0 +1,37 @@
+{
+  "templates": [
+    {
+      "id": "3MAN",
+      "description": "标准三人组（组长+医生+护士+司机，含组长岗位）",
+      "slots": [
+        { "title": "组长", "name": "体验者", "duties": ["TEAM_LEADER"], "color": "#9E9E9E", "ttsVoice": "zm_098" },
+        { "title": "医生", "name": "蓝医生", "duties": ["ASSESS", "AIRWAY", "CPR"], "color": "#1E88E5", "ttsVoice": "zm_098" },
+        { "title": "护士", "name": "黄护士", "duties": ["IV_MED", "MONITOR_DEFIB", "RECORD"], "color": "#FDD835", "ttsVoice": "zf_047" },
+        { "title": "司机", "name": "朱司机", "duties": ["CPR", "ASSIST"], "color": "#E53935", "ttsVoice": "zm_089" }
+      ]
+    },
+    {
+      "id": "4MAN",
+      "description": "标准四人组（增加一名担架员）",
+      "slots": [
+        { "title": "组长", "name": "体验者", "duties": ["TEAM_LEADER"], "color": "#9E9E9E", "ttsVoice": "zm_098" },
+        { "title": "医生", "name": "蓝医生", "duties": ["ASSESS", "AIRWAY", "CPR"], "color": "#1E88E5", "ttsVoice": "zm_098" },
+        { "title": "护士", "name": "黄护士", "duties": ["IV_MED", "MONITOR_DEFIB", "RECORD"], "color": "#FDD835", "ttsVoice": "zf_047" },
+        { "title": "司机", "name": "朱司机", "duties": ["CPR", "ASSIST"], "color": "#E53935", "ttsVoice": "zm_089" },
+        { "title": "担架员", "name": "白担架", "duties": ["ASSIST"], "color": "#F5F5F5", "ttsVoice": "zm_057" }
+      ]
+    },
+    {
+      "id": "5MAN",
+      "description": "大型团队五人组（两名担架员）",
+      "slots": [
+        { "title": "组长", "name": "体验者", "duties": ["TEAM_LEADER"], "color": "#9E9E9E", "ttsVoice": "zm_098" },
+        { "title": "医生", "name": "蓝医生", "duties": ["ASSESS", "AIRWAY", "CPR"], "color": "#1E88E5", "ttsVoice": "zm_098" },
+        { "title": "护士", "name": "黄护士", "duties": ["IV_MED", "MONITOR_DEFIB", "RECORD"], "color": "#FDD835", "ttsVoice": "zf_047" },
+        { "title": "司机", "name": "朱司机", "duties": ["CPR", "ASSIST"], "color": "#E53935", "ttsVoice": "zm_089" },
+        { "title": "担架员1", "name": "白担架", "duties": ["ASSIST"], "color": "#F5F5F5", "ttsVoice": "zm_055" },
+        { "title": "担架员2", "name": "黑担架", "duties": ["ASSIST"], "color": "#212121", "ttsVoice": "zm_057" }
+      ]
+    }
+  ]
+}

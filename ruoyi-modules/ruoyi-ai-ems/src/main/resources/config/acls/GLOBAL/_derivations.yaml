@@ -1,0 +1,12 @@
+derivations:
+  - target: derived.stable
+    description: "血流动力学稳定（AHA 标准：收缩压≥90，意识清醒，呼吸频率10-30）"
+    expression: "#phys.systolicBp != null && #phys.systolicBp >= 90 && #phys.consciousness == 'alert' && #phys.respiratoryRate >= 10 && #phys.respiratoryRate <= 30"
+
+  - target: derived.qrsWidth
+    description: "QRS 宽度分类（≤0.12秒为窄，>0.12秒为宽）"
+    expression: "#phys.qrsDuration != null && #phys.qrsDuration <= 0.12 ? 'narrow' : 'wide'"
+
+  - target: derived.rhythmRegular
+    description: "心律是否规则（RR间期变异度<0.12秒为规则）"
+    expression: "#phys.rrIntervalJitter != null && #phys.rrIntervalJitter < 0.12"

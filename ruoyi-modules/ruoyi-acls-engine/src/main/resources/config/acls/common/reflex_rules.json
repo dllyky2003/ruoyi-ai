@@ -1,0 +1,353 @@
+{
+  "version": "2.0",
+  "description": "ACLS 2025 成人通用反射规则体系 - 适用于 ≥18岁心脏骤停及围骤停场景",
+  "target_population": "adult",
+  "clinical_basis": "AHA 2025 Guidelines for CPR and ECC",
+  "rules": [
+    {
+      "id": "RHYTHM_VF_VT_ALERT",
+      "duty": "MONITOR_DEFIB",
+      "condition": "#context.getVar('phys.rhythm') == 'VF' || #context.getVar('phys.rhythm') == 'VT'",
+      "speech": "报告组长，监护显示室颤/无脉性室速！建议立即除颤，能量200J（双相波）！",
+      "animation": "defib_prep",
+      "priority": 10,
+      "type": "action",
+      "clinical_basis": "AHA 2025: 可电击心律应立即除颤，成人首次能量 120-200J（双相波）"
+    },
+    {
+      "id": "RHYTHM_VF_VT_RECURRENT",
+      "duty": "MONITOR_DEFIB",
+      "condition": "#context.getVar('phys.rhythm') == 'VF' && #context.getVar('process.shockCount') >= 1",
+      "speech": "报告组长，除颤后仍为室颤，可考虑递增能量或更换电极位置，准备第二次电击！",
+      "animation": "defib_prep",
+      "priority": 9,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: refractory VF 可考虑能量递增至 360J 或双序贯除颤"
+    },
+    {
+      "id": "RHYTHM_PEA_ASYSTOLE",
+      "duty": "MONITOR_DEFIB",
+      "condition": "#context.getVar('phys.rhythm') == 'PEA' || #context.getVar('phys.rhythm') == 'ASYSTOLE'",
+      "speech": "报告组长，心律为无脉电活动/停搏，不可电击！立即给予肾上腺素 1mg 并排查可逆原因！",
+      "priority": 8,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: PEA/Asystole 不可电击，应尽早给予肾上腺素并排查 6H6T"
+    },
+    {
+      "id": "RHYTHM_SINUS_ROSC",
+      "duty": "MONITOR_DEFIB",
+      "condition": "#context.getVar('phys.rhythm') == 'SINUS' && #context.getVar('phys.hasPulse') == true",
+      "speech": "报告组长，患者恢复自主循环，心律为窦性，可触及脉搏！",
+      "animation": "rosc_success",
+      "priority": 9,
+      "type": "action",
+      "clinical_basis": "AHA 2025: ROSC 识别后立即启动复苏后管理流程"
+    },
+    {
+      "id": "CPR_2MIN_CYCLE_CHECK",
+      "duty": "CPR",
+      "condition": "#context.getVar('process.cprCycleElapsed', 0) >= 115 && #context.getVar('process.cprCycleElapsed', 0) < 125",
+      "speech": "报告组长，2分钟CPR即将完成，准备暂停按压进行心律和脉搏检查！",
+      "priority": 7,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 每2分钟检查心律，尽量减少按压中断"
+    },
+    {
+      "id": "CPR_HANDS_OFF_ALERT",
+      "duty": "CPR",
+      "condition": "#context.getVar('process.handsOffTime', 0) > 5",
+      "speech": "报告组长，按压中断已超过5秒，建议立即恢复胸外按压！",
+      "priority": 7,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 尽量缩短按压中断时间，目标 < 5秒"
+    },
+    {
+      "id": "CPR_DEPTH_ABNORMAL",
+      "duty": "CPR",
+      "condition": "#context.getVar('process.compressionDepth', 0) < 5 || #context.getVar('process.compressionDepth', 0) > 6",
+      "speech": "报告组长，按压深度异常，当前 ${compressionDepth}cm，成人标准为 5-6cm！",
+      "priority": 4,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 成人胸外按压深度至少 5cm，不超过 6cm"
+    },
+    {
+      "id": "CPR_RATE_ABNORMAL",
+      "duty": "CPR",
+      "condition": "#context.getVar('process.compressionRate', 0) < 100 || #context.getVar('process.compressionRate', 0) > 120",
+      "speech": "报告组长，按压频率异常，当前 ${compressionRate}次/分，标准为 100-120次/分！",
+      "priority": 4,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 按压频率 100-120次/分"
+    },
+    {
+      "id": "CPR_ROTATION_REMINDER",
+      "duty": "CPR",
+      "condition": "#context.getVar('process.cprCycleCount', 0) % 2 == 0 && #context.getVar('process.cprCycleCount', 0) > 0",
+      "speech": "报告组长，已完成 ${cprCycleCount} 个CPR周期，建议考虑按压员轮换！",
+      "priority": 3,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 每2分钟或按压员疲劳时应轮换，避免按压质量下降"
+    },
+    {
+      "id": "POST_SHOCK_RHYTHM_CHECK",
+      "duty": "MONITOR_DEFIB",
+      "condition": "#context.getVar('process.postShockElapsed', 0) >= 115 && #context.getVar('process.postShockElapsed', 0) < 125 && #context.getVar('process.shockDone') == true",
+      "speech": "报告组长，电击后已2分钟，建议暂停按压进行心律和脉搏检查！",
+      "priority": 7,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 电击后立即恢复CPR，2分钟后检查心律"
+    },
+    {
+      "id": "DRUG_EPINEPHRINE_DUE",
+      "duty": "IV_MED",
+      "condition": "#utils.getEpiLastGivenTime() >= 180 && #utils.getEpiLastGivenTime() < 190 && #context.getCurrentState() != 'ROSC'",
+      "speech": "报告组长，肾上腺素间隔已3分钟，建议推注第二剂 1mg！",
+      "priority": 6,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 肾上腺素 1mg IV/IO，每3-5分钟一次"
+    },
+    {
+      "id": "DRUG_EPINEPHRINE_OVERDUE",
+      "duty": "IV_MED",
+      "condition": "#utils.getEpiLastGivenTime() >= 300 && #context.getCurrentState() != 'ROSC'",
+      "speech": "报告组长，肾上腺素间隔已超过5分钟，建议立即推注！",
+      "priority": 7,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 肾上腺素最大间隔不超过5分钟"
+    },
+    {
+      "id": "DRUG_AMIODARONE_FIRST",
+      "duty": "IV_MED",
+      "condition": "#context.getVar('process.shockCount') == 3 && #context.getVar('intervention.amiodaroneGiven') == false && #context.getVar('phys.rhythm') == 'VF'",
+      "speech": "报告组长，已完成3次电击仍为室颤，建议推注胺碘酮 300mg！",
+      "priority": 6,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: refractory VF/pVT，第3次电击后给予胺碘酮 300mg"
+    },
+    {
+      "id": "DRUG_AMIODARONE_SECOND",
+      "duty": "IV_MED",
+      "condition": "#context.getVar('process.shockCount') == 5 && #context.getVar('intervention.amiodaroneSecondGiven') == false && #context.getVar('phys.rhythm') == 'VF'",
+      "speech": "报告组长，已完成5次电击仍为室颤，建议追加胺碘酮 150mg！",
+      "priority": 6,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: refractory VF/pVT，第5次电击后可追加胺碘酮 150mg"
+    },
+    {
+      "id": "DRUG_LIDOCAINE_OPTION",
+      "duty": "IV_MED",
+      "condition": "#context.getVar('process.shockCount') >= 3 && #context.getVar('intervention.amiodaroneGiven') == true && #context.getVar('phys.rhythm') == 'VF' && #context.getVar('intervention.lidocaineGiven') == false",
+      "speech": "报告组长，已使用胺碘酮仍为室颤，可考虑使用利多卡因 1-1.5mg/kg！",
+      "priority": 5,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 胺碘酮不可用或无效时可考虑利多卡因"
+    },
+    {
+      "id": "DRUG_ADENOSINE_SVT_FIRST",
+      "duty": "IV_MED",
+      "condition": "#context.getVar('process.suspectedRhythm') == 'SVT' && #context.getVar('intervention.adenosineDoseCount') == 0 && #context.getVar('process.patientUnstable') == true",
+      "speech": "报告组长，患者不稳定SVT，建议腺苷 6mg 快速静脉推注，随后用 20ml 生理盐水冲管！",
+      "priority": 7,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 不稳定SVT一线治疗为腺苷 6mg，如无效可追加 12mg"
+    },
+    {
+      "id": "DRUG_ADENOSINE_SVT_SECOND",
+      "duty": "IV_MED",
+      "condition": "#context.getVar('process.suspectedRhythm') == 'SVT' && #context.getVar('intervention.adenosineDoseCount') == 1 && #context.getVar('process.patientUnstable') == true",
+      "speech": "报告组长，首剂腺苷无效，建议推注第二剂 12mg 快速推注！",
+      "priority": 7,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 腺苷首剂无效可给予 12mg"
+    },
+    {
+      "id": "DRUG_SODIUM_BICARBONATE_PEA",
+      "duty": "IV_MED",
+      "condition": "#context.getVar('phys.rhythm') == 'PEA' && (#context.getVar('process.suspectedHyperkalemia') == true || #context.getVar('process.suspectedAcidosis') == true)",
+      "speech": "报告组长，PEA合并高钾/酸中毒，可考虑碳酸氢钠 1mEq/kg！",
+      "priority": 5,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 特定情况下（高钾、三环类抗抑郁药过量）可使用碳酸氢钠"
+    },
+    {
+      "id": "VITAL_HYPOTENSION_ALERT",
+      "duty": "MONITOR_DEFIB",
+      "condition": "#context.getVar('phys.systolicBp', 0) < 90 && #context.getVar('phys.systolicBp', 0) > 0",
+      "speech": "报告组长，收缩压低于 90mmHg，血流动力学不稳定，建议关注灌注！",
+      "priority": 5,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: ROSC后应维持 MAP ≥65mmHg，避免低血压"
+    },
+    {
+      "id": "VITAL_HYPOTENSION_SEVERE",
+      "duty": "MONITOR_DEFIB",
+      "condition": "#context.getVar('phys.systolicBp', 0) < 70 && #context.getVar('phys.systolicBp', 0) > 0",
+      "speech": "报告组长，严重低血压（收缩压 <70mmHg），建议立即处理！",
+      "priority": 7,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 严重低血压需立即干预，考虑血管活性药物"
+    },
+    {
+      "id": "VITAL_HYPOXEMIA",
+      "duty": "MONITOR_DEFIB",
+      "condition": "#context.getVar('phys.spo2', 0) < 94 && #context.getVar('phys.spo2', 0) > 0",
+      "speech": "报告组长，血氧饱和度低于 94%，建议检查供氧和通气！",
+      "priority": 5,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 维持 SpO2 ≥94%，避免高氧（ROSC后靶目标 94-98%）"
+    },
+    {
+      "id": "VITAL_ETCO2_LOW",
+      "duty": "MONITOR_DEFIB",
+      "condition": "#context.getVar('phys.etco2', 0) < 10 && #context.getVar('phys.etco2', 0) > 0",
+      "speech": "报告组长，ETCO2 低于 10mmHg，提示 CPR 质量可能不足或病情恶化！",
+      "priority": 7,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: ETCO2 <10mmHg 提示 CPR 质量不佳，应优化按压"
+    },
+    {
+      "id": "AIRWAY_ETT_CONFIRM",
+      "duty": "AIRWAY",
+      "condition": "#context.getVar('device.ettPlaced') == true && #context.getVar('phys.etco2Ett', 0) < 35",
+      "speech": "报告组长，气管插管后 ETCO2 低于 35mmHg，请确认插管位置及深度！",
+      "priority": 8,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 插管后必须通过 ETCO2 确认位置，目标 ETCO2 >35mmHg"
+    },
+    {
+      "id": "REVERSIBLE_HYPOVOLEMIA",
+      "duty": "ASSESS",
+      "condition": "#context.getVar('phys.rhythm') == 'PEA' && #context.getVar('process.suspectedHypovolemia') == true",
+      "speech": "报告组长，PEA心律，建议排查低血容量，考虑快速补液！",
+      "priority": 5,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: PEA 应系统排查 6H6T（低血容量、低氧等）"
+    },
+    {
+      "id": "REVERSIBLE_HYPOXIA",
+      "duty": "ASSESS",
+      "condition": "#context.getVar('phys.rhythm') == 'PEA' && #context.getVar('phys.spo2', 0) < 90",
+      "speech": "报告组长，PEA心律合并低氧，建议排查气道和氧合问题！",
+      "priority": 5,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: PEA 应排查 6H6T，低氧是常见可逆原因"
+    },
+    {
+      "id": "REVERSIBLE_TENSION_PNEUMOTHORAX",
+      "duty": "ASSESS",
+      "condition": "#context.getVar('phys.rhythm') == 'PEA' && #context.getVar('process.suspectedTensionPneumothorax') == true",
+      "speech": "报告组长，PEA心律，建议排查张力性气胸，考虑穿刺减压！",
+      "priority": 5,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: PEA 应排查 6H6T，张力性气胸需紧急减压"
+    },
+    {
+      "id": "REVERSIBLE_CARDIAC_TAMPONADE",
+      "duty": "ASSESS",
+      "condition": "#context.getVar('phys.rhythm') == 'PEA' && #context.getVar('process.suspectedTamponade') == true",
+      "speech": "报告组长，PEA心律，建议排查心包填塞，考虑超声检查！",
+      "priority": 5,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: PEA 应排查 6H6T，心包填塞需心包穿刺"
+    },
+    {
+      "id": "REVERSIBLE_HYPERKALEMIA",
+      "duty": "ASSESS",
+      "condition": "#context.getVar('phys.rhythm') == 'PEA' && #context.getVar('process.suspectedHyperkalemia') == true",
+      "speech": "报告组长，PEA心律，建议排查高钾血症，考虑钙剂和胰岛素+葡萄糖治疗！",
+      "priority": 5,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: PEA 应排查 6H6T，高钾需紧急处理"
+    },
+    {
+      "id": "REVERSIBLE_HYPOTHERMIA",
+      "duty": "ASSESS",
+      "condition": "#context.getVar('phys.rhythm') == 'PEA' && #context.getVar('process.suspectedHypothermia') == true",
+      "speech": "报告组长，PEA心律，建议排查低体温，避免除颤和药物重复使用！",
+      "priority": 5,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 低体温患者应复温，药物/除颤可能无效"
+    },
+    {
+      "id": "REVERSIBLE_MASSIVE_PE",
+      "duty": "ASSESS",
+      "condition": "#context.getVar('phys.rhythm') == 'PEA' && #context.getVar('process.suspectedPe') == true",
+      "speech": "报告组长，PEA心律，建议排查大面积肺栓塞，考虑溶栓治疗！",
+      "priority": 5,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: PEA 应排查 6H6T，大面积肺栓塞需溶栓"
+    },
+    {
+      "id": "ROSC_TARGETED_TEMP",
+      "duty": "MONITOR_DEFIB",
+      "condition": "#context.getVar('clinical.roscConfirmed') == true && #context.getVar('intervention.ttmInitiated') == false",
+      "speech": "报告组长，患者已ROSC，建议启动目标温度管理（32-37.5°C）！",
+      "priority": 6,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: ROSC后昏迷患者应进行温度控制，目标 32-37.5°C"
+    },
+    {
+      "id": "ROSC_GLUCOSE_MANAGEMENT",
+      "duty": "MONITOR_DEFIB",
+      "condition": "#context.getVar('clinical.roscConfirmed') == true && (#context.getVar('phys.bloodGlucose', 0) < 144 || #context.getVar('phys.bloodGlucose', 0) > 180)",
+      "speech": "报告组长，血糖异常（${bloodGlucose}mg/dL），建议控制在 144-180mg/dL！",
+      "priority": 4,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: ROSC后血糖应维持在 144-180mg/dL，避免低/高血糖"
+    },
+    {
+      "id": "ROSC_12LEAD_ECG",
+      "duty": "MONITOR_DEFIB",
+      "condition": "#context.getVar('clinical.roscConfirmed') == true && #context.getVar('process.ecgPerformed') == false",
+      "speech": "报告组长，建议尽快获取 12 导联心电图，排除 STEMI！",
+      "priority": 6,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: ROSC后应尽快行 12 导联心电图，识别 STEMI"
+    },
+    {
+      "id": "BRADYCARDIA_WARNING",
+      "duty": "MONITOR_DEFIB",
+      "condition": "#context.getVar('phys.heartRate', 0) < 50 && #context.getVar('phys.heartRate', 0) > 0 && #context.getVar('process.patientUnstable') == true",
+      "speech": "报告组长，心率低于 50 次/分，且患者不稳定，建议阿托品 0.5mg 或考虑起搏！",
+      "priority": 7,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 有症状心动过缓，阿托品 0.5mg IV（最大 3mg）"
+    },
+    {
+      "id": "TACHYCARDIA_NARROW_QRS",
+      "duty": "MONITOR_DEFIB",
+      "condition": "#context.getVar('phys.heartRate', 0) > 150 && #context.getVar('phys.qrsWidth', 0) < 0.12 && #context.getVar('process.patientUnstable') == true",
+      "speech": "报告组长，窄 QRS 心动过速（＞150次/分），患者不稳定，考虑同步电复律！",
+      "priority": 7,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 不稳定窄QRS心动过速首选同步电复律"
+    },
+    {
+      "id": "TACHYCARDIA_WIDE_QRS",
+      "duty": "MONITOR_DEFIB",
+      "condition": "#context.getVar('phys.heartRate', 0) > 150 && #context.getVar('phys.qrsWidth', 0) >= 0.12 && #context.getVar('process.patientUnstable') == true",
+      "speech": "报告组长，宽 QRS 心动过速（＞150次/分），可能为室性心动过速，建议同步电复律！",
+      "priority": 7,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 不稳定宽QRS心动过速按VT处理，同步电复律"
+    },
+    {
+      "id": "DRUG_ATROPINE_BRADYCARDIA",
+      "duty": "IV_MED",
+      "condition": "#context.getVar('phys.heartRate', 0) < 50 && #context.getVar('intervention.atropineGiven') == false && #context.getVar('process.patientUnstable') == true",
+      "speech": "报告组长，建议给予阿托品 0.5mg 静脉推注，可重复至 3mg！",
+      "priority": 6,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 症状性心动过缓，阿托品首剂 0.5mg"
+    },
+    {
+      "id": "DRUG_DOPAMINE_BRADYCARDIA",
+      "duty": "IV_MED",
+      "condition": "#context.getVar('phys.heartRate', 0) < 50 && #context.getVar('intervention.atropineGiven') == true && #context.getVar('process.patientUnstable') == true",
+      "speech": "报告组长，阿托品无效，可考虑多巴胺 2-10μg/kg/min 静脉输注！",
+      "priority": 5,
+      "type": "speech",
+      "clinical_basis": "AHA 2025: 阿托品无效的严重心动过缓可使用多巴胺或肾上腺素输注"
+    }
+  ]
+}

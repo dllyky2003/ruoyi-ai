@@ -1,24 +1,20 @@
 package com.ruoyi.ems.intent.model;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+
 import java.util.List;
 import java.util.Map;
 
-/**
- * 意图参数抽取配置（映射 JSON 中的 extraction 字段）
- */
 @Data
-@NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ExtractionConfig {
-
+    private String method;
     @JsonProperty("target_params")
-    private List<String> targetParams;      // 目标参数列表，如 ["drug", "dose"]
-
-    @JsonProperty("rules")
-    private Map<String, ParamRule> rules;   // 参数名 -> 具体抽取规则
-
+    private List<String> targetParams;
+    private Map<String, Object> rules;      // 或使用自定义类，但 Map 更通用
+    @JsonProperty("llm_prompt")
+    private String llmPrompt;
+    @JsonProperty("override_instruction")
     private String overrideInstruction;
 }
-

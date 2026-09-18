@@ -1,0 +1,307 @@
+# ============================================================================
+# 01_assessment.yaml - 评估类技能
+# 对应 EgoEMS #1~#26：ABCs、病史、生命体征、卒中评估
+# 职责：ASSESS（医生）为主，少量 RECORD（记录）
+# ============================================================================
+
+skills:
+  # -------- ABCs --------
+  - id: approach_patient
+    duty: ASSESS
+    type: generic_assert
+    params:
+      targetVar: process.sceneSafety
+      responseTemplate: "现场安全，已接近患者。"
+      valueMap:
+        safe: "安全"
+        unsafe: "不安全"
+
+  - id: check_responsiveness
+    duty: ASSESS
+    type: query
+    params:
+      targetVar: process.responsiveness
+      responseTemplate: "患者对刺激的反应为 {value}。"
+      valueMap:
+        alert: "清醒"
+        verbal: "对声音有反应"
+        pain: "对疼痛有反应"
+        unresponsive: "无反应"
+
+
+  - id: check_breathing
+    duty: ASSESS
+    type: generic_assert
+    params:
+      targetVar: phys.respiratoryRate
+      responseTemplate: "患者呼吸 {value} 次/分，胸廓起伏对称。"
+
+  # -------- 患者病史 --------
+  - id: review_medications
+    duty: ASSESS
+    type: generic_assert
+    params:
+      targetVar: process.medicationList
+      responseTemplate: "患者用药记录已查阅：{value}。"
+
+  - id: inquire_medication_anticoagulants
+    duty: ASSESS
+    type: generic_assert
+    params:
+      targetVar: process.anticoagulantUse
+      responseTemplate: "抗凝药物使用情况：{value}。"
+      valueMap:
+        yes: "正在使用"
+        no: "未使用"
+        unknown: "不详"
+
+  - id: inquire_hpi_and_pmh
+    duty: ASSESS
+    type: generic_assert
+    params:
+      targetVar: process.hpiPmh
+      responseTemplate: "现病史和既往史：{value}。"
+
+  - id: inquire_substance_use
+    duty: ASSESS
+    type: generic_assert
+    params:
+      targetVar: process.substanceUse
+      responseTemplate: "酒精/药物使用情况：{value}。"
+      valueMap:
+        yes: "有使用"
+        no: "无使用"
+        unknown: "不详"
+
+  # -------- 生命体征评估 --------
+  - id: check_blood_pressure
+    duty: ASSESS
+    type: generic_assert
+    params:
+      targetVar: phys.bloodPressure
+      responseTemplate: "血压 {value} mmHg。"
+
+  - id: check_heart_rate
+    duty: ASSESS
+    type: generic_assert
+    params:
+      targetVar: phys.heartRate
+      responseTemplate: "心率 {value} 次/分。"
+
+  - id: check_oxygen_saturation
+    duty: ASSESS
+    type: generic_assert
+    params:
+      targetVar: phys.spo2
+      responseTemplate: "血氧饱和度 {value}%。"
+
+  - id: check_respiratory_rate
+    duty: ASSESS
+    type: query
+    params:
+      targetVar: phys.respiratoryRate
+      responseTemplate: "呼吸频率 {value} 次/分。"
+
+  - id: prepare_glucometer_and_strip
+    duty: ASSESS
+    type: standard
+    params:
+      vrActionCode: "PREPARE_GLUCOMETER"
+      durationSeconds: 2
+      successVar: device.glucometerReady
+      successSpeech: "血糖仪和试纸已准备就绪。"
+
+  - id: read_and_record_glucose_level
+    duty: ASSESS
+    type: query
+    params:
+      targetVar: phys.glucoseLevel
+      responseTemplate: "血糖读数 {value} mg/dL。"
+
+  - id: check_perrl
+    duty: ASSESS
+    type: query
+    params:
+      targetVar: phys.perrl
+      responseTemplate: "瞳孔对光反射 {value}。"
+      valueMap:
+        brisk: "灵敏"
+        sluggish: "迟钝"
+        fixed: "固定"
+        unequal: "不等大"
+
+  - id: check_skin_condition
+    duty: ASSESS
+    type: query
+    params:
+      targetVar: phys.skinCondition
+      responseTemplate: "皮肤状况：{value}。"
+      valueMap:
+        warm_dry: "温暖干燥"
+        cool_dry: "凉爽干燥"
+        cool_moist: "凉湿"
+        cold_clammy: "湿冷"
+        mottled: "花斑"
+
+  - id: check_a&o
+    duty: ASSESS
+    type: query
+    params:
+      targetVar: process.alertOrientation
+      responseTemplate: "清醒程度和定向力：{value}。"
+      valueMap:
+        alert: "清醒，定向力完整"
+        confused: "模糊，定向力障碍"
+        disoriented: "定向障碍"
+        unresponsive: "无反应"
+
+  # -------- 卒中评估 --------
+  - id: check_grip_strength
+    duty: ASSESS
+    type: standard
+    params:
+      vrActionCode: "CHECK_GRIP_STRENGTH"
+      durationSeconds: 3
+      successVar: process.gripStrengthChecked
+      successSpeech: "双侧握力对称，无明显减弱。"
+
+  - id: face_droop_check
+    duty: ASSESS
+    type: standard
+    params:
+      vrActionCode: "FACE_DROOP_CHECK"
+      durationSeconds: 2
+      successVar: process.faceDroopChecked
+      successSpeech: "面部对称，无下垂。"
+
+  - id: arm_drift_check
+    duty: ASSESS
+    type: standard
+    params:
+      vrActionCode: "ARM_DRIFT_CHECK"
+      durationSeconds: 3
+      successVar: process.armDriftChecked
+      successSpeech: "双上肢平举无下垂，无偏瘫表现。"
+
+  - id: speech_abnormality_check
+    duty: ASSESS
+    type: standard
+    params:
+      vrActionCode: "SPEECH_CHECK"
+      durationSeconds: 2
+      successVar: process.speechChecked
+      successSpeech: "语言清晰，无失语或言语障碍。"
+
+  - id: assess_balance_and_coordination
+    duty: ASSESS
+    type: standard
+    params:
+      vrActionCode: "BALANCE_CHECK"
+      durationSeconds: 4
+      successVar: process.balanceChecked
+      successSpeech: "平衡和协调能力正常。"
+
+  - id: document_lkw_time
+    duty: RECORD
+    type: query
+    params:
+      targetVar: process.lastKnownWellTime
+      responseTemplate: "最后一次正常知晓时间已记录：{value}。"
+
+  - id: check_vision_deficits
+    duty: ASSESS
+    type: query
+    params:
+      targetVar: process.visionDeficit
+      responseTemplate: "视力变化：{value}。"
+      valueMap:
+        present: "存在视野缺损"
+        absent: "无视野缺损"
+        unknown: "不详"
+
+  - id: evaluate_aphasia
+    duty: ASSESS
+    type: query
+    params:
+      targetVar: process.aphasia
+      responseTemplate: "失语症评估：{value}。"
+      valueMap:
+        present: "存在失语"
+        absent: "无失语"
+        unknown: "不详"
+
+  - id: assess_neglect_signs
+    duty: ASSESS
+    type: query
+    params:
+      targetVar: process.neglectSigns
+      responseTemplate: "单侧忽略体征：{value}。"
+      valueMap:
+        present: "存在忽略"
+        absent: "无忽略"
+        unknown: "不详"
+
+
+  # 节律规则性判读（S-101-1-2）
+  - id: assert_rhythm_regular
+    duty: MONITOR_DEFIB
+    type: generic_assert
+    params:
+      sourceVar: phys.rrIntervalJitter
+      assertExpression: "#phys.rrIntervalJitter != null && #phys.rrIntervalJitter < 0.12"
+      targetVar: assert.rhythmRegular
+      successSpeech: "节律 {value}。"
+      valueMap:
+        true: "规则"
+        false: "不规则"
+      prerequisites:
+        - variable: process.ecgRecorded
+          expected: true
+          message: "请先完成 12导联心电图记录！"
+
+  # 血流动力学稳定性评估（S-101-1-3）
+  - id: assert_stable
+    duty: ASSESS
+    type: generic_assert
+    params:
+      sourceVars: [ phys.systolicBp, phys.consciousness, phys.respiratoryRate ]
+      assertExpression: "#phys.systolicBp >= 90 && #phys.consciousness == 'alert' && #phys.respiratoryRate >= 10 && #phys.respiratoryRate <= 30"
+      targetVar: assert.stable
+      successSpeech: "血流动力学 {value}。"
+      valueMap:
+        true: "稳定"
+        false: "不稳定"
+
+  # 心律综合判读（S-101-1-4）
+  - id: assert_rhythm_type
+    duty: MONITOR_DEFIB
+    type: generic_assert
+    params:
+      sourceVar: phys.rhythm
+      assertExpression: "#phys.rhythm"
+      targetVar: assert.rhythmType
+      successSpeech: "心律 {value}。"
+      valueMap:
+        Sinus: "窦性"
+        SVT: "室上速"
+        AFib: "房颤"
+        AFlutter: "房扑"
+        VT: "室速"
+        VF: "室颤"
+        PEA: "无脉电活动"
+        Asystole: "停搏"
+      prerequisites:
+        - variable: process.ecgRecorded
+          expected: true
+          message: "请先完成 12导联心电图记录！"
+  # 抗凝评估（S-101-2-9）
+  - id: assess_anticoagulation
+    duty: ASSESS
+    type: query
+    params:
+      targetVar: process.anticoagulationStatus
+      responseTemplate: "抗凝评估结果：{value}。"
+      valueMap:
+        indicated: "建议抗凝"
+        not_indicated: "暂不需抗凝"
+        contraindicated: "存在抗凝禁忌"

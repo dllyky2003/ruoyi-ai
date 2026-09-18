@@ -1,0 +1,81 @@
+# ============================================================================
+# 04_drugs.yaml - 药物类技能
+# 所有药物推注效果内联在技能配置中
+# ============================================================================
+
+skills:
+  # -------- 肾上腺素 --------
+  - id: drug_push_epinephrine
+    duty: IV_MED
+    type: complex
+    params:
+      beanName: "drugPushSkill"
+      defaultDose: "1mg"
+      effects:
+        epinephrine_1mg:
+          description: "肾上腺素 1mg 推注效果"
+          updates:
+            intervention.epinephrineGiven: true
+            intervention.epinephrineTotalDose: "#{intervention.epinephrineTotalDose + 1}"
+            intervention.epinephrineLastTime: "#{T(System).currentTimeMillis()}"
+            intervention.epinephrineCount: "#{intervention.epinephrineCount + 1}"
+            intervention.lastDrug: "epinephrine"
+            intervention.lastDrugDose: "1mg"
+            intervention.lastDrugTime: "#{T(System).currentTimeMillis()}"
+
+  # -------- 胺碘酮 --------
+  - id: drug_push_amiodarone
+    duty: IV_MED
+    type: complex
+    params:
+      beanName: "drugPushSkill"
+      defaultDose: "300mg"
+      effects:
+        amiodarone_300mg:
+          description: "胺碘酮 300mg 推注效果"
+          updates:
+            intervention.amiodaroneGiven: true
+            intervention.amiodaroneFirstTime: "#{T(System).currentTimeMillis()}"
+            intervention.lastDrug: "amiodarone"
+            intervention.lastDrugDose: "300mg"
+            intervention.lastDrugTime: "#{T(System).currentTimeMillis()}"
+            phys.heartRate: "#{phys.heartRate - 20}"
+
+  # -------- 腺苷 --------
+  - id: drug_push_adenosine
+    duty: IV_MED
+    type: complex
+    params:
+      beanName: "drugPushSkill"
+      defaultDose: "6mg"
+      effects:
+        adenosine_6mg:
+          description: "腺苷 6mg 推注效果"
+          updates:
+            intervention.adenosineGiven: true
+            intervention.adenosineDoseCount: 1
+            intervention.adenosineTime: "#{T(System).currentTimeMillis()}"
+            intervention.lastDrug: "adenosine"
+            intervention.lastDrugDose: "6mg"
+            intervention.lastDrugTime: "#{T(System).currentTimeMillis()}"
+            phys.heartRate: "#{phys.heartRate - 30}"
+            phys.rhythm: "Sinus"
+        adenosine_12mg:
+          description: "腺苷 12mg 推注效果"
+          updates:
+            intervention.adenosineGiven: true
+            intervention.adenosineDoseCount: 2
+            intervention.adenosineTime: "#{T(System).currentTimeMillis()}"
+            intervention.lastDrug: "adenosine"
+            intervention.lastDrugDose: "12mg"
+            intervention.lastDrugTime: "#{T(System).currentTimeMillis()}"
+            phys.heartRate: "#{phys.heartRate - 40}"
+            phys.rhythm: "Sinus"
+
+  # -------- 通用药物推注（动态效果） --------
+  - id: drug_push
+    duty: IV_MED
+    type: complex
+    params:
+      beanName: "drugPushSkill"
+      # 无默认效果，由 DrugPushSkill 根据 drug + dose 动态查找

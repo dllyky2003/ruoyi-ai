@@ -1,0 +1,51 @@
+# ============================================================================
+# 02_airway.yaml - 气道/通气类技能
+# 对应 EgoEMS #57~#61：开放气道、BVM、通气、吸引、NPA
+# 职责：AIRWAY（医生/气道管理）
+# ============================================================================
+
+skills:
+  - id: open_airway
+    duty: AIRWAY
+    type: standard
+    params:
+      vrActionCode: "OPEN_AIRWAY"
+      durationSeconds: 2
+      successVar: "process.airwayOpen"
+      successSpeech: "气道已开放（仰头抬颏/下颌托举）。"
+
+  - id: place_bvm
+    duty: AIRWAY
+    type: standard
+    params:
+      vrActionCode: "PLACE_BVM"
+      durationSeconds: 3
+      successVar: "process.bvmPlaced"
+      successSpeech: "球囊面罩已放置并密封。"
+
+  - id: ventilate_patient
+    duty: AIRWAY
+    type: standard
+    params:
+      vrActionCode: "VENTILATE"
+      durationSeconds: 4
+      successVar: "process.ventilationDone"
+      successSpeech: "通气已完成，胸廓起伏良好。"
+
+  - id: suction_airway
+    duty: AIRWAY
+    type: standard
+    params:
+      vrActionCode: "SUCTION_AIRWAY"
+      durationSeconds: 3
+      successVar: "process.airwaySuctioned"
+      successSpeech: "气道吸引已完成。"
+
+  - id: insert_NPA
+    duty: AIRWAY
+    type: standard
+    params:
+      vrActionCode: "INSERT_NPA"
+      durationSeconds: 3
+      successVar: "process.npaInserted"
+      successSpeech: "鼻咽通气管已插入。"

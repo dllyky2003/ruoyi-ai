@@ -1,0 +1,761 @@
+# ============================================================
+# 子级流程：stable_narrow（窄QRS稳定心动过速 / SVT）
+# 案例编号：101
+# 存放位置：stable_narrow/_flow.yaml
+# 父级：GLOBAL
+# 版本：1.1.0
+# 修订：1.2.5（★ 第12步 S-101-2-8 直接跳 F-000-ROSC_MANAGEMENT，绕过 F_101_EXIT_TO_PARENT 中转）
+# ============================================================
+caseId: "stable_narrow"
+caseName: "窄QRS稳定心动过速（SVT）"
+version: "1.1.0"
+parent: "GLOBAL"
+description: "迷走→腺苷阶梯→监测/升级；含不稳定/宽QRS、骤停、心动过缓子级退出兜底"
+
+stateDescriptions:
+  F_101_ASSESS_STABILITY: "📋 进入校验（确认稳定+窄QRS）"
+  F_101_CHECK_QRS_WIDTH: "📐 QRS宽度确认"
+  F_101_CHECK_RHYTHM: "🔄 节律类型确认（规则性）"
+  F_101_DO_VAGAL_MANEUVER: "💆 迷走神经刺激（一线）"
+  F_101_DO_ADENOSINE_6MG: "💉 腺苷 6mg IV（二线）"
+  F_101_DO_ADENOSINE_12MG: "💉 腺苷 12mg IV（三线）"
+  F_101_DO_SECOND_LINE_DRUG: "💊 二线药物（β受体阻滞剂/CCB）"
+  F_101_MONITOR_SINUS_RHYTHM: "📊 监测窦性心律（60s窗口）"
+  F_101_UNSTABLE_CARDIOVERSION: "⚡ 同步电复律（紧急干预）"
+  F_101_EXIT_TO_PARENT: "🚪 退出到父级"
+  F_102_ASSESS_STABILITY: "不稳定/宽QRS子级评估"
+  F_102_EXIT_TO_PARENT: "🚪 退出到父级"
+  F_103_CPR_START: "心脏骤停CPR开始"
+  F_103_EXIT_TO_PARENT: "🚪 退出到父级"
+  F_104_ASSESS_BRADY: "有症状心动过缓评估"
+  F_104_EXIT_TO_PARENT: "🚪 退出到父级"
+
+stateMachine:
+  states:
+    - F_101_ASSESS_STABILITY
+    - F_101_CHECK_QRS_WIDTH
+    - F_101_CHECK_RHYTHM
+    - F_101_DO_VAGAL_MANEUVER
+    - F_101_DO_ADENOSINE_6MG
+    - F_101_DO_ADENOSINE_12MG
+    - F_101_DO_SECOND_LINE_DRUG
+    - F_101_MONITOR_SINUS_RHYTHM
+    - F_101_UNSTABLE_CARDIOVERSION
+    - F_101_EXIT_TO_PARENT
+    - F_102_ASSESS_STABILITY
+    - F_102_EXIT_TO_PARENT
+    - F_103_CPR_START
+    - F_103_EXIT_TO_PARENT
+    - F_104_ASSESS_BRADY
+    - F_104_EXIT_TO_PARENT
+
+  endStates:
+    - F_101_EXIT_TO_PARENT
+
+  # ==========================================================
+  # ★ Phase SM：子级特有阶段（继承父级 6 个 + 子级 9 个 = 15 个）
+  #
+  # 合并规则：
+  #   - 不重写父级 BLS / CPR / SETUP / ROSC / POST_ROSC / TERMINATION
+  #   - 子级新增 9 个 SVT 路径专属阶段
+  #   - 同 id 会整体替换父级 phase（子级若需覆盖必须完整重写所有字段）
+  #
+  # 命中优先级（由 PhaseManager 保证）：
+  #   状态命中 > 事实命中 = 意图命中
+  #   —— 避免"事实已就绪但细粒度状态尚未路由"时提前切换主阶段
+  # ==========================================================
+  phases:
+
+    # ==========================================================
+    # ★ 容器阶段：SVT 稳定路径
+    # 把 6 个 SVT 子阶段收进一个容器，顶层图只画 1 个节点。
+    # 容器阶段不参与运行时，只用于主图展示。
+    # ==========================================================
+    - id: "SVT_PATH"
+      displayName: "SVT 稳定路径"
+      priority: 94
+      children:
+
+        # ---- 1. SVT 进入校验 ----
+        - id: "SVT_ASSESSMENT"
+          displayName: "SVT 进入校验"
+          priority: 94
+          states:
+            - F_101_ASSESS_STABILITY
+            - F_101_CHECK_QRS_WIDTH
+            - F_101_CHECK_RHYTHM
+          entryCondition: "#derived.stable == true && #derived.qrsWidth == 'narrow' && #derived.rhythmRegular == true && #derived.isSinusRhythm == false && #phys.heartRate > 100"
+          allowedIntents:
+            - S-101-1-1
+            - S-101-1-2
+            - S-101-1-3
+            - IA_010_check_heart_rate
+            - IA_011_check_oxygen_saturation
+            - IA_043_obtain_ecg_recording
+            - IA_044_interpret_and_report
+          softWarnIntents:
+            - S-101-2-1
+            - S-101-2-2
+          requiresPhases:
+            - SETUP
+          lock:
+            enabled: false
+
+        # ---- 2. 迷走神经刺激 ----
+        - id: "VAGAL"
+          displayName: "迷走神经刺激"
+          priority: 93
+          states:
+            - F_101_DO_VAGAL_MANEUVER
+          entryIntents:
+            - S-101-2-1
+          entryCondition: "#derived.rhythmRegular == true && #intervention.vagal.count == null"
+          allowedIntents:
+            - S-101-2-1
+            - IA_010_check_heart_rate
+            - IA_044_interpret_and_report
+          softWarnIntents:
+            - S-101-2-2
+          requiresPhases:
+            - SVT_ASSESSMENT
+          lock:
+            enabled: false
+
+        # ---- 3. 腺苷 6mg ----
+        - id: "ADENOSINE_6MG"
+          displayName: "腺苷 6mg"
+          priority: 92
+          states:
+            - F_101_DO_ADENOSINE_6MG
+          entryIntents:
+            - S-101-2-2
+          entryCondition: "#intervention.vagal.effect == 'failure' && #clinical.isWpw == false"
+          allowedIntents:
+            - S-101-2-2
+            - IA_010_check_heart_rate
+            - IA_044_interpret_and_report
+          softWarnIntents:
+            - S-101-2-5
+          requiresPhases:
+            - VAGAL
+          lock:
+            enabled: false
+
+        # ---- 4. 腺苷 12mg ----
+        - id: "ADENOSINE_12MG"
+          displayName: "腺苷 12mg"
+          priority: 91
+          states:
+            - F_101_DO_ADENOSINE_12MG
+          entryIntents:
+            - S-101-2-2
+          entryCondition: "#intervention.adenosine.count == 1 && #intervention.rhythmConverted == false"
+          allowedIntents:
+            - S-101-2-2
+            - S-101-2-5
+            - IA_010_check_heart_rate
+            - IA_044_interpret_and_report
+          softWarnIntents:
+            - S-101-2-5
+          requiresPhases:
+            - ADENOSINE_6MG
+          lock:
+            enabled: false
+
+        # ---- 5. 二线药物 ----
+        - id: "SECOND_LINE"
+          displayName: "二线药物"
+          priority: 90
+          states:
+            - F_101_DO_SECOND_LINE_DRUG
+          entryIntents:
+            - S-101-2-5
+          entryCondition: "#intervention.adenosine.count >= 2 && #intervention.rhythmConverted == false && #clinical.isWpw == false"
+          allowedIntents:
+            - S-101-2-5
+            - S-101-2-8
+            - IA_010_check_heart_rate
+            - IA_044_interpret_and_report
+          requiresPhases:
+            - ADENOSINE_12MG
+          lock:
+            enabled: false
+
+        # ---- 6. 监测窦性心律 ----
+        - id: "MONITOR"
+          displayName: "监测窦性心律"
+          priority: 89
+          states:
+            - F_101_MONITOR_SINUS_RHYTHM
+          entryIntents:
+            - S-101-2-8
+          entryCondition: "#intervention.rhythmConverted == true"
+          allowedIntents:
+            - S-101-2-8
+            - IA_010_check_heart_rate
+            - IA_011_check_oxygen_saturation
+            - IA_040_turn_on_ecg
+            - IA_043_obtain_ecg_recording
+            - IA_044_interpret_and_report
+          requiresPhases:
+            - SVT_ASSESSMENT
+          lock:
+            enabled: false
+
+    # ==========================================================
+    # 顶层叶子阶段：同步电复律
+    # 紧急干预，可从 SVT_PATH 任何子阶段跳出
+    # ==========================================================
+    - id: "CARDIOVERSION"
+      displayName: "同步电复律"
+      priority: 98
+      states:
+        - F_101_UNSTABLE_CARDIOVERSION
+      entryIntents:
+        - S-101-2-6
+      allowedIntents:
+        - S-101-2-6
+        - IA_040_turn_on_ecg
+        - IA_041_connect_leads_to_ecg
+        - IA_043_obtain_ecg_recording
+        - IA_044_interpret_and_report
+      lock:
+        enabled: false
+
+    # ==========================================================
+    # 顶层叶子阶段：有症状心动过缓
+    # ==========================================================
+    - id: "BRADY"
+      displayName: "有症状心动过缓"
+      priority: 94
+      states:
+        - F_104_ASSESS_BRADY
+        - F_104_EXIT_TO_PARENT
+      entryCondition: "#phys.heartRate < 50 && #phys.symptomsPresent == true"
+      allowedIntents:
+        - IA_010_check_heart_rate
+        - IA_011_check_oxygen_saturation
+        - IA_040_turn_on_ecg
+        - IA_043_obtain_ecg_recording
+        - IA_044_interpret_and_report
+        - IA_050_request_aed
+        - IA_051_request_assistance
+      requiresPhases:
+        - SETUP
+      lock:
+        enabled: false
+
+    # ==========================================================
+    # 顶层叶子阶段：宽QRS/不稳定
+    # ==========================================================
+    - id: "WIDE_QRS_UNSTABLE"
+      displayName: "宽QRS/不稳定"
+      priority: 94
+      states:
+        - F_102_ASSESS_STABILITY
+        - F_102_EXIT_TO_PARENT
+      entryCondition: "(#derived.stable == false || #derived.qrsWidth == 'wide') && #phys.heartRate >= 50"
+      allowedIntents:
+        - IA_010_check_heart_rate
+        - IA_011_check_oxygen_saturation
+        - IA_040_turn_on_ecg
+        - IA_041_connect_leads_to_ecg
+        - IA_043_obtain_ecg_recording
+        - IA_044_interpret_and_report
+        - IA_050_request_aed
+        - IA_051_request_assistance
+      requiresPhases:
+        - SETUP
+      lock:
+        enabled: false
+
+  transitions:
+    - source: "F-000-INITIAL_SETUP"
+      target: "F_103_CPR_START"
+      intentCode: null
+      condition: "#phys.rhythm == 'VF' || #phys.rhythm == 'VT' || #phys.rhythm == 'PEA' || #phys.rhythm == 'Asystole'"
+      priority: 105
+      exitReason: null
+      effects: [ ]
+      description: "心脏骤停心律 → 进入骤停子级（103）"
+
+    - source: "F-000-INITIAL_SETUP"
+      target: "F_104_ASSESS_BRADY"
+      intentCode: null
+      condition: "#phys.heartRate < 50 && #phys.symptomsPresent == true"
+      priority: 95
+      exitReason: null
+      effects: [ ]
+      description: "有症状心动过缓 → 进入心动过缓子级（104）"
+
+    - source: "F-000-INITIAL_SETUP"
+      target: "F_102_ASSESS_STABILITY"
+      intentCode: null
+      condition: "(#derived.stable == false || #derived.qrsWidth == 'wide') && #phys.heartRate >= 50"
+      priority: 35
+      exitReason: null
+      effects: [ ]
+      description: "不稳定或宽QRS → 进入不稳定/宽QRS子级（102）"
+
+    - source: "F-000-INITIAL_SETUP"
+      target: "F_101_ASSESS_STABILITY"
+      intentCode: null
+      condition: "#derived.stable == true && #derived.qrsWidth == 'narrow' && #derived.rhythmRegular == true && #derived.isSinusRhythm == false && #phys.heartRate > 100"
+      priority: 40
+      exitReason: null
+      effects: [ ]
+      description: "稳定+窄QRS+规则且非窦性 → 进入SVT子级（101）"
+
+    - source: "F_101_ASSESS_STABILITY"
+      target: "F_101_CHECK_QRS_WIDTH"
+      intentCode: "S-101-1-3"
+      condition: "#derived.stable == true && #derived.qrsWidth == 'narrow'"
+      priority: 10
+      exitReason: null
+      effects: []
+      description: "进入校验通过 → 继续"
+
+    - source: "F_101_ASSESS_STABILITY"
+      target: "F_101_EXIT_TO_PARENT"
+      intentCode: null
+      condition: "#derived.stable == false"
+      priority: 100
+      exitReason: "UNSTABLE"
+      effects: []
+      description: "进入后发现不稳定 → 退出到父级"
+
+
+    - source: "F_101_CHECK_QRS_WIDTH"
+      target: "F_101_CHECK_RHYTHM"
+      intentCode: "S-101-1-1"
+      condition: "#derived.qrsWidth == 'narrow'"
+      priority: 10
+      exitReason: null
+      effects: []
+      description: "QRS宽度确认通过 → 继续"
+
+    - source: "F_101_CHECK_QRS_WIDTH"
+      target: "F_101_EXIT_TO_PARENT"
+      intentCode: "S-101-1-1"
+      condition: "#derived.qrsWidth == 'wide'"
+      priority: 100
+      exitReason: "WIDE_QRS"
+      effects: []
+      description: "QRS变为宽 → 退出到父级重新分类"
+
+    - source: "F_101_CHECK_RHYTHM"
+      target: "F_101_DO_VAGAL_MANEUVER"
+      intentCode: "S-101-1-2"
+      condition: "#derived.rhythmRegular == true"
+      priority: 10
+      exitReason: null
+      effects: []
+      description: "规则节律 → 进入迷走神经刺激"
+
+    - source: "F_101_CHECK_RHYTHM"
+      target: "F_101_EXIT_TO_PARENT"
+      intentCode: "S-101-1-2"
+      condition: "#derived.rhythmRegular == false"
+      priority: 100
+      exitReason: "IRREGULAR_RHYTHM"
+      effects: []
+      description: "不规则节律（考虑AFib/AFlutter）→ 退出父级"
+
+    # ★★★ 修改点 1/2：第一次 Valsalva，自循环，置 count=1 + effect=pending ★★★
+    - source: "F_101_DO_VAGAL_MANEUVER"
+      target: "F_101_DO_VAGAL_MANEUVER"
+      intentCode: "S-101-2-1"
+      condition: "#intervention.vagal.count == null || #intervention.vagal.count == 0"
+      priority: 10
+      exitReason: null
+      effects:
+        - var: "intervention.vagal.count"
+          value: 1
+        - var: "intervention.vagal.status"
+          value: "performed"
+        - var: "intervention.vagal.effect"
+          value: "pending"
+        - var: "process.lastInterventionTime"
+          valueExpression: "T(System).currentTimeMillis()"
+      description: "第一次迷走神经刺激，记录 count=1，等待第二次确认"
+
+    # ★★★ 修改点 2/2：第二次 Valsalva，推进到腺苷，置 failure ★★★
+    - source: "F_101_DO_VAGAL_MANEUVER"
+      target: "F_101_DO_ADENOSINE_6MG"
+      intentCode: "S-101-2-1"
+      condition: "#intervention.vagal.count == 1 && #intervention.vagal.effect == 'pending'"
+      priority: 25
+      exitReason: null
+      effects:
+        - var: "intervention.vagal.effect"
+          value: "failure"
+        - var: "intervention.vagal.status"
+          value: "failed"
+      description: "第二次迷走神经刺激仍未转复 → 判定失败，进入腺苷 6mg"
+
+    - source: "F_101_DO_VAGAL_MANEUVER"
+      target: "F_101_MONITOR_SINUS_RHYTHM"
+      intentCode: "S-101-2-1"
+      condition: "#intervention.vagal.effect == 'success'"
+      priority: 30
+      exitReason: null
+      effects: []
+      description: "迷走刺激成功 → 监测窦性心律"
+
+    - source: "F_101_DO_VAGAL_MANEUVER"
+      target: "F_101_UNSTABLE_CARDIOVERSION"
+      intentCode: null
+      condition: "#clinical.isWpw == true"
+      priority: 110
+      exitReason: null
+      effects:
+        - var: "process.wpwAlertTriggered"
+          value: true
+      description: "WPW预激 → 禁用腺苷，直接电复律"
+
+    - source: "F_101_DO_VAGAL_MANEUVER"
+      target: "F_101_UNSTABLE_CARDIOVERSION"
+      intentCode: null
+      condition: "#phys.systolicBp < 90 && #intervention.vagal.status != null"
+      priority: 100
+      exitReason: null
+      effects:
+        - var: "process.instabilityTriggered"
+          value: true
+      description: "迷走刺激期间恶化 → 同步电复律"
+
+    - source: "F_101_DO_ADENOSINE_6MG"
+      target: "F_101_DO_ADENOSINE_6MG"
+      intentCode: "S-101-2-2"
+      condition: "#clinical.isWpw == false && (#intervention.adenosine.count == null || #intervention.adenosine.count == 0)"
+      priority: 10
+      exitReason: null
+      effects:
+        - var: "intervention.adenosine.count"
+          value: 1
+        - var: "intervention.adenosine.status"
+          value: "given"
+        - var: "process.lastInterventionTime"
+          valueExpression: "T(System).currentTimeMillis()"
+      description: "腺苷 6mg 推注执行"
+
+    - source: "F_101_DO_ADENOSINE_6MG"
+      target: "F_101_DO_ADENOSINE_12MG"
+      intentCode: "S-101-2-2"
+      condition: "#intervention.rhythmConverted == false && #intervention.adenosine.count == 1"
+      priority: 20
+      exitReason: null
+      effects: []
+      description: "6mg无效 → 腺苷 12mg"
+
+    - source: "F_101_DO_ADENOSINE_6MG"
+      target: "F_101_MONITOR_SINUS_RHYTHM"
+      intentCode: "S-101-2-2"
+      condition: "#intervention.rhythmConverted == true"
+      priority: 30
+      exitReason: null
+      effects: []
+      description: "6mg有效 → 监测窦性心律"
+
+    - source: "F_101_DO_ADENOSINE_6MG"
+      target: "F_101_UNSTABLE_CARDIOVERSION"
+      intentCode: null
+      condition: "#phys.systolicBp < 90"
+      priority: 100
+      exitReason: null
+      effects:
+        - var: "process.instabilityTriggered"
+          value: true
+      description: "6mg期间恶化 → 同步电复律"
+
+    - source: "F_101_DO_ADENOSINE_6MG"
+      target: "F_101_EXIT_TO_PARENT"
+      intentCode: null
+      condition: "#clinical.isWpw == true"
+      priority: 110
+      exitReason: "WPW_CONTRADICTION"
+      effects: []
+      description: "WPW禁用腺苷 → 立即退出"
+
+    - source: "F_101_DO_ADENOSINE_12MG"
+      target: "F_101_DO_ADENOSINE_12MG"
+      intentCode: "S-101-2-2"
+      condition: "#clinical.isWpw == false && #intervention.adenosine.count == 1"
+      priority: 10
+      exitReason: null
+      effects:
+        - var: "intervention.adenosine.count"
+          value: 2
+        - var: "intervention.adenosine.status"
+          value: "given"
+        - var: "process.lastInterventionTime"
+          valueExpression: "T(System).currentTimeMillis()"
+      description: "腺苷 12mg 推注执行"
+
+    # ★★★ 修改点：新增 S-101-2-5 → 二线药物 的出边 ★★★
+    # 学员在 12mg 状态下直接声明"用二线药物"，无需再连发两次 S-101-2-2
+    - source: "F_101_DO_ADENOSINE_12MG"
+      target: "F_101_DO_SECOND_LINE_DRUG"
+      intentCode: "S-101-2-5"
+      condition: "#intervention.rhythmConverted == false && #clinical.isWpw == false"
+      priority: 12
+      exitReason: null
+      effects: []
+      description: "12mg 无效，学员直接声明用二线药物 → 进入二线药物"
+
+    - source: "F_101_DO_ADENOSINE_12MG"
+      target: "F_101_DO_SECOND_LINE_DRUG"
+      intentCode: "S-101-2-2"
+      condition: "#intervention.rhythmConverted == false && #intervention.adenosine.count >= 2"
+      priority: 15
+      exitReason: null
+      effects: []
+      description: "12mg无效 → 二线药物"
+
+    - source: "F_101_DO_ADENOSINE_12MG"
+      target: "F_101_MONITOR_SINUS_RHYTHM"
+      intentCode: "S-101-2-2"
+      condition: "#intervention.rhythmConverted == true"
+      priority: 30
+      exitReason: null
+      effects: []
+      description: "12mg有效 → 监测窦性心律"
+
+    - source: "F_101_DO_ADENOSINE_12MG"
+      target: "F_101_UNSTABLE_CARDIOVERSION"
+      intentCode: null
+      condition: "#phys.systolicBp < 90"
+      priority: 100
+      exitReason: null
+      effects: []
+      description: "12mg期间恶化 → 同步电复律"
+
+    - source: "F_101_DO_SECOND_LINE_DRUG"
+      target: "F_101_DO_SECOND_LINE_DRUG"
+      intentCode: "S-101-2-5"
+      condition: "#clinical.isWpw == false && (#intervention.diltiazem.count == null || #intervention.diltiazem.count == 0)"
+      priority: 5
+      exitReason: null
+      effects:
+        - var: "intervention.diltiazem.count"
+          value: 1
+        - var: "intervention.diltiazem.status"
+          value: "given"
+        - var: "process.lastInterventionTime"
+          valueExpression: "T(System).currentTimeMillis()"
+      description: "二线药物（β受体阻滞剂/CCB）执行"
+
+    # ★★★ 修改点（v1.2.5）：S-101-2-8 直接跳 F-000-ROSC_MANAGEMENT，绕过 F_101_EXIT_TO_PARENT 中转 ★★★
+    # 原因：F_101_EXIT_TO_PARENT 出边在运行期被加载器复制，priority=100 冲突，导致无法从其出发做转移选择
+    - source: "F_101_DO_SECOND_LINE_DRUG"
+      target: "F-000-ROSC_MANAGEMENT"
+      intentCode: "S-101-2-8"
+      condition: "#clinical.isWpw == false"
+      priority: 8
+      exitReason: null
+      effects: []
+      description: "学员宣布转复为窦性 → 直接跳到父级 ROSC 接管"
+
+    - source: "F_101_DO_SECOND_LINE_DRUG"
+      target: "F_101_EXIT_TO_PARENT"
+      intentCode: "S-101-2-5"
+      condition: "#intervention.rhythmConverted == false"
+      priority: 10
+      exitReason: "REFRACTORY_SVT"
+      effects: []
+      description: "二线药物无效 → 退出父级"
+
+    - source: "F_101_DO_SECOND_LINE_DRUG"
+      target: "F_101_MONITOR_SINUS_RHYTHM"
+      intentCode: "S-101-2-5"
+      condition: "#intervention.rhythmConverted == true"
+      priority: 20
+      exitReason: null
+      effects: []
+      description: "二线药物有效 → 监测窦性心律"
+
+    - source: "F_101_DO_SECOND_LINE_DRUG"
+      target: "F_101_UNSTABLE_CARDIOVERSION"
+      intentCode: null
+      condition: "#phys.systolicBp < 90"
+      priority: 100
+      exitReason: null
+      effects: []
+      description: "二线期间恶化 → 同步电复律"
+
+    - source: "F_101_MONITOR_SINUS_RHYTHM"
+      target: "F_101_EXIT_TO_PARENT"
+      intentCode: "S-101-2-8"
+      condition: "#process.timeElapsedSinceLastIntervention > 60 && #derived.isSinusRhythm == false"
+      priority: 5
+      exitReason: "PERSISTENT_SVT"
+      effects: []
+      description: "60秒窗口未转复 → 返回父级"
+
+    - source: "F_101_MONITOR_SINUS_RHYTHM"
+      target: "F_101_EXIT_TO_PARENT"
+      intentCode: null
+      condition: "#derived.isSinusRhythm == true"
+      priority: 10
+      exitReason: "ROSC"
+      effects: []
+      description: "转为窦性 → 返回父级 ROSC 接管"
+
+    - source: "F_101_MONITOR_SINUS_RHYTHM"
+      target: "F_101_UNSTABLE_CARDIOVERSION"
+      intentCode: null
+      condition: "#phys.systolicBp < 90"
+      priority: 100
+      exitReason: null
+      effects: []
+      description: "监测期间恶化 → 同步电复律"
+
+    - source: "F_101_UNSTABLE_CARDIOVERSION"
+      target: "F_101_EXIT_TO_PARENT"
+      intentCode: "S-101-2-6"
+      condition: "#intervention.cardioversion.success == false && #intervention.cardioversion.count >= 3"
+      priority: 10
+      exitReason: "REFRACTORY_SHOCK"
+      effects: []
+      description: "多次电复律失败 → 退出父级"
+
+    - source: "F_101_UNSTABLE_CARDIOVERSION"
+      target: "F_101_UNSTABLE_CARDIOVERSION"
+      intentCode: "S-101-2-6"
+      condition: "#device.defibConnected == true && #device.defibPadsAttached == true && #device.defibSyncMode == true && #device.defibCharged == true && #intervention.cardioversion.success == false && (#intervention.cardioversion.count == null || #intervention.cardioversion.count < 3)"
+      priority: 15
+      exitReason: null
+      effects:
+        - var: "intervention.cardioversion.count"
+          valueExpression: "(intervention.cardioversion.count == null ? 1 : intervention.cardioversion.count + 1)"
+        - var: "intervention.cardioversion.lastEnergy"
+          value: 200
+        - var: "process.lastInterventionTime"
+          valueExpression: "T(System).currentTimeMillis()"
+      description: "电复律失败且可重试 → 再次尝试"
+
+    - source: "F_101_UNSTABLE_CARDIOVERSION"
+      target: "F_101_MONITOR_SINUS_RHYTHM"
+      intentCode: "S-101-2-6"
+      condition: "#intervention.cardioversion.success == true"
+      priority: 20
+      exitReason: null
+      effects: []
+      description: "电复律成功 → 监测窦性心律"
+
+    - source: "F_101_EXIT_TO_PARENT"
+      target: "F-000-INITIAL_SETUP"
+      intentCode: null
+      condition: "#process.returnToParent == 'UNSTABLE' || #process.returnToParent == 'WIDE_QRS' || #process.returnToParent == 'IRREGULAR_RHYTHM'"
+      priority: 80
+      exitReason: null
+      effects: []
+      description: "子级状态变化 → 返回父级重新分类"
+
+    - source: "F_101_EXIT_TO_PARENT"
+      target: "F-000-ERROR_HANDLING"
+      intentCode: null
+      condition: "#process.returnToParent == 'REFRACTORY_SVT' || #process.returnToParent == 'PERSISTENT_SVT' || #process.returnToParent == 'REFRACTORY_SHOCK'"
+      priority: 90
+      exitReason: null
+      effects: []
+      description: "子级治疗失败 → 错误处理"
+
+    - source: "F_101_EXIT_TO_PARENT"
+      target: "F-000-ROSC_MANAGEMENT"
+      intentCode: null
+      condition: "#process.returnToParent == 'ROSC'"
+      priority: 100
+      exitReason: null
+      effects: []
+      description: "子级转复成功 → 父级ROSC接管"
+
+    - source: "F_101_EXIT_TO_PARENT"
+      target: "F-000-ERROR_HANDLING"
+      intentCode: null
+      condition: "#process.returnToParent == 'WPW_CONTRADICTION'"
+      priority: 110
+      exitReason: null
+      effects: []
+      description: "WPW禁忌 → 错误处理"
+
+    - source: "F_102_ASSESS_STABILITY"
+      target: "F_102_EXIT_TO_PARENT"
+      intentCode: null
+      condition: "#process.returnToParent != null || #derived.stable == false || #derived.qrsWidth == 'wide'"
+      priority: 10
+      exitReason: null
+      effects: []
+      description: "不稳定/宽QRS子级评估完成 → 退出到父级"
+
+    - source: "F_102_EXIT_TO_PARENT"
+      target: "F-000-INITIAL_SETUP"
+      intentCode: null
+      condition: "#process.returnToParent == 'UNSTABLE' || #process.returnToParent == 'WIDE_QRS' || #process.returnToParent == 'IRREGULAR_RHYTHM'"
+      priority: 80
+      exitReason: null
+      effects: []
+      description: "子级状态变化 → 返回父级重新分类"
+
+    - source: "F_102_EXIT_TO_PARENT"
+      target: "F-000-ROSC_MANAGEMENT"
+      intentCode: null
+      condition: "#process.returnToParent == 'ROSC'"
+      priority: 100
+      exitReason: null
+      effects: []
+      description: "子级转复成功 → 父级ROSC接管"
+
+    - source: "F_103_CPR_START"
+      target: "F_103_EXIT_TO_PARENT"
+      intentCode: null
+      condition: "#clinical.rosc == true || #process.terminateResuscitation == true"
+      priority: 10
+      exitReason: null
+      effects: []
+      description: "ROSC或终止复苏 → 退出骤停子级"
+
+    - source: "F_103_EXIT_TO_PARENT"
+      target: "F-000-ROSC_MANAGEMENT"
+      intentCode: null
+      condition: "#clinical.rosc == true"
+      priority: 100
+      exitReason: null
+      effects: []
+      description: "骤停子级ROSC → 父级ROSC接管"
+
+    - source: "F_103_EXIT_TO_PARENT"
+      target: "F-000-TERMINATE_RESUSCITATION"
+      intentCode: null
+      condition: "#process.terminateResuscitation == true && #clinical.rosc == false"
+      priority: 110
+      exitReason: null
+      effects: []
+      description: "骤停子级治疗无效，终止复苏"
+
+    - source: "F_104_ASSESS_BRADY"
+      target: "F_104_EXIT_TO_PARENT"
+      intentCode: null
+      condition: "#process.returnToParent != null || #phys.heartRate >= 50 || #phys.symptomsPresent == false"
+      priority: 10
+      exitReason: null
+      effects: []
+      description: "心动过缓评估完成或状态变化 → 退出到父级"
+
+    - source: "F_104_EXIT_TO_PARENT"
+      target: "F-000-INITIAL_SETUP"
+      intentCode: null
+      condition: "#process.returnToParent == 'UNSTABLE' || #process.returnToParent == 'WIDE_QRS' || #process.returnToParent == 'IRREGULAR_RHYTHM'"
+      priority: 80
+      exitReason: null
+      effects: []
+      description: "子级状态变化 → 返回父级重新分类"
+
+    - source: "F_104_EXIT_TO_PARENT"
+      target: "F-000-ROSC_MANAGEMENT"
+      intentCode: null
+      condition: "#process.returnToParent == 'ROSC'"
+      priority: 100
+      exitReason: null
+      effects: []
+      description: "心动过缓子级转复 → 父级ROSC接管"

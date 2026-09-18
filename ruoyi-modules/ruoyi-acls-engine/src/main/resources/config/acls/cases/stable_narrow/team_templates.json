@@ -1,0 +1,14 @@
+{
+  "templates": [
+    {
+      "id": "3MAN",
+      "description": "成人案例三人组（含组长/体验者）",
+      "slots": [
+        { "title": "组长", "name": "体验者", "duties": ["TEAM_LEADER"], "color": "#9E9E9E", "ttsVoice": "zf_005" },
+        { "title": "医生", "name": "蓝医生", "duties": ["CPR", "AIRWAY", "ASSESS"], "color": "#1E88E5", "ttsVoice": "zm_098" },
+        { "title": "护士", "name": "黄护士", "duties": ["IV_MED", "MONITOR_DEFIB", "RECORD"], "color": "#FDD835", "ttsVoice": "zf_047" },
+        { "title": "司机", "name": "朱司机", "duties": ["CPR", "ASSIST"], "color": "#E53935", "ttsVoice": "zm_089" }
+      ]
+    }
+  ]
+}

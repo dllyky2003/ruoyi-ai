@@ -1,6 +1,6 @@
 package com.ruoyi.acls.scheduler;
 
-import com.ruoyi.acls.cognitive.CognizantTeamMember;
+import com.ruoyi.acls.member.CognizantTeamMember;
 import com.ruoyi.acls.config.AclsEngineProperties;
 import com.ruoyi.acls.factory.VirtualMemberFactory;
 import com.ruoyi.ems.domain.CaseContext; // 旧模块的类，provided依赖，安全
@@ -25,10 +25,9 @@ public class HeartbeatScheduler {
      */
     @Scheduled(fixedDelayString = "${acls.scheduler.tick-interval:100}")
     public void tick() {
-        if (!properties.getEngine().isEnabled()) {
+        if (!"human".equalsIgnoreCase(properties.getMemberMode())) {
             return;
         }
-
         // 遍历所有活跃会话（需要你实现获取活跃session列表的方法）
         // 这里为了示例，假设通过某个ContextManager获取
         for (String sessionId : getActiveSessions()) {

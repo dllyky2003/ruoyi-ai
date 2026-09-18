@@ -2,14 +2,13 @@ package com.ruoyi.ems.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ruoyi.ems.intent.model.*;
+import com.ruoyi.ems.intent.model.IntentCandidate;
+import com.ruoyi.ems.intent.model.IntentDefinition;
+import com.ruoyi.ems.intent.model.SubDomain;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -41,43 +40,100 @@ public class IntentCommand {
     @JsonIgnore
     private SubDomain matchedSubDomain;   // 缓存子域对象
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
-// ================================================================
-    //  参数抽取提示词生成方法（依赖 matchedDefinition 和 matchedSubDomain）
+    private String source;
+    private Object matchDetail;
+
+    /** 分类来源：meta-rule / keyword / vector / llm / default */
+    private String classifySource;   // 分类来源
+    private Integer sentenceIndex;   // 分句序号
+    /** 分句序号，从 0 开始 */
+    @JsonIgnore
+    private String llmRawResponse;
     // ================================================================
-private static final String DEFAULT_SYSTEM_PROMPT = """
-    你是一位擅长院前ACLS和Megacode场景的临床参数抽取专家。
-    你的任务是从急救语音文本中，精准提取【结构化参数】，并以严格的JSON格式输出。
+    //  便捷构造方法（保持不变）
+    // ================================================================
 
-    ## 【抽取核心准则】
-    1. **数值与单位分离**：对于剂量、时间、容量等参数，必须分别抽取 `数值(value)` 和 `单位(unit)`。严禁只提取数字而忽略单位（例如 "肾上腺素1mg" 应提取为 {"value": 1, "unit": "mg"}，而非 {"value": 1} ）。
-    2. **症状阴阳性判断**：对于"疼痛"、"呼吸困难"等主观症状，若语音包含"没有"、"不痛"、"未缓解"等否定词，则布尔值抽取为 `false`；若为肯定描述，则为 `true`。若未提及，必须输出 `null`。
-    3. **严格枚举匹配**：对于 `string` 类型参数，若配置了 `enum` 枚举列表，返回的值必须严格等于列表中的某一项，严禁自行发明新词。
-    4. **如果某个字段无法提取，直接省略该字段。
+    public static IntentCommand keywordHit(String intentCode, String asrText, String source, IntentDefinition definition) {
+        return IntentCommand.builder()
+            .rawText(asrText)
+            .intentCode(intentCode)
+            .source(source != null ? source : "keyword")
+            .classifyMode("keyword")
+            .confidence(1.0)
+            .valid(true)
+            .slots(Collections.emptyMap())
+            .matchedDefinition(definition)
+            .build();
+    }
 
-    ## 【ASR 语音识别容错策略】⭐新增
-    输入文本来自自动语音识别（ASR），可能存在以下问题：
-    - 数字吞音（如"6mg"被识别为"mg"或"六"变成"零"）
-    - 单位遗漏（只说"推6"而未说"毫克"）
-    - 同音错字（如"腺苷"被识别为"线干"）
-    - 数值异常（如将6识别为16或60）
+    public static IntentCommand keywordHit(String intentCode, String asrText, String source) {
+        return keywordHit(intentCode, asrText, source, null);
+    }
 
-    为应对上述情况，你必须遵循以下规则：
-    - **缺失数值时**：若语音中明确提到了药物名称或操作，但数值被吞掉，请根据临床常规默认值补全（例如：腺苷首剂6mg，次剂12mg；盐水冲管20ml；若无法推断，则将该字段输出为 `null`）。
-    - **数值合理性校验**：
-        - 腺苷剂量只允许 6mg 或 12mg，若识别出的数字超出此范围（如16、60），视为ASR错误，应回退为基于 `dose_sequence` 的默认值（首剂6mg，次剂12mg）。
-        - 血压收缩压合理范围 70~250 mmHg，舒张压 40~200 mmHg，超出范围则输出 `null`。
-        - 心率合理范围 20~300 bpm，血氧 50~100%，呼吸频率 5~60 次/分，GCS 3~15 分，超出则输出 `null`。
-    - **单位缺失时**：根据药物/操作类型自动补全单位（如腺苷→mg，盐水→ml，电复律能量→J）。
+    public static IntentCommand vectorHit(String intentCode, double score, String source, IntentDefinition definition) {
+        return IntentCommand.builder()
+            .intentCode(intentCode)
+            .source(source != null ? source : "vector")
+            .classifyMode("vector")
+            .confidence(score)
+            .matchDetail(String.format("向量相似度: %.3f", score))
+            .valid(true)
+            .reason(String.format("向量匹配成功 (score: %.3f)", score))
+            .slots(Collections.emptyMap())
+            .matchedDefinition(definition)
+            .build();
+    }
 
-    ## 【输出约束】
-    1. 仅输出一个合法的 JSON 对象。
-    2. 不要添加任何解释、前缀（如 "结果是："）或 Markdown 代码块标记。
-    3. Key 必须严格匹配【所需参数列表】。
-    """;
+    public static IntentCommand vectorHit(String intentCode, double score, String source) {
+        return vectorHit(intentCode, score, source, null);
+    }
 
+    public static IntentCommand llmResult(String intentCode, String source, IntentDefinition definition) {
+        return IntentCommand.builder()
+            .intentCode(intentCode)
+            .source(source != null ? source : "llm")
+            .classifyMode("llm")
+            .confidence(0.85)
+            .matchDetail("LLM 推理")
+            .valid(true)
+            .reason("LLM 分类决策")
+            .slots(Collections.emptyMap())
+            .matchedDefinition(definition)
+            .build();
+    }
 
-    // ==================== 便捷构造方法 ====================
+    public static IntentCommand llmResult(String intentCode, String source) {
+        return llmResult(intentCode, source, null);
+    }
+
+    public static IntentCommand noMatch(String source) {
+        return IntentCommand.builder()
+            .intentCode(null)
+            .source(source != null ? source : "none")
+            .classifyMode(source != null ? source : "none")
+            .confidence(0.0)
+            .valid(false)
+            .reason("未匹配任何意图")
+            .slots(Collections.emptyMap())
+            .matchedDefinition(null)
+            .errorMessage("无法识别该指令")
+            .build();
+    }
+
+    public static IntentCommand noMatch(String source, String errorMessage) {
+        return IntentCommand.builder()
+            .intentCode(null)
+            .source(source != null ? source : "none")
+            .classifyMode(source != null ? source : "none")
+            .confidence(0.0)
+            .valid(false)
+            .reason("未匹配任何意图")
+            .slots(Collections.emptyMap())
+            .matchedDefinition(null)
+            .errorMessage(errorMessage != null ? errorMessage : "无法识别该指令")
+            .build();
+    }
+
     public static IntentCommand success(String intentCode, Map<String, Object> parameters,
                                         Double confidence, List<IntentCandidate> candidates,
                                         IntentDefinition definition) {
@@ -102,126 +158,63 @@ private static final String DEFAULT_SYSTEM_PROMPT = """
             .build();
     }
 
+    // ================================================================
+    //  判断方法
+    // ================================================================
+
+    /**
+     * ★ 显式覆盖 Lombok 为 {@code private boolean valid;} 自动生成的 {@code isValid()}。
+     *
+     * <p>之所以必须显式定义：{@code @Data} 默认生成的 getter 仅返回 {@code valid} 字段本身，
+     * 并不能保证 {@code intentCode} 与 {@code matchedDefinition} 同时可用。而下游
+     * （如 {@code SessionService.executeCommandSync} 的调试日志、
+     * {@code IntelligentCommandProcessor} 的实现类）会直接调用
+     * {@code command.getMatchedDefinition().getNameCn()}，一旦上游工厂方法
+     * 传入 definition = null 却将 {@code valid} 置为 true，就会出现
+     * "isValid() 通过但 matchedDefinition 为 null" 的半有效状态，进而抛 NPE。
+     *
+     * <p>只有同时满足以下三个条件才视为“真正有效”：
+     * <ul>
+     *   <li>{@code valid} 标记为 true</li>
+     *   <li>{@code intentCode} 非空</li>
+     *   <li>{@code matchedDefinition} 已成功绑定</li>
+     * </ul>
+     *
+     * <p>注意：Lombok 在检测到同名方法已存在时不会重复生成，因此此处的方法会覆盖默认实现。
+     * 同时，本方法未加 {@code @JsonIgnore}，以保持原本 {@code valid} 字段的序列化行为不变。
+     */
+    public boolean isValid() {
+        return valid && intentCode != null && matchedDefinition != null;
+    }
+
+    @JsonIgnore
+    public boolean isKeywordHit() {
+        return valid && "keyword".equals(source);
+    }
+
+    @JsonIgnore
+    public boolean isVectorHit() {
+        return valid && "vector".equals(source);
+    }
+
+    @JsonIgnore
+    public boolean isLlmResult() {
+        return valid && "llm".equals(source);
+    }
+
+    @JsonIgnore
+    public boolean isMatched() {
+        return valid && intentCode != null;
+    }
+
     public String getTopCandidateCode() {
         return (candidates != null && !candidates.isEmpty()) ? candidates.get(0).getIntentCode() : null;
     }
 
+    // ================================================================
+    //  参数访问方法（过滤 null）
+    // ================================================================
 
-
-    @JsonIgnore
-    public String buildExtractionSystemPrompt() {
-        if (matchedDefinition == null || matchedDefinition.getExtraction() == null) {
-            return null;
-        }
-
-        ExtractionConfig ext = matchedDefinition.getExtraction();
-
-        // 1. 意图级精准覆盖（最高优先级）
-        if (StringUtils.hasText(ext.getOverrideInstruction())) {
-            return ext.getOverrideInstruction();
-        }
-
-        // 2. 子域级共享提示（次优先级）—— 直接使用缓存对象
-        if (matchedSubDomain != null && StringUtils.hasText(matchedSubDomain.getExtractionHint())) {
-            return matchedSubDomain.getExtractionHint() + "\n\n" + DEFAULT_SYSTEM_PROMPT;
-        }
-
-        // 3. 默认通用模板
-        return DEFAULT_SYSTEM_PROMPT;
-    }
-
-    @JsonIgnore
-    public String buildExtractionUserPrompt() {
-        if (matchedDefinition == null || matchedDefinition.getExtraction() == null) {
-            return null;
-        }
-
-        ExtractionConfig extraction = matchedDefinition.getExtraction();
-        String rulesJson = serializeRules(extraction.getRules());
-
-        return String.format("""
-        【原始语音文本】
-        %s
-
-        【所需参数列表】
-        %s
-
-        【参数抽取规则（JSON格式）】
-        %s
-
-        请根据上述规则，从语音文本中提取参数，仅输出 JSON 对象。
-        """,
-            rawText != null ? rawText : "",
-            extraction.getTargetParams() != null ? extraction.getTargetParams() : "[]",
-            rulesJson != null ? rulesJson : "{}"
-        );
-    }
-
-    @JsonIgnore
-    public Map<String, String> buildExtractionPromptPair() {
-        String system = buildExtractionSystemPrompt();
-        String user = buildExtractionUserPrompt();
-        if (system == null || user == null) {
-            return Collections.emptyMap();
-        }
-        Map<String, String> pair = new LinkedHashMap<>();
-        pair.put("system", system);
-        pair.put("user", user);
-        return pair;
-    }
-
-    // ==================== 私有辅助方法 ====================
-    private String serializeRules(Map<String, ParamRule> rules) {
-        if (rules == null || rules.isEmpty()) {
-            return "{}";
-        }
-        try {
-            return MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(rules);
-        } catch (JsonProcessingException e) {
-            return rules.toString();
-        }
-    }
-
-    @JsonIgnore
-    public AiPromptPair getExtractionPrompts() {
-        Map<String, String> pair = buildExtractionPromptPair();
-        if (pair.isEmpty()) {
-            return null;
-        }
-        return new AiPromptPair(pair.get("system"), pair.get("user"));
-    }
-
-    /**
-     * 将命中的意图码和抽取的参数格式化为一个可读字符串。
-     */
-    public String formatIntentAndParameters() {
-        if (!valid) {
-            return "无效意图: " + (errorMessage != null ? errorMessage : "未知错误");
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("意图代码: ").append(intentCode != null ? intentCode : "未知");
-        sb.append("意图名称: ").append(matchedDefinition != null ? matchedDefinition.getNameCn() : "未知");
-        sb.append("选择原因: ").append(reason != null ? reason : "?");
-        sb.append(", 参数: ");
-        if (slots != null && !slots.isEmpty()) {
-            sb.append(slots.entrySet().stream()
-                .map(e -> e.getKey() + "=" + e.getValue())
-                .collect(Collectors.joining(", ", "{", "}")));
-        } else {
-            sb.append("无");
-        }
-
-        if (confidence != null) {
-            sb.append(", 置信度: ").append(String.format("%.2f", confidence));
-        }
-
-        return sb.toString();
-    }
-
-    /**
-     * 安全设置参数（自动过滤 null 值）
-     */
     public void setSlots(Map<String, Object> slots) {
         if (slots == null) {
             this.slots = new HashMap<>();
@@ -238,5 +231,38 @@ private static final String DEFAULT_SYSTEM_PROMPT = """
 
     public Map<String, Object> getSlots() {
         return slots != null ? slots : Collections.emptyMap();
+    }
+
+    /**
+     * 格式化意图和参数（仅用于日志/调试）
+     */
+    public String formatIntentAndParameters() {
+        if (!valid) {
+            return "无效意图: " + (errorMessage != null ? errorMessage : "未知错误");
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("意图代码: ").append(intentCode != null ? intentCode : "未知");
+        if (matchedDefinition != null) {
+            sb.append(", 意图名称: ").append(matchedDefinition.getNameCn());
+        }
+        if (source != null) {
+            sb.append(", 分类来源: ").append(source);
+        }
+        if (matchDetail != null) {
+            sb.append(", 匹配详情: ").append(matchDetail);
+        }
+        if (confidence != null) {
+            sb.append(", 置信度: ").append(String.format("%.2f", confidence));
+        }
+        sb.append(", 参数: ");
+        if (slots != null && !slots.isEmpty()) {
+            sb.append(slots.entrySet().stream()
+                .map(e -> e.getKey() + "=" + e.getValue())
+                .collect(Collectors.joining(", ", "{", "}")));
+        } else {
+            sb.append("无");
+        }
+        return sb.toString();
     }
 }

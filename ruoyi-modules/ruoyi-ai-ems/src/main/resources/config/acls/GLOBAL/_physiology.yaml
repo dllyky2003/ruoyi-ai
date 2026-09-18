@@ -1,0 +1,287 @@
+# ================================================================
+# 院前急救通用生理基线配置（极简核心版）
+# 存放位置：config/acls/GLOBAL/_physiology.yaml
+# 用途：为所有急救案例提供最基础的生理状态和常用操作效果
+#       具体案例可在自身 _physiology.yaml 中扩展或覆盖
+# 设计原则：只包含跨案例共享的通用节点，无任何案例特异性
+# ================================================================
+
+# 全局默认过渡时间（秒）
+# 当某个状态未单独指定 transition_duration 时，使用此值
+# 该时间表示模拟器从当前状态自然过渡到下一个状态所需的时间
+default_transition_duration: 10
+
+# ================================================================
+# 状态生理基线定义
+# 每个键代表一个逻辑状态，其下的数值为"学员未做干预时的自然病程"
+# 学员的操作（给药、电击、CPR等）将作为动态叠加层影响最终显示值
+# ================================================================
+state_physiology:
+
+  # ----- 初始评估 / 分诊 -----
+  # 场景：刚接触患者时的首次生命体征采集
+  # 通常用于所有案例的起始节点
+  GLOBAL-ASSESS:
+    phys.heartRate: 80          # 心率 (次/分)
+    phys.systolicBp: 120        # 收缩压 (mmHg)
+    phys.diastolicBp: 80        # 舒张压 (mmHg)
+    phys.spo2: 98               # 血氧饱和度 (%)
+    phys.respiratoryRate: 16    # 呼吸频率 (次/分)
+    phys.consciousness: "alert" # 意识状态：alert（清醒）, verbal（对声音有反应）, pain（对疼痛有反应）, unresponsive（无反应）
+    transition_duration: 5      # 此状态持续5秒后自动进入下一状态（如无操作）
+
+  # ----- 稳定状态 -----
+  # 场景：患者生命体征正常，无危及生命情况
+  # 常见于成功干预后的稳定期，或初始病情轻微
+  GLOBAL-STABLE:
+    phys.heartRate: 75
+    phys.systolicBp: 125
+    phys.diastolicBp: 82
+    phys.spo2: 99
+    phys.respiratoryRate: 14
+    phys.consciousness: "alert"
+    # 未指定 transition_duration，将使用全局默认值 10 秒
+
+  # ----- 不稳定状态 -----
+  # 场景：患者出现休克、低血压、意识改变等危急征象
+  # 此状态用于触发紧急干预流程（如液体复苏、血管活性药物等）
+  GLOBAL-UNSTABLE:
+    phys.heartRate: 130
+    phys.systolicBp: 85
+    phys.diastolicBp: 50
+    phys.spo2: 92
+    phys.respiratoryRate: 28
+    phys.consciousness: "confused"  # 意识模糊，常见于脑灌注不足
+    transition_duration: 8
+
+  # ----- 心脏骤停 -----
+  # 场景：无脉搏、无呼吸，心电呈直线（Asystole）或室颤/无脉性室速
+  # 血压和血氧均为 0，意识无反应
+  GLOBAL-CARDIAC_ARREST:
+    phys.heartRate: 0
+    phys.systolicBp: 0
+    phys.diastolicBp: 0
+    phys.spo2: 0
+    phys.respiratoryRate: 0
+    phys.consciousness: "unresponsive"
+
+  # ----- CPR 进行中 -----
+  # 场景：学员正在进行胸外按压和人工通气
+  # 此时虽无自主循环，但按压可产生一定的血流（约 60/30 mmHg）
+  # 血氧因通气有所改善（约 85%）
+  GLOBAL-CPR:
+    phys.heartRate: 0           # 仍无自主心率
+    phys.systolicBp: 60         # 按压产生的收缩压
+    phys.diastolicBp: 30
+    phys.spo2: 85
+    phys.respiratoryRate: 10    # 人工通气频率（通常按压通气比为 30:2）
+    phys.consciousness: "unresponsive"
+    transition_duration: 30     # 此状态持续30秒，需学员持续操作
+
+  # ----- 恢复自主循环 (ROSC) -----
+  # 场景：经CPR和/或电击后患者自主心跳恢复
+  # 常见于成功除颤或用药后，是急救成功的关键转折点
+  GLOBAL-ROSC:
+    phys.heartRate: 100
+    phys.systolicBp: 110
+    phys.diastolicBp: 70
+    phys.spo2: 96
+    phys.respiratoryRate: 18
+    phys.consciousness: "confused"  # ROSC后早期常存在脑功能不全，意识可能未完全恢复
+    transition_duration: 20
+
+  # ----- 常规监测 -----
+  # 场景：患者情况稳定，进入观察期
+  # 此状态可作为急救后期或转运前的基线
+  GLOBAL-MONITORING:
+    phys.heartRate: 78
+    phys.systolicBp: 122
+    phys.diastolicBp: 78
+    phys.spo2: 99
+    phys.respiratoryRate: 15
+    phys.consciousness: "alert"
+    transition_duration: 25
+
+  # ----- 退出案例 -----
+  # 场景：患者已稳定或终止抢救，退出当前模拟案例
+  # 常作为整个流程的终止节点
+  GLOBAL-EXIT:
+    phys.heartRate: 75
+    phys.systolicBp: 120
+    phys.diastolicBp: 80
+    phys.spo2: 99
+    phys.respiratoryRate: 14
+    phys.consciousness: "alert"
+    transition_duration: 10
+
+# ================================================================
+# 操作效果定义（系统运行时根据学员操作动态叠加）
+# 每个操作可影响多个生理指标，并指定作用时长、恢复方式和曲线类型
+# 所有操作效果均为通用定义，具体案例可在此基础上调整参数
+# ================================================================
+operation_effects:
+
+  # ----- 肾上腺素（EPINEPHRINE）-----
+  # 用途：心脏骤停、过敏性休克、严重低血压
+  # 作用：收缩血管（升压）、增加心输出量，轻微增快心率
+  EPINEPHRINE:
+    - target: phys.systolicBp
+      delta: 25                # 收缩压上升 25 mmHg
+      duration: 20             # 作用维持 20 秒（随后开始恢复）
+      recovery: 15             # 恢复期 15 秒（完全回到基线）
+      curve: LINEAR_DECAY_LINEAR_RECOVER  # 线性衰减再线性恢复
+    - target: phys.heartRate
+      delta: 20                # 心率增加 20 次/分
+      duration: 15
+      recovery: 10
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  # ----- 阿托品（ATROPINE）-----
+  # 用途：症状性心动过缓（如迷走反射、房室传导阻滞）
+  # 作用：阻断迷走神经，增快心率，轻度升压
+  ATROPINE:
+    - target: phys.heartRate
+      delta: 30                # 心率增快 30 次/分
+      duration: 25
+      recovery: 20
+      curve: INSTANT_DROP_LINEAR_RECOVER  # 瞬时起效，线性恢复
+
+  # ----- 胺碘酮（AMIODARONE）-----
+  # 用途：室性心律失常（如室速、室颤）及房颤的转复
+  # 作用：减慢心率，轻度降压（扩血管作用）
+  AMIODARONE:
+    - target: phys.heartRate
+      delta: -20               # 心率减慢 20 次/分
+      duration: 30
+      recovery: 25
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+    - target: phys.systolicBp
+      delta: -10               # 收缩压下降 10 mmHg（可能需配合升压药）
+      duration: 20
+      recovery: 15
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  # ----- 多巴胺（DOPAMINE）-----
+  # 用途：各种休克状态（心源性、分布性、低血容量性）
+  # 作用：剂量依赖性升压（正性肌力+缩血管），心率轻度增快
+  DOPAMINE:
+    - target: phys.systolicBp
+      delta: 30                # 收缩压上升 30 mmHg
+      duration: 30
+      recovery: 20
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+    - target: phys.heartRate
+      delta: 15                # 心率增加 15 次/分
+      duration: 20
+      recovery: 15
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  # ----- 利多卡因（LIDOCAINE）-----
+  # 用途：室性心律失常（尤其急性心肌梗死合并室早/室速）
+  # 作用：抑制心室异位节律，轻微减慢心率
+  LIDOCAINE:
+    - target: phys.heartRate
+      delta: -15               # 心率减慢 15 次/分
+      duration: 20
+      recovery: 15
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  # ----- 除颤（DEFIBRILLATION）-----
+  # 用途：室颤（VF）或无脉性室速（pVT）——同步电复律
+  # 作用：释放电能除颤，使心律转为窦性，心率下降，血压回升
+  # 通常配合 200J 双相波
+  DEFIBRILLATION:
+    - target: phys.heartRate
+      delta: -150              # 心率骤降（转为窦性后正常）
+      duration: 5              # 效果几乎瞬时
+      recovery: 10             # 稳定后逐步恢复至基线
+      curve: INSTANT_DROP_LINEAR_RECOVER
+    - target: phys.systolicBp
+      delta: 40                # 除颤成功后灌注改善，血压上升
+      duration: 15
+      recovery: 10
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  # ----- 同步电复律（CARDIOVERSION）-----
+  # 用途：不稳定型房颤/房扑、室上性心动过速（血流动力学不稳定）
+  # 作用：与R波同步释放能量，转复为窦性，心率下降，血压稳定
+  CARDIOVERSION:
+    - target: phys.heartRate
+      delta: -80               # 心率下降（通常转复后心率减慢）
+      duration: 5
+      recovery: 15
+      curve: INSTANT_DROP_LINEAR_RECOVER
+    - target: phys.systolicBp
+      delta: 30                # 转复后心输出量改善，血压上升
+      duration: 20
+      recovery: 15
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  # ----- CPR 持续进行（CPR_ONGOING）-----
+  # 用途：在心脏骤停时，按压可产生一定灌注
+  # 作用：维持冠脉和脑灌注，提高除颤成功率和ROSC几率
+  # 此效果通常叠加在 CPR 状态下，且恢复期为 0（按压停止即效果消失）
+  CPR_ONGOING:
+    - target: phys.systolicBp
+      delta: 50                # 按压产生的收缩压增量
+      duration: 30             # 效果持续按压期间
+      recovery: 0              # 按压停止立刻恢复（无延迟）
+      curve: CONSTANT          # 恒值，不衰减
+    - target: phys.spo2
+      delta: 10                # 人工通气改善氧合
+      duration: 30
+      recovery: 0
+      curve: CONSTANT
+
+  # ----- 气管插管 / 机械通气（INTUBATION）-----
+  # 用途：建立高级气道，保证通气和氧合
+  # 作用：提高血氧饱和度，降低呼吸频率（由呼吸机控制）
+  INTUBATION:
+    - target: phys.spo2
+      delta: 5                 # 血氧上升 5%
+      duration: 30
+      recovery: 10
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+    - target: phys.respiratoryRate
+      delta: -4                # 呼吸频率降低（由机器控制）
+      duration: 30
+      recovery: 10
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  # ----- 液体复苏（FLUID_RESUSCITATION）-----
+  # 用途：低血容量性休克（创伤、出血、脱水等）
+  # 作用：快速补液提升血压，降低心率（代偿性心动过速缓解）
+  FLUID_RESUSCITATION:
+    - target: phys.systolicBp
+      delta: 20                # 收缩压上升 20 mmHg
+      duration: 30
+      recovery: 25
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+    - target: phys.heartRate
+      delta: -10               # 心率下降 10 次/分（代偿缓解）
+      duration: 20
+      recovery: 15
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  # ----- 纳洛酮（NALOXONE）-----
+  # 用途：阿片类药物过量（呼吸抑制、意识障碍）
+  # 作用：拮抗阿片受体，逆转呼吸抑制，恢复意识和自主呼吸
+  NALOXONE:
+    - target: phys.respiratoryRate
+      delta: 10                # 呼吸频率增加 10 次/分
+      duration: 20
+      recovery: 10
+      curve: INSTANT_DROP_LINEAR_RECOVER
+    - target: phys.consciousness
+      delta: "alert"           # 意识转为清醒（特殊处理字符串）
+      duration: 10
+      recovery: 0
+      curve: INSTANT           # 瞬间生效，不恢复
+
+# ================================================================
+# 曲线类型说明：
+# - INSTANT_DROP_LINEAR_RECOVER  : 瞬时达到峰值（或谷值），然后线性恢复到基线
+# - LINEAR_DECAY_LINEAR_RECOVER  : 线性上升（或下降）至极值，再线性恢复
+# - CONSTANT                     : 恒定值，不随时间变化（恢复期通常为 0）
+# - INSTANT                      : 瞬时改变，立即生效且不恢复（适用于意识状态等离散值）
+# ================================================================

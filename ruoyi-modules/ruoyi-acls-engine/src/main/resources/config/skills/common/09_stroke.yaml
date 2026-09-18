@@ -1,0 +1,128 @@
+# ============================================================================
+# 09_stroke.yaml - 卒中评估类技能
+# 职责：ASSESS（大部分评估）+ RECORD（LKW 记录）
+# ============================================================================
+
+skills:
+  - id: check_grip_strength
+    duty: ASSESS
+    type: query
+    category: STROKE
+    description: 检查双侧握力是否对称
+    params:
+      targetVar: process.gripStrengthChecked
+      responseTemplate: "双侧握力 {value}。"
+      valueMap:
+        symmetric: "对称"
+        asymmetric: "不对称"
+        unknown: "待判读"
+
+  - id: face_droop_check
+    duty: ASSESS
+    type: query
+    category: STROKE
+    description: 面部下垂检查（让患者微笑）
+    params:
+      targetVar: process.faceDroopChecked
+      responseTemplate: "面部 {value}。"
+      valueMap:
+        symmetric: "对称，无下垂"
+        asymmetric: "不对称，有下垂"
+        unknown: "待判读"
+
+  - id: arm_drift_check
+    duty: ASSESS
+    type: query
+    category: STROKE
+    description: 手臂下垂检查（举起双臂观察）
+    params:
+      targetVar: process.armDriftChecked
+      responseTemplate: "双臂平举，{value}。"
+      valueMap:
+        none: "无下垂"
+        left: "左上肢下垂"
+        right: "右上肢下垂"
+        bilateral: "双侧下垂"
+        unknown: "待判读"
+
+  - id: speech_abnormality_check
+    duty: ASSESS
+    type: query
+    category: STROKE
+    description: 语言异常检查（让患者重复短语）
+    params:
+      targetVar: process.speechChecked
+      responseTemplate: "语言 {value}。"
+      valueMap:
+        clear: "清晰"
+        slurred: "含糊"
+        abnormal: "异常"
+        unknown: "待判读"
+
+  - id: assess_balance_coordination
+    duty: ASSESS
+    type: query
+    category: STROKE
+    description: 评估平衡和协调能力
+    params:
+      targetVar: process.balanceChecked
+      responseTemplate: "平衡协调能力 {value}。"
+      valueMap:
+        normal: "正常"
+        abnormal: "异常"
+        unknown: "待判读"
+
+  - id: document_lkw_time
+    duty: RECORD
+    type: query
+    category: STROKE
+    description: 记录最后一次正常知晓时间（LKW）
+    params:
+      targetVar: process.lastKnownWellTime
+      responseTemplate: "最后一次正常知晓时间已记录：{value}。"
+      valueMap:
+        unknown: "不详"
+
+  - id: check_vision_deficits
+    duty: ASSESS
+    type: query
+    category: STROKE
+    description: 检查视野缺损
+    params:
+      targetVar: process.visionDeficit
+      responseTemplate: "视野 {value}。"
+      valueMap:
+        none: "无缺损"
+        left: "左侧缺损"
+        right: "右侧缺损"
+        bilateral: "双侧缺损"
+        unknown: "待判读"
+
+  - id: evaluate_aphasia
+    duty: ASSESS
+    type: query
+    category: STROKE
+    description: 评估失语症
+    params:
+      targetVar: process.aphasia
+      responseTemplate: "失语症评估：{value}。"
+      valueMap:
+        none: "无失语"
+        expressive: "表达性失语"
+        receptive: "感觉性失语"
+        global: "完全性失语"
+        unknown: "待判读"
+
+  - id: assess_neglect_signs
+    duty: ASSESS
+    type: query
+    category: STROKE
+    description: 检查忽略体征（单侧忽略）
+    params:
+      targetVar: process.neglectSigns
+      responseTemplate: "单侧忽略 {value}。"
+      valueMap:
+        none: "无"
+        left: "左侧忽略"
+        right: "右侧忽略"
+        unknown: "待判读"

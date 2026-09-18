@@ -47,7 +47,11 @@ public class ExampleBasedFallbackClassifier implements IntentClassifier {
      * 普通示例分词命中得分（examples 字段）
      */
     private static final int EXAMPLE_SCORE = 1;
+    @Override
+    public void warmUp()
+    {
 
+    }
     @Override
     public IntentCommand classify(String asrText, ClassificationContext context) {
 

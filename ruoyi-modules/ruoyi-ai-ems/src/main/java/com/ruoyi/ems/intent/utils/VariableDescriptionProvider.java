@@ -1,18 +1,19 @@
 package com.ruoyi.ems.intent.utils;
 
-import com.ruoyi.ems.context.VariableMetaManager;
+import com.ruoyi.ems.config.loader.VariableMetaLoader;
 import com.ruoyi.ems.domain.CaseContext;
 import com.ruoyi.ems.domain.VariableMeta;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-
+@Slf4j
 @Component
 public class VariableDescriptionProvider {
 
     @Autowired
-    private VariableMetaManager variableMetaManager;
+    private VariableMetaLoader variableMetaManager;
 
     /**
      * 构建LLM可读的变量描述（分组格式）
@@ -21,7 +22,6 @@ public class VariableDescriptionProvider {
         Map<String, VariableMeta> metaMap = variableMetaManager.getVariablesForCase(caseId);
         Map<String, Object> values = context.getVariablesSnapshot();
 
-        // 分组
         Map<String, List<String>> groups = new LinkedHashMap<>();
         groups.put("【生命体征（客观事实）】", new ArrayList<>());
         groups.put("【学员评估（主观判断）】", new ArrayList<>());
@@ -36,13 +36,17 @@ public class VariableDescriptionProvider {
             if (value == null) continue;
             if (isInternalVariable(name)) continue;
 
-            String displayName = getDisplayName(meta);
-            String displayValue = formatValue(value, meta);
-            String group = getGroup(meta);
-            groups.get(group).add(displayName + "：" + displayValue);
+            try {
+                String displayName = getDisplayName(meta);
+                String displayValue = formatValue(value, meta);
+                String group = getGroup(meta);
+                groups.get(group).add(displayName + "：" + displayValue);
+            } catch (Exception e) {
+                log.warn("处理变量 {} 描述时出错: {}", name, e.getMessage());
+                // 跳过该变量
+            }
         }
 
-        // 构建输出（保留分组标题和缩进）
         StringBuilder sb = new StringBuilder();
         for (Map.Entry<String, List<String>> entry : groups.entrySet()) {
             if (entry.getValue().isEmpty()) continue;
@@ -52,7 +56,6 @@ public class VariableDescriptionProvider {
             }
         }
 
-        // 追加时间信息
         sb.append("【系统时间】\n");
         sb.append("  - 累计时间：").append(formatTime(context.getElapsedSeconds())).append("\n");
         sb.append("  - 时钟状态：").append(context.isClockRunning() ? "▶ 运行中" : "⏸ 已暂停").append("\n");

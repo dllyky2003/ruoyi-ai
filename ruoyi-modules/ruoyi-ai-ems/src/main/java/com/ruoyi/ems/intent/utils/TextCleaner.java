@@ -286,18 +286,23 @@ public class TextCleaner {
 
     // ----- 英文单位/术语转中文 -----
     private String replaceUnits(String text) {
-        // 先处理带数字单位，如 [NUM]mmHg 或 120mmHg
+        if (text == null) return text;
+        String result = text;
+
+        // 遍历单位映射（跳过含数字的键，如 SpO2，它们已由 replaceTermsWithNumbers 处理）
         for (Map.Entry<String, String> entry : UNIT_MAP.entrySet()) {
             String key = entry.getKey();
-            if (key.matches(".*\\d.*")) continue; // 已在上一步处理
-            // 匹配前面有数字或 [NUM] 的情况
-            Pattern p1 = Pattern.compile("(\\[NUM\\]|\\d+(?:\\.\\d+)?)\\s*" + Pattern.quote(key) + "(?![a-zA-Z])");
-            text = p1.matcher(text).replaceAll("$1" + entry.getValue());
-            // 匹配独立词
-            Pattern p2 = Pattern.compile("(?<![0-9a-zA-Z\\]])" + Pattern.quote(key) + "(?![a-zA-Z])");
-            text = p2.matcher(text).replaceAll(Matcher.quoteReplacement(entry.getValue()));
+            // 跳过本身含有数字的键（如 SpO2、FiO2）
+            if (key.matches(".*\\d.*")) continue;
+
+            // 只替换 "数字 或 [NUM] + 可选空格 + 单位" 的形式
+            Pattern p = Pattern.compile("(\\[NUM\\]|\\d+(?:\\.\\d+)?)\\s*" + Pattern.quote(key) + "(?![a-zA-Z])");
+            result = p.matcher(result).replaceAll("$1" + entry.getValue());
         }
-        return text;
+
+        // 再处理含数字的术语（SpO2 等），这部分可保留在 replaceTermsWithNumbers 中
+        // 这里仅作为补充，确保未被处理的情况
+        return result;
     }
 
     // ----- 深度清洗（语气词、重复标点、‘的’结构等） -----

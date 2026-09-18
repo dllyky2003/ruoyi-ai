@@ -1,0 +1,134 @@
+# ============================================================================
+# "*".yaml - 窄QRS稳定心动过速路由
+# ============================================================================
+
+routes:
+  # ======== 判读类 ========
+  - id: R-101-01
+    caseType: "*"
+    intent: S-101-1-1
+    targetType: SKILL
+    targetId: assert_qrs_width
+    priority: 10
+
+  - id: R-101-02
+    caseType: "*"
+    intent: S-101-1-2
+    targetType: SKILL
+    targetId: assert_rhythm_regular
+    priority: 10
+
+  - id: R-101-03
+    caseType: "*"
+    intent: S-101-1-3
+    targetType: SKILL
+    targetId: assert_hemodynamics
+    priority: 10
+
+  - id: R-101-04
+    caseType: "*"
+    intent: S-101-1-4
+    targetType: SKILL
+    targetId: assert_rhythm_type
+    priority: 10
+
+  # ======== 治疗类 ========
+  - id: R-101-05
+    caseType: "*"
+    intent: S-101-2-1
+    targetType: SKILL
+    targetId: vagal_maneuver
+    priority: 10
+
+  - id: R-101-06
+    caseType: "*"
+    intent: S-101-2-2
+    targetType: SKILL
+    targetId: drug_push_adenosine
+    priority: 10
+
+  - id: R-101-07
+    caseType: "*"
+    intent: S-101-2-4
+    targetType: SKILL
+    targetId: flush_adenosine
+    priority: 10
+
+  - id: R-101-08
+    caseType: "*"
+    intent: S-101-2-5
+    targetType: SKILL
+    targetId: drug_push_diltiazem
+    priority: 10
+
+  - id: R-101-09
+    caseType: "*"
+    intent: S-101-2-6
+    targetType: SKILL
+    targetId: synchronized_cardioversion
+    priority: 10
+
+  # ======== 宣告/警示类（统一由 GenericActionSkill 承载） ========
+  # 每条对应一个技能名，技能 YAML 里用 type: generic 声明
+  - id: R-101-10
+    caseType: "*"
+    intent: S-101-2-7
+    targetType: SKILL
+    targetId: wpw_warning
+    priority: 10
+
+  - id: R-101-11
+    caseType: "*"
+    intent: S-101-2-8
+    targetType: SKILL
+    targetId: report_treatment_result
+    priority: 10
+
+  - id: R-101-12
+    caseType: "*"
+    intent: S-101-2-9
+    targetType: SKILL
+    targetId: assess_anticoagulation
+    priority: 10
+
+  - id: R-101-13
+    caseType: "*"
+    intent: S-101-3-1
+    targetType: SKILL
+    targetId: alert_hemodynamic_deterioration
+    priority: 10
+
+  - id: R-101-14
+    caseType: "*"
+    intent: S-101-3-2
+    targetType: SKILL
+    targetId: emergency_cardioversion
+    priority: 10
+
+  - id: R-101-15
+    caseType: "*"
+    intent: S-101-4-1
+    targetType: SKILL
+    targetId: alert_drug_induced_vf
+    priority: 10
+
+  - id: R-101-16
+    caseType: "*"
+    intent: S-101-4-2
+    targetType: SKILL
+    targetId: alert_unsync_shock_vf
+    priority: 10
+
+  - id: R-101-17
+    caseType: "*"
+    intent: S-101-4-3
+    targetType: SKILL
+    targetId: alert_pea_asystole
+    priority: 10
+
+  - id: R-101-18
+    caseType: "*"
+    intent: S-101-4-4
+    targetType: SKILL
+    targetId: block_forbidden_action
+    priority: 10

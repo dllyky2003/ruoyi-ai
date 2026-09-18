@@ -1,7 +1,7 @@
 package com.ruoyi.ems.mapper;
 
 import com.ruoyi.ems.context.EmsContextManager;
-import com.ruoyi.ems.context.VariableMetaManager;
+import com.ruoyi.ems.config.loader.VariableMetaLoader;
 import com.ruoyi.ems.domain.CaseContext;
 import com.ruoyi.ems.domain.VariableMeta;
 
@@ -35,7 +35,7 @@ import java.util.*;
 public class SlotToVariableMapper {
 
     @Autowired
-    private VariableMetaManager metaManager;
+    private VariableMetaLoader metaManager;
 
     @Autowired
     private EmsContextManager contextManager;
@@ -118,63 +118,81 @@ public class SlotToVariableMapper {
                 continue;
             }
 
-            // 1. 解析变量名（槽位 → 变量名）
             String varName = resolveSlotToVariable(caseType, slotName);
             if (varName == null) {
                 log.debug("槽位 {} 无映射定义，跳过", slotName);
                 continue;
             }
 
-            // 2. 获取变量元数据
             VariableMeta meta = vars.get(varName);
             if (meta == null) {
                 log.warn("变量 {} 未在元数据中定义（来自槽位 {}），跳过", varName, slotName);
                 continue;
             }
 
-            // 3. 检查写入权限（分类器只能写入 L2 学员陈述变量）
             if (!metaManager.checkWritePermission(caseType, varName, WRITER_CLASSIFIER)) {
                 log.warn("变量 {} 不允许分类器写入，跳过", varName);
                 continue;
             }
 
-            // 4. 类型转换
             Object convertedValue = convertValue(rawValue, meta);
             if (convertedValue == null && rawValue != null) {
                 log.warn("变量 {} 值转换失败: {} -> {}", varName, rawValue, meta.getType());
                 continue;
             }
 
-            // 5. 值校验
             if (!metaManager.validateValue(caseType, varName, convertedValue)) {
                 log.warn("变量 {} 值校验失败: {}", varName, convertedValue);
                 continue;
             }
 
-            // 6. 特殊逻辑：isUnstable 需要反向处理
+            // 特殊逻辑：isUnstable 反向处理
             if ("isUnstable".equals(slotName) && convertedValue instanceof Boolean) {
-                // isUnstable == true → asserted_stable == false
                 convertedValue = !((Boolean) convertedValue);
                 varName = "asserted_stable";
             }
 
-            // 7. 写入上下文
-            try {
-                ctx.setVar(varName, convertedValue, WRITER_CLASSIFIER);
-                writtenVars.put(varName, convertedValue);
-                log.debug("槽位映射成功: {} → {}.{} = {}",
-                    slotName, varName, meta.getType(), convertedValue);
-            } catch (Exception e) {
-                log.error("变量 {} 写入失败: {}", varName, e.getMessage());
-            }
+            // ★ 只收集，不直接写 ctx
+            writtenVars.put(varName, convertedValue);
+            log.debug("槽位映射成功: {} → {} = {}", slotName, varName, convertedValue);
         }
 
-        // 如果有写入，更新上下文
+        // ★ 一次性批量写入上下文
         if (!writtenVars.isEmpty()) {
-            contextManager.update(caseInstanceId, ctx);
+            writeToContext(caseInstanceId, ctx, writtenVars);
         }
 
         return writtenVars;
+    }
+
+    /**
+     * 通过 EmsContextManager 语义化入口批量写入。
+     * 不再直接改 CaseContext，不调用过时的 setVar，也不调用 private 的 update。
+     */
+    private void writeToContext(String sessionId, CaseContext ctx, Map<String, Object> writtenVars) {
+        long currentVersion = ctx.getVersion();
+
+        boolean ok = contextManager.batchSetVarsWithVersion(
+            sessionId, writtenVars, WRITER_CLASSIFIER, currentVersion);
+
+        if (!ok) {
+            // 版本冲突：重新取快照，再试一次
+            CaseContext latest = contextManager.getSnapshot(sessionId);
+            if (latest != null) {
+                ok = contextManager.batchSetVarsWithVersion(
+                    sessionId, writtenVars, WRITER_CLASSIFIER, latest.getVersion());
+            }
+            if (!ok) {
+                log.error("槽位变量批量写入失败（重试后仍失败）: sessionId={}, vars={}",
+                    sessionId, writtenVars.keySet());
+            } else {
+                log.info("槽位变量批量写入成功（重试）: sessionId={}, vars={}",
+                    sessionId, writtenVars.keySet());
+            }
+        } else {
+            log.debug("槽位变量批量写入成功: sessionId={}, vars={}",
+                sessionId, writtenVars.keySet());
+        }
     }
 
     /**

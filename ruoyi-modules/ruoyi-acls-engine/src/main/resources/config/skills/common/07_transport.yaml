@@ -1,0 +1,62 @@
+# ============================================================================
+# 07_transport.yaml - 转运（所有案例共享）
+# 对应 EgoEMS #62~#67
+# ============================================================================
+
+skills:
+  - id: transport_to_ambulance
+    duty: ASSIST
+    type: standard
+    params:
+      vrActionCode: "TRANSPORT"
+      durationSeconds: 5
+      successVar: process.transportStarted
+      successSpeech: "患者已开始转运。"
+
+  - id: load_to_stretcher
+    duty: ASSIST
+    type: standard
+    params:
+      vrActionCode: "LOAD_STRETCHER"
+      durationSeconds: 6
+      successVar: process.patientLoaded
+      successSpeech: "患者已抬上担架。"
+
+  - id: secure_patient
+    duty: ASSIST
+    type: standard
+    params:
+      vrActionCode: "SECURE_STRETCHER"
+      durationSeconds: 3
+      successVar: process.patientSecured
+      successSpeech: "患者已固定。"
+
+  - id: notify_hospital
+    duty: RECORD
+    type: query
+    params:
+      targetVar: process.hospitalNotified
+      responseTemplate: "已通知接收医院。"
+      valueMap:
+        true: "已通知"
+        false: "未通知"
+
+  - id: notify_stroke_alert
+    duty: RECORD
+    type: query
+    params:
+      targetVar: process.strokeAlertNotified
+      responseTemplate: "已激活卒中警报。"
+      valueMap:
+        true: "已激活"
+        false: "未激活"
+
+  - id: handoff_patient
+    duty: RECORD
+    type: query
+    params:
+      targetVar: process.handoffDone
+      responseTemplate: "患者交接已完成。"
+      valueMap:
+        true: "已完成"
+        false: "未完成"

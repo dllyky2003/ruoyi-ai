@@ -34,7 +34,7 @@ public class OrchestrationConfig {
         private String description;
         private List<String> steps;                     // 步骤ID列表（有序）
         private Map<String, List<String>> preconditions; // stepId → 依赖的stepId列表
-        private List<StepDefinition> resolvedSteps;     // ★ 解析后的完整步骤（由加载器填充）
+        private List<StepDefinition> resolvedSteps;     // 解析后的完整步骤（由加载器填充）
         private OnCompleteConfig onComplete;
         private OnErrorConfig onError;
         private Boolean enabled = true;
@@ -42,16 +42,25 @@ public class OrchestrationConfig {
 
     /**
      * 步骤定义（完整信息）
+     * ★ 新增字段：procedure, speech, params, outputs
      */
     @Data
     public static class StepDefinition {
         private String stepId;
+        private String procedure;          // ★ 新增：操作类型（ATOMIC / DEFIB / DRUG / AIRWAY）
         private String refAtomic;
         private String duty;
         private String vrAnimation;
         private Integer durationSec;
         private String description;
         private Boolean optional;
+        private String speech;             // ★ 新增：语音提示
+
+        // ★ 新增：输入参数
+        private Map<String, Object> params;
+
+        // ★ 新增：输出映射（核心）
+        private Map<String, Object> outputs;
     }
 
     @Data

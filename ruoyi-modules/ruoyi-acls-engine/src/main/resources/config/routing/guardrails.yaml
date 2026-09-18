@@ -1,0 +1,700 @@
+# ============================================================================
+# ACLS 安全护栏配置（结构化可执行版）
+# 版本: 2.1
+# 依据: AHA 2025 Guidelines
+# 说明:
+#   - 所有 trigger.intents 均为完整 IA 编码
+#   - 变量、意图、规则、动作、旁路、审计、测试均结构化定义
+#   - 条件 DSL 统一为 all / any / not
+#   - 安全关键规则默认 fail_closed；非关键规则可 fail_open
+# ============================================================================
+
+schema_version: "2.1"
+
+metadata:
+  name: "ACLS 安全护栏配置"
+  version: "2.1"
+  guideline: "AHA 2025"
+  locale: "zh-CN"
+  description: "用于 ACLS 教学、模拟与临床决策支持的安全护栏规则集"
+  intent_dict_ref: "./intents.yaml"
+  variable_dict_ref: "./variables.yaml"
+  priority_order: "desc"          # 数字越大，优先级越高
+  on_missing_var_default: "fail_closed"
+  audit_policy:
+    enabled: true
+    default_level: "warn"
+    fields:
+      - encounter_id
+      - patient_id
+      - user_id
+      - user_role
+      - intent_id
+      - rule_id
+      - timestamp
+      - override_reason
+  override_policy:
+    default_allowed: false
+    default_roles:
+      - acls_team_leader
+    require_reason: true
+
+defaults:
+  enabled: true
+  timing: "pre_intent"            # pre_intent | post_intent | during_intent
+  severity: "WARN"
+  action:
+    type: "warn"                  # block | warn | info | coach
+  applies_to:
+    scene:
+      - in_hospital
+      - out_of_hospital
+    role:
+      - bls_provider
+      - acls_provider
+      - acls_team_leader
+    age_group:
+      - adult
+      - pediatric
+  override:
+    allowed: false
+    roles:
+      - acls_team_leader
+    require_reason: true
+  audit:
+    level: "warn"
+    fields:
+      - encounter_id
+      - patient_id
+      - user_id
+      - user_role
+      - intent_id
+      - rule_id
+      - timestamp
+
+# ============================================================================
+# 变量契约
+# ============================================================================
+variable_catalog:
+  process.blsSurveyComplete:
+    type: boolean
+    default: false
+    updated_by: ["IA_001", "IA_002", "IA_003", "IA_004"]
+    description: "BLS 初步评估（安全、反应、呼吸、脉搏）是否完成"
+
+  process.leadLaPlaced:
+    type: boolean
+    default: false
+    description: "LA 电极是否放置"
+  process.leadRaPlaced:
+    type: boolean
+    default: false
+    description: "RA 电极是否放置"
+  process.leadLlPlaced:
+    type: boolean
+    default: false
+    description: "LL 电极是否放置"
+  process.leadRlPlaced:
+    type: boolean
+    default: false
+    description: "RL 电极是否放置"
+  process.leadV1Placed:
+    type: boolean
+    default: false
+    description: "V1 电极是否放置"
+  process.leadV2Placed:
+    type: boolean
+    default: false
+    description: "V2 电极是否放置"
+  process.leadV3Placed:
+    type: boolean
+    default: false
+    description: "V3 电极是否放置"
+  process.leadV4Placed:
+    type: boolean
+    default: false
+    description: "V4 电极是否放置"
+  process.leadV5Placed:
+    type: boolean
+    default: false
+    description: "V5 电极是否放置"
+  process.leadV6Placed:
+    type: boolean
+    default: false
+    description: "V6 电极是否放置"
+
+  process.patientStill:
+    type: boolean
+    default: true
+    description: "患者是否静止，true 表示已静止"
+
+  device.ecgOn:
+    type: boolean
+    default: false
+    description: "心电图机是否开机"
+  device.leadsConnected:
+    type: boolean
+    default: false
+    description: "ECG 导联是否连接"
+  device.aedOn:
+    type: boolean
+    default: false
+    description: "AED 是否开机"
+  device.defibPadsAttached:
+    type: boolean
+    default: false
+    description: "除颤贴片是否已贴好"
+
+  process.shockClear:
+    type: boolean
+    default: false
+    description: "电击前清场是否完成，true 表示所有人离开且未接触患者"
+
+  process.cprStartTime:
+    type: datetime
+    default: null
+    description: "胸外按压开始时间"
+  process.cprStopTime:
+    type: datetime
+    default: null
+    description: "胸外按压停止时间"
+
+  process.ecgRecordingInProgress:
+    type: boolean
+    default: false
+    description: "ECG 是否正在记录（预留，当前规则未启用）"
+
+  process.strokeAssessmentCompleted:
+    type: boolean
+    default: false
+    description: "卒中评估是否完成（预留，当前规则未启用）"
+
+  process.drugPushPending:
+    type: boolean
+    default: false
+    description: "是否存在待执行药物推注（预留，当前规则未启用）"
+
+# ============================================================================
+# 意图契约（本文件涉及的 IA 编码）
+# ============================================================================
+intent_catalog:
+  IA_001_check_scene_safety:
+    name: "检查现场安全"
+    category: "BLS"
+  IA_002_check_responsiveness:
+    name: "检查反应"
+    category: "BLS"
+  IA_003_check_pulse:
+    name: "检查脉搏"
+    category: "BLS"
+  IA_004_check_breathing:
+    name: "检查呼吸"
+    category: "BLS"
+
+  IA_018_check_grip_strength:
+    name: "卒中握力检查"
+    category: "卒中"
+  IA_027_explain_procedure:
+    name: "解释 ECG 操作"
+    category: "沟通"
+
+  IA_043_obtain_ecg_recording:
+    name: "记录心电图"
+    category: "ECG"
+
+  IA_045_check_responsiveness_cpr:
+    name: "CPR 中检查反应"
+    category: "CPR"
+  IA_046_check_pulse_cpr:
+    name: "CPR 中检查脉搏"
+    category: "CPR"
+  IA_047_check_breathing_cpr:
+    name: "CPR 中检查呼吸"
+    category: "CPR"
+
+  IA_048_chest_compressions:
+    name: "胸外按压"
+    category: "BLS"
+  IA_050_request_aed:
+    name: "请求 AED"
+    category: "BLS"
+  IA_057_open_airway:
+    name: "打开气道"
+    category: "BLS"
+
+  IA_052_turn_on_aed:
+    name: "开启 AED"
+    category: "AED"
+  IA_053_attach_defib_pads:
+    name: "贴电极片"
+    category: "AED"
+  IA_054_clear_for_analysis:
+    name: "心律分析清场"
+    category: "AED"
+  IA_055_clear_for_shock:
+    name: "电击前清场"
+    category: "AED"
+  IA_056_administer_shock_aed:
+    name: "按下电击键"
+    category: "AED"
+
+# ============================================================================
+# 安全护栏规则
+# ============================================================================
+guardrails:
+
+  # -------- WF-001A: 心脏骤停启动不得被 BLS 完整评估拦截 --------
+  - id: WF-001A
+    group: "BLS/心脏骤停启动"
+    priority: 50
+    enabled: true
+    timing: "pre_intent"
+    description: "胸外按压、请求 AED、打开气道属于时间关键操作，不因 BLS 完整评估未完成而 BLOCK，仅提示尽快完成评估。"
+    trigger:
+      intents:
+        - IA_048_chest_compressions
+        - IA_050_request_aed
+        - IA_057_open_airway
+    condition:
+      all:
+        - var: process.blsSurveyComplete
+          op: eq
+          value: false
+          on_missing: fail_closed
+    severity: "INFO"
+    action:
+      type: "coach"
+      message: "提示：按压、请求 AED、打开气道可立即进行；请在操作同时尽快完成安全、反应、呼吸、脉搏评估（IA_001~IA_004）。"
+    override:
+      allowed: true
+      roles:
+        - bls_provider
+        - acls_provider
+        - acls_team_leader
+      require_reason: false
+    audit:
+      level: "info"
+    references:
+      - "AHA 2025 成人心脏骤停链"
+
+  # -------- WF-001B: 高级干预前置条件 --------
+  - id: WF-001B
+    group: "高级干预前置"
+    priority: 100
+    enabled: true
+    timing: "pre_intent"
+    description: "启动高级评估/干预前必须完成 BLS 初步评估（安全、反应、呼吸、脉搏）。"
+    trigger:
+      intents:
+        - IA_018_check_grip_strength
+        - IA_027_explain_procedure
+        - IA_043_obtain_ecg_recording
+    condition:
+      all:
+        - var: process.blsSurveyComplete
+          op: eq
+          value: false
+          on_missing: fail_closed
+    severity: "BLOCK"
+    action:
+      type: "block"
+      message: "⚠️ 请先完成现场安全、反应、呼吸和脉搏检查（IA_001~IA_004），再执行高级评估/干预。"
+    override:
+      allowed: true
+      roles:
+        - acls_team_leader
+      require_reason: true
+    audit:
+      level: "warn"
+    references:
+      - "AHA 2025 ACLS 成人高级生命支持流程"
+
+  # -------- WF-002A: 12 导联 ECG 设备/电极前置条件 --------
+  - id: WF-002A
+    group: "ECG"
+    priority: 200
+    enabled: true
+    timing: "pre_intent"
+    description: "记录心电图前必须完成全部电极放置、心电图机开机及导联连接。"
+    trigger:
+      intents:
+        - IA_043_obtain_ecg_recording
+    condition:
+      any:
+        - var: process.leadLaPlaced
+          op: eq
+          value: false
+          on_missing: fail_closed
+        - var: process.leadRaPlaced
+          op: eq
+          value: false
+          on_missing: fail_closed
+        - var: process.leadLlPlaced
+          op: eq
+          value: false
+          on_missing: fail_closed
+        - var: process.leadRlPlaced
+          op: eq
+          value: false
+          on_missing: fail_closed
+        - var: process.leadV1Placed
+          op: eq
+          value: false
+          on_missing: fail_closed
+        - var: process.leadV2Placed
+          op: eq
+          value: false
+          on_missing: fail_closed
+        - var: process.leadV3Placed
+          op: eq
+          value: false
+          on_missing: fail_closed
+        - var: process.leadV4Placed
+          op: eq
+          value: false
+          on_missing: fail_closed
+        - var: process.leadV5Placed
+          op: eq
+          value: false
+          on_missing: fail_closed
+        - var: process.leadV6Placed
+          op: eq
+          value: false
+          on_missing: fail_closed
+        - var: device.ecgOn
+          op: eq
+          value: false
+          on_missing: fail_closed
+        - var: device.leadsConnected
+          op: eq
+          value: false
+          on_missing: fail_closed
+    severity: "BLOCK"
+    action:
+      type: "block"
+      message: "⚠️ 请先完成全部电极放置（IA_029~IA_038）、心电图机开机（IA_040）及导联连接（IA_041）。"
+    override:
+      allowed: true
+      roles:
+        - acls_team_leader
+      require_reason: true
+    audit:
+      level: "warn"
+    references:
+      - "AHA 2025 ACLS 12 导联 ECG 流程"
+
+  # -------- WF-002B: 患者未静止仅警告，不拦截 --------
+  - id: WF-002B
+    group: "ECG"
+    priority: 80
+    enabled: true
+    timing: "pre_intent"
+    description: "患者未静止时记录 ECG 仅警告，不 BLOCK，避免延误不稳定患者。"
+    trigger:
+      intents:
+        - IA_043_obtain_ecg_recording
+    condition:
+      all:
+        - var: process.patientStill
+          op: eq
+          value: false
+          on_missing: fail_open
+    severity: "WARN"
+    action:
+      type: "warn"
+      message: "⚠️ 患者未静止，ECG 可能有伪差；请安抚患者并尽快记录。如患者不稳定，可紧急旁路。"
+    override:
+      allowed: true
+      roles:
+        - acls_provider
+        - acls_team_leader
+      require_reason: false
+    audit:
+      level: "warn"
+    references:
+      - "AHA 2025 ACLS 12 导联 ECG 流程"
+
+  # -------- WF-003: AED 分析前必须开机且贴片 --------
+  - id: WF-003
+    group: "AED"
+    priority: 250
+    enabled: true
+    timing: "pre_intent"
+    description: "AED 心律分析必须在开机和贴片完成后执行。"
+    trigger:
+      intents:
+        - IA_054_clear_for_analysis
+    condition:
+      any:
+        - var: device.aedOn
+          op: eq
+          value: false
+          on_missing: fail_closed
+        - var: device.defibPadsAttached
+          op: eq
+          value: false
+          on_missing: fail_closed
+    severity: "BLOCK"
+    action:
+      type: "block"
+      message: "⚠️ 请先完成 AED 开机（IA_052_turn_on_aed）和贴电极片（IA_053_attach_defib_pads），再执行心律分析清场（IA_054_clear_for_analysis）。"
+    override:
+      allowed: false
+    audit:
+      level: "warn"
+    references:
+      - "AHA 2025 AED 操作流程"
+
+  # -------- WF-004: 电击前必须完成清场 --------
+  - id: WF-004
+    group: "AED/电击安全"
+    priority: 300
+    enabled: true
+    timing: "pre_intent"
+    description: "按下电击键前必须完成电击清场，确保所有人离开且未接触患者。"
+    trigger:
+      intents:
+        - IA_056_administer_shock_aed
+    condition:
+      all:
+        - var: process.shockClear
+          op: eq
+          value: false
+          on_missing: fail_closed
+    severity: "BLOCK"
+    action:
+      type: "block"
+      message: "⚠️ 请先执行电击前清场（IA_055_clear_for_shock），确保所有人离开且未接触患者。"
+    override:
+      allowed: false
+    audit:
+      level: "critical"
+    references:
+      - "AHA 2025 电击安全操作"
+
+  # -------- WF-005: CPR 专用检查仅在 CPR 进行中允许调用 --------
+  - id: WF-005
+    group: "CPR"
+    priority: 150
+    enabled: true
+    timing: "pre_intent"
+    description: "CPR 专用检查意图只能在胸外按压进行中调用。"
+    trigger:
+      intents:
+        - IA_045_check_responsiveness_cpr
+        - IA_046_check_pulse_cpr
+        - IA_047_check_breathing_cpr
+    condition:
+      any:
+        - var: process.cprStartTime
+          op: is_null
+          on_missing: fail_closed
+        - var: process.cprStopTime
+          op: is_not_null
+          on_missing: fail_closed
+    severity: "BLOCK"
+    action:
+      type: "block"
+      message: "⚠️ 当前未处于活跃 CPR 状态，请使用常规检查意图（IA_002、IA_003、IA_004）。CPR 中检查应限制中断 <10 秒，非必要不查脉搏。"
+    override:
+      allowed: false
+    audit:
+      level: "warn"
+    references:
+      - "AHA 2025 成人 CPR 质量要求"
+
+  # -------- 以下为预留规则，依赖未定义变量或意图，默认不启用 --------
+
+  - id: WF-006
+    group: "卒中"
+    priority: 120
+    enabled: false
+    timing: "pre_intent"
+    description: "卒中评估完成检查（需补充 process.strokeAssessmentCompleted 及对应意图）"
+    trigger:
+      intents:
+        - IA_018_check_grip_strength
+    condition:
+      all:
+        - var: process.strokeAssessmentCompleted
+          op: eq
+          value: false
+          on_missing: fail_closed
+    severity: "BLOCK"
+    action:
+      type: "block"
+      message: "请先完成卒中评估。"
+    override:
+      allowed: true
+      roles:
+        - acls_team_leader
+      require_reason: true
+    audit:
+      level: "warn"
+    planned: true
+    missing_dependencies:
+      - "process.strokeAssessmentCompleted"
+      - "IA_019~IA_026 等卒中评估意图"
+
+  - id: WF-007
+    group: "药物"
+    priority: 180
+    enabled: false
+    timing: "pre_intent"
+    description: "临床药物禁忌检查（需先扩展 drug_push_* 意图及对应变量）"
+    trigger:
+      intents:
+        - IA_DRUG_PUSH_PLACEHOLDER
+    condition:
+      all:
+        - var: process.drugPushPending
+          op: eq
+          value: true
+          on_missing: fail_closed
+    severity: "BLOCK"
+    action:
+      type: "block"
+      message: "药物禁忌检查未启用，请先完成药物意图与变量扩展。"
+    override:
+      allowed: true
+      roles:
+        - acls_team_leader
+      require_reason: true
+    audit:
+      level: "critical"
+    planned: true
+    missing_dependencies:
+      - "drug_push_* 意图"
+      - "药物禁忌变量"
+
+  - id: WF-008
+    group: "ECG"
+    priority: 220
+    enabled: false
+    timing: "during_intent"
+    description: "ECG 记录中禁止胸外按压（需补充 process.ecgRecordingInProgress 瞬时变量）"
+    trigger:
+      intents:
+        - IA_048_chest_compressions
+    condition:
+      all:
+        - var: process.ecgRecordingInProgress
+          op: eq
+          value: true
+          on_missing: fail_closed
+    severity: "BLOCK"
+    action:
+      type: "block"
+      message: "ECG 正在记录，请暂停按压以减少伪差。"
+    override:
+      allowed: true
+      roles:
+        - acls_team_leader
+      require_reason: true
+    audit:
+      level: "warn"
+    planned: true
+    missing_dependencies:
+      - "process.ecgRecordingInProgress"
+
+  - id: WF-009
+    group: "转运/卒中"
+    priority: 110
+    enabled: false
+    timing: "pre_intent"
+    description: "转运前卒中评估完成检查（需补充 process.strokeAssessmentCompleted）"
+    trigger:
+      intents:
+        - IA_TRANSPORT_PLACEHOLDER
+    condition:
+      all:
+        - var: process.strokeAssessmentCompleted
+          op: eq
+          value: false
+          on_missing: fail_closed
+    severity: "BLOCK"
+    action:
+      type: "block"
+      message: "转运前请完成卒中评估。"
+    override:
+      allowed: true
+      roles:
+        - acls_team_leader
+      require_reason: true
+    audit:
+      level: "warn"
+    planned: true
+    missing_dependencies:
+      - "process.strokeAssessmentCompleted"
+      - "转运相关意图"
+
+# ============================================================================
+# 测试场景
+# ============================================================================
+test_scenarios:
+  - id: TS-001
+    description: "心脏骤停启动不因 BLS 未完成被拦截"
+    given:
+      process.blsSurveyComplete: false
+    when:
+      intent: IA_048_chest_compressions
+    expect:
+      matched_rule: WF-001A
+      action: coach
+      blocked: false
+
+  - id: TS-002
+    description: "高级干预在 BLS 未完成时被拦截"
+    given:
+      process.blsSurveyComplete: false
+    when:
+      intent: IA_027_explain_procedure
+    expect:
+      matched_rule: WF-001B
+      action: block
+      blocked: true
+
+  - id: TS-003
+    description: "ECG 电极未全时被拦截"
+    given:
+      process.leadLaPlaced: false
+      process.leadRaPlaced: true
+      process.leadLlPlaced: true
+      process.leadRlPlaced: true
+      process.leadV1Placed: true
+      process.leadV2Placed: true
+      process.leadV3Placed: true
+      process.leadV4Placed: true
+      process.leadV5Placed: true
+      process.leadV6Placed: true
+      device.ecgOn: true
+      device.leadsConnected: true
+    when:
+      intent: IA_043_obtain_ecg_recording
+    expect:
+      matched_rule: WF-002A
+      action: block
+      blocked: true
+
+  - id: TS-004
+    description: "未清场电击被阻止"
+    given:
+      process.shockClear: false
+    when:
+      intent: IA_056_administer_shock_aed
+    expect:
+      matched_rule: WF-004
+      action: block
+      blocked: true
+
+  - id: TS-005
+    description: "非 CPR 状态下调用 CPR 专用检查被阻止"
+    given:
+      process.cprStartTime: null
+      process.cprStopTime: null
+    when:
+      intent: IA_046_check_pulse_cpr
+    expect:
+      matched_rule: WF-005
+      action: block
+      blocked: true

@@ -4,7 +4,6 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.metrics.buffering.BufferingApplicationStartup;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.net.InetSocketAddress;
@@ -15,18 +14,19 @@ import java.net.ServerSocket;
  *
  * @author Lion Li
  */
-
 @SpringBootApplication(scanBasePackages = {
     "org.ruoyi",           // RuoYi-AI 核心
-    "com.ruoyi.ems",       // 原有的急救模拟模块
-    "com.ruoyi.acls"       // 新增：ACLS智能引擎模块（你在这里）
+    "com.ruoyi.ems",       // 急救模拟模块
+    "com.ruoyi.acls"       // ACLS 智能引擎模块
 })
 @MapperScan(basePackages = {
     "com.ruoyi.ems.mapper",
-    "org.ruoyi.system.mapper",
-    "com.ruoyi.acls"       // 新增：如果你在新模块中定义了 Mapper（虽极少，但加上无害）
-}
-)
+    "org.ruoyi.system.mapper"
+    // ★ 已移除 "com.ruoyi.acls"：整个包被当 Mapper 扫，
+    //   误把 com.ruoyi.acls.skill.EmsSkill 注册为 mapper，
+    //   导致 List<EmsSkill> 注入时混入 MyBatis JDK 动态代理。
+    //   ACLS 模块当前无 Mapper；将来若有，改成 "com.ruoyi.acls.**.mapper"。
+})
 @EnableScheduling
 public class RuoYiAIApplication {
 
@@ -53,7 +53,7 @@ public class RuoYiAIApplication {
             ProcessBuilder pb = new ProcessBuilder("netstat", "-ano");
             Process process = pb.start();
             java.io.BufferedReader reader = new java.io.BufferedReader(
-                    new java.io.InputStreamReader(process.getInputStream()));
+                new java.io.InputStreamReader(process.getInputStream()));
 
             String line;
             while ((line = reader.readLine()) != null) {
@@ -92,5 +92,4 @@ public class RuoYiAIApplication {
             return true;
         }
     }
-
 }
