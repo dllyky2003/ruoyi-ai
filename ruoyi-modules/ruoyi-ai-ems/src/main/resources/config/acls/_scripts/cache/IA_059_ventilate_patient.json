@@ -1,0 +1,61 @@
+{
+  "intent_code": "IA_059_ventilate_patient",
+  "normalized": "实施通气",
+  "variants": [
+    {
+      "surface": "开始通气",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "进行通气",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "做通气",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "用球囊通气",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "球囊给气",
+      "type": "同音",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "吹气",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "人工呼吸",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "给气",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "做人工呼吸",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    }
+  ],
+  "intent_name": "实施通气"
+}

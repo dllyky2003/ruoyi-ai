@@ -1,0 +1,43 @@
+{
+  "intent_code": "IA_041_connect_leads_to_ecg",
+  "normalized": "将导联连接到心电图机",
+  "variants": [
+    {
+      "surface": "把导联线连到心电图机上",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "连接好导联",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "将导联线接到心电图机",
+      "type": "同义词",
+      "confidence": 0.98,
+      "note": ""
+    },
+    {
+      "surface": "导联线接到心电图机",
+      "type": "同义词",
+      "confidence": 0.98,
+      "note": ""
+    },
+    {
+      "surface": "心电图机连接导联",
+      "type": "同义词",
+      "confidence": 0.98,
+      "note": ""
+    },
+    {
+      "surface": "导联连接",
+      "type": "同义词",
+      "confidence": 0.98,
+      "note": ""
+    }
+  ],
+  "intent_name": "将导联连接到心电图机"
+}

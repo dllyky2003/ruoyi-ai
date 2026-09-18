@@ -1,0 +1,55 @@
+{
+  "intent_code": "IA_038_place_v6_lead",
+  "normalized": "将V6置于腋中线。",
+  "variants": [
+    {
+      "surface": "V6放到腋中线。",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "贴V6导联。",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "V6电极放在腋中线。",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "V6导联贴在腋中线。",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "V6电极贴在腋中线。",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "V6导联电极放在腋中线。",
+      "type": "同义词",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "V6电极贴在腋中。",
+      "type": "同音",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "V6电极贴在腋中。",
+      "type": "错别字",
+      "confidence": 0.7,
+      "note": ""
+    }
+  ],
+  "intent_name": "放置V6导联电极"
+}

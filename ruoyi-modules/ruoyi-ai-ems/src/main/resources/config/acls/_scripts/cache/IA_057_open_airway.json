@@ -1,0 +1,55 @@
+{
+  "intent_code": "IA_057_open_airway",
+  "normalized": "打开气道",
+  "variants": [
+    {
+      "surface": "抬颏后仰",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "下颌托举",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "仰头抬颏",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "打开气道并保持通畅",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "保持气道开放",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "气道开放",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "打开气门",
+      "type": "同音",
+      "confidence": 0.1,
+      "note": "同音错误"
+    },
+    {
+      "surface": "打开心道",
+      "type": "错别字",
+      "confidence": 0.1,
+      "note": "错别字"
+    }
+  ],
+  "intent_name": "打开气道（如下颌托举/抬颏后仰）"
+}

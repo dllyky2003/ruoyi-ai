@@ -1,0 +1,73 @@
+{
+  "intent_code": "IA_017_check_ao",
+  "normalized": "检查意识与定向力（A&O）",
+  "variants": [
+    {
+      "surface": "检查意识状态",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "评估意识与定向力",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "看看人地时",
+      "type": "口语",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "问人地时",
+      "type": "口语",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "意识与定向力检查",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "A&O检查",
+      "type": "缩写",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "意识状态检查",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "意识与定向力评估",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "A&O评估",
+      "type": "缩写",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "意识与定向力",
+      "type": "英文",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "A&O",
+      "type": "英文",
+      "confidence": 0.7,
+      "note": ""
+    }
+  ],
+  "intent_name": "检查意识与定向力（A&O）"
+}

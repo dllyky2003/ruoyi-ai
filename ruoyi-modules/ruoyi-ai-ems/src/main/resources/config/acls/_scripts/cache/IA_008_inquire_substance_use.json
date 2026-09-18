@@ -1,0 +1,127 @@
+{
+  "intent_code": "IA_008_inquire_substance_use",
+  "normalized": "询问酒精或药物使用情况",
+  "variants": [
+    {
+      "surface": "有没有喝酒？",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "最近有没有用药？",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "酒精使用情况怎么样？",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "最近有没有吸毒？",
+      "type": "同义词",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "有没有用过毒品？",
+      "type": "同义词",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "酒精或药物用过没？",
+      "type": "口语",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "最近有没有喝过酒？",
+      "type": "口语",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "最近有没有用过药？",
+      "type": "口语",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "有没有吸毒史？",
+      "type": "同义词",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "最近有没有喝酒或用药？",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "有没有用过酒精或药物？",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "最近有没有用过酒精或药物？",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "有没有用过酒精或药物？",
+      "type": "口语",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "有没有吸毒史？",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "有没有用过毒品？",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "有没有用过酒精或药物？",
+      "type": "口语",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "有没有吸毒？",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "有没有用过酒精或药物？",
+      "type": "口语",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "有没有用过酒精或药物？",
+      "type": "口语",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "有没有用过酒精或药物？",
+      "type": "口语",
+      "confidence": 0.9,
+      "note": ""
+    }
+  ],
+  "intent_name": "询问酒精或药物使用情况"
+}

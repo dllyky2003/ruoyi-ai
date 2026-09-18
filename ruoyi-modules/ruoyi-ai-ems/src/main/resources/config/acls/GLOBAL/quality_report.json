@@ -1,0 +1,337 @@
+{
+  "IA_001_approach_patient": {
+    "count": 22,
+    "regex_coverage": 1.0,
+    "avg_length": 13.0
+  },
+  "IA_002_check_responsiveness": {
+    "count": 24,
+    "regex_coverage": 0.5,
+    "avg_length": 12.7
+  },
+  "IA_003_check_pulse": {
+    "count": 23,
+    "regex_coverage": 0.304,
+    "avg_length": 10.2
+  },
+  "IA_004_check_breathing": {
+    "count": 24,
+    "regex_coverage": 0.5,
+    "avg_length": 12.1
+  },
+  "IA_005_review_medications": {
+    "count": 25,
+    "regex_coverage": 1.0,
+    "avg_length": 8.9
+  },
+  "IA_006_inquire_medication_anticoagulants": {
+    "count": 24,
+    "regex_coverage": 0.917,
+    "avg_length": 12.8
+  },
+  "IA_007_inquire_hpi_and_pmh": {
+    "count": 24,
+    "regex_coverage": 0.958,
+    "avg_length": 11.4
+  },
+  "IA_008_inquire_substance_use": {
+    "count": 25,
+    "regex_coverage": 0.6,
+    "avg_length": 11.3
+  },
+  "IA_009_check_blood_pressure": {
+    "count": 25,
+    "regex_coverage": 0.92,
+    "avg_length": 7.1
+  },
+  "IA_010_check_heart_rate": {
+    "count": 25,
+    "regex_coverage": 1.0,
+    "avg_length": 15.2
+  },
+  "IA_011_check_oxygen_saturation": {
+    "count": 25,
+    "regex_coverage": 1.0,
+    "avg_length": 9.2
+  },
+  "IA_012_check_respiratory_rate": {
+    "count": 25,
+    "regex_coverage": 1.0,
+    "avg_length": 9.6
+  },
+  "IA_013_prepare_glucometer_and_strip": {
+    "count": 25,
+    "regex_coverage": 0.2,
+    "avg_length": 12.8
+  },
+  "IA_014_read_and_record_glucose_level": {
+    "count": 25,
+    "regex_coverage": 0.4,
+    "avg_length": 10.3
+  },
+  "IA_015_check_perrl": {
+    "count": 23,
+    "regex_coverage": 0.913,
+    "avg_length": 9.0
+  },
+  "IA_016_check_skin_condition": {
+    "count": 25,
+    "regex_coverage": 1.0,
+    "avg_length": 14.4
+  },
+  "IA_017_check_ao": {
+    "count": 25,
+    "regex_coverage": 0.64,
+    "avg_length": 9.0
+  },
+  "IA_018_check_grip_strength": {
+    "count": 25,
+    "regex_coverage": 0.84,
+    "avg_length": 11.3
+  },
+  "IA_019_face_droop_check": {
+    "count": 25,
+    "regex_coverage": 0.76,
+    "avg_length": 11.1
+  },
+  "IA_020_arm_drift_check": {
+    "count": 25,
+    "regex_coverage": 0.6,
+    "avg_length": 13.7
+  },
+  "IA_021_speech_abnormality_check": {
+    "count": 25,
+    "regex_coverage": 0.2,
+    "avg_length": 10.6
+  },
+  "IA_022_assess_balance_and_coordination": {
+    "count": 25,
+    "regex_coverage": 0.4,
+    "avg_length": 10.5
+  },
+  "IA_023_document_lkw_time": {
+    "count": 22,
+    "regex_coverage": 0.636,
+    "avg_length": 14.3
+  },
+  "IA_024_check_vision_deficits": {
+    "count": 25,
+    "regex_coverage": 0.8,
+    "avg_length": 13.5
+  },
+  "IA_025_evaluate_aphasia": {
+    "count": 25,
+    "regex_coverage": 0.44,
+    "avg_length": 11.0
+  },
+  "IA_026_assess_neglect_signs": {
+    "count": 25,
+    "regex_coverage": 0.24,
+    "avg_length": 10.5
+  },
+  "IA_027_explain_procedure": {
+    "count": 25,
+    "regex_coverage": 0.04,
+    "avg_length": 11.8
+  },
+  "IA_028_shave_patient": {
+    "count": 25,
+    "regex_coverage": 0.72,
+    "avg_length": 10.9
+  },
+  "IA_029_place_left_arm_lead": {
+    "count": 25,
+    "regex_coverage": 1.0,
+    "avg_length": 9.3
+  },
+  "IA_030_place_right_arm_lead": {
+    "count": 24,
+    "regex_coverage": 1.0,
+    "avg_length": 9.6
+  },
+  "IA_031_place_left_leg_lead": {
+    "count": 23,
+    "regex_coverage": 0.913,
+    "avg_length": 10.3
+  },
+  "IA_032_place_right_leg_lead": {
+    "count": 24,
+    "regex_coverage": 1.0,
+    "avg_length": 9.5
+  },
+  "IA_033_place_v1_lead": {
+    "count": 25,
+    "regex_coverage": 1.0,
+    "avg_length": 12.4
+  },
+  "IA_034_place_v2_lead": {
+    "count": 25,
+    "regex_coverage": 1.0,
+    "avg_length": 21.0
+  },
+  "IA_035_place_v3_lead": {
+    "count": 8,
+    "regex_coverage": 1.0,
+    "avg_length": 13.8
+  },
+  "IA_036_place_v4_lead": {
+    "count": 25,
+    "regex_coverage": 1.0,
+    "avg_length": 12.6
+  },
+  "IA_037_place_v5_lead": {
+    "count": 24,
+    "regex_coverage": 0.875,
+    "avg_length": 13.7
+  },
+  "IA_038_place_v6_lead": {
+    "count": 25,
+    "regex_coverage": 1.0,
+    "avg_length": 10.5
+  },
+  "IA_039_request_patient_to_not_move": {
+    "count": 16,
+    "regex_coverage": 0.438,
+    "avg_length": 9.4
+  },
+  "IA_040_turn_on_ecg": {
+    "count": 23,
+    "regex_coverage": 0.565,
+    "avg_length": 11.0
+  },
+  "IA_041_connect_leads_to_ecg": {
+    "count": 19,
+    "regex_coverage": 0.316,
+    "avg_length": 11.4
+  },
+  "IA_042_ask_patient_age_sex": {
+    "count": 5,
+    "regex_coverage": 0.0,
+    "avg_length": 9.8
+  },
+  "IA_043_obtain_ecg_recording": {
+    "count": 23,
+    "regex_coverage": 0.87,
+    "avg_length": 7.7
+  },
+  "IA_044_interpret_and_report": {
+    "count": 25,
+    "regex_coverage": 0.6,
+    "avg_length": 11.8
+  },
+  "IA_045_check_responsiveness_cpr": {
+    "count": 25,
+    "regex_coverage": 0.0,
+    "avg_length": 12.9
+  },
+  "IA_046_check_pulse_cpr": {
+    "count": 25,
+    "regex_coverage": 0.12,
+    "avg_length": 11.6
+  },
+  "IA_047_check_breathing_cpr": {
+    "count": 25,
+    "regex_coverage": 0.12,
+    "avg_length": 12.8
+  },
+  "IA_048_chest_compressions": {
+    "count": 21,
+    "regex_coverage": 0.571,
+    "avg_length": 9.8
+  },
+  "IA_049_assess_patient": {
+    "count": 25,
+    "regex_coverage": 0.12,
+    "avg_length": 12.0
+  },
+  "IA_050_request_aed": {
+    "count": 18,
+    "regex_coverage": 0.833,
+    "avg_length": 10.1
+  },
+  "IA_051_request_assistance": {
+    "count": 24,
+    "regex_coverage": 0.333,
+    "avg_length": 8.6
+  },
+  "IA_052_turn_on_aed": {
+    "count": 24,
+    "regex_coverage": 0.5,
+    "avg_length": 9.1
+  },
+  "IA_053_attach_defib_pads": {
+    "count": 25,
+    "regex_coverage": 0.24,
+    "avg_length": 20.1
+  },
+  "IA_054_clear_for_analysis": {
+    "count": 22,
+    "regex_coverage": 1.0,
+    "avg_length": 13.4
+  },
+  "IA_055_clear_for_shock": {
+    "count": 23,
+    "regex_coverage": 0.261,
+    "avg_length": 10.0
+  },
+  "IA_056_administer_shock_aed": {
+    "count": 25,
+    "regex_coverage": 0.76,
+    "avg_length": 9.3
+  },
+  "IA_057_open_airway": {
+    "count": 25,
+    "regex_coverage": 0.64,
+    "avg_length": 11.2
+  },
+  "IA_058_place_bvm": {
+    "count": 25,
+    "regex_coverage": 0.04,
+    "avg_length": 10.0
+  },
+  "IA_059_ventilate_patient": {
+    "count": 25,
+    "regex_coverage": 0.92,
+    "avg_length": 14.5
+  },
+  "IA_060_suction_airway": {
+    "count": 25,
+    "regex_coverage": 0.96,
+    "avg_length": 11.2
+  },
+  "IA_061_insert_NPA": {
+    "count": 25,
+    "regex_coverage": 0.96,
+    "avg_length": 15.0
+  },
+  "IA_062_transport": {
+    "count": 25,
+    "regex_coverage": 0.68,
+    "avg_length": 12.6
+  },
+  "IA_063_load_patient_to_stretcher": {
+    "count": 25,
+    "regex_coverage": 0.96,
+    "avg_length": 12.2
+  },
+  "IA_064_secure_patient_on_stretcher": {
+    "count": 24,
+    "regex_coverage": 0.542,
+    "avg_length": 15.5
+  },
+  "IA_065_notify_hospital": {
+    "count": 25,
+    "regex_coverage": 0.24,
+    "avg_length": 12.9
+  },
+  "IA_066_notify_hospital_of_stroke_alert": {
+    "count": 25,
+    "regex_coverage": 0.92,
+    "avg_length": 15.8
+  },
+  "IA_067_handoff_patient_to_hospital": {
+    "count": 25,
+    "regex_coverage": 1.0,
+    "avg_length": 13.2
+  }
+}

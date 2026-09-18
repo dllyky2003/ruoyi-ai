@@ -1,0 +1,43 @@
+{
+  "intent_code": "IA_045_check_responsiveness_cpr",
+  "normalized": "重新检查患者反应",
+  "variants": [
+    {
+      "surface": "按压暂停，检查反应",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "看看有没有反应",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "CPR检查反应",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "按压暂停检查反应",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "CPR后反应",
+      "type": "同义词",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "复苏中检查反应",
+      "type": "同义词",
+      "confidence": 0.85,
+      "note": ""
+    }
+  ],
+  "intent_name": "CPR中检查患者反应"
+}

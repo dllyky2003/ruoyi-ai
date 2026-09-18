@@ -1,0 +1,85 @@
+{
+  "intent_code": "IA_064_secure_patient_on_stretcher",
+  "normalized": "固定患者于担架上",
+  "variants": [
+    {
+      "surface": "固定好患者",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "绑好担架",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "系好安全带",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "安全带固定",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "担架固定",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "把患者固定在担架上",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "固定患者在担架上",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "把担架固定好",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "担架绑紧",
+      "type": "同音",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "担架绑牢",
+      "type": "同音",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "担架绑紧了",
+      "type": "同音",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "担架绑牢了",
+      "type": "同音",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "担架绑错了",
+      "type": "错别字",
+      "confidence": 0.6,
+      "note": ""
+    }
+  ],
+  "intent_name": "固定患者于担架上"
+}

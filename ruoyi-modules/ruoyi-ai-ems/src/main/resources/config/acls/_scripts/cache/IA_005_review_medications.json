@@ -1,0 +1,49 @@
+{
+  "intent_code": "IA_005_review_medications",
+  "normalized": "回顾患者当前用药。",
+  "variants": [
+    {
+      "surface": "他现在在吃什么药？",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "回顾一下当前用药。",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "回顾用药",
+      "type": "同义词",
+      "confidence": 0.98,
+      "note": ""
+    },
+    {
+      "surface": "当前用药",
+      "type": "同义词",
+      "confidence": 0.98,
+      "note": ""
+    },
+    {
+      "surface": "正在吃什么药",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "目前用药",
+      "type": "同义词",
+      "confidence": 0.98,
+      "note": ""
+    },
+    {
+      "surface": "用药情况",
+      "type": "同义词",
+      "confidence": 0.98,
+      "note": ""
+    }
+  ],
+  "intent_name": "回顾当前用药"
+}

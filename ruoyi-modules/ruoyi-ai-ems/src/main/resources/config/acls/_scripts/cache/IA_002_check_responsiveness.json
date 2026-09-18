@@ -1,0 +1,43 @@
+{
+  "intent_code": "IA_002_check_responsiveness",
+  "normalized": "检查患者对言语或物理刺激的反应。",
+  "variants": [
+    {
+      "surface": "检查反应",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "呼叫患者",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "叫患者",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "有没有反应",
+      "type": "口语",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "叫醒",
+      "type": "口语",
+      "confidence": 0.75,
+      "note": ""
+    },
+    {
+      "surface": "对刺激反应",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    }
+  ],
+  "intent_name": "检查患者反应（对言语/刺激的反应）"
+}

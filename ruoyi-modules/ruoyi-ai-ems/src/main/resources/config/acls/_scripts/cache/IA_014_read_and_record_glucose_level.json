@@ -1,0 +1,55 @@
+{
+  "intent_code": "IA_014_read_and_record_glucose_level",
+  "normalized": "读取并记录血糖水平",
+  "variants": [
+    {
+      "surface": "读一下血糖多少，记下来。",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "测血糖并记录数值。",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "读取并记录血糖值。",
+      "type": "同义词",
+      "confidence": 0.98,
+      "note": ""
+    },
+    {
+      "surface": "读取并记录血糖数值。",
+      "type": "同义词",
+      "confidence": 0.98,
+      "note": ""
+    },
+    {
+      "surface": "读取并记录血糖读数。",
+      "type": "同义词",
+      "confidence": 0.98,
+      "note": ""
+    },
+    {
+      "surface": "读取并记录糖水平。",
+      "type": "同音",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "读取并记录糖水水平。",
+      "type": "同音",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "读取并记录糖水平。",
+      "type": "错别字",
+      "confidence": 0.85,
+      "note": ""
+    }
+  ],
+  "intent_name": "读取并记录血糖读数"
+}

@@ -1,0 +1,55 @@
+{
+  "intent_code": "IA_029_place_left_arm_lead",
+  "normalized": "连接左臂电极",
+  "variants": [
+    {
+      "surface": "把左臂电极贴上并连接",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "连接左臂导联",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "贴左臂电极",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "把左臂连接上",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "连接左臂",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "左臂贴上",
+      "type": "口语",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "左臂导联",
+      "type": "同义词",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "左臂电极贴上",
+      "type": "口语",
+      "confidence": 0.75,
+      "note": ""
+    }
+  ],
+  "intent_name": "连接左臂电极"
+}

@@ -1,0 +1,49 @@
+{
+  "intent_code": "IA_065_notify_hospital",
+  "normalized": "通知接收医院",
+  "variants": [
+    {
+      "surface": "通知医院",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "提前通知医院",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "告知接收医院",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "打电话给医院",
+      "type": "口语",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "医院报告",
+      "type": "同义词",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "通知医院我们马上到",
+      "type": "口语",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "提前给医院打电话",
+      "type": "口语",
+      "confidence": 0.7,
+      "note": ""
+    }
+  ],
+  "intent_name": "通知接收医院"
+}

@@ -1,0 +1,121 @@
+{
+  "intent_code": "IA_043_obtain_ecg_recording",
+  "normalized": "记录心电图",
+  "variants": [
+    {
+      "surface": "开始记录心电图",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "采集心电图并保存",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "开始心电图记录",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "获取心电图",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "心电图记录",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "开始心电图采集",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "做心电图",
+      "type": "口语",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "开始做心电图",
+      "type": "口语",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "心电图",
+      "type": "缩写",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "心电",
+      "type": "缩写",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "电图",
+      "type": "缩写",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "心电",
+      "type": "拼音缩写",
+      "confidence": 0.6,
+      "note": ""
+    },
+    {
+      "surface": "电图",
+      "type": "拼音缩写",
+      "confidence": 0.6,
+      "note": ""
+    },
+    {
+      "surface": "心电",
+      "type": "方言",
+      "confidence": 0.5,
+      "note": ""
+    },
+    {
+      "surface": "电图",
+      "type": "方言",
+      "confidence": 0.5,
+      "note": ""
+    },
+    {
+      "surface": "心电",
+      "type": "错别字",
+      "confidence": 0.4,
+      "note": ""
+    },
+    {
+      "surface": "电图",
+      "type": "错别字",
+      "confidence": 0.4,
+      "note": ""
+    },
+    {
+      "surface": "心电",
+      "type": "同音",
+      "confidence": 0.3,
+      "note": ""
+    },
+    {
+      "surface": "电图",
+      "type": "同音",
+      "confidence": 0.3,
+      "note": ""
+    }
+  ],
+  "intent_name": "记录心电图"
+}

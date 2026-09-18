@@ -1,0 +1,61 @@
+{
+  "intent_code": "IA_061_inset_NPA",
+  "normalized": "插入鼻咽通气管以维持气道通畅。",
+  "variants": [
+    {
+      "surface": "插NPA",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "鼻咽通气管",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "NPA",
+      "type": "缩写",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "插入鼻咽通气管",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "鼻咽管",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "插鼻咽通气管",
+      "type": "口语",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "插鼻咽管",
+      "type": "口语",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "插鼻通气管",
+      "type": "同音",
+      "confidence": 0.6,
+      "note": ""
+    },
+    {
+      "surface": "插鼻咽通气管NPA",
+      "type": "错别字",
+      "confidence": 0.5,
+      "note": ""
+    }
+  ],
+  "intent_name": "插入鼻咽通气管（NPA）"
+}

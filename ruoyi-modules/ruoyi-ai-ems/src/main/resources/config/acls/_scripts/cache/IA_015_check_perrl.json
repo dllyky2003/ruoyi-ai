@@ -1,0 +1,49 @@
+{
+  "intent_code": "IA_015_check_perrl",
+  "normalized": "检查瞳孔对光反射",
+  "variants": [
+    {
+      "surface": "检查瞳孔对光反应",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "看瞳孔对光",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "瞳孔对光检查",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "PERRL检查",
+      "type": "缩写",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "瞳孔对光反应",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "瞳孔对光",
+      "type": "同音",
+      "confidence": 0.7,
+      "note": "注意与‘瞳孔对光’的发音相似但含义不同"
+    },
+    {
+      "surface": "PRL检查",
+      "type": "错别字",
+      "confidence": 0.6,
+      "note": "注意与PERRL的错别字"
+    }
+  ],
+  "intent_name": "检查瞳孔对光反射（PERRL）"
+}

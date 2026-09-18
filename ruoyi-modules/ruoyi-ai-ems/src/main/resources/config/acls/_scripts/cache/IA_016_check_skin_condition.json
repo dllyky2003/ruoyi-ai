@@ -1,0 +1,49 @@
+{
+  "intent_code": "IA_016_check_skin_condition",
+  "normalized": "评估皮肤情况（颜色/温度/湿度）",
+  "variants": [
+    {
+      "surface": "检查皮肤颜色和温度",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "看皮肤湿不湿",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "皮肤冷汗",
+      "type": "同音",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "皮肤湿冷",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "皮肤湿了",
+      "type": "口语",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "皮肤出汗",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "皮肤湿冷",
+      "type": "错别字",
+      "confidence": 0.6,
+      "note": "应为湿冷"
+    }
+  ],
+  "intent_name": "评估皮肤情况（颜色/温度/湿度）"
+}

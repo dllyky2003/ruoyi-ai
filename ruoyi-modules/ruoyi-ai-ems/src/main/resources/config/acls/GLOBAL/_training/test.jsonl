@@ -1,0 +1,15 @@
+{"text": "床边人员全部撤离", "intent": "G1-01", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "所有人清场离开床边", "intent": "G1-01", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "确认患者无起搏器", "intent": "G1-02", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "询问除颤禁忌金属饰物", "intent": "G1-02", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "环境安全确认完毕", "intent": "G1-03", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "检查地面有无湿滑或电线", "intent": "G1-03", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "连接十二导联心电监护", "intent": "G3-02", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "连接十二导联心电图", "intent": "G3-02", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "快速建立外周静脉通道", "intent": "G3-03", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "打上留置针建立静脉通路", "intent": "G3-03", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "准备除颤设备调焦耳", "intent": "G3-04", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "除颤仪准备调至200焦耳", "intent": "G3-04", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "除颤仪充电完成", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "G1-01", "source": "GLOBAL"}
+{"text": "准备除颤设备", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "G1-01", "source": "GLOBAL"}
+{"text": "检查一下有没有金属饰物", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "G3-02", "source": "GLOBAL"}

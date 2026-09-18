@@ -1,0 +1,55 @@
+{
+  "intent_code": "IA_018_check_grip_strength",
+  "normalized": "检查双侧握力是否对称",
+  "variants": [
+    {
+      "surface": "检查双侧握力是否对称",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "比较双侧握力对不对称",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "看双侧握力是否一样",
+      "type": "口语",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "检查左右手握力",
+      "type": "口语",
+      "confidence": 0.75,
+      "note": ""
+    },
+    {
+      "surface": "捏紧双侧手比较",
+      "type": "口语",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "检查双侧握拳力量",
+      "type": "口语",
+      "confidence": 0.65,
+      "note": ""
+    },
+    {
+      "surface": "看双侧握力是否一样",
+      "type": "同音",
+      "confidence": 0.6,
+      "note": ""
+    },
+    {
+      "surface": "检查双侧握力",
+      "type": "缩写",
+      "confidence": 0.55,
+      "note": ""
+    }
+  ],
+  "intent_name": "检查双侧握力是否对称"
+}

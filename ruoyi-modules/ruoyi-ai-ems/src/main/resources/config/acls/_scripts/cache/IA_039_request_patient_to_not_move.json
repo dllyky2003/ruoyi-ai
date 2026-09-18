@@ -1,0 +1,61 @@
+{
+  "intent_code": "IA_039_request_patient_to_not_move",
+  "normalized": "要求患者在记录期间保持不动",
+  "variants": [
+    {
+      "surface": "记录时别动",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "心电图保持别动",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "采集时别乱动",
+      "type": "口语",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "记录时不要乱动",
+      "type": "口语",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "心电图时别乱动",
+      "type": "口语",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "心电图时保持不动",
+      "type": "同义词",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "记录时保持不动",
+      "type": "同义词",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "心电图期间别动",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "心电图期间保持不动",
+      "type": "同音",
+      "confidence": 0.7,
+      "note": ""
+    }
+  ],
+  "intent_name": "要求患者在记录期间保持不动"
+}

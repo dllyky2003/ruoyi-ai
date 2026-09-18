@@ -1,0 +1,37 @@
+{
+  "intent_code": "IA_022_assess_balance_and_coordination",
+  "normalized": "评估平衡和移动/协调能力",
+  "variants": [
+    {
+      "surface": "评估平衡和协调能力",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "看看他站得稳不稳",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "评估一下平衡和协调能力",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "走路评估",
+      "type": "同音",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "平衡协调",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    }
+  ],
+  "intent_name": "评估平衡和协调能力"
+}

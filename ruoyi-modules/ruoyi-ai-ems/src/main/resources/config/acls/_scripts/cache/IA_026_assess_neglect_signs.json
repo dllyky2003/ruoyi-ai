@@ -1,0 +1,31 @@
+{
+  "intent_code": "IA_026_assess_neglect_signs",
+  "normalized": "检查单侧忽略体征",
+  "variants": [
+    {
+      "surface": "检查有没有单侧忽略",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "看看他有没有忽略一侧",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "检查单侧忽视体征",
+      "type": "同音",
+      "confidence": 0.65,
+      "note": ""
+    },
+    {
+      "surface": "检查单侧不理会体征",
+      "type": "错别字",
+      "confidence": 0.55,
+      "note": ""
+    }
+  ],
+  "intent_name": "检查忽略体征（单侧忽略）"
+}

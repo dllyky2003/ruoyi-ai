@@ -1,0 +1,43 @@
+{
+  "intent_code": "IA_056_administer_shock_aed",
+  "normalized": "实施电击（AED建议时电击）",
+  "variants": [
+    {
+      "surface": "按下电击键",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "执行电击",
+      "type": "同义词",
+      "confidence": 0.98,
+      "note": ""
+    },
+    {
+      "surface": "AED电击",
+      "type": "缩写",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "放电",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "实施电击",
+      "type": "同义词",
+      "confidence": 1.0,
+      "note": ""
+    },
+    {
+      "surface": "AED提示电击，马上放电",
+      "type": "口语",
+      "confidence": 0.8,
+      "note": "包含具体场景描述"
+    }
+  ],
+  "intent_name": "实施电击（AED建议时电击）"
+}

@@ -1,0 +1,55 @@
+{
+  "intent_code": "IA_025_evaluate_aphasia",
+  "normalized": "评估失语症",
+  "variants": [
+    {
+      "surface": "评估失语症状",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "看看失语情况",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "检查语言理解障碍",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "语言表达困难",
+      "type": "同义词",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "复述困难",
+      "type": "同义词",
+      "confidence": 0.75,
+      "note": ""
+    },
+    {
+      "surface": "失语症评估",
+      "type": "同音",
+      "confidence": 0.6,
+      "note": ""
+    },
+    {
+      "surface": "失语症检查",
+      "type": "同音",
+      "confidence": 0.6,
+      "note": ""
+    },
+    {
+      "surface": "失语症看",
+      "type": "方言",
+      "confidence": 0.5,
+      "note": ""
+    }
+  ],
+  "intent_name": "评估失语症（失语）"
+}

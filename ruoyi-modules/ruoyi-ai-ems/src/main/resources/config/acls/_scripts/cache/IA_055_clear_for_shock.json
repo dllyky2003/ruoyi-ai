@@ -1,0 +1,43 @@
+{
+  "intent_code": "IA_055_clear_for_shock",
+  "normalized": "电击前清场",
+  "variants": [
+    {
+      "surface": "确认所有人已离开后再电击",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "不要碰他，我要电击了",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "电击前清场",
+      "type": "同义词",
+      "confidence": 1.0,
+      "note": ""
+    },
+    {
+      "surface": "准备电击清场",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "所有人离开",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "别碰准备电击",
+      "type": "口语",
+      "confidence": 0.75,
+      "note": ""
+    }
+  ],
+  "intent_name": "电击前清场（确认所有人离开）"
+}

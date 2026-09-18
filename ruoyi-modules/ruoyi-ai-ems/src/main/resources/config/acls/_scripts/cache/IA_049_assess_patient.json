@@ -1,0 +1,67 @@
+{
+  "intent_code": "IA_049_assess_patient",
+  "normalized": "重新评估患者状况",
+  "variants": [
+    {
+      "surface": "CPR后重新评估",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "再评估患者",
+      "type": "口语",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "重新检查患者",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "复苏后评估",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "评估完再决定",
+      "type": "口语",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "再看看患者",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "CPR后检查",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "再检查一下",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "再评估一下",
+      "type": "口语",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "再看看",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    }
+  ],
+  "intent_name": "重新评估患者状况"
+}

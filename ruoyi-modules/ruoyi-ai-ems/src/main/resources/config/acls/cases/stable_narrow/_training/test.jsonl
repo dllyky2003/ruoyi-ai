@@ -1,0 +1,34 @@
+{"text": "评估QRS波群宽度是否正常", "intent": "S-101-1-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "判断是窄QRS还是宽QRS", "intent": "S-101-1-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "RR间期有没有明显差异", "intent": "S-101-1-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "判断心律是规则还是不规则", "intent": "S-101-1-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "让患者屏住呼吸用力", "intent": "S-101-2-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "让患者深吸气后屏气用力", "intent": "S-101-2-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "准备好腺苷6毫克推注", "intent": "S-101-2-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "腺苷12毫克再推一次", "intent": "S-101-2-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "推注盐水冲管药物", "intent": "S-101-2-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "推完腺苷快速冲管", "intent": "S-101-2-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "艾司洛尔静脉推注控制心率", "intent": "S-101-2-5", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "美托洛尔5毫克静脉推注", "intent": "S-101-2-5", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "同步电复律能量选择100焦耳", "intent": "S-101-2-6", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "同步电复律100焦耳充电", "intent": "S-101-2-6", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "WPW患者只能用胺碘酮", "intent": "S-101-2-7", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "患者有预激综合征禁用腺苷", "intent": "S-101-2-7", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "药物不良反应导致室颤", "intent": "S-101-4-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "室颤了推药后造成的", "intent": "S-101-4-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "药物诱发宽QRS室速无脉搏", "intent": "S-101-4-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "没开同步就电击了", "intent": "S-101-4-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "误电击后立即除颤抢救", "intent": "S-101-4-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "PEA无脉电活动血压测不到", "intent": "S-101-4-3", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "心电图呈直线心脏停搏", "intent": "S-101-4-3", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "稳定窄QRS不要做胸外按压", "intent": "S-101-4-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "开始做心肺复苏", "intent": "S-101-4-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "把除颤仪调到非同步模式", "intent": "S-101-4-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "患者有没有胸痛", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-1-2", "source": "stable_narrow"}
+{"text": "快速推注腺苷6毫克", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-2-1", "source": "stable_narrow"}
+{"text": "推肾上腺素", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-2-2", "source": "stable_narrow"}
+{"text": "推注腺苷6毫克快速静推", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-2-4", "source": "stable_narrow"}
+{"text": "推注腺苷6毫克快速静推", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-2-5", "source": "stable_narrow"}
+{"text": "R-R间期齐不齐", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-1-1", "source": "stable_narrow"}
+{"text": "房颤用腺苷后变成室颤了", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-1-2", "source": "stable_narrow"}
+{"text": "腺苷6毫克快速静推", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-4-4", "source": "stable_narrow"}

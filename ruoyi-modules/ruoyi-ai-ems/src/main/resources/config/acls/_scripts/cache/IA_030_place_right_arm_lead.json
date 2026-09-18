@@ -1,0 +1,49 @@
+{
+  "intent_code": "IA_030_place_right_arm_lead",
+  "normalized": "连接右臂电极",
+  "variants": [
+    {
+      "surface": "右臂电极",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "右臂导联",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "连接右臂",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "贴右臂电极",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "右臂电极贴上",
+      "type": "口语",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "连接右臂电极",
+      "type": "同音",
+      "confidence": 0.7,
+      "note": "同音词为'连接右臂带电'"
+    },
+    {
+      "surface": "贴右臂电极",
+      "type": "同音",
+      "confidence": 0.7,
+      "note": "同音词为'贴右臂电极'"
+    }
+  ],
+  "intent_name": "连接右臂电极"
+}

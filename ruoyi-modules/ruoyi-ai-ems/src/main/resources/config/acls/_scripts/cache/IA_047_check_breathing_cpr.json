@@ -1,0 +1,67 @@
+{
+  "intent_code": "IA_047_check_breathing_cpr",
+  "normalized": "检查呼吸",
+  "variants": [
+    {
+      "surface": "停一下，检查有没有呼吸。",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "看看呼吸情况。",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "按压暂停检查呼吸",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "按压后看呼吸",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "复苏中检查呼吸",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "检查呼吸",
+      "type": "标准",
+      "confidence": 1.0,
+      "note": ""
+    },
+    {
+      "surface": "检查有无呼吸",
+      "type": "同义词",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "检查呼吸情况",
+      "type": "同义词",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "暂停按压检查呼吸",
+      "type": "口语",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "检查有无气道",
+      "type": "错别字",
+      "confidence": 0.1,
+      "note": "气道应为呼吸"
+    }
+  ],
+  "intent_name": "CPR中检查呼吸"
+}

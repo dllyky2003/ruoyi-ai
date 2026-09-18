@@ -1,0 +1,37 @@
+{
+  "intent_code": "IA_023_document_lkw_time",
+  "normalized": "记录最后一次正常知晓时间（LKW）",
+  "variants": [
+    {
+      "surface": "记录LKW时间",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "最后一次正常知晓是何时？记下来。",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "记录最后一次正常时间",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "记录最后正常知晓",
+      "type": "同义词",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "记录发作时间",
+      "type": "同音",
+      "confidence": 0.7,
+      "note": "同音词：LKW与发作时间发音相似"
+    }
+  ],
+  "intent_name": "记录最后一次正常知晓时间（LKW）"
+}

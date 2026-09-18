@@ -1,0 +1,61 @@
+{
+  "intent_code": "IA_058_place_bvm",
+  "normalized": "放置并密封球囊面罩",
+  "variants": [
+    {
+      "surface": "放置球囊面罩并密封",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "把面罩按紧，密封好",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "放置BVM并密封",
+      "type": "缩写",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "放置通气面罩并密封",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "放置面罩并密封",
+      "type": "同义词",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "放置BVM",
+      "type": "缩写",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "放置面罩",
+      "type": "同义词",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "放置并密封面罩",
+      "type": "同义词",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "放置并密封BVM",
+      "type": "缩写",
+      "confidence": 0.8,
+      "note": ""
+    }
+  ],
+  "intent_name": "放置并密封球囊面罩（BVM）"
+}

@@ -1,0 +1,73 @@
+{
+  "intent_code": "IA_011_check_oxygen_saturation",
+  "normalized": "测量血氧饱和度",
+  "variants": [
+    {
+      "surface": "测血氧",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "看SpO2多少",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "检查血氧",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "SpO2值",
+      "type": "同音",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "测一下氧饱和度",
+      "type": "口语",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "氧饱和度多少",
+      "type": "口语",
+      "confidence": 0.75,
+      "note": ""
+    },
+    {
+      "surface": "测血氧值",
+      "type": "口语",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "SpO2",
+      "type": "英文",
+      "confidence": 0.65,
+      "note": ""
+    },
+    {
+      "surface": "测一下SpO2",
+      "type": "口语",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "测一下氧饱和度值",
+      "type": "口语",
+      "confidence": 0.75,
+      "note": ""
+    },
+    {
+      "surface": "测一下血氧值",
+      "type": "口语",
+      "confidence": 0.8,
+      "note": ""
+    }
+  ],
+  "intent_name": "测量血氧饱和度"
+}

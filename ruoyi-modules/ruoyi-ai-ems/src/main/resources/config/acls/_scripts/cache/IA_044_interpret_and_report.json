@@ -1,0 +1,67 @@
+{
+  "intent_code": "IA_044_interpret_and_report",
+  "normalized": "审阅并报告心电图结果",
+  "variants": [
+    {
+      "surface": "审阅心电图并报告结果",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "看一下心电图判读并说出来",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "看心电图判读并报告",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "心电图结果报告",
+      "type": "同义词",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "心电图判读结果",
+      "type": "同义词",
+      "confidence": 0.75,
+      "note": ""
+    },
+    {
+      "surface": "心电图结果审阅",
+      "type": "同义词",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "心电图判读",
+      "type": "同义词",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "看心电图",
+      "type": "口语",
+      "confidence": 0.65,
+      "note": ""
+    },
+    {
+      "surface": "心电图结果",
+      "type": "同音",
+      "confidence": 0.55,
+      "note": "同音词：心电图结核"
+    },
+    {
+      "surface": "心电图读",
+      "type": "错别字",
+      "confidence": 0.45,
+      "note": "错别字：读"
+    }
+  ],
+  "intent_name": "审阅并报告心电图结果"
+}

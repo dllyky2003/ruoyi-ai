@@ -1,0 +1,49 @@
+{
+  "intent_code": "IA_032_place_right_leg_lead",
+  "normalized": "连接右腿电极",
+  "variants": [
+    {
+      "surface": "连接右腿电极",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "连接右腿导联",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "贴右腿电极",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "连接右腿",
+      "type": "同义词",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "右腿电极连接",
+      "type": "同音",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "右腿导联连接",
+      "type": "同音",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "右腿电极贴",
+      "type": "错别字",
+      "confidence": 0.6,
+      "note": ""
+    }
+  ],
+  "intent_name": "连接右腿电极"
+}

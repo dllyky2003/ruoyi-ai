@@ -1,0 +1,49 @@
+{
+  "intent_code": "IA_037_place_v5_lead",
+  "normalized": "将V5置于腋前线。",
+  "variants": [
+    {
+      "surface": "V5贴在腋前线。",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "放置V5导联。",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "V5电极贴在腋前线。",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "V5导联贴在腋前线。",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "V5电极贴在腋前线。",
+      "type": "方言",
+      "confidence": 0.75,
+      "note": ""
+    },
+    {
+      "surface": "V5导联电极贴在腋前线。",
+      "type": "同音",
+      "confidence": 0.6,
+      "note": ""
+    },
+    {
+      "surface": "V5电极贴在腋前线。",
+      "type": "错别字",
+      "confidence": 0.5,
+      "note": ""
+    }
+  ],
+  "intent_name": "放置V5导联电极"
+}

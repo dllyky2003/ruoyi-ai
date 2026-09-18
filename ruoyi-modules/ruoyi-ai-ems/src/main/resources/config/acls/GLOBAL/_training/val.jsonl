@@ -1,0 +1,14 @@
+{"text": "大家手离开床准备放电", "intent": "G1-01", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "清场所有人离开安全线外", "intent": "G1-01", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "检查身上有无膏药或起搏器", "intent": "G1-02", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "检查金属饰物和植入物", "intent": "G1-02", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "确认现场环境安全", "intent": "G1-03", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "清理地面杂物确保安全", "intent": "G1-03", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "贴好除颤电极片连接导联", "intent": "G3-02", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "连接导联线至监护仪", "intent": "G3-02", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "建立静脉通道接生理盐水", "intent": "G3-03", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "建立静脉通路IV接盐水", "intent": "G3-03", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "准备除颤仪充电200焦耳", "intent": "G3-04", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "赶紧准备除颤仪和电极片", "intent": "G3-04", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "患者有什么过敏史吗", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "G1-02", "source": "GLOBAL"}
+{"text": "测量血压数值", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "G3-03", "source": "GLOBAL"}

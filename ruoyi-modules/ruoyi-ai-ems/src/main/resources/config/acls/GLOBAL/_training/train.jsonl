@@ -1,0 +1,46 @@
+{"text": "确认清场准备电击", "intent": "G1-01", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "手抬起来不要接触床", "intent": "G1-01", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "所有人退到安全区域外", "intent": "G1-01", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "清场完毕可以放电", "intent": "G1-01", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "准备放电大家离远点", "intent": "G1-01", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "别碰病人全体撤离", "intent": "G1-01", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "询问除颤禁忌症", "intent": "G1-02", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "确认没有除颤禁忌物品", "intent": "G1-02", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "检查胸前有无膏药", "intent": "G1-02", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "清除身上金属物品", "intent": "G1-02", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "查看有无药物贴片", "intent": "G1-02", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "确认没有起搏器和膏药", "intent": "G1-02", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "检查氧气瓶和电源安全", "intent": "G1-03", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "确认周围环境无火源", "intent": "G1-03", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "检查脚下有无松散电线", "intent": "G1-03", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "确保现场没有易燃物", "intent": "G1-03", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "确保抢救环境无明火", "intent": "G1-03", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "评估现场有无危险因素", "intent": "G1-03", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "贴电极片除颤位置", "intent": "G3-02", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "检查除颤片是否贴紧皮肤", "intent": "G3-02", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "贴好电极片查看心电波形", "intent": "G3-02", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "贴除颤电极片准备除颤", "intent": "G3-02", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "把电极片接到监护仪上", "intent": "G3-02", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "准备十二导联心电图检查", "intent": "G3-02", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "穿刺困难准备骨内通路IO", "intent": "G3-03", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "建立两条静脉通路备药", "intent": "G3-03", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "中心静脉置管建立通路", "intent": "G3-03", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "静脉通路已建立可给药", "intent": "G3-03", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "准备骨内通路穿刺", "intent": "G3-03", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "开通大号静脉通道输液", "intent": "G3-03", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "除颤准备充电200焦耳", "intent": "G3-04", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "开始准备电击操作", "intent": "G3-04", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "除颤仪充电至200焦耳", "intent": "G3-04", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "开机贴电极片充电备用", "intent": "G3-04", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "开机贴片充电准备除颤", "intent": "G3-04", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "准备电击设备充电完成", "intent": "G3-04", "sample_type": "positive", "source": "GLOBAL"}
+{"text": "启动监护仪监护模式", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "G3-02", "source": "GLOBAL"}
+{"text": "放电操作执行", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "G3-04", "source": "GLOBAL"}
+{"text": "打开除颤仪开机", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "G3-02", "source": "GLOBAL"}
+{"text": "评估患者意识状态", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "G1-03", "source": "GLOBAL"}
+{"text": "清场所有人离开", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "G3-04", "source": "GLOBAL"}
+{"text": "准备除颤仪设备", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "G3-03", "source": "GLOBAL"}
+{"text": "检查病人瞳孔大小", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "G1-03", "source": "GLOBAL"}
+{"text": "充电200焦耳完成", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "G1-01", "source": "GLOBAL"}
+{"text": "身上有膏药或起搏器吗", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "G3-02", "source": "GLOBAL"}
+{"text": "家属有无药物过敏史", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "G1-02", "source": "GLOBAL"}

@@ -1,0 +1,49 @@
+{
+  "intent_code": "IA_036_place_v4_lead",
+  "normalized": "将V4置于第5肋间锁骨中线。",
+  "variants": [
+    {
+      "surface": "V4导联放锁骨中线第5肋间",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "V4电极放锁骨中线第5肋间",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "V4贴锁骨中线第5肋间",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "V4放锁骨中线第5肋间",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "V4电极放第5肋间锁骨中线",
+      "type": "同音",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "V4导联放第5肋间锁骨中线",
+      "type": "同音",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "V4电极放锁骨中线第5肋间",
+      "type": "错别字",
+      "confidence": 0.6,
+      "note": ""
+    }
+  ],
+  "intent_name": "放置V4导联电极"
+}

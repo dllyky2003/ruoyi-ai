@@ -1,0 +1,49 @@
+{
+  "intent_code": "IA_021_speech_abnormality_check",
+  "normalized": "让患者重复短语以评估语言能力。",
+  "variants": [
+    {
+      "surface": "让他重复一句话，看看有没有语言问题。",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "检查语言是否异常。",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "让患者复述一句话，看是否有语言障碍。",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "让患者重复一句话，看语言是否正常。",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "让患者复述一句，检查语言。",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "让患者重复一句话，看语言是否正常。",
+      "type": "同音",
+      "confidence": 0.7,
+      "note": "可能误听为‘看语言是否正常’"
+    },
+    {
+      "surface": "让患者重复一句话，看语言是否正常。",
+      "type": "错别字",
+      "confidence": 0.7,
+      "note": "可能误写为‘看语言是否正常’"
+    }
+  ],
+  "intent_name": "语言异常检查（让患者重复短语）"
+}

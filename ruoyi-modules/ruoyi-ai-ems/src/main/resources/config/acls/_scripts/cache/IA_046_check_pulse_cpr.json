@@ -1,0 +1,37 @@
+{
+  "intent_code": "IA_046_check_pulse_cpr",
+  "normalized": "检查脉搏。",
+  "variants": [
+    {
+      "surface": "停一下按压，检查脉搏。",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "按压暂停摸脉。",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "按压后检查脉搏。",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "复苏中检查脉搏。",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "摸一下，看有没有脉。",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    }
+  ],
+  "intent_name": "CPR中检查脉搏"
+}

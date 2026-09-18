@@ -1,0 +1,55 @@
+{
+  "intent_code": "IA_042_ask_patient_age_sex",
+  "normalized": "确认患者年龄和性别",
+  "variants": [
+    {
+      "surface": "请问患者的年龄和性别",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "患者是男是女，多大了",
+      "type": "口语",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "确认患者的年龄和性别",
+      "type": "同义词",
+      "confidence": 0.98,
+      "note": ""
+    },
+    {
+      "surface": "问一下患者的年龄和性别",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "确认男女性别和年龄",
+      "type": "同义词",
+      "confidence": 0.98,
+      "note": ""
+    },
+    {
+      "surface": "输入患者的年龄和性别",
+      "type": "口语",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "患者多大了，是男是女",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "患者性别和年龄",
+      "type": "同音",
+      "confidence": 0.8,
+      "note": ""
+    }
+  ],
+  "intent_name": "确认患者年龄和性别"
+}

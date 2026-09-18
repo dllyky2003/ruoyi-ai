@@ -1,0 +1,73 @@
+{
+  "intent_code": "IA_028_shave_patient",
+  "normalized": "剃除皮肤以利于电极接触",
+  "variants": [
+    {
+      "surface": "剃毛",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "刮毛",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "备皮",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "剃除毛发",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "先刮一下皮肤",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "需要的话先刮一下皮肤",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "需要的话先剃一下皮肤",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "先备皮",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "先剃毛",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "剃除皮肤",
+      "type": "同音",
+      "confidence": 0.7,
+      "note": "同音词剃除与剃毛发音相似"
+    },
+    {
+      "surface": "刮除皮肤",
+      "type": "同音",
+      "confidence": 0.7,
+      "note": "同音词刮除与刮毛发音相似"
+    }
+  ],
+  "intent_name": "剃除皮肤以利于电极接触"
+}

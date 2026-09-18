@@ -1,0 +1,55 @@
+{
+  "intent_code": "IA_006_inquire_medication_anticoagulants",
+  "normalized": "询问抗凝药物使用情况",
+  "variants": [
+    {
+      "surface": "他有没有在用抗凝药？",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "确认有没有用抗凝。",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "他是否在服用抗凝药物？",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "患者是否在使用抗凝药？",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "有没有用华法林？",
+      "type": "同音",
+      "confidence": 0.8,
+      "note": "注意与‘华法林’同音的词语"
+    },
+    {
+      "surface": "有没有用利伐沙班？",
+      "type": "同音",
+      "confidence": 0.8,
+      "note": "注意与‘利伐沙班’同音的词语"
+    },
+    {
+      "surface": "有没有用阿哌沙班？",
+      "type": "同音",
+      "confidence": 0.8,
+      "note": "注意与‘阿哌沙班’同音的词语"
+    },
+    {
+      "surface": "有没有用血液稀释药？",
+      "type": "同义词",
+      "confidence": 0.85,
+      "note": ""
+    }
+  ],
+  "intent_name": "询问抗凝药物使用情况"
+}

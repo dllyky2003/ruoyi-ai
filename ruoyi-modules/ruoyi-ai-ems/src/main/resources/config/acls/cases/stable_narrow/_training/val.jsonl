@@ -1,0 +1,31 @@
+{"text": "看看心电图QRS宽度是多少", "intent": "S-101-1-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "心电图显示QRS宽度异常", "intent": "S-101-1-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "R-R间期是否规整整齐", "intent": "S-101-1-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "R-R间期不规则可能是房颤", "intent": "S-101-1-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "指导患者做Valsalva动作", "intent": "S-101-2-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "让患者屏气用力鼓肚子", "intent": "S-101-2-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "快速静推腺苷6毫克", "intent": "S-101-2-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "腺苷6毫克静脉推注", "intent": "S-101-2-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "立即快速冲管生理盐水20毫升", "intent": "S-101-2-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "20毫升生理盐水冲管", "intent": "S-101-2-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "地尔硫卓0.25毫克每公斤静注", "intent": "S-101-2-5", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "地尔硫卓控制心室率", "intent": "S-101-2-5", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "调至同步模式选择100焦耳", "intent": "S-101-2-6", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "准备同步电复律和镇静药物", "intent": "S-101-2-6", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "δ波阳性禁用腺苷和地尔硫卓", "intent": "S-101-2-7", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "有预激别用腺苷药物", "intent": "S-101-2-7", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "推药后变成宽QRS室速", "intent": "S-101-4-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "宽QRS室速药物诱发", "intent": "S-101-4-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "能量过高诱发尖端扭转型室速", "intent": "S-101-4-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "非同步电击R-on-T现象", "intent": "S-101-4-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "血压测不到无脉电活动PEA", "intent": "S-101-4-3", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "心脏停搏立即心肺复苏", "intent": "S-101-4-3", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "推注肾上腺素是禁忌操作", "intent": "S-101-4-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "切勿在稳定情况下做CPR", "intent": "S-101-4-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "推注肾上腺素1毫克", "intent": "S-101-4-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "血压恢复稳定", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-4-3", "source": "stable_narrow"}
+{"text": "做Valsalva动作", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-4-4", "source": "stable_narrow"}
+{"text": "血压稳定吗", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-1-1", "source": "stable_narrow"}
+{"text": "心律转复成功为窦性", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-4-1", "source": "stable_narrow"}
+{"text": "测量血压和心率", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-1-2", "source": "stable_narrow"}
+{"text": "药物诱发宽QRS室速", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-4-2", "source": "stable_narrow"}

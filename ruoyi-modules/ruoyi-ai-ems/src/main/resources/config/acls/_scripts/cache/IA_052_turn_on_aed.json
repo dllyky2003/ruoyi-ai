@@ -1,0 +1,97 @@
+{
+  "intent_code": "IA_052_turn_on_aed",
+  "normalized": "开启AED并准备使用",
+  "variants": [
+    {
+      "surface": "开机AED，准备使用。",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "打开除颤器。",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "启动AED。",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "AED开机。",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "打开AED。",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "启动除颤器。",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "开启除颤器。",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "开AED。",
+      "type": "缩写",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "开除颤器。",
+      "type": "缩写",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "开AED机。",
+      "type": "方言",
+      "confidence": 0.6,
+      "note": ""
+    },
+    {
+      "surface": "开除颤器机。",
+      "type": "方言",
+      "confidence": 0.6,
+      "note": ""
+    },
+    {
+      "surface": "开AED机子。",
+      "type": "方言",
+      "confidence": 0.6,
+      "note": ""
+    },
+    {
+      "surface": "开除颤器机子。",
+      "type": "方言",
+      "confidence": 0.6,
+      "note": ""
+    },
+    {
+      "surface": "开AED机子。",
+      "type": "同音",
+      "confidence": 0.5,
+      "note": "同音词：开爱机子"
+    },
+    {
+      "surface": "开除颤器机子。",
+      "type": "同音",
+      "confidence": 0.5,
+      "note": "同音词：开除机子"
+    }
+  ],
+  "intent_name": "开启AED并准备使用"
+}

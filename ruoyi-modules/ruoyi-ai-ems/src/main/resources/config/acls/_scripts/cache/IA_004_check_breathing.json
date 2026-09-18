@@ -1,0 +1,67 @@
+{
+  "intent_code": "IA_004_check_breathing",
+  "normalized": "检查呼吸",
+  "variants": [
+    {
+      "surface": "检查呼吸",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "有没有呼吸",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "看胸廓起伏",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "听呼吸音",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "感受气息",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "观察呼吸",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "听听呼吸",
+      "type": "口语",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "看看有没有呼吸",
+      "type": "口语",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "感觉有没有呼吸",
+      "type": "口语",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "听呼吸",
+      "type": "同音",
+      "confidence": 0.7,
+      "note": ""
+    }
+  ],
+  "intent_name": "检查呼吸"
+}

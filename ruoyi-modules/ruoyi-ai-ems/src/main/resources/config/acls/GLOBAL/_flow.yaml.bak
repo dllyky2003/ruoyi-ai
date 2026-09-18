@@ -1,0 +1,232 @@
+# ============================================================
+# 父级流程：GENERAL_ACLS（全局编排）
+# 案例编号：000
+# 存放位置：GLOBAL/_flow.yaml
+# 职责：全局编排、安全解锁、子级路由、ROSC统一接管、超时/错误处理
+# 版本：2.0.0（补充BLS初始评估、终止复苏路径）
+# ============================================================
+caseId: "GLOBAL"
+caseName: "ACLS全局父级编排"
+version: "2.0.0"
+
+description: "所有Megacode案例共享的顶层状态机，包含完整的BLS初始评估与终止复苏路径"
+
+stateDescriptions:
+  F-000-SCENE_START: "场景启动"
+  F-000-BLS_PRIMARY_SURVEY: "BLS初步评估（安全、反应、呼吸、脉搏）"
+  F-000-INITIAL_ASSESSMENT: "初始评估（生命体征获取）"
+  F-000-INITIAL_SETUP: "初始设置（安全/设备/通路就绪）"
+  F-000-ROSC_MANAGEMENT: "ROSC管理（循环恢复后处理）"
+  F-000-POST_ROSC_CARE: "复苏后护理（12导联、TTM等）"
+  F-000-TERMINATE_RESUSCITATION: "终止复苏决策与记录"
+  F-000-TERMINAL_END: "✅ 案例结束"
+  F-000-ERROR_HANDLING: "❌ 错误处理"
+  F-000-TIMEOUT_HANDLING: "⏰ 超时处理"
+
+stateMachine:
+  initial: "F-000-SCENE_START"
+  states:
+    - F-000-SCENE_START
+    - F-000-BLS_PRIMARY_SURVEY
+    - F-000-INITIAL_ASSESSMENT
+    - F-000-INITIAL_SETUP
+    - F-000-ROSC_MANAGEMENT
+    - F-000-POST_ROSC_CARE
+    - F-000-TERMINATE_RESUSCITATION
+    - F-000-TERMINAL_END
+    - F-000-ERROR_HANDLING
+    - F-000-TIMEOUT_HANDLING
+  endStates:
+    - F-000-TERMINAL_END
+
+  transitions:
+    # ==========================================================
+    # 1. 场景启动 → BLS初步评估（新增）
+    # ==========================================================
+    - source: "F-000-SCENE_START"
+      target: "F-000-BLS_PRIMARY_SURVEY"
+      priority: 10
+      description: "场景启动，进入BLS初步评估"
+
+    # ==========================================================
+    # 2. BLS评估 → 初始评估（完成基础检查后自动进入）
+    # ==========================================================
+    - source: "F-000-BLS_PRIMARY_SURVEY"
+      target: "F-000-INITIAL_ASSESSMENT"
+      condition: "#process.blsSurveyComplete == true"   # 可在BLS状态中通过意图或计时器设置此变量
+      priority: 10
+      description: "BLS评估完成，进入生命体征获取"
+
+    # ==========================================================
+    # 3. 初始评估 → 初始设置（生命体征获取完成）
+    #    条件不变，但可能依赖BLS评估中已获取的脉搏信息
+    # ==========================================================
+    - source: "F-000-INITIAL_ASSESSMENT"
+      target: "F-000-INITIAL_SETUP"
+      condition: "#phys.heartRate != null && #phys.systolicBp != null && #phys.consciousness != null"
+      priority: 10
+      description: "生命体征已获取，进入初始设置"
+
+    # ==========================================================
+    # 4. 父级安全/设备就绪（学员主动触发，自循环更新变量）
+    #    所有intentCode已映射至IA_xxx
+    # ==========================================================
+    - source: "F-000-INITIAL_SETUP"
+      target: "F-000-INITIAL_SETUP"
+      intentCode: "IA_001_approach_patient"
+      condition: "#process.safetyCleared == false"
+      priority: 10
+      description: "接近患者+安全清场确认 → safety_cleared = true"
+
+    - source: "F-000-INITIAL_SETUP"
+      target: "F-000-INITIAL_SETUP"
+      intentCode: "IA_040_turn_on_ecg"
+      condition: "#device.defibConnected == false"
+      priority: 10
+      description: "开机（监护/除颤模式）→ defib_connected = true"
+
+    - source: "F-000-INITIAL_SETUP"
+      target: "F-000-INITIAL_SETUP"
+      intentCode: "IA_041_connect_leads_to_ecg"
+      condition: "#device.leadsPlaced == false"
+      priority: 10
+      description: "连接导联/电极片 → leads_placed = true"
+
+    # 静脉通路：由子级或通用意图触发，此处不限定intentCode
+    - source: "F-000-INITIAL_SETUP"
+      target: "F-000-INITIAL_SETUP"
+      intentCode: null
+      condition: "#device.ivEstablished == false"
+      priority: 10
+      description: "静脉通路建立 → iv_established = true（可由子级或通用意图驱动）"
+
+    # ==========================================================
+    # 5. 初始设置 → 子级路由（派生变量驱动，intentCode为空）
+    # ==========================================================
+    - source: "F-000-INITIAL_SETUP"
+      target: "F-101-ASSESS_STABILITY"
+      condition: "#derived.stable == true && #derived.qrsWidth == 'narrow' && #derived.rhythmRegular == true"
+      priority: 30
+      description: "稳定 + 窄QRS + 规则 → 进入SVT子级（101）"
+
+    - source: "F-000-INITIAL_SETUP"
+      target: "F-102-ASSESS_STABILITY"
+      condition: "(#derived.stable == false || #derived.qrsWidth == 'wide') && #phys.heartRate >= 50"
+      priority: 25
+      description: "不稳定或宽QRS → 进入不稳定/宽QRS子级（102）"
+
+    - source: "F-000-INITIAL_SETUP"
+      target: "F-103-CPR_START"
+      condition: "#phys.rhythm == 'VF' || #phys.rhythm == 'VT' || #phys.rhythm == 'PEA' || #phys.rhythm == 'Asystole'"
+      priority: 100
+      description: "心脏骤停心律 → 进入骤停子级（103）"
+
+    - source: "F-000-INITIAL_SETUP"
+      target: "F-104-ASSESS_BRADY"
+      condition: "#phys.heartRate < 50 && #phys.symptomsPresent == true"
+      priority: 90
+      description: "有症状心动过缓 → 进入心动过缓子级（104）"
+
+    # ==========================================================
+    # 6. 子级退出 → ROSC管理（维持原出口目标）
+    # ==========================================================
+    - source: "F-101-EXIT_TO_PARENT"
+      target: "F-000-ROSC_MANAGEMENT"
+      condition: "#process.returnToParent == 'ROSC'"
+      priority: 100
+      description: "子级转复成功 → 父级ROSC接管"
+
+    - source: "F-102-EXIT_TO_PARENT"
+      target: "F-000-ROSC_MANAGEMENT"
+      condition: "#process.returnToParent == 'ROSC'"
+      priority: 100
+      description: "子级转复成功 → 父级ROSC接管"
+
+    - source: "F-103-EXIT_TO_PARENT"
+      target: "F-000-ROSC_MANAGEMENT"
+      condition: "#clinical.rosc == true"
+      priority: 100
+      description: "骤停子级ROSC → 父级ROSC接管"
+
+    - source: "F-104-EXIT_TO_PARENT"
+      target: "F-000-ROSC_MANAGEMENT"
+      condition: "#process.returnToParent == 'ROSC'"
+      priority: 100
+      description: "心动过缓子级转复 → 父级ROSC接管"
+
+    # ==========================================================
+    # 7. 子级异常退出 → 返回初始设置或错误处理（保持不变）
+    # ==========================================================
+    - source: "F-101-EXIT_TO_PARENT"
+      target: "F-000-INITIAL_SETUP"
+      condition: "#process.returnToParent == 'UNSTABLE' || #process.returnToParent == 'WIDE_QRS' || #process.returnToParent == 'IRREGULAR_RHYTHM'"
+      priority: 80
+      description: "子级状态变化 → 返回父级重新分类"
+
+    - source: "F-101-EXIT_TO_PARENT"
+      target: "F-000-ERROR_HANDLING"
+      condition: "#process.returnToParent == 'REFRACTORY_SVT' || #process.returnToParent == 'PERSISTENT_SVT' || #process.returnToParent == 'REFRACTORY_SHOCK'"
+      priority: 90
+      description: "子级治疗失败 → 错误处理"
+      deviation: true
+
+    - source: "F-101-EXIT_TO_PARENT"
+      target: "F-000-ERROR_HANDLING"
+      condition: "#process.returnToParent == 'WPW_CONTRADICTION'"
+      priority: 100
+      description: "WPW禁忌 → 错误处理"
+      deviation: false
+
+    # ==========================================================
+    # 8. ROSC → 复苏后护理 → 结束（增加终止复苏路径）
+    # ==========================================================
+    - source: "F-000-ROSC_MANAGEMENT"
+      target: "F-000-POST_ROSC_CARE"
+      condition: "#clinical.roscStabilized == true"
+      priority: 10
+      description: "ROSC稳定 → 进入复苏后护理"
+
+    - source: "F-000-POST_ROSC_CARE"
+      target: "F-000-TERMINAL_END"
+      condition: "#clinical.postRoscComplete == true"
+      priority: 10
+      description: "复苏后护理完成 → 案例结束"
+
+    # ==========================================================
+    # 9. 终止复苏路径（新增）
+    #    可从初始设置或子级出口触发，条件为终止复苏标志
+    # ==========================================================
+    - source: "F-000-INITIAL_SETUP"
+      target: "F-000-TERMINATE_RESUSCITATION"
+      condition: "#process.terminateResuscitation == true"
+      priority: 100
+      description: "初始设置阶段决定终止复苏"
+
+    # 也可在子级出口时触发（例如骤停治疗无效）
+    - source: "F-103-EXIT_TO_PARENT"
+      target: "F-000-TERMINATE_RESUSCITATION"
+      condition: "#process.terminateResuscitation == true && #clinical.rosc == false"
+      priority: 110
+      description: "骤停子级治疗无效，终止复苏"
+
+    # 终止复苏 → 结束
+    - source: "F-000-TERMINATE_RESUSCITATION"
+      target: "F-000-TERMINAL_END"
+      condition: "#process.terminationDocumented == true"
+      priority: 10
+      description: "终止复苏记录完成，案例结束"
+
+    # ==========================================================
+    # 10. 错误/超时恢复 → 返回初始设置（保持不变）
+    # ==========================================================
+    - source: "F-000-ERROR_HANDLING"
+      target: "F-000-INITIAL_SETUP"
+      condition: "#process.errorFixed == true"
+      priority: 10
+      description: "错误已修复 → 返回初始设置"
+
+    - source: "F-000-TIMEOUT_HANDLING"
+      target: "F-000-INITIAL_SETUP"
+      condition: "#process.timeoutResolved == true"
+      priority: 10
+      description: "超时已处理 → 返回初始设置"

@@ -1,0 +1,43 @@
+{
+  "intent_code": "IA_019_face_droop_check",
+  "normalized": "让患者微笑以检查面部对称性。",
+  "variants": [
+    {
+      "surface": "让他笑一笑，看看嘴角有没有歪。",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "让患者咧嘴笑，看看两边嘴角是否对称。",
+      "type": "同义词",
+      "confidence": 0.98,
+      "note": ""
+    },
+    {
+      "surface": "让他笑一笑，看看嘴角有没有不对称。",
+      "type": "同义词",
+      "confidence": 0.98,
+      "note": ""
+    },
+    {
+      "surface": "让患者笑一笑，看看嘴角有没有歪斜。",
+      "type": "同义词",
+      "confidence": 0.98,
+      "note": ""
+    },
+    {
+      "surface": "让他笑一笑，看看嘴角有没有不对称。",
+      "type": "同音",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "让患者笑一笑，看看嘴角有没有不对称。",
+      "type": "错别字",
+      "confidence": 0.85,
+      "note": ""
+    }
+  ],
+  "intent_name": "面部下垂检查（让患者微笑）"
+}

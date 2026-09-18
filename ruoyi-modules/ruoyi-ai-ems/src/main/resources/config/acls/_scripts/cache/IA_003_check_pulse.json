@@ -1,0 +1,43 @@
+{
+  "intent_code": "IA_003_check_pulse",
+  "normalized": "检查患者的脉搏（颈动脉或桡动脉）。",
+  "variants": [
+    {
+      "surface": "摸脉",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "脉搏",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "颈动脉",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "桡动脉",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "有没有脉",
+      "type": "口语",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "检查脉搏",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    }
+  ],
+  "intent_name": "评估脉搏"
+}

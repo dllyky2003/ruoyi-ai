@@ -1,0 +1,49 @@
+{
+  "intent_code": "IA_010_check_heart_rate",
+  "normalized": "检查心率",
+  "variants": [
+    {
+      "surface": "检查心率",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "测心率多少",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "检查脉率",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "心率",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "脉率",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "心跳",
+      "type": "同义词",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "心率次数",
+      "type": "同义词",
+      "confidence": 0.8,
+      "note": ""
+    }
+  ],
+  "intent_name": "检查心率"
+}

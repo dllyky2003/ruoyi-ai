@@ -1,0 +1,117 @@
+{"text": "快看心电图的QRS波形", "intent": "S-101-1-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "QRS波群宽度超过正常范围", "intent": "S-101-1-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "这个QRS时限是窄的还是宽的", "intent": "S-101-1-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "QRS宽度测量结果出来了吗", "intent": "S-101-1-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "量一下QRS波群时限", "intent": "S-101-1-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "QRS时限是否小于0.12秒", "intent": "S-101-1-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "评估节律的规则性", "intent": "S-101-1-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "心电图R-R间期整齐吗", "intent": "S-101-1-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "心律节律是否规整", "intent": "S-101-1-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "判断心律的规则性", "intent": "S-101-1-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "看R-R间期有没有规律", "intent": "S-101-1-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "心律规则还是心房颤动", "intent": "S-101-1-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "尝试Valsalva动作转复心律", "intent": "S-101-2-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "指导患者使劲屏气", "intent": "S-101-2-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "做迷走神经兴奋试验", "intent": "S-101-2-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "Valsalva动作效果如何", "intent": "S-101-2-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "做Valsalva动作终止心动过速", "intent": "S-101-2-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "迷走神经刺激用Valsalva动作", "intent": "S-101-2-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "第二剂腺苷12毫克推注", "intent": "S-101-2-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "腺苷快速弹丸式给药", "intent": "S-101-2-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "推注腺苷6毫克观察反应", "intent": "S-101-2-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "腺苷推注后立即冲管", "intent": "S-101-2-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "首剂腺苷快推完成", "intent": "S-101-2-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "再推一支腺苷药物", "intent": "S-101-2-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "冲管加快药物入血", "intent": "S-101-2-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "快速冲管操作完毕", "intent": "S-101-2-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "生理盐水冲管确保药物进入", "intent": "S-101-2-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "冲管完成准备下一步", "intent": "S-101-2-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "生理盐水冲管完成", "intent": "S-101-2-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "快速冲管促进药物循环", "intent": "S-101-2-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "美托洛尔缓慢静注控制心率", "intent": "S-101-2-5", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "二线药物控制心率治疗", "intent": "S-101-2-5", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "地尔硫卓静注控制房颤心率", "intent": "S-101-2-5", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "β受体阻滞剂控制心室率", "intent": "S-101-2-5", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "房颤控制心率用艾司洛尔", "intent": "S-101-2-5", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "艾司洛尔0.5毫克每公斤静推", "intent": "S-101-2-5", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "给镇静药物后准备同步电复律", "intent": "S-101-2-6", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "同步模式充电100焦耳", "intent": "S-101-2-6", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "同步电复律前需要镇静", "intent": "S-101-2-6", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "调成同步模式电复律", "intent": "S-101-2-6", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "充电完成准备同步放电", "intent": "S-101-2-6", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "同步电复律100焦耳准备放电", "intent": "S-101-2-6", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "预激综合征禁用腺苷类药物", "intent": "S-101-2-7", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "WPW心电图特征预激波阳性", "intent": "S-101-2-7", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "预激合并房颤禁用CCB", "intent": "S-101-2-7", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "WPW综合征避免房室结阻滞剂", "intent": "S-101-2-7", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "预激患者禁用洋地黄类药物", "intent": "S-101-2-7", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "宽QRS伴预激波CCB禁用", "intent": "S-101-2-7", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "WPW综合征用药安全警示", "intent": "S-101-2-7", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "预激合并房颤蜕变为室颤", "intent": "S-101-4-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "房颤用药后变成宽QRS室速", "intent": "S-101-4-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "WPW误用腺苷诱发室颤", "intent": "S-101-4-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "腺苷诱发多形性室速", "intent": "S-101-4-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "变宽QRS药物诱发", "intent": "S-101-4-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "推完腺苷后变成室颤了", "intent": "S-101-4-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "推药后心跳骤停室颤", "intent": "S-101-4-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "地尔硫卓诱发室颤心脏停搏", "intent": "S-101-4-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "药物诱发致命性心律失常", "intent": "S-101-4-1", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "非同步模式电击后室颤", "intent": "S-101-4-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "非同步放电后诱发室颤", "intent": "S-101-4-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "错误模式电击导致心脏骤停", "intent": "S-101-4-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "未开启同步模式诱发室颤", "intent": "S-101-4-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "非同步放电诱发恶性心律失常", "intent": "S-101-4-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "没开同步导致R-on-T现象", "intent": "S-101-4-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "非同步电击后室颤发作", "intent": "S-101-4-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "非同步模式误电击致室颤", "intent": "S-101-4-2", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "无脉电活动启动复苏流程", "intent": "S-101-4-3", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "严重低血压导致无脉PEA", "intent": "S-101-4-3", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "停搏心电图直线处理", "intent": "S-101-4-3", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "心电机械分离出现PEA", "intent": "S-101-4-3", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "药物过量导致心脏停搏", "intent": "S-101-4-3", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "脉搏消失出现PEA无脉电活动", "intent": "S-101-4-3", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "非同步除颤", "intent": "S-101-4-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "阿托品不适用于窄QRS", "intent": "S-101-4-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "开始胸外按压", "intent": "S-101-4-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "非同步除颤错误指令", "intent": "S-101-4-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "稳定窄QRS禁忌使用肾上腺素", "intent": "S-101-4-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "稳定状态禁止除颤操作", "intent": "S-101-4-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "错误操作非同步电击已拦截", "intent": "S-101-4-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "错误指令CPR被系统拦截", "intent": "S-101-4-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "稳定心动过速禁止按压", "intent": "S-101-4-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "开始CPR", "intent": "S-101-4-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "立刻开始胸外按压", "intent": "S-101-4-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "推肾上腺素", "intent": "S-101-4-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "准备1mg肾上腺素静推", "intent": "S-101-4-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "赶紧准备除颤", "intent": "S-101-4-4", "sample_type": "positive", "source": "stable_narrow"}
+{"text": "快速静推腺苷12毫克", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-2-5", "source": "stable_narrow"}
+{"text": "准备除颤仪充电200焦耳", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-2-6", "source": "stable_narrow"}
+{"text": "心律转复成功", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-4-3", "source": "stable_narrow"}
+{"text": "开始胸外按压", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-2-1", "source": "stable_narrow"}
+{"text": "准备镇静药物咪达唑仑", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-2-6", "source": "stable_narrow"}
+{"text": "地尔硫卓静注控制心率", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-2-1", "source": "stable_narrow"}
+{"text": "转复为窦性心律", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-4-1", "source": "stable_narrow"}
+{"text": "同步模式电击安全有效", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-4-2", "source": "stable_narrow"}
+{"text": "地尔硫卓静注控制心率", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-2-2", "source": "stable_narrow"}
+{"text": "预激综合征禁用腺苷", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-1-1", "source": "stable_narrow"}
+{"text": "推完腺苷变成室颤了", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-4-2", "source": "stable_narrow"}
+{"text": "QRS波群宽度是多少", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-1-2", "source": "stable_narrow"}
+{"text": "给镇静药", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-4-4", "source": "stable_narrow"}
+{"text": "推注腺苷6毫克快速静推", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-2-7", "source": "stable_narrow"}
+{"text": "生理盐水快速冲管", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-2-2", "source": "stable_narrow"}
+{"text": "同步电复律转复成功", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-4-2", "source": "stable_narrow"}
+{"text": "宽QRS时限超过0.12秒", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-2-7", "source": "stable_narrow"}
+{"text": "推注腺苷6毫克快速静推", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-4-4", "source": "stable_narrow"}
+{"text": "同步电复律100焦耳准备", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-4-4", "source": "stable_narrow"}
+{"text": "QRS宽度是多少毫秒", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-4-1", "source": "stable_narrow"}
+{"text": "美托洛尔5毫克静脉推注", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-2-2", "source": "stable_narrow"}
+{"text": "地尔硫卓控制心率", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-2-7", "source": "stable_narrow"}
+{"text": "准备非同步除颤操作", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-2-6", "source": "stable_narrow"}
+{"text": "非同步放电后室颤", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-2-6", "source": "stable_narrow"}
+{"text": "非同步放电后诱发室颤", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-4-1", "source": "stable_narrow"}
+{"text": "同步电复律转复成功", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-4-4", "source": "stable_narrow"}
+{"text": "心律是否规则整齐", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-1-1", "source": "stable_narrow"}
+{"text": "推肾上腺素", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-2-5", "source": "stable_narrow"}
+{"text": "地尔硫卓静注控制心率", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-2-4", "source": "stable_narrow"}
+{"text": "按摩颈动脉窦", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-4-4", "source": "stable_narrow"}
+{"text": "准备同步电复律治疗", "intent": "NEGATIVE_SAMPLE", "sample_type": "negative", "negative_for": "S-101-4-4", "source": "stable_narrow"}

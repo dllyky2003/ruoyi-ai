@@ -1,0 +1,37 @@
+{
+  "intent_code": "IA_060_suction_airway",
+  "normalized": "使用吸引器清理气道",
+  "variants": [
+    {
+      "surface": "使用吸引器吸痰",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "吸出来气道",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "吸气道",
+      "type": "同音",
+      "confidence": 0.65,
+      "note": ""
+    },
+    {
+      "surface": "吸气道痰",
+      "type": "同音",
+      "confidence": 0.65,
+      "note": ""
+    },
+    {
+      "surface": "吸气管",
+      "type": "错别字",
+      "confidence": 0.55,
+      "note": ""
+    }
+  ],
+  "intent_name": "使用吸引器清理气道（吸引）"
+}

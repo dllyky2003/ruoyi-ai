@@ -1,0 +1,91 @@
+{
+  "intent_code": "IA_051_request_assistance",
+  "normalized": "呼叫旁观者或团队协助",
+  "variants": [
+    {
+      "surface": "请求协助",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "呼叫协助",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "叫旁边人帮忙",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "需要团队协助",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "旁观者协助",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "请帮忙",
+      "type": "口语",
+      "confidence": 0.75,
+      "note": ""
+    },
+    {
+      "surface": "快来帮忙",
+      "type": "口语",
+      "confidence": 0.75,
+      "note": ""
+    },
+    {
+      "surface": "需要人手",
+      "type": "口语",
+      "confidence": 0.75,
+      "note": ""
+    },
+    {
+      "surface": "叫人来帮忙",
+      "type": "口语",
+      "confidence": 0.75,
+      "note": ""
+    },
+    {
+      "surface": "请求支援",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "需要支援",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "叫人来协助",
+      "type": "口语",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "请求支援",
+      "type": "同音",
+      "confidence": 0.6,
+      "note": "同音词：请支援"
+    },
+    {
+      "surface": "请支援",
+      "type": "同音",
+      "confidence": 0.6,
+      "note": "同音词：请支援"
+    }
+  ],
+  "intent_name": "呼叫旁观者或团队协助"
+}

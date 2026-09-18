@@ -1,0 +1,91 @@
+{
+  "intent_code": "IA_024_check_vision_deficits",
+  "normalized": "检查视力变化或视野丧失情况。",
+  "variants": [
+    {
+      "surface": "视力有没有变化？",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "有没有视野丧失？",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "视力检查一下",
+      "type": "口语",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "视力有变化吗？",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "看东西有看不见的地方吗？",
+      "type": "口语",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "视力检查",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "视力有无变化？",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "视力有无丧失？",
+      "type": "同义词",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "视力有无问题？",
+      "type": "同义词",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "视力有无异常？",
+      "type": "同义词",
+      "confidence": 0.75,
+      "note": ""
+    },
+    {
+      "surface": "视力有无缺损？",
+      "type": "同义词",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "视力有无障碍？",
+      "type": "同义词",
+      "confidence": 0.65,
+      "note": ""
+    },
+    {
+      "surface": "视力有无异常？",
+      "type": "同音",
+      "confidence": 0.6,
+      "note": "同音词：有无"
+    },
+    {
+      "surface": "视力有无问题？",
+      "type": "错别字",
+      "confidence": 0.55,
+      "note": "错别字：无"
+    }
+  ],
+  "intent_name": "检查视野缺损"
+}

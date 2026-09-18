@@ -1,0 +1,55 @@
+{
+  "intent_code": "IA_035_place_v3_lead",
+  "normalized": "将V3置于V2和V4之间。",
+  "variants": [
+    {
+      "surface": "V3放在V2和V4之间",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "V3电极放V2和V4之间",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "V3导联贴在V2和V4之间",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "V3电极贴在V2和V4之间",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "V3导联放V2和V4之间",
+      "type": "口语",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "V3电极贴在V2与V4之间",
+      "type": "同音",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "V3电极放V2与V4之间",
+      "type": "同音",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "V3电极放V2-V4之间",
+      "type": "错别字",
+      "confidence": 0.6,
+      "note": ""
+    }
+  ],
+  "intent_name": "放置V3导联电极"
+}

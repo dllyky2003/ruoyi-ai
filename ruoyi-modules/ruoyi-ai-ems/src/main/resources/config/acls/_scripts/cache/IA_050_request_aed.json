@@ -1,0 +1,37 @@
+{
+  "intent_code": "IA_050_request_aed",
+  "normalized": "尽早请求AED",
+  "variants": [
+    {
+      "surface": "赶紧拿AED来",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "尽早请求AED",
+      "type": "同义词",
+      "confidence": 1.0,
+      "note": ""
+    },
+    {
+      "surface": "找AED",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "要AED",
+      "type": "同义词",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "AED在哪",
+      "type": "口语",
+      "confidence": 0.8,
+      "note": ""
+    }
+  ],
+  "intent_name": "尽早请求AED"
+}

@@ -1,0 +1,2692 @@
+{
+  "generated_at": "2026-09-11T17:05:09.865779",
+  "total_intents": 40,
+  "suggestions": {
+    "IA_001_approach_patient": {
+      "intent_name": "接近患者并评估现场安全",
+      "existing_count": 15,
+      "keep": [
+        {
+          "surface": "接近患者",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "靠近患者",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "走近患者",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "查安全",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "看安全",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "走近",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "靠近",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "确认安全",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "评估安全",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "确保安全",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "安全确认",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "现场安全",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "安全评估",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [
+        {
+          "surface": "保证安全",
+          "action": "delete",
+          "reason": "过于口语化"
+        },
+        {
+          "surface": "安全查看",
+          "action": "delete",
+          "reason": "过于口语化"
+        }
+      ],
+      "replace": [],
+      "add": [
+        {
+          "surface": "查现场",
+          "type": "同义词",
+          "confidence": 0.9,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_002_check_responsiveness": {
+      "intent_name": "检查患者反应（对言语/刺激的反应）",
+      "existing_count": 18,
+      "keep": [
+        {
+          "surface": "对刺激反应",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "拍打患者",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "轻拍患者",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "拍打肩部",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "轻拍肩膀",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "轻拍患者肩部",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "轻拍患者手臂",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "叫患者",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "拍患者",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "轻拍肩",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "拍肩部",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "叫醒患者",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "看反应",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "叫患者名字",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "摇晃患者",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "戳患者",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "拍患者手臂",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [],
+      "replace": [],
+      "add": [
+        {
+          "surface": "轻拍",
+          "type": "同义词",
+          "confidence": 0.95,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_003_check_pulse": {
+      "intent_name": "评估脉搏",
+      "existing_count": 15,
+      "keep": [
+        {
+          "surface": "脉搏",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "颈动脉",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "桡动脉",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "有没有脉",
+          "action": "keep",
+          "reason": "口语表达"
+        },
+        {
+          "surface": "检查脉搏",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "摸摸患者的脉",
+          "action": "keep",
+          "reason": "口语表达"
+        },
+        {
+          "surface": "评估患者脉搏",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "感觉患者的脉搏",
+          "action": "keep",
+          "reason": "口语表达"
+        },
+        {
+          "surface": "确认脉搏",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "确认患者的脉搏",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "摸脉",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "摸一下脉",
+          "action": "keep",
+          "reason": "口语表达"
+        },
+        {
+          "surface": "搭脉",
+          "action": "keep",
+          "reason": "口语表达"
+        },
+        {
+          "surface": "摸脉搏",
+          "action": "keep",
+          "reason": "口语表达"
+        }
+      ],
+      "delete": [
+        {
+          "surface": "评估脉搏",
+          "action": "delete",
+          "reason": "意图名"
+        }
+      ],
+      "replace": [],
+      "add": [
+        {
+          "surface": "检查脉",
+          "type": "同义词",
+          "confidence": 0.9,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_004_check_breathing": {
+      "intent_name": "检查呼吸",
+      "existing_count": 9,
+      "keep": [
+        {
+          "surface": "检查呼吸",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "有没有呼吸",
+          "action": "keep",
+          "reason": "真实对话"
+        },
+        {
+          "surface": "看胸廓起伏",
+          "action": "keep",
+          "reason": "真实对话"
+        },
+        {
+          "surface": "听呼吸音",
+          "action": "keep",
+          "reason": "真实对话"
+        },
+        {
+          "surface": "感受气息",
+          "action": "keep",
+          "reason": "真实对话"
+        },
+        {
+          "surface": "观察呼吸",
+          "action": "keep",
+          "reason": "真实对话"
+        }
+      ],
+      "delete": [],
+      "replace": [
+        {
+          "surface": "听听呼吸",
+          "action": "replace",
+          "new_surface": "听呼吸",
+          "reason": "更简洁"
+        },
+        {
+          "surface": "看看有没有呼吸",
+          "action": "replace",
+          "new_surface": "看呼吸",
+          "reason": "更简洁"
+        },
+        {
+          "surface": "感觉有没有呼吸",
+          "action": "replace",
+          "new_surface": "感呼吸",
+          "reason": "更简洁"
+        }
+      ],
+      "add": [
+        {
+          "surface": "有无呼吸",
+          "type": "同义词",
+          "confidence": 0.9,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_005_review_medications": {
+      "intent_name": "回顾当前用药",
+      "existing_count": 9,
+      "keep": [
+        {
+          "surface": "回顾用药",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "当前用药",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "正在吃什么药",
+          "action": "keep",
+          "reason": "口语表达"
+        },
+        {
+          "surface": "目前用药",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "看用药",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [
+        {
+          "surface": "回顾当前用药",
+          "action": "delete",
+          "reason": "10字太长"
+        },
+        {
+          "surface": "看吃啥药",
+          "action": "delete",
+          "reason": "拼凑"
+        },
+        {
+          "surface": "查吃啥药",
+          "action": "delete",
+          "reason": "拼凑"
+        },
+        {
+          "surface": "用药状况",
+          "action": "delete",
+          "reason": "拼凑"
+        }
+      ],
+      "replace": [],
+      "add": [
+        {
+          "surface": "用药",
+          "type": "同义词",
+          "confidence": 0.98,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_006_inquire_medication_anticoagulants": {
+      "intent_name": "询问抗凝药物使用情况",
+      "existing_count": 6,
+      "keep": [
+        {
+          "surface": "查抗凝药",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "看用啥药",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "查血液稀释药",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [
+        {
+          "surface": "查华法林",
+          "action": "delete",
+          "reason": "泛化"
+        },
+        {
+          "surface": "查利伐沙班",
+          "action": "delete",
+          "reason": "泛化"
+        },
+        {
+          "surface": "查阿哌沙班",
+          "action": "delete",
+          "reason": "泛化"
+        }
+      ],
+      "replace": [],
+      "add": [
+        {
+          "surface": "查抗凝剂",
+          "type": "同义词",
+          "confidence": 0.9,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_008_inquire_substance_use": {
+      "intent_name": "询问酒精或药物使用情况",
+      "existing_count": 12,
+      "keep": [
+        {
+          "surface": "用过药",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "饮酒",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "用药",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "喝酒",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "饮酒史",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "喝过酒",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "用药史",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "吃过药",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "吸毒史",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "抽过毒",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "物质史",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "吃过毒品",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [],
+      "replace": [],
+      "add": [
+        {
+          "surface": "询问用药",
+          "type": "同义词",
+          "confidence": 0.9,
+          "reason": "常用表达"
+        },
+        {
+          "surface": "询问饮酒",
+          "type": "同义词",
+          "confidence": 0.9,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_010_check_heart_rate": {
+      "intent_name": "检查心率",
+      "existing_count": 10,
+      "keep": [
+        {
+          "surface": "检查心率",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "检查脉率",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "心率",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "脉率",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "心跳",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "测心率",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "检查心率值",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [
+        {
+          "surface": "心率次数",
+          "action": "delete",
+          "reason": "8字过长"
+        },
+        {
+          "surface": "检查心率多少",
+          "action": "delete",
+          "reason": "8字过长"
+        },
+        {
+          "surface": "测心率次数",
+          "action": "delete",
+          "reason": "8字过长"
+        }
+      ],
+      "replace": [],
+      "add": [
+        {
+          "surface": "听心音",
+          "type": "同义词",
+          "confidence": 0.9,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_011_check_oxygen_saturation": {
+      "intent_name": "测量血氧饱和度",
+      "existing_count": 17,
+      "keep": [
+        {
+          "surface": "测血氧",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "看SpO2",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "检查血氧",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "测氧饱和度",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "测血氧饱和度",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "测量血氧",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "测血氧浓度",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "检查血氧浓度",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [
+        {
+          "surface": "测量血氧饱和度",
+          "action": "delete",
+          "reason": "8字过长"
+        },
+        {
+          "surface": "测量血氧浓度",
+          "action": "delete",
+          "reason": "8字过长"
+        }
+      ],
+      "replace": [],
+      "add": [
+        {
+          "surface": "测SpO2",
+          "type": "同义词",
+          "confidence": 0.95,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_014_read_and_record_glucose_level": {
+      "intent_name": "读取并记录血糖读数",
+      "existing_count": 15,
+      "keep": [
+        {
+          "surface": "读血糖并记录",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "读取血糖并记录",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "报出血糖并记录",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "读血糖值并记录",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "读血糖并登记",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "读血糖并记下",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "读血糖",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "记血糖",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "报血糖",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "看血糖",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "记数血糖",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "记血糖值",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "记血糖数值",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "记血糖度数",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "记血糖浓度",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [],
+      "replace": [],
+      "add": [
+        {
+          "surface": "读血糖记录",
+          "type": "同义词",
+          "confidence": 0.9,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_015_check_perrl": {
+      "intent_name": "检查瞳孔对光反射（PERRL）",
+      "existing_count": 12,
+      "keep": [
+        {
+          "surface": "检查瞳孔对光反应",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "看瞳孔对光",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "瞳孔对光检查",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "PERRL检查",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "瞳孔对光反应",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "瞳孔光反射检查",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "瞳孔对光线反应",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "看瞳孔对光刺激",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "瞳孔光反应检查",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "瞳孔对光反应测试",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "瞳孔光反射测试",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [
+        {
+          "surface": "检查瞳孔对光反射",
+          "action": "delete",
+          "reason": "超过8字"
+        }
+      ],
+      "replace": [],
+      "add": [
+        {
+          "surface": "瞳孔反应",
+          "type": "同义词",
+          "confidence": 0.9,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_016_check_skin_condition": {
+      "intent_name": "评估皮肤情况（颜色/温度/湿度）",
+      "existing_count": 8,
+      "keep": [
+        {
+          "surface": "看皮肤湿不湿",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "皮肤湿冷",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "皮肤湿了",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "皮肤出汗",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "看皮肤冷汗",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "看皮肤湿乎乎",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [],
+      "replace": [],
+      "add": [
+        {
+          "surface": "看皮肤冷",
+          "type": "同义词",
+          "confidence": 0.9,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_017_check_ao": {
+      "intent_name": "检查意识与定向力（A&O）",
+      "existing_count": 24,
+      "keep": [
+        {
+          "surface": "检查意识状态",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "评估意识与定向力",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "看看人地时",
+          "action": "keep",
+          "reason": "口语表达"
+        },
+        {
+          "surface": "A&O检查",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "意识与定向力检查",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "A&O评估",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "意识状态检查",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "意识与定向力评估",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "意识状态评估",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "意识与定向力状态",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "意识与定向力测试",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "意识与定向力评价",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "意识状态评价",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "意识状态",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "意识评估",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "意识检查",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "看意识",
+          "action": "keep",
+          "reason": "口语表达"
+        },
+        {
+          "surface": "评估意识",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "意识",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "定向力",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "看定向力",
+          "action": "keep",
+          "reason": "口语表达"
+        },
+        {
+          "surface": "人地时",
+          "action": "keep",
+          "reason": "口语表达"
+        }
+      ],
+      "delete": [],
+      "replace": [],
+      "add": [
+        {
+          "surface": "意识与定向力（A&O）",
+          "type": "同义词",
+          "confidence": 0.95,
+          "reason": "完整表达"
+        }
+      ]
+    },
+    "IA_018_check_grip_strength": {
+      "intent_name": "检查双侧握力是否对称",
+      "existing_count": 8,
+      "keep": [
+        {
+          "surface": "检查左右手握力",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "捏紧双侧手",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "检查双侧握力",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "检查左右手紧握",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "左右手握力对比",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "双手握力对比",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [],
+      "replace": [],
+      "add": [
+        {
+          "surface": "捏紧双手",
+          "type": "同义词",
+          "confidence": 0.95,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_019_face_droop_check": {
+      "intent_name": "面部下垂检查（让患者微笑）",
+      "existing_count": 9,
+      "keep": [
+        {
+          "surface": "嘴角歪斜",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "看微笑",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "笑一笑",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "面部不对称",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "嘴角歪",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "微笑检查",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "嘴角下垂",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [
+        {
+          "surface": "看面部",
+          "action": "delete",
+          "reason": "8字过长"
+        },
+        {
+          "surface": "面部检查",
+          "action": "delete",
+          "reason": "8字过长"
+        }
+      ],
+      "replace": [],
+      "add": [
+        {
+          "surface": "让患者笑",
+          "type": "同义词",
+          "confidence": 0.95,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_021_speech_abnormality_check": {
+      "intent_name": "语言异常检查（让患者重复短语）",
+      "existing_count": 7,
+      "keep": [
+        {
+          "surface": "重复短语",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "说句完整话",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "复述检查",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "让患者说",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "语言评估",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "听患者复述",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [
+        {
+          "surface": "说话含糊",
+          "action": "delete",
+          "reason": "拼凑"
+        }
+      ],
+      "replace": [],
+      "add": [
+        {
+          "surface": "说短语",
+          "type": "同义词",
+          "confidence": 0.9,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_022_assess_balance_and_coordination": {
+      "intent_name": "评估平衡和协调能力",
+      "existing_count": 8,
+      "keep": [
+        {
+          "surface": "看看他站得稳不稳",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "平衡协调",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "看他能否平稳行走",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "评估动作协调性",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "看他行走是否平稳",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "评估他的平衡状态",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "评估他的移动能力",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "平稳行走",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [],
+      "replace": [],
+      "add": [
+        {
+          "surface": "观察步态",
+          "type": "同义词",
+          "confidence": 0.9,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_023_document_lkw_time": {
+      "intent_name": "记录最后一次正常知晓时间（LKW）",
+      "existing_count": 13,
+      "keep": [
+        {
+          "surface": "记录LKW时间",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "记录最后正常知晓",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "记录最后一次清醒",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "记录最后一次意识",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "记录最后一次清楚",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "记录LKW",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "记录最后正常",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "记录意识时间",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "最后清楚时间",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "最后清醒时间",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "最后意识时间",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "LKW时间",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [
+        {
+          "surface": "记录最后一次",
+          "action": "delete",
+          "reason": "太泛化"
+        }
+      ],
+      "replace": [],
+      "add": [
+        {
+          "surface": "记录LKW时刻",
+          "type": "同义词",
+          "confidence": 0.9,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_024_check_vision_deficits": {
+      "intent_name": "检查视野缺损",
+      "existing_count": 11,
+      "keep": [
+        {
+          "surface": "视力检查",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "查视力",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "查视野",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "视力模糊",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "看不见",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "看不清",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "看东西模糊",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "视野丧失",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "视力变化",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [
+        {
+          "surface": "检查视力变化或视野丧失情况。",
+          "action": "delete",
+          "reason": "超过8字"
+        }
+      ],
+      "replace": [
+        {
+          "surface": "视力检查一下",
+          "action": "replace",
+          "new_surface": "查视力",
+          "reason": "更简洁"
+        }
+      ],
+      "add": [
+        {
+          "surface": "视物不清",
+          "type": "同义词",
+          "confidence": 0.95,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_025_evaluate_aphasia": {
+      "intent_name": "评估失语症（失语）",
+      "existing_count": 14,
+      "keep": [
+        {
+          "surface": "复述困难",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "失语症筛查",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "失语症诊断",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "失语症测试",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "失语症评估",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "失语症检查",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "失语症判断",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "失语症评定",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [
+        {
+          "surface": "评估失语症状",
+          "action": "delete",
+          "reason": "8字过长"
+        },
+        {
+          "surface": "检查语言理解障碍",
+          "action": "delete",
+          "reason": "8字过长"
+        },
+        {
+          "surface": "语言表达困难",
+          "action": "delete",
+          "reason": "8字过长"
+        },
+        {
+          "surface": "失语症看",
+          "action": "delete",
+          "reason": "方言表达"
+        },
+        {
+          "surface": "语言障碍评估",
+          "action": "delete",
+          "reason": "8字过长"
+        }
+      ],
+      "replace": [],
+      "add": [
+        {
+          "surface": "失语评估",
+          "type": "同义词",
+          "confidence": 0.95,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_026_assess_neglect_signs": {
+      "intent_name": "检查忽略体征（单侧忽略）",
+      "existing_count": 15,
+      "keep": [
+        {
+          "surface": "检查单侧忽略体征",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "检查单侧忽视表现",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "查看单侧忽略体征",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "检查单侧忽视症状",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "检查单侧忽略表现",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "评估单侧忽视体征",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "查看单侧忽视体征",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "看单侧忽略体征",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "单侧忽视",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "忽略体征",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "注意不到",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "不理会",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [
+        {
+          "surface": "观忽视",
+          "action": "delete",
+          "reason": "3字过短，不够具体"
+        },
+        {
+          "surface": "察忽视",
+          "action": "delete",
+          "reason": "3字过短，不够具体"
+        }
+      ],
+      "replace": [],
+      "add": [
+        {
+          "surface": "检查单侧忽略",
+          "type": "同义词",
+          "confidence": 0.95,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_027_explain_procedure": {
+      "intent_name": "向患者解释心电图操作",
+      "existing_count": 6,
+      "keep": [
+        {
+          "surface": "解释心电图",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "说明心电图",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "告知流程",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "讲心电图",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "说心电图",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "解释操作",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [],
+      "replace": [],
+      "add": []
+    },
+    "IA_028_shave_patient": {
+      "intent_name": "剃除皮肤以利于电极接触",
+      "existing_count": 7,
+      "keep": [
+        {
+          "surface": "先备皮",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "先剃毛",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "剃净皮肤",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "刮净皮肤",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "去除皮肤毛发",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "备皮",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "剃除皮肤毛发",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [],
+      "replace": [],
+      "add": []
+    },
+    "IA_029_place_left_arm_lead": {
+      "intent_name": "连接左臂电极",
+      "existing_count": 10,
+      "keep": [
+        {
+          "surface": "连接左臂导联",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "贴左臂电极",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "连接左臂",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "左臂贴上",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "左臂导联",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "左臂电极贴上",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "连接左臂电极",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "连接左上臂电极",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [],
+      "replace": [
+        {
+          "surface": "把左臂连接上",
+          "action": "replace",
+          "new_surface": "贴左臂",
+          "reason": "更简洁"
+        },
+        {
+          "surface": "将左臂电极贴好",
+          "action": "replace",
+          "new_surface": "贴左臂电极",
+          "reason": "更简洁"
+        }
+      ],
+      "add": [
+        {
+          "surface": "贴左臂",
+          "type": "同义词",
+          "confidence": 0.95,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_030_place_right_arm_lead": {
+      "intent_name": "连接右臂电极",
+      "existing_count": 11,
+      "keep": [
+        {
+          "surface": "右臂导联",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "连接右臂",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "贴右臂电极",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "右臂电极贴上",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "连接右臂电极",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "右上臂电极贴好",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "右臂电极放置",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "右臂电极贴妥",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "右臂电极安放",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [],
+      "replace": [],
+      "add": [
+        {
+          "surface": "贴右臂",
+          "type": "同义词",
+          "confidence": 0.9,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_031_place_left_leg_lead": {
+      "intent_name": "连接左腿电极",
+      "existing_count": 10,
+      "keep": [
+        {
+          "surface": "贴左腿电极",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "连接左腿导联",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "把左腿电极贴上",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "连接左腿电极",
+          "action": "keep",
+          "reason": "标准表述"
+        },
+        {
+          "surface": "将左腿电极放置",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "放置左腿电极",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [
+        {
+          "surface": "左腿电极贴哪里",
+          "action": "delete",
+          "reason": "口语化，不简洁"
+        },
+        {
+          "surface": "左腿电极怎么贴",
+          "action": "delete",
+          "reason": "口语化，不简洁"
+        },
+        {
+          "surface": "左腿电极贴在哪儿",
+          "action": "delete",
+          "reason": "口语化，不简洁"
+        },
+        {
+          "surface": "左腿电极怎么放",
+          "action": "delete",
+          "reason": "口语化，不简洁"
+        }
+      ],
+      "replace": [],
+      "add": [
+        {
+          "surface": "贴左腿电极",
+          "type": "同义词",
+          "confidence": 0.95,
+          "reason": "常用表达"
+        },
+        {
+          "surface": "贴左腿导联",
+          "type": "同义词",
+          "confidence": 0.95,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_032_place_right_leg_lead": {
+      "intent_name": "连接右腿电极",
+      "existing_count": 9,
+      "keep": [
+        {
+          "surface": "连接右腿电极",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "贴右腿电极",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "连接右腿",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "连接右腿电极片",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "右腿放置电极",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "放置右腿电极",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "贴右腿电极片",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "右腿上贴电极",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "放置右腿电极片",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [],
+      "replace": [],
+      "add": [
+        {
+          "surface": "贴右腿",
+          "type": "同义词",
+          "confidence": 0.9,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_033_place_v1_lead": {
+      "intent_name": "放置V1导联电极",
+      "existing_count": 11,
+      "keep": [
+        {
+          "surface": "放置V1导联电极",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "V1电极",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "V1导联",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "胸骨右缘",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "第4肋间",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "右缘V1",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "V1放电极",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "V1放右",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "V1放右缘",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [
+        {
+          "surface": "V1放电极右",
+          "action": "delete",
+          "reason": "10字太长"
+        },
+        {
+          "surface": "V1放第4肋间",
+          "action": "delete",
+          "reason": "10字太长"
+        }
+      ],
+      "replace": [],
+      "add": [
+        {
+          "surface": "V1置电极",
+          "type": "同义词",
+          "confidence": 0.9,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_035_place_v3_lead": {
+      "intent_name": "放置V3导联电极",
+      "existing_count": 8,
+      "keep": [
+        {
+          "surface": "放置V3导联电极",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "V3电极",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "V3位置",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "V2V4间",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "V3导联",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "V2V4",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [
+        {
+          "surface": "V3放V2V4",
+          "action": "delete",
+          "reason": "10字过长"
+        },
+        {
+          "surface": "V3电极位",
+          "action": "delete",
+          "reason": "10字过长"
+        }
+      ],
+      "replace": [],
+      "add": [
+        {
+          "surface": "V3位",
+          "type": "同义词",
+          "confidence": 0.95,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_036_place_v4_lead": {
+      "intent_name": "放置V4导联电极",
+      "existing_count": 8,
+      "keep": [
+        {
+          "surface": "放置V4导联电极",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "V4电极",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "第5肋间",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "锁骨中线",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "V4位置",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "放置V4",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "V4电极位置",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "第5肋间V4",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [],
+      "replace": [],
+      "add": [
+        {
+          "surface": "V4电极放锁骨中线第5肋间",
+          "type": "同义词",
+          "confidence": 0.9,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_037_place_v5_lead": {
+      "intent_name": "放置V5导联电极",
+      "existing_count": 8,
+      "keep": [
+        {
+          "surface": "放置V5导联电极",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "腋前线",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "V5位置",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "V5电极",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "V5贴电极",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "V5贴上",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "V5放上",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "V5贴腋前线",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [],
+      "replace": [],
+      "add": []
+    },
+    "IA_038_place_v6_lead": {
+      "intent_name": "放置V6导联电极",
+      "existing_count": 1,
+      "keep": [
+        {
+          "surface": "放置V6导联电极",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [],
+      "replace": [],
+      "add": []
+    },
+    "IA_039_request_patient_to_not_move": {
+      "intent_name": "要求患者在记录期间保持不动",
+      "existing_count": 8,
+      "keep": [
+        {
+          "surface": "记录时别动",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "心电图保持别动",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "采集时别乱动",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "记录时不要乱动",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "心电图时别乱动",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "心电图时保持不动",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "记录时保持不动",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "心电图期间别动",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [],
+      "replace": [],
+      "add": [
+        {
+          "surface": "保持不动",
+          "type": "同义词",
+          "confidence": 0.95,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_041_connect_leads_to_ecg": {
+      "intent_name": "将导联连接到心电图机",
+      "existing_count": 9,
+      "keep": [
+        {
+          "surface": "心电图机连接导联",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "导联连接",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "接导联",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "接心电",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "导联接机",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "心电接导联",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [
+        {
+          "surface": "接线到心电",
+          "action": "delete",
+          "reason": "8字过长"
+        },
+        {
+          "surface": "心电接线",
+          "action": "delete",
+          "reason": "8字过长"
+        },
+        {
+          "surface": "导联连机",
+          "action": "delete",
+          "reason": "8字过长"
+        }
+      ],
+      "replace": [],
+      "add": [
+        {
+          "surface": "接心电",
+          "type": "同义词",
+          "confidence": 0.95,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_042_ask_patient_age_sex": {
+      "intent_name": "确认患者年龄和性别",
+      "existing_count": 10,
+      "keep": [
+        {
+          "surface": "年龄",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "性别",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "问年龄",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "问性别",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [
+        {
+          "surface": "患者年龄",
+          "action": "delete",
+          "reason": "超过8字"
+        },
+        {
+          "surface": "患者性别",
+          "action": "delete",
+          "reason": "超过8字"
+        },
+        {
+          "surface": "输入年龄",
+          "action": "delete",
+          "reason": "超过8字"
+        },
+        {
+          "surface": "输入性别",
+          "action": "delete",
+          "reason": "超过8字"
+        },
+        {
+          "surface": "报年龄",
+          "action": "delete",
+          "reason": "超过8字"
+        },
+        {
+          "surface": "报性别",
+          "action": "delete",
+          "reason": "超过8字"
+        }
+      ],
+      "replace": [],
+      "add": [
+        {
+          "surface": "问性别",
+          "type": "同义词",
+          "confidence": 0.95,
+          "reason": "常用表达"
+        },
+        {
+          "surface": "问年龄",
+          "type": "同义词",
+          "confidence": 0.95,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_043_obtain_ecg_recording": {
+      "intent_name": "记录心电图",
+      "existing_count": 16,
+      "keep": [
+        {
+          "surface": "获取心电图",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "心电图记录",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "心电图",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "心电",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "电图",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "做心电",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "开始心电",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "开始电图",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "开始记录",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "开始采集",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [
+        {
+          "surface": "采集心电图并保存",
+          "action": "delete",
+          "reason": "10字太长"
+        },
+        {
+          "surface": "记录心电图",
+          "action": "delete",
+          "reason": "重复"
+        },
+        {
+          "surface": "看心电",
+          "action": "delete",
+          "reason": "别扭"
+        },
+        {
+          "surface": "看电图",
+          "action": "delete",
+          "reason": "别扭"
+        },
+        {
+          "surface": "听心电",
+          "action": "delete",
+          "reason": "别扭"
+        }
+      ],
+      "replace": [
+        {
+          "surface": "做心电图",
+          "action": "replace",
+          "new_surface": "做心电",
+          "reason": "更简洁"
+        }
+      ],
+      "add": [
+        {
+          "surface": "记录ECG",
+          "type": "同义词",
+          "confidence": 0.9,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_044_interpret_and_report": {
+      "intent_name": "审阅并报告心电图结果",
+      "existing_count": 14,
+      "keep": [
+        {
+          "surface": "看心电图",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "心电图结果报告",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "心电图判读结果",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "心电图结果审阅",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "心电图判读",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "看心电",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "审阅心电图",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "报告心电图",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "读心电图",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "看波形",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "看图",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "读图",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "看波",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "查心电",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [],
+      "replace": [],
+      "add": [
+        {
+          "surface": "看心电",
+          "type": "口语",
+          "confidence": 0.95,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_045_check_responsiveness_cpr": {
+      "intent_name": "CPR中检查患者反应",
+      "existing_count": 1,
+      "keep": [],
+      "delete": [
+        {
+          "surface": "重新检查患者反应",
+          "action": "delete",
+          "reason": "超过8字"
+        }
+      ],
+      "replace": [],
+      "add": []
+    },
+    "IA_046_check_pulse_cpr": {
+      "intent_name": "CPR中检查脉搏",
+      "existing_count": 1,
+      "keep": [
+        {
+          "surface": "检查脉搏",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [],
+      "replace": [],
+      "add": [
+        {
+          "surface": "摸脉",
+          "type": "同义词",
+          "confidence": 0.9,
+          "reason": "常用表达"
+        }
+      ]
+    },
+    "IA_047_check_breathing_cpr": {
+      "intent_name": "CPR中检查呼吸",
+      "existing_count": 20,
+      "keep": [
+        {
+          "surface": "检查呼吸",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "看呼吸",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "听呼吸",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "看喘气",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "听喘气",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "胸有呼吸",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "胸无呼吸",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "有呼吸",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "无呼吸",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "喘气否",
+          "action": "keep",
+          "reason": "简洁自然"
+        },
+        {
+          "surface": "喘息否",
+          "action": "keep",
+          "reason": "简洁自然"
+        }
+      ],
+      "delete": [
+        {
+          "surface": "按压",
+          "action": "delete",
+          "reason": "泛化"
+        },
+        {
+          "surface": "复苏中检查",
+          "action": "delete",
+          "reason": "泛化"
+        },
+        {
+          "surface": "CPR中检查",
+          "action": "delete",
+          "reason": "意图名"
+        }
+      ],
+      "replace": [
+        {
+          "surface": "按压暂停检查",
+          "action": "replace",
+          "new_surface": "按压停查",
+          "reason": "更简洁"
+        },
+        {
+          "surface": "按压后看呼吸",
+          "action": "replace",
+          "new_surface": "按压后查",
+          "reason": "更简洁"
+        },
+        {
+          "surface": "检查有无呼吸",
+          "action": "replace",
+          "new_surface": "查有无",
+          "reason": "更简洁"
+        },
+        {
+          "surface": "暂停按压检查",
+          "action": "replace",
+          "new_surface": "暂停查",
+          "reason": "更简洁"
+        },
+        {
+          "surface": "暂停按压观察",
+          "action": "replace",
+          "new_surface": "暂停查",
+          "reason": "更简洁"
+        },
+        {
+          "surface": "检查患者是否呼吸",
+          "action": "replace",
+          "new_surface": "查患者",
+          "reason": "更简洁"
+        }
+      ],
+      "add": [
+        {
+          "surface": "查无",
+          "type": "同义词",
+          "confidence": 0.95,
+          "reason": "常用表达"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "intent_code": "IA_054_clear_for_analysis",
+  "normalized": "确保心律分析期间无人接触患者。",
+  "variants": [
+    {
+      "surface": "确保心律分析时不要碰患者。",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "心律分析时保持清场。",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "心律分析时别碰患者。",
+      "type": "同音",
+      "confidence": 0.75,
+      "note": ""
+    },
+    {
+      "surface": "心律分析时不要接触患者。",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "心律分析时保持清静。",
+      "type": "方言",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "心律分析时别碰着患者。",
+      "type": "口语",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "心律分析时不要碰触患者。",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "心律分析时不要碰触患者。",
+      "type": "错别字",
+      "confidence": 0.6,
+      "note": ""
+    }
+  ],
+  "intent_name": "分析心律清场（无人接触患者）"
+}

@@ -1,0 +1,79 @@
+{
+  "intent_code": "IA_027_explain_procedure",
+  "normalized": "向患者解释心电图操作",
+  "variants": [
+    {
+      "surface": "我先跟你解释一下做心电图。",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "向患者说明心电图检查流程。",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "解释心电图操作。",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "告知心电图流程。",
+      "type": "同义词",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "给患者讲讲心电图。",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "向患者说说心电图。",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "向患者讲清楚心电图。",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "向患者解释清楚心电图。",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "向患者解释心电图。",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "向患者说明心电图。",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "向患者解释心电图操作。",
+      "type": "同音",
+      "confidence": 0.7,
+      "note": "同音词为：解剖"
+    },
+    {
+      "surface": "向患者解释心电图操作。",
+      "type": "错别字",
+      "confidence": 0.7,
+      "note": "错别字为：解剖"
+    }
+  ],
+  "intent_name": "向患者解释心电图操作"
+}

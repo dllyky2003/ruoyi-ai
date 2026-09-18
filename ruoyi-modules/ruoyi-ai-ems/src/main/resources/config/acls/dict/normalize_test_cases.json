@@ -1,0 +1,441 @@
+{
+  "version": "1.0.0",
+  "description": "IntentNormalizer 测试用例集",
+  "categories": {
+
+    "exact_standard": {
+      "description": "精确匹配：ASR 输出标准表述",
+      "cases": [
+        {"input": "检查呼吸", "expect_any": ["IA_004_check_breathing", "IA_047_check_breathing_cpr"], "note": "标准表述，可能命中两个 intent"},
+        {"input": "评估脉搏", "expect_any": ["IA_003_check_pulse"]},
+        {"input": "检查心率", "expect_any": ["IA_010_check_heart_rate"]},
+        {"input": "测量血氧饱和度", "expect_any": ["IA_011_check_oxygen_saturation"]},
+        {"input": "打开气道", "expect_any": ["IA_057_open_airway"]},
+        {"input": "实施通气", "expect_any": ["IA_059_ventilate_patient"]},
+        {"input": "实施电击", "expect_any": ["IA_056_administer_shock_aed"]},
+        {"input": "记录心电图", "expect_any": ["IA_043_obtain_ecg_recording"]},
+        {"input": "通知接收医院", "expect_any": ["IA_065_notify_hospital"]},
+        {"input": "向医院交接患者", "expect_any": ["IA_067_handoff_patient_to_hospital"]}
+      ]
+    },
+
+    "exact_spoken": {
+      "description": "精确匹配：口语表达",
+      "cases": [
+        {"input": "摸脉", "expect_any": ["IA_003_check_pulse"]},
+        {"input": "叫患者", "expect_any": ["IA_002_check_responsiveness"]},
+        {"input": "看呼吸", "expect_any": ["IA_047_check_breathing_cpr", "IA_004_check_breathing"]},
+        {"input": "听呼吸", "expect_any": ["IA_047_check_breathing_cpr", "IA_004_check_breathing"]},
+        {"input": "看喘气", "expect_any": ["IA_047_check_breathing_cpr"]},
+        {"input": "放电", "expect_any": ["IA_056_administer_shock_aed"]},
+        {"input": "吹气", "expect_any": ["IA_059_ventilate_patient"]},
+        {"input": "喝酒", "expect_any": ["IA_008_inquire_substance_use"]},
+        {"input": "笑一笑", "expect_any": ["IA_019_face_droop_check"]},
+        {"input": "做心电图", "expect_any": ["IA_043_obtain_ecg_recording"]},
+        {"input": "上担架", "expect_any": ["IA_063_load_patient_to_stretcher"]},
+        {"input": "看意识", "expect_any": ["IA_017_check_ao"]}
+      ]
+    },
+
+    "exact_short_word": {
+      "description": "精确匹配：极短词（2 字）",
+      "cases": [
+        {"input": "脉搏", "expect_any": ["IA_003_check_pulse"]},
+        {"input": "心率", "expect_any": ["IA_010_check_heart_rate"]},
+        {"input": "脉率", "expect_any": ["IA_010_check_heart_rate"]},
+        {"input": "心跳", "expect_any": ["IA_010_check_heart_rate"]},
+        {"input": "意识", "expect_any": ["IA_017_check_ao"]},
+        {"input": "定向力", "expect_any": ["IA_017_check_ao"]},
+        {"input": "备皮", "expect_any": ["IA_028_shave_patient"]},
+        {"input": "走近", "expect_any": ["IA_001_approach_patient"]},
+        {"input": "靠近", "expect_any": ["IA_001_approach_patient"]}
+      ]
+    },
+
+    "pinyin_homophone": {
+      "description": "拼音匹配：同音字替换",
+      "cases": [
+        {"input": "呼息", "expect_any": ["IA_004_check_breathing", "IA_047_check_breathing_cpr"], "note": "呼息 → 呼吸"},
+        {"input": "摸卖", "expect_any": ["IA_003_check_pulse"], "note": "摸卖 → 摸脉"},
+        {"input": "心绿", "expect_any": ["IA_010_check_heart_rate"], "note": "心绿 → 心率"},
+        {"input": "血养", "expect_any": ["IA_011_check_oxygen_saturation"], "note": "血养 → 血氧"},
+        {"input": "除蝉", "expect_any": ["IA_053_attach_defib_pads", "IA_056_administer_shock_aed"], "note": "除蝉 → 除颤"},
+        {"input": "电激", "expect_any": ["IA_056_administer_shock_aed"], "note": "电激 → 电击"},
+        {"input": "气到", "expect_any": ["IA_057_open_airway"], "note": "气到 → 气道"},
+        {"input": "同孔", "expect_any": ["IA_015_check_perrl"], "note": "同孔 → 瞳孔"},
+        {"input": "失语正", "expect_any": ["IA_025_evaluate_aphasia"], "note": "失语正 → 失语症"},
+        {"input": "定相力", "expect_any": ["IA_017_check_ao"], "note": "定相力 → 定向力"}
+      ]
+    },
+
+    "fuzzy_edit": {
+      "description": "编辑距离：错字/多字/少字",
+      "cases": [
+        {"input": "摸脉博", "expect_any": ["IA_003_check_pulse"], "note": "多一字"},
+        {"input": "心率次", "expect_any": ["IA_010_check_heart_rate"], "note": "少一字"},
+        {"input": "血氧气", "expect_any": ["IA_011_check_oxygen_saturation"], "note": "多一字"},
+        {"input": "心电图记", "expect_any": ["IA_043_obtain_ecg_recording"], "note": "少一字"},
+        {"input": "输液器", "expect_any": [], "note": "无关，不应高分命中"}
+      ]
+    },
+
+    "clause_with_punct": {
+      "description": "分句 + 剥标点",
+      "cases": [
+        {"input": "快点！看他有没有呼吸。", "expect_any": ["IA_004_check_breathing", "IA_047_check_breathing_cpr"]},
+        {"input": "先看反应，再摸脉。", "expect_any": ["IA_002_check_responsiveness", "IA_003_check_pulse"]},
+        {"input": "看看瞳孔对光，还有脉搏？", "expect_any": ["IA_015_check_perrl", "IA_003_check_pulse"]},
+        {"input": "叫一下他；测一下血氧。", "expect_any": ["IA_002_check_responsiveness", "IA_011_check_oxygen_saturation"]},
+        {"input": "有没有呼吸？有没有心跳？", "expect_any": ["IA_004_check_breathing", "IA_010_check_heart_rate"]}
+      ]
+    },
+
+    "full_width_punct": {
+      "description": "全角标点 + 全角字母",
+      "cases": [
+        {"input": "看ＡＥＤ在哪里", "expect_any": ["IA_050_request_aed"], "note": "全角 AED"},
+        {"input": "测一下血氧！", "expect_any": ["IA_011_check_oxygen_saturation"]},
+        {"input": "检查心率。", "expect_any": ["IA_010_check_heart_rate"]},
+        {"input": "（有没有呼吸）", "expect_any": ["IA_004_check_breathing", "IA_047_check_breathing_cpr"], "note": "括号包裹"}
+      ]
+    },
+
+    "multi_intent_ambiguity": {
+      "description": "一个输入命中多个 intent，都应返回",
+      "cases": [
+        {"input": "检查呼吸", "expect_all": ["IA_004_check_breathing", "IA_047_check_breathing_cpr"], "note": "非 CPR 和 CPR 中检查呼吸共用表面"},
+        {"input": "看心电", "expect_all": ["IA_043_obtain_ecg_recording", "IA_044_interpret_and_report"], "note": "看心电可能是记录也可能是判读"}
+      ]
+    },
+
+    "negative": {
+      "description": "无关文本，不应高分命中",
+      "cases": [
+        {"input": "今天天气不错", "expect_any": []},
+        {"input": "我家住在三楼", "expect_any": []},
+        {"input": "嗯好的", "expect_any": []},
+        {"input": "吃饭了吗", "expect_any": []},
+        {"input": "他今年六十岁了", "expect_any": [], "note": "年龄本身不算意图"}
+      ]
+    },
+
+    "empty_and_whitespace": {
+      "description": "空输入边界",
+      "cases": [
+        {"input": "", "expect_any": []},
+        {"input": "   ", "expect_any": []},
+        {"input": "\n\n", "expect_any": []},
+        {"input": "。！？", "expect_any": [], "note": "只有标点"}
+      ]
+    },
+
+    "realistic_asr": {
+      "description": "模拟真实 ASR 输出，含口语、重复、语气词",
+      "cases": [
+        {"input": "喂喂快点！我爸晕倒了，还有没有呼吸啊？", "expect_any": ["IA_004_check_breathing", "IA_047_check_breathing_cpr"]},
+        {"input": "那个我看一下啊，摸一下脉", "expect_any": ["IA_003_check_pulse"]},
+        {"input": "我们现在给他做心电图可以吗", "expect_any": ["IA_043_obtain_ecg_recording"]},
+        {"input": "你赶紧拿AED过来！", "expect_any": ["IA_050_request_aed"]},
+        {"input": "准备按压，按压要深一点啊", "expect_any": ["IA_048_chest_compressions"]},
+        {"input": "先打开气道，用抬颏后仰", "expect_any": ["IA_057_open_airway"]},
+        {"input": "血氧多少？测一下", "expect_any": ["IA_011_check_oxygen_saturation"]},
+        {"input": "通知医院，我们马上到", "expect_any": ["IA_065_notify_hospital"]},
+        {"input": "给他戴上球囊面罩，开始通气", "expect_any": ["IA_058_place_bvm", "IA_059_ventilate_patient"]}
+      ]
+    },
+    "all_intents_coverage": {
+      "description": "全 intent 覆盖：每个 intent 至少 1 条，验证词典加载和匹配连通性",
+      "cases": [
+        {"input": "接近患者", "expect_any": ["IA_001_approach_patient"]},
+        {"input": "靠近患者", "expect_any": ["IA_001_approach_patient"]},
+        {"input": "现场安全", "expect_any": ["IA_001_approach_patient"]},
+        {"input": "评估安全", "expect_any": ["IA_001_approach_patient"]},
+
+        {"input": "检查反应", "expect_any": ["IA_002_check_responsiveness"]},
+        {"input": "叫患者", "expect_any": ["IA_002_check_responsiveness"]},
+        {"input": "对刺激反应", "expect_any": ["IA_002_check_responsiveness"]},
+        {"input": "轻拍患者", "expect_any": ["IA_002_check_responsiveness"]},
+
+        {"input": "评估脉搏", "expect_any": ["IA_003_check_pulse"]},
+        {"input": "摸脉", "expect_any": ["IA_003_check_pulse"]},
+        {"input": "脉搏", "expect_any": ["IA_003_check_pulse"]},
+        {"input": "颈动脉", "expect_any": ["IA_003_check_pulse"]},
+        {"input": "桡动脉", "expect_any": ["IA_003_check_pulse"]},
+        {"input": "摸一下脉", "expect_any": ["IA_003_check_pulse"]},
+        {"input": "搭脉", "expect_any": ["IA_003_check_pulse"]},
+
+        {"input": "检查呼吸", "expect_any": ["IA_004_check_breathing", "IA_047_check_breathing_cpr"]},
+        {"input": "有没有呼吸", "expect_any": ["IA_004_check_breathing"]},
+        {"input": "看胸廓起伏", "expect_any": ["IA_004_check_breathing"]},
+        {"input": "听呼吸音", "expect_any": ["IA_004_check_breathing"]},
+        {"input": "观察呼吸", "expect_any": ["IA_004_check_breathing"]},
+
+        {"input": "回顾用药", "expect_any": ["IA_005_review_medications"]},
+        {"input": "当前用药", "expect_any": ["IA_005_review_medications"]},
+        {"input": "回顾当前用药", "expect_any": ["IA_005_review_medications"]},
+        {"input": "正在吃什么药", "expect_any": ["IA_005_review_medications"]},
+
+        {"input": "查抗凝药", "expect_any": ["IA_006_inquire_medication_anticoagulants"]},
+        {"input": "查华法林", "expect_any": ["IA_006_inquire_medication_anticoagulants"]},
+        {"input": "查利伐沙班", "expect_any": ["IA_006_inquire_medication_anticoagulants"]},
+        {"input": "查血液稀释药", "expect_any": ["IA_006_inquire_medication_anticoagulants"]},
+
+        {"input": "喝酒", "expect_any": ["IA_008_inquire_substance_use"]},
+        {"input": "饮酒", "expect_any": ["IA_008_inquire_substance_use"]},
+        {"input": "用药史", "expect_any": ["IA_008_inquire_substance_use"]},
+        {"input": "吸毒史", "expect_any": ["IA_008_inquire_substance_use"]},
+
+        {"input": "检查心率", "expect_any": ["IA_010_check_heart_rate"]},
+        {"input": "心率", "expect_any": ["IA_010_check_heart_rate"]},
+        {"input": "脉率", "expect_any": ["IA_010_check_heart_rate"]},
+        {"input": "心跳", "expect_any": ["IA_010_check_heart_rate"]},
+        {"input": "测心率", "expect_any": ["IA_010_check_heart_rate"]},
+
+        {"input": "测量血氧饱和度", "expect_any": ["IA_011_check_oxygen_saturation"]},
+        {"input": "测血氧", "expect_any": ["IA_011_check_oxygen_saturation"]},
+        {"input": "SpO2", "expect_any": ["IA_011_check_oxygen_saturation"]},
+        {"input": "测量血氧", "expect_any": ["IA_011_check_oxygen_saturation"]},
+        {"input": "测血氧浓度", "expect_any": ["IA_011_check_oxygen_saturation"]},
+
+        {"input": "读血糖", "expect_any": ["IA_014_read_and_record_glucose_level"]},
+        {"input": "记血糖", "expect_any": ["IA_014_read_and_record_glucose_level"]},
+        {"input": "报血糖", "expect_any": ["IA_014_read_and_record_glucose_level"]},
+        {"input": "读取血糖并记录", "expect_any": ["IA_014_read_and_record_glucose_level"]},
+
+        {"input": "检查瞳孔对光反射", "expect_any": ["IA_015_check_perrl"]},
+        {"input": "瞳孔对光反应", "expect_any": ["IA_015_check_perrl"]},
+        {"input": "PERRL", "expect_any": ["IA_015_check_perrl"]},
+        {"input": "看瞳孔对光", "expect_any": ["IA_015_check_perrl"]},
+        {"input": "瞳孔光反射检查", "expect_any": ["IA_015_check_perrl"]},
+
+        {"input": "皮肤湿冷", "expect_any": ["IA_016_check_skin_condition"]},
+        {"input": "皮肤出汗", "expect_any": ["IA_016_check_skin_condition"]},
+        {"input": "看皮肤湿不湿", "expect_any": ["IA_016_check_skin_condition"]},
+        {"input": "检查皮肤冷汗", "expect_any": ["IA_016_check_skin_condition"]},
+
+        {"input": "检查意识状态", "expect_any": ["IA_017_check_ao"]},
+        {"input": "A&O", "expect_any": ["IA_017_check_ao"]},
+        {"input": "意识与定向力", "expect_any": ["IA_017_check_ao"]},
+        {"input": "人地时", "expect_any": ["IA_017_check_ao"]},
+        {"input": "看意识", "expect_any": ["IA_017_check_ao"]},
+        {"input": "意识评估", "expect_any": ["IA_017_check_ao"]},
+
+        {"input": "检查双侧握力", "expect_any": ["IA_018_check_grip_strength"]},
+        {"input": "双手握力对比", "expect_any": ["IA_018_check_grip_strength"]},
+        {"input": "捏紧双侧手", "expect_any": ["IA_018_check_grip_strength"]},
+        {"input": "左右手握力对比", "expect_any": ["IA_018_check_grip_strength"]},
+
+        {"input": "面部下垂检查", "expect_any": ["IA_019_face_droop_check"]},
+        {"input": "嘴角歪斜", "expect_any": ["IA_019_face_droop_check"]},
+        {"input": "笑一笑", "expect_any": ["IA_019_face_droop_check"]},
+        {"input": "看微笑", "expect_any": ["IA_019_face_droop_check"]},
+        {"input": "面部不对称", "expect_any": ["IA_019_face_droop_check"]},
+
+        {"input": "语言异常检查", "expect_any": ["IA_021_speech_abnormality_check"]},
+        {"input": "重复短语", "expect_any": ["IA_021_speech_abnormality_check"]},
+        {"input": "复述检查", "expect_any": ["IA_021_speech_abnormality_check"]},
+        {"input": "说话含糊", "expect_any": ["IA_021_speech_abnormality_check"]},
+        {"input": "语言评估", "expect_any": ["IA_021_speech_abnormality_check"]},
+
+        {"input": "评估平衡和协调能力", "expect_any": ["IA_022_assess_balance_and_coordination"]},
+        {"input": "平衡协调", "expect_any": ["IA_022_assess_balance_and_coordination"]},
+        {"input": "看看他站得稳不稳", "expect_any": ["IA_022_assess_balance_and_coordination"]},
+        {"input": "评估动作协调性", "expect_any": ["IA_022_assess_balance_and_coordination"]},
+
+        {"input": "记录LKW时间", "expect_any": ["IA_023_document_lkw_time"]},
+        {"input": "LKW", "expect_any": ["IA_023_document_lkw_time"]},
+        {"input": "记录最后正常知晓", "expect_any": ["IA_023_document_lkw_time"]},
+        {"input": "最后清醒时间", "expect_any": ["IA_023_document_lkw_time"]},
+
+        {"input": "检查视野缺损", "expect_any": ["IA_024_check_vision_deficits"]},
+        {"input": "视力检查", "expect_any": ["IA_024_check_vision_deficits"]},
+        {"input": "看不清", "expect_any": ["IA_024_check_vision_deficits"]},
+        {"input": "查视力", "expect_any": ["IA_024_check_vision_deficits"]},
+        {"input": "看东西模糊", "expect_any": ["IA_024_check_vision_deficits"]},
+
+        {"input": "评估失语症", "expect_any": ["IA_025_evaluate_aphasia"]},
+        {"input": "失语症检查", "expect_any": ["IA_025_evaluate_aphasia"]},
+        {"input": "失语症筛查", "expect_any": ["IA_025_evaluate_aphasia"]},
+        {"input": "语言障碍评估", "expect_any": ["IA_025_evaluate_aphasia"]},
+
+        {"input": "检查忽略体征", "expect_any": ["IA_026_assess_neglect_signs"]},
+        {"input": "单侧忽视", "expect_any": ["IA_026_assess_neglect_signs"]},
+        {"input": "忽略体征", "expect_any": ["IA_026_assess_neglect_signs"]},
+        {"input": "看单侧忽略体征", "expect_any": ["IA_026_assess_neglect_signs"]},
+
+        {"input": "解释心电图", "expect_any": ["IA_027_explain_procedure"]},
+        {"input": "说明心电图", "expect_any": ["IA_027_explain_procedure"]},
+        {"input": "告知流程", "expect_any": ["IA_027_explain_procedure"]},
+        {"input": "讲心电图", "expect_any": ["IA_027_explain_procedure"]},
+
+        {"input": "剃除皮肤", "expect_any": ["IA_028_shave_patient"]},
+        {"input": "剃毛", "expect_any": ["IA_028_shave_patient"]},
+        {"input": "备皮", "expect_any": ["IA_028_shave_patient"]},
+        {"input": "剃净皮肤", "expect_any": ["IA_028_shave_patient"]},
+
+        {"input": "连接左臂电极", "expect_any": ["IA_029_place_left_arm_lead"]},
+        {"input": "左臂导联", "expect_any": ["IA_029_place_left_arm_lead"]},
+        {"input": "贴左臂电极", "expect_any": ["IA_029_place_left_arm_lead"]},
+        {"input": "连接左上臂电极", "expect_any": ["IA_029_place_left_arm_lead"]},
+
+        {"input": "连接右臂电极", "expect_any": ["IA_030_place_right_arm_lead"]},
+        {"input": "右臂导联", "expect_any": ["IA_030_place_right_arm_lead"]},
+        {"input": "贴右臂电极", "expect_any": ["IA_030_place_right_arm_lead"]},
+        {"input": "右臂电极安放", "expect_any": ["IA_030_place_right_arm_lead"]},
+
+        {"input": "连接左腿电极", "expect_any": ["IA_031_place_left_leg_lead"]},
+        {"input": "贴左腿电极", "expect_any": ["IA_031_place_left_leg_lead"]},
+        {"input": "放置左腿电极", "expect_any": ["IA_031_place_left_leg_lead"]},
+        {"input": "左腿电极贴哪里", "expect_any": ["IA_031_place_left_leg_lead"]},
+
+        {"input": "连接右腿电极", "expect_any": ["IA_032_place_right_leg_lead"]},
+        {"input": "贴右腿电极", "expect_any": ["IA_032_place_right_leg_lead"]},
+        {"input": "放置右腿电极", "expect_any": ["IA_032_place_right_leg_lead"]},
+        {"input": "右腿上贴电极", "expect_any": ["IA_032_place_right_leg_lead"]},
+
+        {"input": "放置V1导联电极", "expect_any": ["IA_033_place_v1_lead"]},
+        {"input": "V1导联", "expect_any": ["IA_033_place_v1_lead"]},
+        {"input": "V1电极", "expect_any": ["IA_033_place_v1_lead"]},
+        {"input": "第4肋间", "expect_any": ["IA_033_place_v1_lead"]},
+
+        {"input": "放置V3导联电极", "expect_any": ["IA_035_place_v3_lead"]},
+        {"input": "V3电极", "expect_any": ["IA_035_place_v3_lead"]},
+        {"input": "V3位置", "expect_any": ["IA_035_place_v3_lead"]},
+        {"input": "V2V4间", "expect_any": ["IA_035_place_v3_lead"]},
+
+        {"input": "放置V4导联电极", "expect_any": ["IA_036_place_v4_lead"]},
+        {"input": "V4电极", "expect_any": ["IA_036_place_v4_lead"]},
+        {"input": "V4位置", "expect_any": ["IA_036_place_v4_lead"]},
+        {"input": "锁骨中线", "expect_any": ["IA_036_place_v4_lead"]},
+
+        {"input": "放置V5导联电极", "expect_any": ["IA_037_place_v5_lead"]},
+        {"input": "V5电极", "expect_any": ["IA_037_place_v5_lead"]},
+        {"input": "腋前线", "expect_any": ["IA_037_place_v5_lead"]},
+        {"input": "V5位置", "expect_any": ["IA_037_place_v5_lead"]},
+
+        {"input": "放置V6导联电极", "expect_any": ["IA_038_place_v6_lead"]},
+        {"input": "V6电极", "expect_any": ["IA_038_place_v6_lead"]},
+        {"input": "V6导联", "expect_any": ["IA_038_place_v6_lead"]},
+
+        {"input": "要求患者保持不动", "expect_any": ["IA_039_request_patient_to_not_move"]},
+        {"input": "记录时别动", "expect_any": ["IA_039_request_patient_to_not_move"]},
+        {"input": "心电图时别乱动", "expect_any": ["IA_039_request_patient_to_not_move"]},
+        {"input": "采集时别乱动", "expect_any": ["IA_039_request_patient_to_not_move"]},
+
+        {"input": "导联连接", "expect_any": ["IA_041_connect_leads_to_ecg"]},
+        {"input": "心电图机连接导联", "expect_any": ["IA_041_connect_leads_to_ecg"]},
+        {"input": "导联连机", "expect_any": ["IA_041_connect_leads_to_ecg"]},
+        {"input": "接心电", "expect_any": ["IA_041_connect_leads_to_ecg"]},
+
+        {"input": "确认患者年龄和性别", "expect_any": ["IA_042_ask_patient_age_sex"]},
+        {"input": "患者年龄", "expect_any": ["IA_042_ask_patient_age_sex"]},
+        {"input": "患者性别", "expect_any": ["IA_042_ask_patient_age_sex"]},
+        {"input": "问年龄", "expect_any": ["IA_042_ask_patient_age_sex"]},
+
+        {"input": "记录心电图", "expect_any": ["IA_043_obtain_ecg_recording"]},
+        {"input": "做心电图", "expect_any": ["IA_043_obtain_ecg_recording"]},
+        {"input": "心电图", "expect_any": ["IA_043_obtain_ecg_recording"]},
+        {"input": "做心电", "expect_any": ["IA_043_obtain_ecg_recording"]},
+        {"input": "开始采集", "expect_any": ["IA_043_obtain_ecg_recording"]},
+
+        {"input": "审阅并报告心电图结果", "expect_any": ["IA_044_interpret_and_report"]},
+        {"input": "读心电图", "expect_any": ["IA_044_interpret_and_report"]},
+        {"input": "报告心电图", "expect_any": ["IA_044_interpret_and_report"]},
+        {"input": "看波形", "expect_any": ["IA_044_interpret_and_report"]},
+
+        {"input": "重新检查患者反应", "expect_any": ["IA_045_check_responsiveness_cpr"]},
+        {"input": "CPR中检查患者反应", "expect_any": ["IA_045_check_responsiveness_cpr"]},
+
+        {"input": "CPR中检查脉搏", "expect_any": ["IA_046_check_pulse_cpr"]},
+        {"input": "检查脉搏", "expect_any": ["IA_003_check_pulse", "IA_046_check_pulse_cpr"]},
+
+        {"input": "CPR中检查呼吸", "expect_any": ["IA_047_check_breathing_cpr"]},
+        {"input": "按压暂停检查呼吸", "expect_any": ["IA_047_check_breathing_cpr"]},
+        {"input": "检查有无呼吸", "expect_any": ["IA_047_check_breathing_cpr"]},
+        {"input": "看呼吸", "expect_any": ["IA_047_check_breathing_cpr"]},
+        {"input": "听呼吸", "expect_any": ["IA_047_check_breathing_cpr"]},
+
+        {"input": "胸外按压", "expect_any": ["IA_048_chest_compressions"]},
+        {"input": "按压深度", "expect_any": ["IA_048_chest_compressions"]},
+        {"input": "按压频率", "expect_any": ["IA_048_chest_compressions"]},
+        {"input": "不要停按压", "expect_any": ["IA_048_chest_compressions"]},
+        {"input": "继续按压", "expect_any": ["IA_048_chest_compressions"]},
+
+        {"input": "重新评估患者状况", "expect_any": ["IA_049_assess_patient"]},
+        {"input": "CPR后重新评估", "expect_any": ["IA_049_assess_patient"]},
+        {"input": "再评估患者", "expect_any": ["IA_049_assess_patient"]},
+        {"input": "复苏后评估", "expect_any": ["IA_049_assess_patient"]},
+
+        {"input": "尽早请求AED", "expect_any": ["IA_050_request_aed"]},
+        {"input": "尽早呼叫AED", "expect_any": ["IA_050_request_aed"]},
+        {"input": "快找AED", "expect_any": ["IA_050_request_aed"]},
+
+        {"input": "请求协助", "expect_any": ["IA_051_request_assistance"]},
+        {"input": "呼叫协助", "expect_any": ["IA_051_request_assistance"]},
+        {"input": "旁观者协助", "expect_any": ["IA_051_request_assistance"]},
+        {"input": "叫旁边人帮忙", "expect_any": ["IA_051_request_assistance"]},
+        {"input": "请周围的人来帮忙", "expect_any": ["IA_051_request_assistance"]},
+
+        {"input": "开启AED并准备使用", "expect_any": ["IA_052_turn_on_aed"]},
+        {"input": "开启AED", "expect_any": ["IA_052_turn_on_aed"]},
+        {"input": "打开AED", "expect_any": ["IA_052_turn_on_aed"]},
+
+        {"input": "将除颤电极片正确贴上", "expect_any": ["IA_053_attach_defib_pads"]},
+        {"input": "除颤电极贴", "expect_any": ["IA_053_attach_defib_pads"]},
+        {"input": "把电极贴在胸部", "expect_any": ["IA_053_attach_defib_pads"]},
+
+        {"input": "确保心律分析期间无人接触患者", "expect_any": ["IA_054_clear_for_analysis"]},
+        {"input": "分析心律清场", "expect_any": ["IA_054_clear_for_analysis"]},
+
+        {"input": "电击前清场", "expect_any": ["IA_055_clear_for_shock"]},
+        {"input": "准备电击清场", "expect_any": ["IA_055_clear_for_shock"]},
+
+        {"input": "实施电击", "expect_any": ["IA_056_administer_shock_aed"]},
+        {"input": "执行电击", "expect_any": ["IA_056_administer_shock_aed"]},
+        {"input": "AED电击", "expect_any": ["IA_056_administer_shock_aed"]},
+        {"input": "放电", "expect_any": ["IA_056_administer_shock_aed"]},
+
+        {"input": "打开气道", "expect_any": ["IA_057_open_airway"]},
+        {"input": "抬颏后仰", "expect_any": ["IA_057_open_airway"]},
+        {"input": "下颌托举", "expect_any": ["IA_057_open_airway"]},
+        {"input": "仰头抬颏", "expect_any": ["IA_057_open_airway"]},
+        {"input": "托下颌", "expect_any": ["IA_057_open_airway"]},
+
+        {"input": "放置BVM", "expect_any": ["IA_058_place_bvm"]},
+        {"input": "放置并密封面罩", "expect_any": ["IA_058_place_bvm"]},
+        {"input": "放置面罩并密封", "expect_any": ["IA_058_place_bvm"]},
+
+        {"input": "实施通气", "expect_any": ["IA_059_ventilate_patient"]},
+        {"input": "人工呼吸", "expect_any": ["IA_059_ventilate_patient"]},
+        {"input": "做人工呼吸", "expect_any": ["IA_059_ventilate_patient"]},
+        {"input": "用球囊通气", "expect_any": ["IA_059_ventilate_patient"]},
+        {"input": "吹气", "expect_any": ["IA_059_ventilate_patient"]},
+
+        {"input": "使用吸引器清理气道", "expect_any": ["IA_060_suction_airway"]},
+        {"input": "清理气道用吸引器", "expect_any": ["IA_060_suction_airway"]},
+
+        {"input": "插入鼻咽通气管", "expect_any": ["IA_061_inset_NPA"]},
+        {"input": "NPA", "expect_any": ["IA_061_inset_NPA"]},
+        {"input": "鼻咽管", "expect_any": ["IA_061_inset_NPA"]},
+        {"input": "插鼻咽管", "expect_any": ["IA_061_inset_NPA"]},
+
+        {"input": "将患者抬上担架", "expect_any": ["IA_063_load_patient_to_stretcher"]},
+        {"input": "上担架", "expect_any": ["IA_063_load_patient_to_stretcher"]},
+        {"input": "把患者抬上担架", "expect_any": ["IA_063_load_patient_to_stretcher"]},
+        {"input": "担架搬运", "expect_any": ["IA_063_load_patient_to_stretcher"]},
+
+        {"input": "固定患者于担架上", "expect_any": ["IA_064_secure_patient_on_stretcher"]},
+
+        {"input": "通知接收医院", "expect_any": ["IA_065_notify_hospital"]},
+        {"input": "通知医院", "expect_any": ["IA_065_notify_hospital"]},
+        {"input": "提前通知医院", "expect_any": ["IA_065_notify_hospital"]},
+        {"input": "告知接收医院", "expect_any": ["IA_065_notify_hospital"]},
+
+        {"input": "向医院交接患者", "expect_any": ["IA_067_handoff_patient_to_hospital"]},
+        {"input": "交接患者", "expect_any": ["IA_067_handoff_patient_to_hospital"]},
+        {"input": "移交患者", "expect_any": ["IA_067_handoff_patient_to_hospital"]},
+        {"input": "handoff", "expect_any": ["IA_067_handoff_patient_to_hospital"]}
+      ]
+    }
+  }
+}

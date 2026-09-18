@@ -1,0 +1,79 @@
+{
+  "intent_code": "IA_067_handoff_patient_to_hospital",
+  "normalized": "向医院交接患者",
+  "variants": [
+    {
+      "surface": "交接患者",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "向医院交接",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "口头交接",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "移交患者",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "handoff",
+      "type": "英文",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "交患者",
+      "type": "口语",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "交病人",
+      "type": "方言",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "交病人给医院",
+      "type": "口语",
+      "confidence": 0.6,
+      "note": ""
+    },
+    {
+      "surface": "移交",
+      "type": "同义词",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "转交患者",
+      "type": "同义词",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "转给医院",
+      "type": "同音",
+      "confidence": 0.5,
+      "note": "易与'转给'混淆"
+    },
+    {
+      "surface": "hando",
+      "type": "错别字",
+      "confidence": 0.3,
+      "note": "易与'handoff'混淆"
+    }
+  ],
+  "intent_name": "向医院交接患者"
+}

@@ -1,0 +1,407 @@
+{
+  "intent_code": "IA_001_approach_patient",
+  "normalized": "接近患者并确认现场安全。",
+  "variants": [
+    {
+      "surface": "我先靠近看一下现场安全。",
+      "type": "口语",
+      "confidence": 0.95
+    },
+    {
+      "surface": "走近患者并评估安全情况。",
+      "type": "口语",
+      "confidence": 0.95
+    },
+    {
+      "surface": "靠近患者，确认现场安全。",
+      "type": "同义词",
+      "confidence": 0.98
+    },
+    {
+      "surface": "走近患者，评估现场安全。",
+      "type": "同义词",
+      "confidence": 0.98
+    },
+    {
+      "surface": "接近患者，现场安全确认。",
+      "type": "同义词",
+      "confidence": 0.98
+    },
+    {
+      "surface": "走近患者，现场安全确认。",
+      "type": "同义词",
+      "confidence": 0.98
+    },
+    {
+      "surface": "走近患者，现场安全评估。",
+      "type": "同义词",
+      "confidence": 0.98
+    },
+    {
+      "surface": "靠近患者，现场安全评估。",
+      "type": "同义词",
+      "confidence": 0.98
+    },
+    {
+      "surface": "靠近患者，现场安全。",
+      "type": "口语",
+      "confidence": 0.95
+    },
+    {
+      "surface": "走近患者，现场安全。",
+      "type": "口语",
+      "confidence": 0.95
+    },
+    {
+      "surface": "靠近患者，现场安全情况。",
+      "type": "口语",
+      "confidence": 0.95
+    },
+    {
+      "surface": "走近患者，现场安全情况。",
+      "type": "口语",
+      "confidence": 0.95
+    },
+    {
+      "surface": "靠近患者，现场安全确认。",
+      "type": "口语",
+      "confidence": 0.95
+    },
+    {
+      "surface": "走近患者，现场安全确认。",
+      "type": "口语",
+      "confidence": 0.95
+    },
+    {
+      "surface": "靠近患者，现场安全评估。",
+      "type": "口语",
+      "confidence": 0.95
+    },
+    {
+      "surface": "走近患者，现场安全评估。",
+      "type": "口语",
+      "confidence": 0.95
+    },
+    {
+      "surface": "靠近患者，现场安全。",
+      "type": "方言",
+      "confidence": 0.9
+    },
+    {
+      "surface": "走近患者，现场安全。",
+      "type": "方言",
+      "confidence": 0.9
+    },
+    {
+      "surface": "靠近患者，现场安全情况。",
+      "type": "方言",
+      "confidence": 0.9
+    },
+    {
+      "surface": "走近患者，现场安全情况。",
+      "type": "方言",
+      "confidence": 0.9
+    },
+    {
+      "surface": "靠近患者，现场安全确认。",
+      "type": "方言",
+      "confidence": 0.9
+    },
+    {
+      "surface": "走近患者，现场安全确认。",
+      "type": "方言",
+      "confidence": 0.9
+    },
+    {
+      "surface": "靠近患者，现场安全评估。",
+      "type": "方言",
+      "confidence": 0.9
+    },
+    {
+      "surface": "走近患者，现场安全评估。",
+      "type": "方言",
+      "confidence": 0.9
+    },
+    {
+      "surface": "靠近患者，现场安全。",
+      "type": "同音",
+      "confidence": 0.8
+    },
+    {
+      "surface": "走近患者，现场安全。",
+      "type": "同音",
+      "confidence": 0.8
+    },
+    {
+      "surface": "靠近患者，现场安全情况。",
+      "type": "同音",
+      "confidence": 0.8
+    },
+    {
+      "surface": "走近患者，现场安全情况。",
+      "type": "同音",
+      "confidence": 0.8
+    },
+    {
+      "surface": "靠近患者，现场安全确认。",
+      "type": "同音",
+      "confidence": 0.8
+    },
+    {
+      "surface": "走近患者，现场安全确认。",
+      "type": "同音",
+      "confidence": 0.8
+    },
+    {
+      "surface": "靠近患者，现场安全评估。",
+      "type": "同音",
+      "confidence": 0.8
+    },
+    {
+      "surface": "走近患者，现场安全评估。",
+      "type": "同音",
+      "confidence": 0.8
+    },
+    {
+      "surface": "靠近患者，现场安生。",
+      "type": "错别字",
+      "confidence": 0.7
+    },
+    {
+      "surface": "走近患者，现场安生。",
+      "type": "错别字",
+      "confidence": 0.7
+    },
+    {
+      "surface": "靠近患者，现场安生情况。",
+      "type": "错别字",
+      "confidence": 0.7
+    },
+    {
+      "surface": "走近患者，现场安生情况。",
+      "type": "错别字",
+      "confidence": 0.7
+    },
+    {
+      "surface": "靠近患者，现场安生确认。",
+      "type": "错别字",
+      "confidence": 0.7
+    },
+    {
+      "surface": "走近患者，现场安生确认。",
+      "type": "错别字",
+      "confidence": 0.7
+    },
+    {
+      "surface": "靠近患者，现场安生评估。",
+      "type": "错别字",
+      "confidence": 0.7
+    },
+    {
+      "surface": "走近患者，现场安生评估。",
+      "type": "错别字",
+      "confidence": 0.7
+    },
+    {
+      "surface": "靠近患者，现安生。",
+      "type": "错别字",
+      "confidence": 0.6
+    },
+    {
+      "surface": "走近患者，现安生。",
+      "type": "错别字",
+      "confidence": 0.6
+    },
+    {
+      "surface": "靠近患者，现安生情况。",
+      "type": "错别字",
+      "confidence": 0.6
+    },
+    {
+      "surface": "走近患者，现安生情况。",
+      "type": "错别字",
+      "confidence": 0.6
+    },
+    {
+      "surface": "靠近患者，现安生确认。",
+      "type": "错别字",
+      "confidence": 0.6
+    },
+    {
+      "surface": "走近患者，现安生确认。",
+      "type": "错别字",
+      "confidence": 0.6
+    },
+    {
+      "surface": "靠近患者，现安生评估。",
+      "type": "错别字",
+      "confidence": 0.6
+    },
+    {
+      "surface": "走近患者，现安生评估。",
+      "type": "错别字",
+      "confidence": 0.6
+    },
+    {
+      "surface": "靠近患者，现安生。",
+      "type": "错别字",
+      "confidence": 0.5
+    },
+    {
+      "surface": "走近患者，现安生。",
+      "type": "错别字",
+      "confidence": 0.5
+    },
+    {
+      "surface": "靠近患者，现安生情况。",
+      "type": "错别字",
+      "confidence": 0.5
+    },
+    {
+      "surface": "走近患者，现安生情况。",
+      "type": "错别字",
+      "confidence": 0.5
+    },
+    {
+      "surface": "靠近患者，现安生确认。",
+      "type": "错别字",
+      "confidence": 0.5
+    },
+    {
+      "surface": "走近患者，现安生确认。",
+      "type": "错别字",
+      "confidence": 0.5
+    },
+    {
+      "surface": "靠近患者，现安生评估。",
+      "type": "错别字",
+      "confidence": 0.5
+    },
+    {
+      "surface": "走近患者，现安生评估。",
+      "type": "错别字",
+      "confidence": 0.5
+    },
+    {
+      "surface": "靠近患者，现安生。",
+      "type": "缩写",
+      "confidence": 0.8
+    },
+    {
+      "surface": "走近患者，现安生。",
+      "type": "缩写",
+      "confidence": 0.8
+    },
+    {
+      "surface": "靠近患者，现安生情况。",
+      "type": "缩写",
+      "confidence": 0.8
+    },
+    {
+      "surface": "走近患者，现安生情况。",
+      "type": "缩写",
+      "confidence": 0.8
+    },
+    {
+      "surface": "靠近患者，现安生确认。",
+      "type": "缩写",
+      "confidence": 0.8
+    },
+    {
+      "surface": "走近患者，现安生确认。",
+      "type": "缩写",
+      "confidence": 0.8
+    },
+    {
+      "surface": "靠近患者，现安生评估。",
+      "type": "缩写",
+      "confidence": 0.8
+    },
+    {
+      "surface": "走近患者，现安生评估。",
+      "type": "缩写",
+      "confidence": 0.8
+    },
+    {
+      "surface": "靠近患者，现安生。",
+      "type": "英文",
+      "confidence": 0.7
+    },
+    {
+      "surface": "走近患者，现安生。",
+      "type": "英文",
+      "confidence": 0.7
+    },
+    {
+      "surface": "靠近患者，现安生情况。",
+      "type": "英文",
+      "confidence": 0.7
+    },
+    {
+      "surface": "走近患者，现安生情况。",
+      "type": "英文",
+      "confidence": 0.7
+    },
+    {
+      "surface": "靠近患者，现安生确认。",
+      "type": "英文",
+      "confidence": 0.7
+    },
+    {
+      "surface": "走近患者，现安生确认。",
+      "type": "英文",
+      "confidence": 0.7
+    },
+    {
+      "surface": "靠近患者，现安生评估。",
+      "type": "英文",
+      "confidence": 0.7
+    },
+    {
+      "surface": "走近患者，现安生评估。",
+      "type": "英文",
+      "confidence": 0.7
+    },
+    {
+      "surface": "靠近患者，现安生。",
+      "type": "拼音缩写",
+      "confidence": 0.6
+    },
+    {
+      "surface": "走近患者，现安生。",
+      "type": "拼音缩写",
+      "confidence": 0.6
+    },
+    {
+      "surface": "靠近患者，现安生情况。",
+      "type": "拼音缩写",
+      "confidence": 0.6
+    },
+    {
+      "surface": "走近患者，现安生情况。",
+      "type": "拼音缩写",
+      "confidence": 0.6
+    },
+    {
+      "surface": "靠近患者，现安生确认。",
+      "type": "拼音缩写",
+      "confidence": 0.6
+    },
+    {
+      "surface": "走近患者，现安生确认。",
+      "type": "拼音缩写",
+      "confidence": 0.6
+    },
+    {
+      "surface": "靠近患者，现安生评估。",
+      "type": "拼音缩写",
+      "confidence": 0.6
+    },
+    {
+      "surface": "走近患者，现安生评估。",
+      "type": "拼音缩写",
+      "confidence": 0.6
+    }
+  ],
+  "intent_name": "接近患者并评估现场安全"
+}

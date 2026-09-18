@@ -1,0 +1,43 @@
+{
+  "intent_code": "IA_031_place_left_leg_lead",
+  "normalized": "连接左腿电极",
+  "variants": [
+    {
+      "surface": "贴左腿电极",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "连接左腿导联",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "把左腿电极贴上",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "左腿电极贴哪里",
+      "type": "方言",
+      "confidence": 0.75,
+      "note": ""
+    },
+    {
+      "surface": "左腿电极贴左腿",
+      "type": "同音",
+      "confidence": 0.65,
+      "note": ""
+    },
+    {
+      "surface": "左腿电极贴错",
+      "type": "错别字",
+      "confidence": 0.55,
+      "note": ""
+    }
+  ],
+  "intent_name": "连接左腿电极"
+}

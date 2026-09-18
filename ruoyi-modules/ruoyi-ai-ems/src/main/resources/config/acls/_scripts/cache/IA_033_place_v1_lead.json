@@ -1,0 +1,79 @@
+{
+  "intent_code": "IA_033_place_v1_lead",
+  "normalized": "将V1置于第4肋间胸骨右缘。",
+  "variants": [
+    {
+      "surface": "V1导联放哪里？",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "V1电极贴哪里？",
+      "type": "口语",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "V1放哪里？",
+      "type": "口语",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "V1电极贴在第4肋间胸骨右缘。",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "V1导联贴在第4肋间胸骨右缘。",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "V1放第4肋间胸骨右缘。",
+      "type": "口语",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "V1电极贴第4肋间胸骨右缘。",
+      "type": "口语",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "V1导联贴第4肋间胸骨右缘。",
+      "type": "口语",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "V1电极放第4肋间胸骨右缘。",
+      "type": "口语",
+      "confidence": 0.9,
+      "note": ""
+    },
+    {
+      "surface": "V1电极放4肋间胸骨右缘。",
+      "type": "方言",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "V1电极放4肋间胸骨右缘。",
+      "type": "同音",
+      "confidence": 0.8,
+      "note": "同音错误为'4'和'一'"
+    },
+    {
+      "surface": "V1电极放4肋间胸骨右缘。",
+      "type": "错别字",
+      "confidence": 0.8,
+      "note": "错别字为'肋'应为'里'"
+    }
+  ],
+  "intent_name": "放置V1导联电极"
+}

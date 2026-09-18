@@ -1,0 +1,55 @@
+{
+  "intent_code": "IA_048_chest_compressions",
+  "normalized": "以正确的频率和深度进行胸外按压。",
+  "variants": [
+    {
+      "surface": "继续胸外按压，按得更深一点。",
+      "type": "同义词",
+      "confidence": 0.95,
+      "note": ""
+    },
+    {
+      "surface": "不要停按压。",
+      "type": "口语",
+      "confidence": 0.85,
+      "note": ""
+    },
+    {
+      "surface": "加快按压。",
+      "type": "同音",
+      "confidence": 0.7,
+      "note": ""
+    },
+    {
+      "surface": "按压要深一些。",
+      "type": "方言",
+      "confidence": 0.8,
+      "note": ""
+    },
+    {
+      "surface": "按压频率要快。",
+      "type": "错别字",
+      "confidence": 0.6,
+      "note": ""
+    },
+    {
+      "surface": "CPR, 按压要深。",
+      "type": "英文",
+      "confidence": 0.5,
+      "note": ""
+    },
+    {
+      "surface": "CPR, 加快按压。",
+      "type": "英文",
+      "confidence": 0.5,
+      "note": ""
+    },
+    {
+      "surface": "CPR, 按压要深。",
+      "type": "拼音缩写",
+      "confidence": 0.5,
+      "note": ""
+    }
+  ],
+  "intent_name": "胸外按压（以合适频率与深度进行）"
+}
