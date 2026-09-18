@@ -69,16 +69,19 @@ public class ProcessTranscriptor {
     }
 
     // ==========================================================
-    // 【新增】多意图入口：分句 → 逐句分类
+    // 多意图入口：分句 → 逐句分类
     // ==========================================================
 
     /**
-     * 处理一段 ASR 文本，可能包含多个动作。
-     * 先分句，再逐句分类，返回有序的 IntentCommand 列表。
+     * 处理一段 ASR 文本（走 Session 通道，用于 ASR WebSocket）。
      *
      * <p>与 {@link #processTranscript} 一样，本方法只做“理解”，
-     * 绝不修改任何临床变量，也不驱动状态机。
+     * 绝不修改任何临床变量，也不驱动状态机。</p>
+     *
+     * @deprecated 建议调用 {@link #processTranscriptMulti(String, String, String)}，
+     *             直接传 sessionId，避免 Session 为 null 时参数抽取被跳过。
      */
+    @Deprecated
     public List<IntentCommand> processTranscriptMulti(Session session,
                                                       String transcript,
                                                       String caseId) {
@@ -87,6 +90,34 @@ public class ProcessTranscriptor {
         }
 
         String sessionId = extractSessionId(session);
+        if (sessionId == null) {
+            log.warn("⚠️ processTranscriptMulti(Session): session 为 null 或缺少 sessionId，参数抽取将被跳过");
+        }
+        return doProcessTranscriptMulti(sessionId, transcript, caseId);
+    }
+
+    /**
+     * ★ 新增重载：直接传 sessionId，绕开 Session 依赖。
+     *
+     * <p>用于非 ASR 通道（如 Unity 引擎上行 asr_transcript），
+     * 此时没有 jakarta.websocket.Session，但已经有 emsSessionId。</p>
+     */
+    public List<IntentCommand> processTranscriptMulti(String sessionId,
+                                                      String transcript,
+                                                      String caseId) {
+        if (transcript == null || transcript.isBlank()) {
+            return Collections.emptyList();
+        }
+        return doProcessTranscriptMulti(sessionId, transcript, caseId);
+    }
+
+    // ==========================================================
+    // 私有：多意图处理核心（两个重载共用）
+    // ==========================================================
+
+    private List<IntentCommand> doProcessTranscriptMulti(String sessionId,
+                                                         String transcript,
+                                                         String caseId) {
         CaseContext caseContext = sessionId != null ? contextManager.getSnapshot(sessionId) : null;
 
         ClassificationContext classificationContext = null;
@@ -99,7 +130,7 @@ public class ProcessTranscriptor {
         for (IntentCommand cmd : results) {
             if (cmd == null) continue;
 
-            // 1. 回填 matchedDefinition（原有逻辑）
+            // 1. 回填 matchedDefinition
             if (cmd.getIntentCode() != null && cmd.getMatchedDefinition() == null) {
                 IntentDefinition def = caseIntentDefinitionsLoader.getIntent(cmd.getIntentCode());
                 if (def != null) {
@@ -107,37 +138,48 @@ public class ProcessTranscriptor {
                 }
             }
 
-            // 2. ★ 新增：参数抽取
+            // 2. 参数抽取 + 临时写回
             if (cmd.isValid() && sessionId != null) {
-                try {
-                    Map<String, Object> extracted = parameterExtractor.extract(cmd, sessionId);
-                    if (!extracted.isEmpty()) {
-                        // ★ 填入 IntentCommand.slots，供后续 skill / Unity 使用
-                        cmd.setSlots(extracted);
-
-                        // ★ 临时方案：Unity 未接入前，参数抽取结果直接写回上下文，
-                        //    让状态机的条件出边（variable-driven）能感知到变量变更。
-                        //    Unity 接入后，此段应删除，改由 Unity NPC 执行完成回传变量。
-                        CaseContext latest = contextManager.getSnapshot(sessionId);
-                        if (latest != null) {
-                            contextManager.batchSetVarsWithVersion(
-                                sessionId, extracted, "PARAM_EXTRACTOR", latest.getVersion());
-                        }
-
-                        log.info("[参数抽取-多意图] intent={}, extracted={}",
-                            cmd.getIntentCode(), extracted);
-                    } else {
-                        log.debug("[参数抽取-多意图] intent={} 无参数产出",
-                            cmd.getIntentCode());
-                    }
-                } catch (Exception e) {
-                    log.error("[参数抽取-多意图] 失败 intent={}", cmd.getIntentCode(), e);
-                }
+                doExtractParametersAndWriteback(cmd, sessionId);
             }
         }
 
         return results;
     }
+
+    /**
+     * 参数抽取 + 写回上下文（两个重载共用）。
+     *
+     * <p>★ 临时方案：Unity 未完全接入前，参数抽取结果直接写回上下文，
+     * 让状态机的条件出边（variable-driven）能感知到变量变更。
+     * Unity 接入后，此段应删除，改由 Unity NPC 执行完成回传变量。</p>
+     */
+    private void doExtractParametersAndWriteback(IntentCommand cmd, String sessionId) {
+        try {
+            Map<String, Object> extracted = parameterExtractor.extract(cmd, sessionId);
+            if (extracted.isEmpty()) {
+                log.debug("[参数抽取-多意图] intent={} 无参数产出", cmd.getIntentCode());
+                return;
+            }
+
+            // ★ 填入 IntentCommand.slots，供后续 skill / Unity 使用
+            cmd.setSlots(extracted);
+
+            // ★ 写回上下文
+            CaseContext latest = contextManager.getSnapshot(sessionId);
+            if (latest != null) {
+                contextManager.batchSetVarsWithVersion(
+                    sessionId, extracted, "PARAM_EXTRACTOR", latest.getVersion());
+            }
+
+            log.info("[参数抽取-多意图] intent={}, extracted={}",
+                cmd.getIntentCode(), extracted);
+
+        } catch (Exception e) {
+            log.error("[参数抽取-多意图] 失败 intent={}", cmd.getIntentCode(), e);
+        }
+    }
+
     // ==========================================================
     // 单句分类：元语用规则 → 意图链路 → 回填 actType
     // ==========================================================

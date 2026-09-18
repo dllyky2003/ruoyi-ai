@@ -8,30 +8,17 @@
 exceptions:
 
   # ============================================================
-  # 稳定窄QRS患者执行绝对禁忌操作
-  #
-  # 触发意图：S-101-4-4（safety_clear，"稳定窄QRS禁忌操作拦截"）
-  #   → 正例：开始胸外按压 / 做CPR / 准备除颤 / 非同步放电 /
-  #           推肾上腺素 / 给阿托品 / 利多卡因
-  #   → 负例（合法指令，不触发）：同步电复律 / 推注腺苷
-  #
-  # AHA 依据（2025）：
-  #   稳定窄QRS心动过速的首选是迷走神经刺激 → 腺苷阶梯治疗。
-  #   此类患者血流动力学稳定、有脉搏，胸外按压与非同步电击
-  #   属明确禁忌；肾上腺素、阿托品、利多卡因亦无指征。
-  #
-  # 拦截语义：状态机原地不动，仅记录 errorChain + 反馈。
+  # 规则 1：稳定窄QRS患者执行绝对禁忌操作（已有，保持原样）
   # ============================================================
   - id: "CONTRAINDICATED_ACTION_FOR_STABLE_SVT"
     description: "稳定窄QRS心动过速患者执行绝对禁忌操作（CPR / 非同步除颤 / 肾上腺素 / 阿托品等）。AHA 2025：稳定心动过速首选迷走神经刺激→腺苷阶梯；患者有脉搏、血流动力学稳定时，胸外按压与非同步电击均属禁忌。"
-    # phase 不写 = 不限阶段；S-101-4-4 可能在 SVT 路径任一阶段被说出
     triggerIntent: "S-101-4-4"
     condition: |
       #derived.stable == true &&
       #phys.hasPulse == true
     severity: "CRITICAL"
     keepCurrent: true
-    unityStateName: "室上速(SVT)"       # 维持原状态
+    unityStateName: "室上速(SVT)"
     effects:
       - var: "process.contraindicationBlockTriggered"
         value: true
@@ -42,4 +29,67 @@ exceptions:
         tts: "患者有脉搏、血流动力学稳定，不需要胸外按压！继续按 SVT 流程处理。"
         interruptCurrentTts: true
       exam:
-      # 空 = 考核模式静默
+
+  # ============================================================
+  # 规则 2：不稳定患者尝试迷走神经刺激（跳转类，新增）
+  #
+  # 触发意图：S-101-2-1（vagal，做 Valsalva 动作）
+  #   正常路径：F_101_DO_VAGAL_MANEUVER 自循环 / 推进到腺苷
+  #   本规则路径：不稳定的患者做 Valsalva → 立即强制跳 F_101_UNSTABLE_CARDIOVERSION
+  #
+  # AHA 依据（2025）：
+  #   血流动力学不稳定的心动过速（低血压/意识改变/休克/缺血性胸痛/急性心衰）
+  #   应立即同步电复律，迷走神经刺激无效且延误抢救。
+  #
+  # ⚠️ 验证注意：稳定患者（#derived.stable==true）不会命中此规则；
+  #    要自然触发需先让 patient 变不稳定（如 BP<90），当前 case 数据流下较难。
+  #    验证时可临时把 condition 改为 #derived.stable == true。
+  # ============================================================
+  - id: "VAGAL_ON_UNSTABLE_PATIENT"
+    description: "血流动力学不稳定的心动过速患者尝试迷走神经刺激。AHA 2025：不稳定患者应立即同步电复律，迷走神经刺激无效且延误抢救。"
+    triggerIntent: "S-101-2-1"
+    condition: |
+      #derived.stable == false
+    severity: "CRITICAL"
+    keepCurrent: false
+    jumpTo: "F_101_UNSTABLE_CARDIOVERSION"
+    unityStateName: "室上速(SVT)"          # ★ 改成已知合法值
+    effects:
+      - var: "process.instabilityTriggered"
+        value: true
+    feedback:
+      teaching:
+        tts: "患者血流动力学不稳定，迷走神经刺激无效且会延误抢救。应立即同步电复律，不要浪费时间做 Valsalva。"
+      learning:
+        tts: "不稳定！跳过迷走神经刺激，直接同步电复律！"
+        interruptCurrentTts: true
+      exam:
+
+  # ============================================================
+  # 规则 3：【验证用】稳定窄QRS禁忌操作的次要记录（多规则命中测试）
+  #
+  # 与规则 1 同意图（S-101-4-4）触发，用于验证：
+  #   - hits.size() == 2
+  #   - effects 全写（contraindicationBlockTriggered + warningRecorded）
+  #   - errorChain 记 2 条
+  #   - jumpTo 取 severity 最高（规则 1 CRITICAL > 规则 3 MINOR）
+  #
+  # ⚠️ 验证完毕后建议删除，避免污染 errorChain。
+  # ============================================================
+  - id: "STABLE_SVT_CONTRAINDICATED_SECONDARY"
+    description: "（验证用）稳定窄QRS禁忌操作的次要记录，用于测试多规则命中。验证完请删除。"
+    triggerIntent: "S-101-4-4"
+    condition: |
+      #derived.stable == true
+    severity: "MINOR"
+    keepCurrent: true
+    unityStateName: "室上速(SVT)"
+    effects:
+      - var: "process.warningRecorded"
+        value: true
+    feedback:
+      teaching:
+        tts: "（次要提示）请再次确认操作流程。"
+      learning:
+        tts: "请再确认一下。"
+      exam:

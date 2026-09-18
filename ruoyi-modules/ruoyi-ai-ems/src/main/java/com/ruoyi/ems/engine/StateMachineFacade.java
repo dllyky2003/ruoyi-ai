@@ -128,11 +128,29 @@ public class StateMachineFacade {
      *       condition 驱动的转移，学员意图到达时没有 intentCode 入口，必须靠兜底推进。</li>
      * </ul>
      */
-    @SuppressWarnings({"deprecation", "unchecked"})
     public String selectAndTransition(String instanceId,
                                       ResolvedCaseTypeConfig config,
                                       String intentCode,
                                       CaseContext ctx) {
+        return doSelectAndTransition(instanceId, config, intentCode, ctx, 0);
+    }
+
+    /**
+     * ★ 状态转移核心实现（带 depth 递归保护）。
+     *
+     * <p>depth 语义：
+     * <ul>
+     *   <li>0：外部调用入口（通过 public selectAndTransition 进入）</li>
+     *   <li>≥1：自循环 effects 后的内部重评估（由本方法末尾触发，intentCode 传 null）</li>
+     *   <li>depth >= 2 时不再触发自循环重评估，防止配置错误导致无限递归</li>
+     * </ul>
+     */
+    @SuppressWarnings({"deprecation", "unchecked"})
+    private String doSelectAndTransition(String instanceId,
+                                         ResolvedCaseTypeConfig config,
+                                         String intentCode,
+                                         CaseContext ctx,
+                                         int depth) {
 
         StateMachine<String, String> sm = getOrCreateMachine(instanceId, config);
         String currentState = sm.getState().getId();
@@ -326,6 +344,23 @@ public class StateMachineFacade {
 
         // 13. 推送新状态的生理基线
         pushPhysiologyUpdate(instanceId, config, targetState);
+
+        // 14. ★ 自循环 + effects 已写 → 立即重评估一次，避免依赖外部指令再次驱动
+        //     场景：F_101_DO_VAGAL_MANEUVER 自循环写 count=1，需要立即评估
+        //          `count==1 && effect=='pending'` 推进出边到 ADENOSINE_6MG
+        //     depth 上限保护：最多递归 2 层，防止配置错误导致无限循环
+        if (Objects.equals(currentState, targetState) && depth < 2) {
+            CaseContext latest = contextManager.getSnapshot(instanceId);
+            if (latest != null) {
+                log.info("🔁 [自循环重评估] state={}，effects 已写入，立即重评估条件出边 (depth={}, intent={})",
+                    targetState, depth, intentCode);
+                // ★ 保留原 intentCode：自循环由 S-101-2-1 触发，重评估同一意图的所有出边
+                String next = doSelectAndTransition(instanceId, config, intentCode, latest, depth + 1);
+                if (next != null && !Objects.equals(next, targetState)) {
+                    return next;
+                }
+            }
+        }
 
         return targetState;
     }

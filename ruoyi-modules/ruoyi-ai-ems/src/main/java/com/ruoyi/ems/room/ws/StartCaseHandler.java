@@ -1,8 +1,6 @@
 package com.ruoyi.ems.room.ws;
 
 import com.ruoyi.ems.domain.entity.EmsSession;
-
-
 import com.ruoyi.ems.npc.TeamSize;
 import com.ruoyi.ems.room.CaseConfigAssembler;
 import com.ruoyi.ems.room.dto.CaseConfigDto;
@@ -35,22 +33,51 @@ public class StartCaseHandler implements WsMessageRouter.WsMessageHandler {
 
     @Override
     public void handle(WsMessageContext ctx) {
-        if (ctx.role() != Role.ENGINE && ctx.role() != Role.INSTRUCTOR) {
+        // 角色放宽：ENGINE / INSTRUCTOR / SPEAKER
+        if (ctx.role() != Role.ENGINE
+            && ctx.role() != Role.INSTRUCTOR
+            && ctx.role() != Role.SPEAKER) {
             reject(ctx, "角色无权限发起案例启动");
             return;
         }
 
         SessionRoom room = roomRegistry.getOrThrow(ctx.sessionId());
 
+        // ==================== ★ 房间已绑定 emsSession 的处理 ====================
         if (room.getEmsSessionId() != null) {
-            reject(ctx, "案例已启动: " + room.getEmsSessionId());
+            String existingEmsId = room.getEmsSessionId();
+            EmsSession existing = sessionService.getSessionById(existingEmsId);
+            String status = existing != null ? existing.getStatus() : null;
+
+            // 分支 1：会话仍在运行 → Unity 重连恢复，重新下发 case_config
+            if ("RUNNING".equals(status)) {
+                log.info("♻️ 案例仍运行中，重新下发 case_config: room={}, ems={}",
+                    ctx.sessionId(), existingEmsId);
+                CaseConfigDto config = assembler.assemble(existingEmsId, ctx.sessionId());
+                broadcaster.sendToRole(ctx.sessionId(), Role.ENGINE,
+                    RoomBroadcaster.envelope("case_config", config));
+                return;
+            }
+
+            // 分支 2：会话已结束（COMPLETED/INIT 等） → 解绑旧会话，继续走创建流程
+            log.info("🔄 旧会话已结束（status={}），解绑后重新创建: room={}, oldEms={}",
+                status, ctx.sessionId(), existingEmsId);
+            // ★ 修复：attachEmsSession(null) 会抛 IllegalArgumentException（见 SessionRoom L276-278）
+            //   改用显式 detach 方法
+            room.detachEmsSession();
+        }
+
+        // ==================== 房间状态检查（保持放宽） ====================
+        RoomState state = room.getState();
+        if (state != RoomState.ACTIVE && state != RoomState.WAITING) {
+            log.warn("start_case 被拒：roomState={}, sessionId={}",
+                state, ctx.sessionId());
+            reject(ctx, "房间状态不允许启动: " + state);
             return;
         }
 
-        if (room.getState() != RoomState.ACTIVE) {
-            reject(ctx, "必需角色未到齐，当前状态: " + room.getState());
-            return;
-        }
+        log.info("📋 start_case 请求: room={}, role={}, roomState={}, clientCount={}",
+            ctx.sessionId(), ctx.role(), state, room.size());
 
         Map<String, Object> data = ctx.data();
         String caseId      = (String) data.get("caseId");
@@ -110,7 +137,6 @@ public class StartCaseHandler implements WsMessageRouter.WsMessageHandler {
             try {
                 val = Integer.parseInt(String.valueOf(v).trim());
             } catch (NumberFormatException ignored) {
-                // val 保持 null
             }
         }
         return val != null ? TeamSize.fromValue(val) : null;

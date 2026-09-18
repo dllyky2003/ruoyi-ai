@@ -12,6 +12,8 @@ public class ExtractionConfig {
     private String method;
     @JsonProperty("target_params")
     private List<String> targetParams;
+    @JsonProperty("outputs")
+    private Map<String, String> outputs;    // ★ 新增：processor 路径的"短名 → 全名"映射
     private Map<String, Object> rules;      // 或使用自定义类，但 Map 更通用
     @JsonProperty("llm_prompt")
     private String llmPrompt;

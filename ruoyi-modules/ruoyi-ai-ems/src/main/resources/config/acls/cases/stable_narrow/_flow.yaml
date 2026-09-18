@@ -534,7 +534,7 @@ stateMachine:
       target: "F_101_DO_SECOND_LINE_DRUG"
       intentCode: "S-101-2-5"
       condition: "#clinical.isWpw == false && (#intervention.diltiazem.count == null || #intervention.diltiazem.count == 0)"
-      priority: 5
+      priority: 30
       exitReason: null
       effects:
         - var: "intervention.diltiazem.count"
@@ -556,14 +556,18 @@ stateMachine:
       effects: []
       description: "学员宣布转复为窦性 → 直接跳到父级 ROSC 接管"
 
+    # ★★★ 修改点（本次）：exit guard 加 30 秒时间窗 ★★★
+    # 原因：B-1 自循环重评估（depth=0）在自循环后立即触发，此时 timeElapsedSinceLastIntervention=0，
+    #      原 guard rhythmConverted==false 立即为 true → 直接退出到父级。
+    #      加时间窗后，30 秒内留在原地等学员下一步指令，30 秒后才判 REFRACTORY_SVT。
     - source: "F_101_DO_SECOND_LINE_DRUG"
       target: "F_101_EXIT_TO_PARENT"
       intentCode: "S-101-2-5"
-      condition: "#intervention.rhythmConverted == false"
+      condition: "#intervention.rhythmConverted == false && #process.timeElapsedSinceLastIntervention > 30"
       priority: 10
       exitReason: "REFRACTORY_SVT"
       effects: []
-      description: "二线药物无效 → 退出父级"
+      description: "二线药物 30 秒未生效 → 退出父级"
 
     - source: "F_101_DO_SECOND_LINE_DRUG"
       target: "F_101_MONITOR_SINUS_RHYTHM"

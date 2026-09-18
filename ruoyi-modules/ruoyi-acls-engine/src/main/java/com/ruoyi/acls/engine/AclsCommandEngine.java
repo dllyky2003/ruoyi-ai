@@ -22,6 +22,10 @@ import com.ruoyi.ems.engine.StateMachineFacade;
 import com.ruoyi.ems.exception.ExceptionEngine;
 import com.ruoyi.ems.npc.IVrClientService;
 import com.ruoyi.ems.npc.TeamManager;
+import com.ruoyi.ems.room.model.Role;
+import com.ruoyi.ems.room.model.SessionRoom;
+import com.ruoyi.ems.room.registry.RoomRegistry;
+import com.ruoyi.ems.room.ws.RoomBroadcaster;
 import com.ruoyi.ems.rule.IRuleEvaluator;
 import com.ruoyi.ems.service.SessionService;
 import com.ruoyi.ems.tts.KokoroTtsClient;
@@ -93,6 +97,11 @@ public class AclsCommandEngine {
     private final IRuleEvaluator ruleEvaluator;
     private final SessionService sessionService;   // 取 TeachingMode
 
+    // ========== ★ 房间通道（用于把消息真正发给 Unity） ==========
+    private final RoomRegistry roomRegistry;
+    private final RoomBroadcaster roomBroadcaster;
+
+
     /**
      * 处理学员指令
      */
@@ -131,7 +140,18 @@ public class AclsCommandEngine {
                 return CommandResult.failure("会话上下文不存在");
             }
 
+            // ★ 新增：context 已失效（被 endSession 清了 caseType）→ 拒绝处理
+            // 避免下游 getConfig(null) 抛 NPE
             String caseType = caseContext.getCaseType();
+            if (caseType == null || caseType.isBlank()) {
+                log.warn("⚠️ 会话上下文已失效（可能已 endSession），拒绝处理指令: session={}, intent={}",
+                    sessionId, intentId);
+                return CommandResult.builder()
+                    .success(false)
+                    .errorMessage("会话已结束")
+                    .build();
+            }
+
             String currentState = caseContext.getCurrentState();
             log.info("📌 session={}, caseType={}, state={}, intent={}, actType={}",
                 sessionId, caseType, currentState, intentId, actType);
@@ -177,14 +197,12 @@ public class AclsCommandEngine {
                 log.info("⚠️ Phase 软警告: session={}, intent={}, phase={}, active={}, msg={}",
                     sessionId, intentId, phaseCheck.getPrimaryPhase(),
                     phaseCheck.getActivePhasesView(), warnMsg);
-                if (warnMsg != null && !warnMsg.isBlank()) {
-                    try {
-                        ttsService.speak(sessionId, warnMsg);
-                    } catch (Exception e) {
-                        log.warn("Phase WARN TTS 播报失败: session={}, err={}",
-                            sessionId, e.getMessage());
-                    }
-                }
+                // ★ Phase 软警告只记日志，不播 TTS。
+                //   原因：ttsService.speak() → speakStream，
+                //   conn.getResponseCode() / line.write() / line.drain() 全同步阻塞，
+                //   单条指令耗时 10-15s，25 条累计约 4 分钟。
+                //   Phase 软警告属提示性反馈，非关键路径，不播报不影响业务流程。
+                //   后续如恢复播报，改用异步方案（需先给 KokoroTtsClient 加 per-session 队列）。
             }
 
             // ========== 4. 前置验证（OperationArbiter） ==========
@@ -427,24 +445,52 @@ public class AclsCommandEngine {
      * @param sessionId      会话 id
      * @param unityStateName Unity 有效状态名（来自 ExceptionRule.unityStateName）
      */
-    private void sendUnityStateChange(String sessionId, String unityStateName) {
+    /**
+     * 向 Unity 下发生理状态切换指令。
+     *
+     * <p>★ 通道修正：消息通过 RoomBroadcaster 走 {@code /ws/session/{roomSessionId}} 通道，
+     * 不再走 {@code WebSocketMessageSender}（那是 ASR 语音通道，Unity 收不到）。</p>
+     *
+     * <p>★ 结构修正：改为 {@code {type, data: {stateName}, timestamp}} 嵌套结构，
+     * 与 Unity 侧 EngineJson.ParseEnvelope 的解析逻辑对齐。</p>
+     *
+     * @param emsSessionId   业务会话 id（AclsCommandEngine 上下文的 sessionId）
+     * @param unityStateName Unity 有效状态名（中文 stateName，如 "室上速(SVT)"）
+     */
+    private void sendUnityStateChange(String emsSessionId, String unityStateName) {
         if (unityStateName == null || unityStateName.isBlank()) {
-            log.warn("sendUnityStateChange: unityStateName 为空，跳过: session={}", sessionId);
+            log.warn("sendUnityStateChange: unityStateName 为空，跳过: ems={}", emsSessionId);
             return;
         }
         try {
-            Map<String, Object> payload = new LinkedHashMap<>();
-            payload.put("type", "physiology_state_change");   // 方案 A：独立 type，不与正常 state_change 混
-            payload.put("stateName", unityStateName);
-            payload.put("timestamp", System.currentTimeMillis());
-            messageSender.send(sessionId, payload);
-            log.info("📤 Unity 生理状态切换已下发: session={}, stateName={}",
-                sessionId, unityStateName);
+            // 1. 反查房间（emsSessionId → roomSessionId）
+            SessionRoom room = roomRegistry.getByEmsSessionId(emsSessionId).orElse(null);
+            if (room == null) {
+                log.warn("sendUnityStateChange: 找不到房间映射 emsSessionId={}", emsSessionId);
+                return;
+            }
+            String roomSessionId = room.getSessionId();
+
+            // 2. 嵌套 data 结构（与 RoomBroadcaster.envelope 对齐）
+            Map<String, Object> data = new LinkedHashMap<>();
+            data.put("stateName", unityStateName);
+            Map<String, Object> envelope =
+                RoomBroadcaster.envelope("physiology_state_change", data);
+
+            // 3. 定向发给 Unity（ENGINE 角色）
+            roomBroadcaster.sendToRoles(
+                roomSessionId,
+                java.util.Set.of(Role.ENGINE),
+                envelope
+            );
+
+            log.info("📤 Unity 生理状态切换已下发: room={}, ems={}, stateName={}",
+                roomSessionId, emsSessionId, unityStateName);
         } catch (Exception e) {
             // 下发失败不阻断异常处理：effects 已写、forceTransition 会执行，
             // 只是 Unity 侧生理状态没切。记 error 供人工核查。
-            log.error("Unity 生理状态切换下发失败: session={}, stateName={}",
-                sessionId, unityStateName, e);
+            log.error("Unity 生理状态切换下发失败: ems={}, stateName={}",
+                emsSessionId, unityStateName, e);
         }
     }
 
@@ -510,6 +556,12 @@ public class AclsCommandEngine {
         Map<String, Object> updates = new HashMap<>();
         updates.put(ERROR_CHAIN_KEY, chain);
         persistUpdates(sessionId, updates, ctx, "EXCEPTION_ERROR_CHAIN");
+
+
+        // ★ 临时验证日志（验证完删掉）
+        log.info("🔗 errorChain 现长 {} 条，本轮新增 {} 条，最后一条: {}",
+            chain.size(), hits.size(), chain.get(chain.size() - 1));
+
     }
 
     private int severityScore(String severity) {

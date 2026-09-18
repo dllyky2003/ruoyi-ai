@@ -409,4 +409,14 @@ public class SessionRoom {
 
         return m;
     }
+
+    /**
+     * 解绑业务会话。
+     *
+     * <p>用于房间"结束→重启"场景：旧会话已 COMPLETED，需要重新创建新会话。
+     * <p>与 {@link #attachEmsSession(String)} 配对使用。
+     */
+    public void detachEmsSession() {
+        this.emsSessionId = null;
+    }
 }

@@ -34,19 +34,18 @@
     "phys.hasPulse": true
   },
 
-  "variables": [
-    {
-      "name": "process.qrsWidthChecked",
-      "name_cn": "QRS宽度已检查",
-      "type": "boolean",
-      "description": "QRS宽度是否已检查（稳定窄QRS场景）",
-      "category": "PROCESS_MARKER",
-      "source": "EXECUTOR",
-      "writable_by": "EXECUTOR",
-      "default_value": false,
-      "persistence": true,
-      "scoring": false
-    },
+  "variables": [{
+    "name": "process.qrsWidthChecked",
+    "name_cn": "QRS宽度已检查",
+    "type": "boolean",
+    "description": "QRS宽度是否已检查（稳定窄QRS场景）",
+    "category": "PROCESS_MARKER",
+    "source": "EXECUTOR",
+    "writable_by": "EXECUTOR",
+    "default_value": false,
+    "persistence": true,
+    "scoring": false
+  },
     {
       "name": "process.rhythmRegularityChecked",
       "name_cn": "节律规则性已检查",
@@ -66,7 +65,7 @@
       "description": "血流动力学稳定性是否已评估",
       "category": "PROCESS_MARKER",
       "source": "EXECUTOR",
-      "writable_by": "EXECUTOR",
+      "writable_by": "EXECUTOR,PARAM_EXTRACTOR",
       "default_value": false,
       "persistence": true,
       "scoring": false
@@ -87,15 +86,23 @@
       "name": "intervention.rhythmConfirmed",
       "name_cn": "确认的心律类型",
       "type": "string",
-      "enum": [
-        { "value": "afib", "label": "房颤（AFib）" },
-        { "value": "aflutter", "label": "房扑（AFlutter）" },
-        { "value": "unknown", "label": "未知" }
+      "enum": [{
+        "value": "afib",
+        "label": "房颤（AFib）"
+      },
+        {
+          "value": "aflutter",
+          "label": "房扑（AFlutter）"
+        },
+        {
+          "value": "unknown",
+          "label": "未知"
+        },{"value":"sinus","label":"窦性心律（Sinus）"}
       ],
       "description": "确认的心律类型",
       "category": "LEARNER_STATEMENT",
       "source": "LEARNER",
-      "writable_by": "CLASSIFIER",
+      "writable_by": "CLASSIFIER,PARAM_EXTRACTOR",
       "default_value": "unknown",
       "persistence": true,
       "scoring": true
@@ -143,15 +150,23 @@
       "name": "process.vagalEffectObserved",
       "name_cn": "迷走动作效果",
       "type": "string",
-      "enum": [
-        { "value": "pending", "label": "待观察" },
-        { "value": "success", "label": "转复成功" },
-        { "value": "failure", "label": "无效" }
+      "enum": [{
+        "value": "pending",
+        "label": "待观察"
+      },
+        {
+          "value": "success",
+          "label": "转复成功"
+        },
+        {
+          "value": "failure",
+          "label": "无效"
+        }
       ],
       "description": "迷走神经刺激的转复效果",
       "category": "PROCESS_MARKER",
       "source": "EXECUTOR",
-      "writable_by": "EXECUTOR",
+      "writable_by": "EXECUTOR,PARAM_EXTRACTOR",
       "default_value": "pending",
       "persistence": true,
       "scoring": true
@@ -160,15 +175,23 @@
       "name": "intervention.adenosineDoseSequence",
       "name_cn": "腺苷剂量序列",
       "type": "string",
-      "enum": [
-        { "value": "first", "label": "首剂 6mg" },
-        { "value": "second", "label": "次剂 12mg" },
-        { "value": "none", "label": "未给药" }
+      "enum": [{
+        "value": "first",
+        "label": "首剂 6mg"
+      },
+        {
+          "value": "second",
+          "label": "次剂 12mg"
+        },
+        {
+          "value": "none",
+          "label": "未给药"
+        }
       ],
       "description": "腺苷处于首剂还是次剂阶段（AHA 2025 阶梯：6mg → 12mg）",
       "category": "TREATMENT_HISTORY",
       "source": "EXECUTOR",
-      "writable_by": "EXECUTOR",
+      "writable_by": "EXECUTOR,PARAM_EXTRACTOR",
       "default_value": "none",
       "persistence": true,
       "scoring": true
@@ -226,12 +249,10 @@
 
   "auto_derived_rules": {
     "description": "案例专属派生规则",
-    "rules": [
-      {
-        "source_vars": ["assert.qrsWidth", "assert.rhythmRegular"],
-        "target_var": "process.anticoagulationDecisionTriggered",
-        "rule": "#assert.qrsWidth == 'narrow' and #assert.rhythmRegular == false"
-      }
-    ]
+    "rules": [{
+      "source_vars": ["assert.qrsWidth", "assert.rhythmRegular"],
+      "target_var": "process.anticoagulationDecisionTriggered",
+      "rule": "#assert.qrsWidth == 'narrow' and #assert.rhythmRegular == false"
+    }]
   }
 }

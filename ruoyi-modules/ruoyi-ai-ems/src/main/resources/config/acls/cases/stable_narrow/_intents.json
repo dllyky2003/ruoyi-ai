@@ -127,6 +127,9 @@
                 "target_params": [
                   "assert.qrsWidth"
                 ],
+                "outputs": {
+                  "assertedQrsWidth": "assert.qrsWidth"
+                },
                 "rules": {
                   "processor": "#{thresholdParser.parseQrsWidth(#ctx)}"
                 }
@@ -236,6 +239,9 @@
                 "target_params": [
                   "assert.rhythmRegular"
                 ],
+                "outputs": {
+                  "assertedRhythmRegular": "assert.rhythmRegular"
+                },
                 "rules": {
                   "processor": "#{rhythmParser.parseRegularity(#ctx)}"
                 }
@@ -602,6 +608,9 @@
                   "intervention.vagalManeuverPerformed",
                   "intervention.vagalEffectObserved"
                 ],
+                "outputs": {
+                  "operation_status": "process.operationStatus"
+                },
                 "rules": {
                   "processor": "#{vagalParser.parse(#ctx)}"
                 }
@@ -720,6 +729,12 @@
                   "intervention.lastDrugDose",
                   "intervention.operationStatus"
                 ],
+                "outputs": {
+                  "drug": "intervention.lastDrug",
+                  "dose": "intervention.lastDrugDose",
+                  "doseSequence": "intervention.adenosineDoseSequence",
+                  "operationStatus": "process.operationStatus"
+                },
                 "rules": {
                   "processor": "#{drugParser.parseSequenceDrug(#ctx)}"
                 }
@@ -950,7 +965,7 @@
                 "target_params": [
                   "intervention.lastDrug",
                   "intervention.lastDrugDose",
-                  "intervention.operationStatus"
+                  "process.operationStatus"
                 ],
                 "rules": {
                   "processor": "#{drugParser.parseWeightBasedDrug(#ctx)}"
@@ -1289,6 +1304,10 @@
                   "intervention.rhythmConfirmed",
                   "intervention.rhythmConverted"
                 ],
+                "outputs": {
+                  "vagalEffectObserved": "process.vagalEffectObserved",
+                  "rhythmConfirmed": "intervention.rhythmConfirmed"
+                },
                 "rules": {
                   "processor": "#{resultParser.parse(#ctx)}"
                 }

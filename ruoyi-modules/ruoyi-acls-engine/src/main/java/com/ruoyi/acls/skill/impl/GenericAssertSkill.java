@@ -6,7 +6,6 @@ import com.ruoyi.ems.npc.Duty;
 import com.ruoyi.ems.npc.TeamMember;
 import com.ruoyi.ems.spel.SpELExpressionEvaluator;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.expression.spel.support.StandardEvaluationContext;
 
 import java.util.*;
 
@@ -99,12 +98,15 @@ public class GenericAssertSkill extends AbstractEmsSkill {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public CommandResult execute(CommandContext context, Map<String, Object> slots, TeamMember executor) {
         String sessionId = context.getSessionId();
 
-        // 1. 构建 SpEL 评估上下文
-        StandardEvaluationContext evalCtx = buildEvalContext(context);
+        // ★ 改动 1：构建 extraVars，保留 #context / #caseContext 可访问性。
+        //    #phys / #process / #derived 等前缀变量由 SpELExpressionEvaluator.buildContext
+        //    统一注册为 DynamicVariableMap，避免与状态机 Guard 路径分裂成两套上下文构造。
+        Map<String, Object> extraVars = new LinkedHashMap<>();
+        extraVars.put("context", context);                          // CommandContext（与原 buildEvalContext 一致）
+        extraVars.put("caseContext", context.getCaseContext());     // 向后兼容
 
         // 2. sourceVars 缺失判定（配置驱动）
         if (!sourceVars.isEmpty()) {
@@ -116,10 +118,15 @@ public class GenericAssertSkill extends AbstractEmsSkill {
             }
         }
 
-        // 3. 执行判读
+        // ★ 改动 2：执行判读，走 SpELExpressionEvaluator 的 CaseContext 重载
         Object result;
         try {
-            result = spelEvaluator.evaluateValue(assertExpression, evalCtx, Object.class);
+            result = spelEvaluator.evaluateValue(
+                assertExpression,
+                context.getCaseContext(),   // ← 传 CaseContext（不再传手造的 StandardEvaluationContext）
+                extraVars,
+                Object.class
+            );
         } catch (Exception e) {
             log.error("判读表达式执行失败: {}", assertExpression, e);
             return CommandResult.failure("判读失败: " + e.getMessage());
@@ -157,19 +164,8 @@ public class GenericAssertSkill extends AbstractEmsSkill {
         return CommandResult.success(reportSpeech);
     }
 
-    private StandardEvaluationContext buildEvalContext(CommandContext context) {
-        StandardEvaluationContext evalCtx = new StandardEvaluationContext();
-
-        Map<String, Object> vars = context.getCaseContext().getVariablesSnapshot();
-        for (Map.Entry<String, Object> entry : vars.entrySet()) {
-            evalCtx.setVariable(entry.getKey(), entry.getValue());
-        }
-
-        evalCtx.setVariable("context", context);
-        evalCtx.setVariable("caseContext", context.getCaseContext());
-
-        return evalCtx;
-    }
+    // ★ 改动 3：buildEvalContext 方法已删除 ——
+    //   由 SpELExpressionEvaluator.buildContext(CaseContext, extraVars) 统一负责上下文构造。
 
     // ==================== 前置条件比较增强（沿用你原逻辑） ====================
 

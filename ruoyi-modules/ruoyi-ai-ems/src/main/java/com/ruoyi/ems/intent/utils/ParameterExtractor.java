@@ -226,15 +226,40 @@ public class ParameterExtractor {
                     }
                     log.info(">>> 准备执行 SpEL 表达式: {}", expr);
                     Object result = spelParser.parseExpression(expr).getValue(spelCtx);
+
+
+
                     if (result instanceof Map) {
                         Map<String, Object> processorResult = (Map<String, Object>) result;
                         if (!processorResult.isEmpty()) {
-                            log.info("意图 {} 处理器抽取成功，参数：{}", intentResult.getIntentCode(), processorResult);
+                            // ★ 按 extraction.outputs 把 parser 返回的短名映射为 context 全名
+                            Map<String, String> outputs = extraction.getOutputs();
+                            Map<String, Object> mapped = new LinkedHashMap<>();
+                            for (Map.Entry<String, Object> e : processorResult.entrySet()) {
+                                String shortName = e.getKey();
+                                if (shortName.contains(".")) {
+                                    mapped.put(shortName, e.getValue());   // 已是全名，不动
+                                    continue;
+                                }
+                                if (outputs != null && outputs.containsKey(shortName)) {
+                                    mapped.put(outputs.get(shortName), e.getValue());
+                                } else {
+                                    log.warn("意图 {} 的 outputs 里找不到 {} 的映射，丢弃",
+                                        intentResult.getIntentCode(), shortName);
+                                }
+                            }
+                            log.info("意图 {} 处理器抽取成功，参数（映射前）：{}",
+                                intentResult.getIntentCode(), processorResult);
+                            log.info("意图 {} 处理器抽取成功，参数（映射后）：{}",
+                                intentResult.getIntentCode(), mapped);
                             saveExtractionMemory(sessionId, ctx);
-                            intentResult.setSlots(processorResult);
-                            return processorResult;
+                            intentResult.setSlots(mapped);
+                            return mapped;
                         }
                     } else {
+
+
+
                         log.warn("处理器返回结果不是 Map，实际类型: {}，意图码: {}",
                             result == null ? "null" : result.getClass().getSimpleName(),
                             intentResult.getIntentCode());
@@ -285,14 +310,21 @@ public class ParameterExtractor {
             ChatResponse response = chatModel.chat(messages);
             String llmResponse = response.aiMessage().text();
             log.info(">>> LLM 原始响应: {}", llmResponse);
+
             Map<String, Object> extractedParams = parseJsonToMap(llmResponse);
             if (extractedParams == null) {
                 extractedParams = Collections.emptyMap();
             }
-            Map<String, Object> cleanedParams = removeNullValues(extractedParams);
+            // ★ 新增：LLM 可能返回嵌套结构（如 {intervention={lastDrug=x}}），展平为点分全名
+            Map<String, Object> flatParams = flattenNestedMap(extractedParams);
+            Map<String, Object> cleanedParams = removeNullValues(flatParams);
 
             log.info("意图 {} LLM 抽取成功，参数：{}", intentResult.getIntentCode(), cleanedParams);
             saveExtractionMemory(sessionId, ctx);
+
+
+
+
             intentResult.setSlots(cleanedParams);
             return cleanedParams;
 
@@ -849,5 +881,39 @@ public class ParameterExtractor {
 
         log.error("无法从 LLM 响应中提取 JSON，原始内容：\n{}", rawResponse);
         return Collections.emptyMap();
+    }
+
+    /**
+     * 将 LLM 返回的嵌套 Map 展平为点分全名。
+     *
+     * <p>例：{intervention={lastDrug=x, lastDrugDose=y}} -> {"intervention.lastDrug": x, "intervention.lastDrugDose": y}
+     *
+     * <p>规则：
+     * <ul>
+     *   <li>value 是 Map → 递归展平，key 用 "parent.child" 形式拼接</li>
+     *   <li>value 非 Map（标量/null/List）→ key 原样保留，不做处理</li>
+     * </ul>
+     *
+     * <p>目的：兜底 LLM 不遵守 prompt 约束、输出嵌套 JSON 的情况。
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> flattenNestedMap(Map<String, Object> input) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        if (input == null || input.isEmpty()) {
+            return result;
+        }
+        for (Map.Entry<String, Object> e : input.entrySet()) {
+            String key = e.getKey();
+            Object value = e.getValue();
+            if (value instanceof Map) {
+                Map<String, Object> subMap = flattenNestedMap((Map<String, Object>) value);
+                for (Map.Entry<String, Object> sub : subMap.entrySet()) {
+                    result.put(key + "." + sub.getKey(), sub.getValue());
+                }
+            } else {
+                result.put(key, value);
+            }
+        }
+        return result;
     }
 }

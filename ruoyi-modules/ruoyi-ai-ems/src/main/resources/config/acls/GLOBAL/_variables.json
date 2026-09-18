@@ -12,6 +12,7 @@
       "max": 350,
       "unit": "bpm",
       "description": "实时心率",
+      "writable_by": "PARAM_EXTRACTOR,SKILL_RESULT,UNITY_VITALS",
       "category": "PHYSIOLOGICAL",
       "default_value": 150
     },
@@ -23,6 +24,7 @@
       "max": 300,
       "unit": "mmHg",
       "description": "收缩压",
+      "writable_by": "PARAM_EXTRACTOR,SKILL_RESULT,UNITY_VITALS",
       "category": "PHYSIOLOGICAL",
       "default_value": 145
     },
@@ -34,6 +36,7 @@
       "max": 200,
       "unit": "mmHg",
       "description": "舒张压",
+      "writable_by": "PARAM_EXTRACTOR,SKILL_RESULT,UNITY_VITALS",
       "category": "PHYSIOLOGICAL",
       "default_value": 90
     },
@@ -168,6 +171,7 @@
       "max": 100,
       "unit": "%",
       "description": "脉搏血氧饱和度",
+      "writable_by": "PARAM_EXTRACTOR,SKILL_RESULT,UNITY_VITALS",
       "category": "PHYSIOLOGICAL",
       "default_value": 98
     },
@@ -179,6 +183,7 @@
       "max": 100,
       "unit": "mmHg",
       "description": "呼气末二氧化碳分压",
+      "writable_by": "PARAM_EXTRACTOR,SKILL_RESULT,UNITY_VITALS",
       "category": "PHYSIOLOGICAL",
       "default_value": 35
     },
@@ -2666,6 +2671,7 @@
       "max": 60,
       "unit": "/min",
       "description": "学员报告的呼吸频率",
+      "writable_by": "PARAM_EXTRACTOR,SKILL_RESULT,UNITY_VITALS",
       "category": "LEARNER_STATEMENT",
       "default_value": null
     },
@@ -3139,7 +3145,7 @@
       "description": "从学员陈述中抽取的症状标准编码集合，供血流动力学稳定性判定与审计",
       "category": "PROCESS_MARKER",
       "source": "EXTRACTOR",
-      "writable_by": ["PARAM_EXTRACTOR"],
+      "writable_by": "PARAM_EXTRACTOR",
       "default_value": [],
       "persistence": true,
       "scoring": false

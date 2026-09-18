@@ -17,20 +17,24 @@ import java.util.regex.Pattern;
  * <ul>
  *   <li>否定词作用域识别（"没有胸痛" → 不提取 chest_pain）</li>
  *   <li>症状关键词映射（中文 → 标准编码）</li>
- *   <li>输出 {@code assert.stable}（客观推导的稳定性）</li>
  *   <li>输出 {@code process.hemodynamicsAssessed}（评估动作标记）</li>
- *   <li>输出 {@code symptoms}（原始症状列表，供审计）</li>
+ *   <li>输出 {@code process.symptoms}（原始症状列表，供审计）</li>
  * </ul>
  *
- * <p><b>不负责：</b>句类识别（疑问/陈述/祈使）。该职责由分类层的
- * {@code actType}（PROBE / ANNOUNCEMENT / COMMAND）承担，
- * 抽取层通过 {@code ParameterExtractor} 的 PROBE 过滤实现"疑问句不写断言"。</p>
+ * <p><b>不负责：</b></p>
+ * <ul>
+ *   <li>句类识别（疑问/陈述/祈使）。该职责由分类层的
+ *       {@code actType}（PROBE / ANNOUNCEMENT / COMMAND）承担，
+ *       抽取层通过 {@code ParameterExtractor} 的 PROBE 过滤实现"疑问句不写断言"。</li>
+ *   <li><b>稳定性判断</b>。{@code assert.stable} 由 {@code GenericAssertSkill}
+ *       基于客观 vitals（BP / 意识 / RR）统一判定，本解析器<b>不再写</b>该变量，
+ *       避免与 skill 路径的判读结论产生数据冲突。</li>
+ * </ul>
  *
  * <p>输出键名与 {@code _variables.json} 对齐：</p>
  * <ul>
- *   <li>{@code assert.stable} —— 稳定/不稳定判断（boolean）</li>
  *   <li>{@code process.hemodynamicsAssessed} —— 是否发起评估（boolean，总是 true）</li>
- *   <li>{@code symptoms} —— 症状列表（List&lt;String&gt;，原始编码，供审计）</li>
+ *   <li>{@code process.symptoms} —— 症状列表（List&lt;String&gt;，原始编码，供审计）</li>
  * </ul>
  */
 @Slf4j
@@ -60,17 +64,19 @@ public class NegationAwareSymptomParser {
     }
 
     /**
-     * 从原始文本中抽取症状，并推导稳定性。
+     * 从原始文本中抽取症状，并推导稳定性（仅用于日志诊断）。
      *
      * <p>输出键名与 {@code _variables.json} 对齐，方便 {@code ParameterExtractor}
      * 在 PROBE 意图时按前缀过滤。</p>
+     *
+     * <p><b>注意</b>：{@code assert.stable} 不再由本方法输出。
+     * 稳定性判断由 {@code GenericAssertSkill} 基于客观 vitals 统一负责。</p>
      *
      * @param ctx 抽取上下文（含 rawText）
      * @return Map 包含：
      *         <ul>
      *           <li>{@code process.hemodynamicsAssessed} = true（总是）</li>
-     *           <li>{@code assert.stable} = 是否稳定（boolean）</li>
-     *           <li>{@code symptoms} = 症状列表（List&lt;String&gt;，仅在有症状时输出）</li>
+     *           <li>{@code process.symptoms} = 症状列表（List&lt;String&gt;，仅在有症状时输出）</li>
      *         </ul>
      */
     public Map<String, Object> extractSymptoms(ExtractionContext ctx) {
@@ -81,7 +87,8 @@ public class NegationAwareSymptomParser {
         result.put("process.hemodynamicsAssessed", true);
 
         if (raw == null || raw.isEmpty()) {
-            result.put("assert.stable", true);
+            // ★ 已移除：result.put("assert.stable", true);
+            //   稳定性判断统一由 GenericAssertSkill 负责。
             return result;
         }
 
@@ -104,18 +111,18 @@ public class NegationAwareSymptomParser {
 
         List<String> uniqueSymptoms = new ArrayList<>(new LinkedHashSet<>(positiveSymptoms));
 
-        // 3. 推导稳定性
+        // 3. 本地推导稳定性 —— ★ 仅供日志诊断，不再写回 Context
         //    有明确症状 → 不稳定；无症状词 → 稳定
-        //    （"疑问句不该写断言"的责任由 ParameterExtractor 的 PROBE 过滤承担）
         boolean stable = uniqueSymptoms.isEmpty();
-        result.put("assert.stable", stable);
 
         // 4. 症状列表（仅在有症状时输出，避免污染 Context）
         if (!uniqueSymptoms.isEmpty()) {
             result.put("process.symptoms", uniqueSymptoms);
         }
 
-        log.info("症状提取结果: symptoms={}, stable={}, assessed=true",
+        // ★ 已移除：result.put("assert.stable", stable);
+
+        log.info("症状提取结果: symptoms={}, stable={}(仅日志), assessed=true",
             uniqueSymptoms, stable);
         return result;
     }

@@ -171,7 +171,9 @@ public class CaseContractBuilder {
             if (def.hasExtraction() && def.getExtraction().getTargetParams() != null) {
                 writes.addAll(def.getExtraction().getTargetParams());
             }
-
+            if (def.hasExtraction() && def.getExtraction().getOutputs() != null) {
+                writes.addAll(def.getExtraction().getOutputs().values());
+            }
             if (!writes.isEmpty()) {
                 result.put(intentCode, writes);
             }

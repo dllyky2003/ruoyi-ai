@@ -233,6 +233,7 @@ public class SessionService {
         redisContext.put("caseId", caseId);
         redisContext.put("traineeName", traineeName);
         redisContext.put("mode", mode);
+        redisContext.put("teamSize", teamSize);   // ★ 新增：供 startSession 恢复用
         redisContext.put("status", "RUNNING");
         redisContext.put("currentState", initialState);
         redisContext.put("actions", new ArrayList<>());
@@ -250,6 +251,94 @@ public class SessionService {
 
         log.info("✅ 会话创建成功，状态机已初始化: {}", sessionId);
         return session;
+    }
+
+    /**
+     * 重建会话上下文、状态机、Phase 与团队。
+     *
+     * <p>用于 startSession 恢复被 endSession 清空的会话（"结束→启动"场景）。</p>
+     */
+    private void reinitializeContext(String sessionId, String scenarioId, TeamSize teamSize) {
+        EmsScenario scenario = scenarioService.getById(scenarioId);
+        if (scenario == null) {
+            throw new RuntimeException("场景不存在: " + scenarioId);
+        }
+        String caseId = scenario.getId();
+        ResolvedCaseTypeConfig config = configLoader.getConfig(caseId);
+        if (config == null) {
+            throw new RuntimeException("案例配置不存在: " + caseId);
+        }
+
+        // 1. 建 context + caseType
+        CaseContext caseContext = contextManager.getOrCreate(sessionId);
+        contextManager.batchSetVarsWithVersion(
+            sessionId, Map.of("caseType", caseId), "SYSTEM", caseContext.getVersion());
+
+        // 2. 建状态机
+        redisTemplate.delete("acls:sm:state:" + sessionId);
+        stateMachineFacade.clearCache(sessionId);
+        StateMachine<String, String> stateMachine =
+            stateMachineFacade.getOrCreateMachine(sessionId, config);
+
+        String initialState = stateMachine.getState().getId();
+        stateMachineCache.put(sessionId, stateMachine);
+        stateMachine.getExtendedState().getVariables().put("caseId", caseId);
+        stateMachine.getExtendedState().getVariables().put("sessionId", sessionId);
+        stateMachine.getExtendedState().getVariables().put("scenarioId", scenarioId);
+
+        // 3. 写 currentState
+        CaseContext ctxAfterState = contextManager.getSnapshot(sessionId);
+        contextManager.batchSetVarsWithVersion(
+            sessionId, Map.of("currentState", initialState), "SYSTEM",
+            ctxAfterState != null ? ctxAfterState.getVersion() : 0L);
+
+        // 4. resetDefaults（触发 derived 刷新）
+        boolean resetApplied = contextManager.applyResetDefaults(sessionId, caseId, "SYSTEM");
+        if (!resetApplied) {
+            log.warn("应用 resetDefaults 失败: {}", sessionId);
+        } else {
+            log.info("✅ 案例 {} 默认变量已初始化", caseId);
+        }
+
+        // 5. Phase 初始化
+        try {
+            phaseManager.initialize(sessionId, config);
+            CaseContext phaseCtx = contextManager.getSnapshot(sessionId);
+            String initialPhase = phaseCtx != null ? phaseCtx.getPrimaryPhase() : null;
+            log.info("✅ Phase 已初始化: session={}, primaryPhase={}", sessionId, initialPhase);
+        } catch (Exception e) {
+            log.warn("Phase 初始化失败: session={}, err={}", sessionId, e.getMessage());
+        }
+
+        // 6. 团队初始化
+        try {
+            teamManager.initializeTeam(sessionId, teamSize);
+            log.info("🏥 虚拟团队已初始化: {} (模板: {})", sessionId, teamSize);
+        } catch (Exception e) {
+            log.warn("虚拟团队初始化失败: {}", e.getMessage());
+        }
+
+        // 7. 同步 Redis 中的 status（context 已重建，标记为 RUNNING）
+        redisTemplate.opsForHash().put(SESSION_CONTEXT_PREFIX + sessionId, "status", "RUNNING");
+        redisTemplate.opsForHash().put(SESSION_CONTEXT_PREFIX + sessionId, "teamSize", teamSize);
+
+        log.info("✅ 会话上下文已重建: {}", sessionId);
+    }
+
+    /**
+     * 从 Redis 读取 teamSize（会话创建时写入）。
+     */
+    private TeamSize readTeamSizeFromRedis(String sessionId) {
+        try {
+            Object v = redisTemplate.opsForHash()
+                .get(SESSION_CONTEXT_PREFIX + sessionId, "teamSize");
+            if (v == null) return null;
+            if (v instanceof TeamSize) return (TeamSize) v;
+            return TeamSize.valueOf(String.valueOf(v));
+        } catch (Exception e) {
+            log.warn("读取 teamSize 失败: {}", e.getMessage());
+            return null;
+        }
     }
 
     public String getLiveMermaid(String sessionId) {
@@ -273,16 +362,30 @@ public class SessionService {
         if (session == null) {
             throw new RuntimeException("会话不存在");
         }
-        log.info("开始会话: {}", session.getId());
+        String sessionId = session.getId();
+        log.info("开始会话: {}", sessionId);
+
+        // ★ 新增：检测 context 已被 endSession 清空 → 重建
+        CaseContext ctx = contextManager.getSnapshot(sessionId);
+        if (ctx == null || ctx.getCaseType() == null) {
+            log.info("♻️ 检测到 context 已失效，重新初始化: ems={}, scenario={}",
+                sessionId, session.getScenarioId());
+
+            TeamSize teamSize = readTeamSizeFromRedis(sessionId);
+            if (teamSize == null) {
+                teamSize = TeamSize.defaultSize();
+                log.warn("Redis 无 teamSize 记录，使用默认: {}", teamSize);
+            }
+
+            reinitializeContext(sessionId, session.getScenarioId(), teamSize);
+        }
+
         session.setStatus("RUNNING");
         sessionMapper.updateById(session);
-        redisTemplate.opsForHash().put(SESSION_CONTEXT_PREFIX + session.getId(), "status", "RUNNING");
-        processTranscriptService.prepareForStart(session.getId());
-
-
+        redisTemplate.opsForHash().put(SESSION_CONTEXT_PREFIX + sessionId, "status", "RUNNING");
+        processTranscriptService.prepareForStart(sessionId);
 
         // ★ 建立 ASR 连接（幂等：已连接就不重复建）
-        String sessionId = session.getId();
         try {
             if (!asrClient.isSessionActive(sessionId)) {
                 asrClient.startRealtimeRecognition(sessionId);
@@ -376,8 +479,7 @@ public class SessionService {
 
         List<IntentCommand> commands;
         try {
-            commands = processTranscriptService
-                .processTranscriptMulti(webSocketSession, transcript, caseId);
+            commands = processTranscriptService.processTranscriptMulti(sessionId, transcript, caseId);
         } catch (Exception e) {
             log.error("❌ 分句分类失败", e);
             return "CLASSIFY_ERROR: " + e.getMessage();
@@ -794,8 +896,9 @@ public class SessionService {
         } catch (Exception e) {
             log.warn("清理虚拟团队失败: {}", e.getMessage());
         }
-
         removeSessionCache(sessionId);
+        stateMachineFacade.clearCache(sessionId);
+        redisTemplate.delete("acls:sm:state:" + sessionId);
         contextManager.clearContext(sessionId);
     }
     public void removeSessionCache(String sessionId) {
