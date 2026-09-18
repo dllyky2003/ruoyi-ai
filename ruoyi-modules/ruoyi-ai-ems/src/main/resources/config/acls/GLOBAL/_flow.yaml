@@ -6,6 +6,8 @@
 # 版本：2.0.0（补充BLS初始评估、终止复苏路径）
 # 修订：2.0.1（补充 F-000-INITIAL_SETUP 自循环 effects）
 # 修订：2.1.0（★ Phase SM：新增 initialPhase + phases 段）
+# 修订：2.2.0（★ 删除 GLOBAL 中 F_101_EXIT_TO_PARENT 的 4 条冗余转移，避免与 case 层重复导致 priority 冲突）
+# 修订：2.3.0（★ 删除 GLOBAL 中 F_102/103/104_EXIT_TO_PARENT 的 4 条冗余转移，全部改由 case 层定义）
 # ============================================================
 caseId: "GLOBAL"
 caseName: "ACLS全局父级编排"
@@ -359,56 +361,12 @@ stateMachine:
 
     # ==========================================================
     # 6. 子级退出 → ROSC管理
+    # ★ F_101/F_102/F_103/F_104_EXIT_TO_PARENT 的出边均在 case 层定义，
+    #   GLOBAL 侧不再重复，避免合并时 priority 冲突
     # ==========================================================
-    - source: "F_101_EXIT_TO_PARENT"
-      target: "F-000-ROSC_MANAGEMENT"
-      condition: "#process.returnToParent == 'ROSC'"
-      priority: 100
-      description: "子级转复成功 → 父级ROSC接管"
-
-    - source: "F_102_EXIT_TO_PARENT"
-      target: "F-000-ROSC_MANAGEMENT"
-      condition: "#process.returnToParent == 'ROSC'"
-      priority: 100
-      description: "子级转复成功 → 父级ROSC接管"
-
-    - source: "F_103_EXIT_TO_PARENT"
-      target: "F-000-ROSC_MANAGEMENT"
-      condition: "#clinical.rosc == true"
-      priority: 100
-      description: "骤停子级ROSC → 父级ROSC接管"
-
-    - source: "F_104_EXIT_TO_PARENT"
-      target: "F-000-ROSC_MANAGEMENT"
-      condition: "#process.returnToParent == 'ROSC'"
-      priority: 100
-      description: "心动过缓子级转复 → 父级ROSC接管"
 
     # ==========================================================
-    # 7. 子级异常退出
-    # ==========================================================
-    - source: "F_101_EXIT_TO_PARENT"
-      target: "F-000-INITIAL_SETUP"
-      condition: "#process.returnToParent == 'UNSTABLE' || #process.returnToParent == 'WIDE_QRS' || #process.returnToParent == 'IRREGULAR_RHYTHM'"
-      priority: 80
-      description: "子级状态变化 → 返回父级重新分类"
-
-    - source: "F_101_EXIT_TO_PARENT"
-      target: "F-000-ERROR_HANDLING"
-      condition: "#process.returnToParent == 'REFRACTORY_SVT' || #process.returnToParent == 'PERSISTENT_SVT' || #process.returnToParent == 'REFRACTORY_SHOCK'"
-      priority: 90
-      description: "子级治疗失败 → 错误处理"
-      deviation: true
-
-    - source: "F_101_EXIT_TO_PARENT"
-      target: "F-000-ERROR_HANDLING"
-      condition: "#process.returnToParent == 'WPW_CONTRADICTION'"
-      priority: 100
-      description: "WPW禁忌 → 错误处理"
-      deviation: false
-
-    # ==========================================================
-    # 8. ROSC → 复苏后护理 → 结束
+    # 7. ROSC → 复苏后护理 → 结束
     # ==========================================================
     - source: "F-000-ROSC_MANAGEMENT"
       target: "F-000-POST_ROSC_CARE"
@@ -423,19 +381,15 @@ stateMachine:
       description: "复苏后护理完成 → 案例结束"
 
     # ==========================================================
-    # 9. 终止复苏路径
+    # 8. 终止复苏路径
+    # ★ F_103_EXIT_TO_PARENT --> F-000-TERMINATE_RESUSCITATION 在 case 层定义，
+    #   此处只保留父级状态自身的转移
     # ==========================================================
     - source: "F-000-INITIAL_SETUP"
       target: "F-000-TERMINATE_RESUSCITATION"
       condition: "#process.terminateResuscitation == true"
       priority: 100
       description: "初始设置阶段决定终止复苏"
-
-    - source: "F_103_EXIT_TO_PARENT"
-      target: "F-000-TERMINATE_RESUSCITATION"
-      condition: "#process.terminateResuscitation == true && #clinical.rosc == false"
-      priority: 110
-      description: "骤停子级治疗无效，终止复苏"
 
     - source: "F-000-TERMINATE_RESUSCITATION"
       target: "F-000-TERMINAL_END"
@@ -444,7 +398,7 @@ stateMachine:
       description: "终止复苏记录完成，案例结束"
 
     # ==========================================================
-    # 10. 错误/超时恢复
+    # 9. 错误/超时恢复
     # ==========================================================
     - source: "F-000-ERROR_HANDLING"
       target: "F-000-INITIAL_SETUP"
