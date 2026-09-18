@@ -1,0 +1,151 @@
+warning: in the working copy of 'ruoyi-modules/ruoyi-ai-ems/src/main/resources/config/acls/cases/stable_narrow/_variables.json', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/ruoyi-modules/ruoyi-ai-ems/src/main/resources/config/acls/cases/stable_narrow/_variables.json b/ruoyi-modules/ruoyi-ai-ems/src/main/resources/config/acls/cases/stable_narrow/_variables.json[m
+[1mindex 57e05a7b..6ba9cecb 100644[m
+[1m--- a/ruoyi-modules/ruoyi-ai-ems/src/main/resources/config/acls/cases/stable_narrow/_variables.json[m
+[1m+++ b/ruoyi-modules/ruoyi-ai-ems/src/main/resources/config/acls/cases/stable_narrow/_variables.json[m
+[36m@@ -34,19 +34,18 @@[m
+     "phys.hasPulse": true[m
+   },[m
+ [m
+[31m-  "variables": [[m
+[31m-    {[m
+[31m-      "name": "process.qrsWidthChecked",[m
+[31m-      "name_cn": "QRS宽度已检查",[m
+[31m-      "type": "boolean",[m
+[31m-      "description": "QRS宽度是否已检查（稳定窄QRS场景）",[m
+[31m-      "category": "PROCESS_MARKER",[m
+[31m-      "source": "EXECUTOR",[m
+[31m-      "writable_by": "EXECUTOR",[m
+[31m-      "default_value": false,[m
+[31m-      "persistence": true,[m
+[31m-      "scoring": false[m
+[31m-    },[m
+[32m+[m[32m  "variables": [{[m
+[32m+[m[32m    "name": "process.qrsWidthChecked",[m
+[32m+[m[32m    "name_cn": "QRS宽度已检查",[m
+[32m+[m[32m    "type": "boolean",[m
+[32m+[m[32m    "description": "QRS宽度是否已检查（稳定窄QRS场景）",[m
+[32m+[m[32m    "category": "PROCESS_MARKER",[m
+[32m+[m[32m    "source": "EXECUTOR",[m
+[32m+[m[32m    "writable_by": "EXECUTOR",[m
+[32m+[m[32m    "default_value": false,[m
+[32m+[m[32m    "persistence": true,[m
+[32m+[m[32m    "scoring": false[m
+[32m+[m[32m  },[m
+     {[m
+       "name": "process.rhythmRegularityChecked",[m
+       "name_cn": "节律规则性已检查",[m
+[36m@@ -66,7 +65,7 @@[m
+       "description": "血流动力学稳定性是否已评估",[m
+       "category": "PROCESS_MARKER",[m
+       "source": "EXECUTOR",[m
+[31m-      "writable_by": "EXECUTOR",[m
+[32m+[m[32m      "writable_by": "EXECUTOR,PARAM_EXTRACTOR",[m
+       "default_value": false,[m
+       "persistence": true,[m
+       "scoring": false[m
+[36m@@ -87,15 +86,23 @@[m
+       "name": "intervention.rhythmConfirmed",[m
+       "name_cn": "确认的心律类型",[m
+       "type": "string",[m
+[31m-      "enum": [[m
+[31m-        { "value": "afib", "label": "房颤（AFib）" },[m
+[31m-        { "value": "aflutter", "label": "房扑（AFlutter）" },[m
+[31m-        { "value": "unknown", "label": "未知" }[m
+[32m+[m[32m      "enum": [{[m
+[32m+[m[32m        "value": "afib",[m
+[32m+[m[32m        "label": "房颤（AFib）"[m
+[32m+[m[32m      },[m
+[32m+[m[32m        {[m
+[32m+[m[32m          "value": "aflutter",[m
+[32m+[m[32m          "label": "房扑（AFlutter）"[m
+[32m+[m[32m        },[m
+[32m+[m[32m        {[m
+[32m+[m[32m          "value": "unknown",[m
+[32m+[m[32m          "label": "未知"[m
+[32m+[m[32m        },{"value":"sinus","label":"窦性心律（Sinus）"}[m
+       ],[m
+       "description": "确认的心律类型",[m
+       "category": "LEARNER_STATEMENT",[m
+       "source": "LEARNER",[m
+[31m-      "writable_by": "CLASSIFIER",[m
+[32m+[m[32m      "writable_by": "CLASSIFIER,PARAM_EXTRACTOR",[m
+       "default_value": "unknown",[m
+       "persistence": true,[m
+       "scoring": true[m
+[36m@@ -143,15 +150,23 @@[m
+       "name": "process.vagalEffectObserved",[m
+       "name_cn": "迷走动作效果",[m
+       "type": "string",[m
+[31m-      "enum": [[m
+[31m-        { "value": "pending", "label": "待观察" },[m
+[31m-        { "value": "success", "label": "转复成功" },[m
+[31m-        { "value": "failure", "label": "无效" }[m
+[32m+[m[32m      "enum": [{[m
+[32m+[m[32m        "value": "pending",[m
+[32m+[m[32m        "label": "待观察"[m
+[32m+[m[32m      },[m
+[32m+[m[32m        {[m
+[32m+[m[32m          "value": "success",[m
+[32m+[m[32m          "label": "转复成功"[m
+[32m+[m[32m        },[m
+[32m+[m[32m        {[m
+[32m+[m[32m          "value": "failure",[m
+[32m+[m[32m          "label": "无效"[m
+[32m+[m[32m        }[m
+       ],[m
+       "description": "迷走神经刺激的转复效果",[m
+       "category": "PROCESS_MARKER",[m
+       "source": "EXECUTOR",[m
+[31m-      "writable_by": "EXECUTOR",[m
+[32m+[m[32m      "writable_by": "EXECUTOR,PARAM_EXTRACTOR",[m
+       "default_value": "pending",[m
+       "persistence": true,[m
+       "scoring": true[m
+[36m@@ -160,15 +175,23 @@[m
+       "name": "intervention.adenosineDoseSequence",[m
+       "name_cn": "腺苷剂量序列",[m
+       "type": "string",[m
+[31m-      "enum": [[m
+[31m-        { "value": "first", "label": "首剂 6mg" },[m
+[31m-        { "value": "second", "label": "次剂 12mg" },[m
+[31m-        { "value": "none", "label": "未给药" }[m
+[32m+[m[32m      "enum": [{[m
+[32m+[m[32m        "value": "first",[m
+[32m+[m[32m        "label": "首剂 6mg"[m
+[32m+[m[32m      },[m
+[32m+[m[32m        {[m
+[32m+[m[32m          "value": "second",[m
+[32m+[m[32m          "label": "次剂 12mg"[m
+[32m+[m[32m        },[m
+[32m+[m[32m        {[m
+[32m+[m[32m          "value": "none",[m
+[32m+[m[32m          "label": "未给药"[m
+[32m+[m[32m        }[m
+       ],[m
+       "description": "腺苷处于首剂还是次剂阶段（AHA 2025 阶梯：6mg → 12mg）",[m
+       "category": "TREATMENT_HISTORY",[m
+       "source": "EXECUTOR",[m
+[31m-      "writable_by": "EXECUTOR",[m
+[32m+[m[32m      "writable_by": "EXECUTOR,PARAM_EXTRACTOR",[m
+       "default_value": "none",[m
+       "persistence": true,[m
+       "scoring": true[m
+[36m@@ -226,12 +249,10 @@[m
+ [m
+   "auto_derived_rules": {[m
+     "description": "案例专属派生规则",[m
+[31m-    "rules": [[m
+[31m-      {[m
+[31m-        "source_vars": ["assert.qrsWidth", "assert.rhythmRegular"],[m
+[31m-        "target_var": "process.anticoagulationDecisionTriggered",[m
+[31m-        "rule": "#assert.qrsWidth == 'narrow' and #assert.rhythmRegular == false"[m
+[31m-      }[m
+[31m-    ][m
+[32m+[m[32m    "rules": [{[m
+[32m+[m[32m      "source_vars": ["assert.qrsWidth", "assert.rhythmRegular"],[m
+[32m+[m[32m      "target_var": "process.anticoagulationDecisionTriggered",[m
+[32m+[m[32m      "rule": "#assert.qrsWidth == 'narrow' and #assert.rhythmRegular == false"[m
+[32m+[m[32m    }][m
+   }[m
+ }[m
