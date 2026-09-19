@@ -8,7 +8,7 @@
         <groupId>org.ruoyi</groupId>
         <artifactId>ruoyi-ai</artifactId>
         <version>3.1.0</version>
-        <relativePath>../pom.xml</relativePath>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <artifactId>ruoyi-acls-engine</artifactId>
@@ -24,24 +24,16 @@
             <groupId>org.ruoyi</groupId>
             <artifactId>ruoyi-ai-ems</artifactId>
             <version>${project.version}</version>
-            <scope>provided</scope>
         </dependency>
 
         <!-- Spring 上下文（@Component、@Autowired 等） -->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <!-- Spring Boot 自动配置（@ConditionalOnProperty、@ConfigurationProperties 等） -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-autoconfigure</artifactId>
             <scope>provided</scope>
         </dependency>
 

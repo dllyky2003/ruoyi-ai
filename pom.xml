@@ -400,6 +400,11 @@
                 <version>${revision}</version>
             </dependency>
 
+            <dependency>
+                <groupId>org.ruoyi</groupId>
+                <artifactId>ruoyi-acls-tutor</artifactId>
+                <version>${revision}</version>
+            </dependency>
             <!--  AI流程编排模块  -->
             <dependency>
                 <groupId>org.ruoyi</groupId>
@@ -433,6 +438,7 @@
         <module>ruoyi-modules/emergency</module>
         <module>ruoyi-modules/ruoyi-ai-ems</module>
         <module>ruoyi-modules/ruoyi-acls-engine</module>
+        <module>ruoyi-modules/ruoyi-acls-tutor</module>
     </modules>
     <packaging>pom</packaging>
 

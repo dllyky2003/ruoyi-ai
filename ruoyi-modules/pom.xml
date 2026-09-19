@@ -16,9 +16,10 @@
         <module>ruoyi-system</module>
         <module>ruoyi-workflow</module>
         <module>ruoyi-ai-ems</module>
+        <module>ruoyi-acls-tutor</module>
         <module>ruoyi-acls-engine</module>
         <module>emergency</module>
-        <module>ruoyi-acls-engine</module>
+
     </modules>
 
     <artifactId>ruoyi-modules</artifactId>
