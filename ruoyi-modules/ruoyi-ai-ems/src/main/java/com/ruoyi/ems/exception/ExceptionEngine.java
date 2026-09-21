@@ -58,9 +58,8 @@ public class ExceptionEngine {
             log.debug("ExceptionEngine: caseType 为空，返回空列表");
             return Collections.emptyList();
         }
-        if (!StringUtils.hasText(intentId)) {
-            log.debug("ExceptionEngine: intentId 为空，返回空列表");
-            return Collections.emptyList();
+        if (intentId == null) {
+            intentId = "";   // 归一化，避免下游 NPE
         }
         if (ctx == null) {
             log.warn("ExceptionEngine: CaseContext 为空，返回空列表");

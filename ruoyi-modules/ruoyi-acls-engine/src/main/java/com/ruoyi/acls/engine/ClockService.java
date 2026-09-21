@@ -33,6 +33,8 @@ public class ClockService {
     @Autowired private TeamManager teamManager;
     @Autowired private AclsIntelligentProcessor intentProcessor;
     @Autowired private ApplicationEventPublisher eventPublisher;
+    @Autowired
+    private AclsCommandEngine aclsCommandEngine;
 
     /**
      * 每个会话的暂停时刻（墙上时间毫秒），用于恢复时计算暂停时长。
@@ -86,6 +88,12 @@ public class ClockService {
         teamManager.updateStatus(sessionId);
 
         refreshStateDuration(sessionId, context);
+
+        try {
+            aclsCommandEngine.tickExceptionsForSession(sessionId);
+        } catch (Exception e) {
+            log.warn("定时异常评估调用失败: session={}, err={}", sessionId, e.getMessage());
+        }
     }
 
     private void refreshStateDuration(String sessionId, CaseContext context) {
@@ -121,9 +129,48 @@ public class ClockService {
         contextManager.setClockRunning(sessionId, true);
         // ★ 阶段 3：评估真实时间起点。putIfAbsent 保证重复 start 不重置锚点。
         assessmentRealStartMap.putIfAbsent(sessionId, System.currentTimeMillis());
+        initializeLastInterventionTime(sessionId);
         log.info("⏱️ 时钟启动: session={}", sessionId);
     }
+    /**
+     * ★ 初始化 process.lastInterventionTime（若未设置）。
+     * <p>该变量是 process.timeElapsedSinceLastIntervention 的依赖；
+     * 不初始化会导致延时规则永远无法触发。
+     */
+    private void initializeLastInterventionTime(String sessionId) {
+        try {
+            CaseContext ctx = contextManager.getSnapshot(sessionId);
+            if (ctx == null) return;
 
+            Object existing = ctx.getVar("process.lastInterventionTime", Object.class);
+            if (existing != null) {
+                return;   // 已有值，不覆盖
+            }
+
+            boolean ok = contextManager.batchSetVarsWithVersion(
+                sessionId,
+                Map.of("process.lastInterventionTime", System.currentTimeMillis()),
+                "CLOCK_START",
+                ctx.getVersion());
+
+            if (ok) {
+                log.info("⏱️ 初始化 lastInterventionTime: session={}", sessionId);
+            } else {
+                // 版本冲突：重试一次
+                CaseContext latest = contextManager.getSnapshot(sessionId);
+                if (latest != null) {
+                    contextManager.batchSetVarsWithVersion(
+                        sessionId,
+                        Map.of("process.lastInterventionTime", System.currentTimeMillis()),
+                        "CLOCK_START_RETRY",
+                        latest.getVersion());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("初始化 lastInterventionTime 失败: session={}, err={}",
+                sessionId, e.getMessage());
+        }
+    }
     /**
      * 暂停时钟。由 PauseResumeHandler 调用。
      * <p>幂等：已暂停则忽略。</p>

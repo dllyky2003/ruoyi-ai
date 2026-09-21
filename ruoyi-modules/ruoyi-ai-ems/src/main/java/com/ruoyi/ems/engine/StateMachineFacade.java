@@ -2,7 +2,8 @@ package com.ruoyi.ems.engine;
 
 import com.ruoyi.ems.config.ResolvedCaseTypeConfig;
 import com.ruoyi.ems.config.TransitionRule;
-import com.ruoyi.ems.config.loader.PhysiologyConfigService;
+
+import com.ruoyi.ems.config.loader.PhysiologyConfigLoader;
 import com.ruoyi.ems.context.EmsContextManager;
 import com.ruoyi.ems.domain.CaseContext;
 import com.ruoyi.ems.domain.StatePhysiology;
@@ -45,7 +46,7 @@ public class StateMachineFacade {
     private final IRuleEvaluator ruleEvaluator;
     private final RedisTemplate<String, Object> redisTemplate;
     private final WebSocketMessageSender messageSender;
-    private final PhysiologyConfigService physiologyConfigService;
+    private final PhysiologyConfigLoader physiologyConfigLoader;
 
     /** ★ 第六步：tutor 阻断灰度开关，默认 false（关闭） */
     private final boolean tutorBlockEnabled;
@@ -63,7 +64,7 @@ public class StateMachineFacade {
                               IRuleEvaluator ruleEvaluator,
                               RedisTemplate<String, Object> redisTemplate,
                               WebSocketMessageSender messageSender,
-                              PhysiologyConfigService physiologyConfigService,
+                              PhysiologyConfigLoader physiologyConfigLoader,
                               ObjectProvider<ClinicalRuleService> clinicalRuleServiceProvider,
                               ObjectProvider<TemporalEventSink> temporalEventSinkProvider,
                               ObjectProvider<StateTransitionHook> stateTransitionHookProvider,
@@ -74,7 +75,7 @@ public class StateMachineFacade {
         this.ruleEvaluator = ruleEvaluator;
         this.redisTemplate = redisTemplate;
         this.messageSender = messageSender;
-        this.physiologyConfigService = physiologyConfigService;
+        this.physiologyConfigLoader = physiologyConfigLoader;
         this.clinicalRuleServiceProvider = clinicalRuleServiceProvider;
         this.temporalEventSinkProvider = temporalEventSinkProvider;
         this.stateTransitionHookProvider = stateTransitionHookProvider;
@@ -127,7 +128,7 @@ public class StateMachineFacade {
         }
         String caseId = config.getCode();
         try {
-            return physiologyConfigService.getState(caseId, currentState);
+            return physiologyConfigLoader.getState(caseId, currentState);
         } catch (IllegalArgumentException e) {
             log.warn("当前状态 {} 在生理配置中未定义: {}", currentState, e.getMessage());
             return null;
@@ -509,7 +510,7 @@ public class StateMachineFacade {
                 log.warn("无法获取 caseId，无法推送生理数据");
                 return;
             }
-            StatePhysiology physiology = physiologyConfigService.getState(caseId, stateId);
+            StatePhysiology physiology = physiologyConfigLoader.getState(caseId, stateId);
             if (physiology == null) {
                 log.debug("状态 {} 无生理基线定义，跳过推送", stateId);
                 return;

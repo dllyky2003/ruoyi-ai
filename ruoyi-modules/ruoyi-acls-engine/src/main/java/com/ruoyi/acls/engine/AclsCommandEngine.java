@@ -37,6 +37,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * ACLS 引擎 —— 核心执行器（重构版）
@@ -101,7 +102,14 @@ public class AclsCommandEngine {
     // ========== ★ 房间通道（用于把消息真正发给 Unity） ==========
     private final RoomRegistry roomRegistry;
     private final RoomBroadcaster roomBroadcaster;
+    /**
+     * ★ 定时评估去重：sessionId → (ruleId → 上次触发时间毫秒)。
+     * 避免同一规则每秒重复触发。
+     */
+    private final Map<String, Map<String, Long>> scheduledTriggerHistory = new ConcurrentHashMap<>();
 
+    /** 同规则重复触发的冷却窗口（毫秒） */
+    private static final long SCHEDULED_TRIGGER_COOLDOWN_MS = 30_000L;
 
     /**
      * 处理学员指令
@@ -243,6 +251,9 @@ public class AclsCommandEngine {
             if (result.getContextUpdates() != null && !result.getContextUpdates().isEmpty()) {
                 persistUpdates(sessionId, result.getContextUpdates(), caseContext,
                     "SKILL_RESULT");
+                Map<String, Object> timeUpdate = new HashMap<>();
+                timeUpdate.put("process.lastInterventionTime", System.currentTimeMillis());
+                persistUpdates(sessionId, timeUpdate, caseContext, "SKILL_TIME_STAMP");
             }
 
             // ========== 7.6 ★ P0-3：动作执行后重新读取最新快照 ==========
@@ -329,7 +340,50 @@ public class AclsCommandEngine {
             return CommandResult.failure("处理指令异常: " + e.getMessage());
         }
     }
+    /**
+     * ★ 定时异常评估入口。
+     *
+     * <p>由 {@link com.ruoyi.ems.engine.ClockService} 每秒调用一次。
+     * 只评估"无 triggerIntent 声明"的延时类规则（triggerIntent 为空）。
+     *
+     * <p>去重策略：同一规则在 {@link #SCHEDULED_TRIGGER_COOLDOWN_MS} 内不重复触发。
+     *
+     * <p>不在暂停期间执行——调用方（ClockService）已经检查 clockRunning。
+     *
+     * @param sessionId 会话 id
+     */
+    public void tickExceptionsForSession(String sessionId) {
+        if (sessionId == null) return;
 
+        try {
+            CaseContext ctx = contextManager.getSnapshot(sessionId);
+            if (ctx == null) return;
+
+            String caseType = ctx.getCaseType();
+            if (caseType == null || caseType.isBlank()) return;
+
+            ResolvedCaseTypeConfig config = stateMachineLoader.getConfig(caseType);
+            if (config == null) return;
+
+            // 定时评估：intentId 传 null，只匹配无 triggerIntent 声明的规则
+            String currentPhase = null;   // 不限阶段；如需阶段限定，从 phaseManager 拿
+
+            CommandResult result = tryHandleExceptions(
+                sessionId,
+                caseType,
+                null,               // ★ intentId 为 null
+                currentPhase,
+                ctx,
+                config
+            );
+
+            if (result != null && result.isSuccess()) {
+                log.info("⏰ [定时评估] 命中延时规则: session={}", sessionId);
+            }
+        } catch (Exception e) {
+            log.warn("定时异常评估失败: session={}, err={}", sessionId, e.getMessage());
+        }
+    }
     // ==================== 私有方法 ====================
 
     // ====================================================================
@@ -352,7 +406,7 @@ public class AclsCommandEngine {
                                               String currentPhase,
                                               CaseContext freshContext,
                                               ResolvedCaseTypeConfig config) {
-        // 1. 评估
+        // ... 1. 评估
         List<ExceptionRule> hits;
         try {
             hits = exceptionEngine.evaluate(caseType, intentId, currentPhase, freshContext);
@@ -364,6 +418,14 @@ public class AclsCommandEngine {
             return null;
         }
 
+        // ★ 新增：定时评估去重
+        // 定时路径 intentId == null，学员路径 intentId != null 不做去重
+        if (intentId == null || intentId.isBlank()) {
+            hits = filterByCooldown(sessionId, hits);
+            if (hits.isEmpty()) {
+                return null;
+            }
+        }
         ExceptionRule top = hits.get(0);
         log.warn("⚡ 异常命中: session={}, intent={}, phase={}, count={}, top={} [{}]",
             sessionId, intentId, currentPhase, hits.size(), top.getId(), top.getSeverity());
@@ -437,7 +499,27 @@ public class AclsCommandEngine {
             .animations(java.util.Collections.emptyList())
             .build();
     }
+    /**
+     * ★ 过滤冷却窗口内的规则，并刷新命中规则的触发时间。
+     */
+    private List<ExceptionRule> filterByCooldown(String sessionId, List<ExceptionRule> hits) {
+        long now = System.currentTimeMillis();
+        Map<String, Long> sessionHistory =
+            scheduledTriggerHistory.computeIfAbsent(sessionId, k -> new ConcurrentHashMap<>());
 
+        List<ExceptionRule> filtered = new ArrayList<>();
+        for (ExceptionRule rule : hits) {
+            Long last = sessionHistory.get(rule.getId());
+            if (last != null && (now - last) < SCHEDULED_TRIGGER_COOLDOWN_MS) {
+                log.debug("⏰ 规则 {} 在冷却窗口内（{}ms 前触发），跳过",
+                    rule.getId(), now - last);
+                continue;
+            }
+            sessionHistory.put(rule.getId(), now);
+            filtered.add(rule);
+        }
+        return filtered;
+    }
     /**
      * 向 Unity 下发生理状态切换指令。
      *
@@ -467,11 +549,35 @@ public class AclsCommandEngine {
      * @param emsSessionId   业务会话 id（AclsCommandEngine 上下文的 sessionId）
      * @param unityStateName Unity 有效状态名（中文 stateName，如 "室上速(SVT)"）
      */
+    /**
+     * 2 参重载：兼容旧调用点，operationId 传 null。
+     */
     private void sendUnityStateChange(String emsSessionId, String unityStateName) {
+        sendUnityStateChange(emsSessionId, unityStateName, null);
+    }
+
+    /**
+     * 3 参版本：向 Unity 下发生理状态切换指令。
+     *
+     * <p>消息通过 RoomBroadcaster 走 {@code /ws/session/{roomSessionId}} 通道，
+     * 结构为 {@code {type, data: {stateName, operationId}, timestamp}}。</p>
+     *
+     * <p>服务器乐观先行：不等 Unity 2.5s 过渡，立即返回。Unity 的 vitals_update
+     * 到达后，由 vitals 对比服务自行校验一致性。</p>
+     *
+     * @param emsSessionId   业务会话 id
+     * @param unityStateName Unity 有效状态名（中文 stateName，如 "室上速(SVT)"）
+     * @param operationId    可选的 operationId，Unity 用来查本地缓存的 operationEffects；
+     *                       传 null 表示不需要查（只切心律）
+     */
+    private void sendUnityStateChange(String emsSessionId,
+                                      String unityStateName,
+                                      String operationId) {
         if (unityStateName == null || unityStateName.isBlank()) {
             log.warn("sendUnityStateChange: unityStateName 为空，跳过: ems={}", emsSessionId);
             return;
         }
+
         try {
             // 1. 反查房间（emsSessionId → roomSessionId）
             SessionRoom room = roomRegistry.getByEmsSessionId(emsSessionId).orElse(null);
@@ -481,9 +587,13 @@ public class AclsCommandEngine {
             }
             String roomSessionId = room.getSessionId();
 
-            // 2. 嵌套 data 结构（与 RoomBroadcaster.envelope 对齐）
+            // 2. 嵌套 data 结构
             Map<String, Object> data = new LinkedHashMap<>();
             data.put("stateName", unityStateName);
+            if (operationId != null && !operationId.isBlank()) {
+                data.put("operationId", operationId);
+            }
+
             Map<String, Object> envelope =
                 RoomBroadcaster.envelope("physiology_state_change", data);
 
@@ -494,13 +604,12 @@ public class AclsCommandEngine {
                 envelope
             );
 
-            log.info("📤 Unity 生理状态切换已下发: room={}, ems={}, stateName={}",
-                roomSessionId, emsSessionId, unityStateName);
+            log.info("📤 Unity 生理状态切换已下发: room={}, ems={}, stateName={}, op={}",
+                roomSessionId, emsSessionId, unityStateName, operationId);
         } catch (Exception e) {
-            // 下发失败不阻断异常处理：effects 已写、forceTransition 会执行，
-            // 只是 Unity 侧生理状态没切。记 error 供人工核查。
-            log.error("Unity 生理状态切换下发失败: ems={}, stateName={}",
-                emsSessionId, unityStateName, e);
+            // 下发失败不阻断异常处理
+            log.error("Unity 生理状态切换下发失败: ems={}, stateName={}, op={}",
+                emsSessionId, unityStateName, operationId, e);
         }
     }
 

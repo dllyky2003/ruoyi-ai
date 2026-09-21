@@ -27,6 +27,11 @@ import java.util.stream.Collectors;
  * <p>
  * 线程安全：修改状态的公共方法都持有 lock。
  * </p>
+ *
+ * <p>★ 当前策略：允许单角色（ENGINE）启动。
+ * {@link #hasAllRequiredRoles()} 与 {@link #allRequiredReady()} 均以
+ * ENGINE 就绪为准，不再要求 SPEAKER 等其它角色存在。
+ * 未来若需恢复多角色要求，改回 hasAllRequiredRoles 的遍历逻辑即可。</p>
  */
 @Getter
 public class SessionRoom {
@@ -77,6 +82,7 @@ public class SessionRoom {
         this.createdAt = System.currentTimeMillis();
         this.lastActivityAt = this.createdAt;
     }
+
     public void attachCreator(Long userId) {
         this.creatorUserId = userId;
     }
@@ -101,6 +107,7 @@ public class SessionRoom {
             lock.unlock();
         }
     }
+
     /**
      * 加入一个客户端。重复 clientId 会拒绝。
      *
@@ -220,11 +227,22 @@ public class SessionRoom {
         }
     }
 
+    /**
+     * ★ 当前策略：允许单角色启动。
+     * <p>只要 ENGINE 连接存在，房间即视为"必需角色到齐"，
+     * 状态机从 WAITING 推进到 ACTIVE。</p>
+     *
+     * <p>未来若需恢复多角色要求，改回：
+     * <pre>
+     * for (Role r : Role.requiredRoles()) {
+     *     if (!hasRole(r)) return false;
+     * }
+     * return true;
+     * </pre>
+     * </p>
+     */
     private boolean hasAllRequiredRoles() {
-        for (Role r : Role.requiredRoles()) {
-            if (!hasRole(r)) return false;
-        }
-        return true;
+        return hasRole(Role.ENGINE);
     }
 
     public void complete() {
@@ -305,27 +323,35 @@ public class SessionRoom {
     }
 
     /**
-     * 所有必需角色是否每类至少有一个 ready。
+     * ENGINE 角色是否已就绪（发过 case_ready）。
+     * <p>本方法只检查 ENGINE，不要求其他必需角色存在。</p>
      */
+    public boolean isEngineReady() {
+        return getClientsByRole(Role.ENGINE).stream()
+            .anyMatch(c -> readyClients.contains(c.getClientId()));
+    }
+
     /**
-     * 是否所有必需角色已就绪。
+     * 所有必需角色是否已就绪。
      * <p>
-     * ENGINE 必须发过 case_ready；其他必需角色（SPEAKER）只要求已连接。
-     * 前端 speaker 不实现 case_ready 协议，所以不能要求它 ready。
+     * ★ 当前策略：允许单角色启动。
+     * 因此本方法等价于 {@link #isEngineReady()}——
+     * 只要 ENGINE 就绪，即视为全部就绪。
+     * </p>
+     *
+     * <p>未来若需恢复多角色要求，改回：
+     * <pre>
+     * if (!isEngineReady()) return false;
+     * for (Role r : Role.requiredRoles()) {
+     *     if (r == Role.ENGINE) continue;
+     *     if (!hasRole(r)) return false;
+     * }
+     * return true;
+     * </pre>
      * </p>
      */
     public boolean allRequiredReady() {
-        // ENGINE 必须 ready
-        boolean engineReady = getClientsByRole(Role.ENGINE).stream()
-            .anyMatch(c -> readyClients.contains(c.getClientId()));
-        if (!engineReady) return false;
-
-        // 其他必需角色只需存在
-        for (Role r : Role.requiredRoles()) {
-            if (r == Role.ENGINE) continue;
-            if (!hasRole(r)) return false;
-        }
-        return true;
+        return isEngineReady();
     }
 
     public void markStarted() {

@@ -8,7 +8,7 @@
 exceptions:
 
   # ============================================================
-  # 规则 1：稳定窄QRS患者执行绝对禁忌操作（已有，保持原样）
+  # 规则 1：稳定窄QRS患者执行绝对禁忌操作
   # ============================================================
   - id: "CONTRAINDICATED_ACTION_FOR_STABLE_SVT"
     description: "稳定窄QRS心动过速患者执行绝对禁忌操作（CPR / 非同步除颤 / 肾上腺素 / 阿托品等）。AHA 2025：稳定心动过速首选迷走神经刺激→腺苷阶梯；患者有脉搏、血流动力学稳定时，胸外按压与非同步电击均属禁忌。"
@@ -31,19 +31,7 @@ exceptions:
       exam:
 
   # ============================================================
-  # 规则 2：不稳定患者尝试迷走神经刺激（跳转类，新增）
-  #
-  # 触发意图：S-101-2-1（vagal，做 Valsalva 动作）
-  #   正常路径：F_101_DO_VAGAL_MANEUVER 自循环 / 推进到腺苷
-  #   本规则路径：不稳定的患者做 Valsalva → 立即强制跳 F_101_UNSTABLE_CARDIOVERSION
-  #
-  # AHA 依据（2025）：
-  #   血流动力学不稳定的心动过速（低血压/意识改变/休克/缺血性胸痛/急性心衰）
-  #   应立即同步电复律，迷走神经刺激无效且延误抢救。
-  #
-  # ⚠️ 验证注意：稳定患者（#derived.stable==true）不会命中此规则；
-  #    要自然触发需先让 patient 变不稳定（如 BP<90），当前 case 数据流下较难。
-  #    验证时可临时把 condition 改为 #derived.stable == true。
+  # 规则 2：不稳定患者尝试迷走神经刺激
   # ============================================================
   - id: "VAGAL_ON_UNSTABLE_PATIENT"
     description: "血流动力学不稳定的心动过速患者尝试迷走神经刺激。AHA 2025：不稳定患者应立即同步电复律，迷走神经刺激无效且延误抢救。"
@@ -53,7 +41,7 @@ exceptions:
     severity: "CRITICAL"
     keepCurrent: false
     jumpTo: "F_101_UNSTABLE_CARDIOVERSION"
-    unityStateName: "室上速(SVT)"          # ★ 改成已知合法值
+    unityStateName: "室上速(SVT)"
     effects:
       - var: "process.instabilityTriggered"
         value: true
@@ -66,14 +54,7 @@ exceptions:
       exam:
 
   # ============================================================
-  # 规则 3：【验证用】稳定窄QRS禁忌操作的次要记录（多规则命中测试）
-  #
-  # 与规则 1 同意图（S-101-4-4）触发，用于验证：
-  #   - hits.size() == 2
-  #   - effects 全写（contraindicationBlockTriggered + warningRecorded）
-  #   - errorChain 记 2 条
-  #   - jumpTo 取 severity 最高（规则 1 CRITICAL > 规则 3 MINOR）
-  #
+  # 规则 3：【验证用】稳定窄QRS禁忌操作的次要记录
   # ⚠️ 验证完毕后建议删除，避免污染 errorChain。
   # ============================================================
   - id: "STABLE_SVT_CONTRAINDICATED_SECONDARY"
@@ -92,4 +73,79 @@ exceptions:
         tts: "（次要提示）请再次确认操作流程。"
       learning:
         tts: "请再确认一下。"
+      exam:
+
+  # ============================================================
+  # 规则 4：首次干预超过 5 分钟 → 恶化
+  # ============================================================
+  - id: "DELAYED_FIRST_INTERVENTION"
+    description: "超过 5 分钟仍未对稳定窄QRS心动过速进行干预。AHA 2025：稳定心动过速应及时评估并推进治疗流程，延误将导致病情恶化。"
+    triggerIntent: "*"
+    condition: |
+      #process.timeElapsedSinceLastIntervention != null &&
+      #process.timeElapsedSinceLastIntervention > 300 &&
+      #evaluation.timeToFirstIntervention == null
+    severity: "TIMING"
+    keepCurrent: false
+    jumpTo: "F-101-UNSTABLE_CARDIOVERSION"
+    unityStateName: "室上速(SVT)"
+    effects:
+      - var: "process.timeoutOccurred"
+        value: true
+      - var: "process.patientUnstable"
+        value: true
+    feedback:
+      teaching:
+        tts: "已超过 5 分钟未采取干预。稳定心动过速虽不急，但持续心动过速会增加心肌耗氧、诱发心衰。患者已转为不稳定状态。"
+      learning:
+        tts: "太慢了！心动过速拖太久，患者转为不稳定，需要立即同步电复律。"
+        interruptCurrentTts: true
+      exam:
+
+  # ============================================================
+  # 规则 5：稳定患者未按流程先做迷走神经刺激，直接给腺苷
+  # ============================================================
+  - id: "ADENOSINE_BEFORE_VAGAL"
+    description: "稳定窄QRS心动过速患者未先尝试迷走神经刺激，直接使用腺苷。AHA 2025：稳定窄QRS心动过速应走阶梯：迷走神经刺激 → 腺苷 6mg → 腺苷 12mg → 二线药物。"
+    triggerIntent: "S-101-2-2"
+    condition: |
+      #process.vagalManeuverPerformed == false &&
+      #derived.stable == true
+    severity: "TIMING"
+    keepCurrent: true
+    unityStateName: "室上速(SVT)"
+    effects:
+      - var: "process.vagalSkippedWarning"
+        value: true
+    feedback:
+      teaching:
+        tts: "稳定窄QRS心动过速的治疗是有阶梯的：先做迷走神经刺激，无效再给腺苷 6mg，还不转复再给 12mg。跳过迷走神经刺激直接用药属于流程错误。"
+      learning:
+        tts: "⚠️ 跳过了迷走神经刺激！稳定患者应先做 Valsalva 或颈动脉窦按摩。"
+        interruptCurrentTts: false
+      exam:
+
+  # ============================================================
+  # 规则 6：心律转复后 30s 内未复评 → 警告
+  # ============================================================
+  - id: "NO_POST_CONVERSION_REASSESSMENT"
+    description: "心律转复后 30 秒内未进行复评。应评估心律稳定性、生命体征、意识状态。"
+    triggerIntent: "S-101-3-1"
+    condition: |
+      #process.timeElapsedSinceLastIntervention != null &&
+      #process.timeElapsedSinceLastIntervention > 30 &&
+      #intervention.rhythmConverted == true &&
+      #process.reassessed == false
+    severity: "TIMING"
+    keepCurrent: false
+    jumpTo: "F-101-MONITOR_SINUS_RHYTHM"
+    unityStateName: "正常窦性心律"
+    effects:
+      - var: "process.reassessed"
+        value: true
+    feedback:
+      teaching:
+        tts: "心律转复后应尽快复评：确认心律稳定性、生命体征、意识状态。30 秒内完成评估是标准流程。"
+      learning:
+        tts: "转复后别忘了复评！"
       exam:

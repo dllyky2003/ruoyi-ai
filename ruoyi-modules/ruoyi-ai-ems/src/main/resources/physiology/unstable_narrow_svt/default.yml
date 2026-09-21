@@ -1,22 +1,27 @@
 # ================================================================
-# 窄QRS不稳定心动过速（Unstable Narrow QRS / SVT）生理预设
+# 窄QRS不稳定心动过速（Unstable Narrow QRS / SVT）
 # 案例编号：102
-# 存放位置：cases/unstable_narrow_svt/_physiology.yaml
-#
-# 字段约束：StatePhysiology 仅支持以下 9 个生理字段 + transitionDuration
-#   phys.heartRate / phys.systolicBp / phys.diastolicBp / phys.spo2
-#   phys.respiratoryRate / phys.consciousness / phys.qrsDuration
-#   phys.rrIntervalJitter / phys.rhythm
-#   transition_duration（无前缀）
-# 不支持的字段（如 phys.skinCondition / capillaryRefill / hasPulse）
-# 请在 operation_effects 或运行时叠加层处理，不能写在 state_physiology 里。
 # ================================================================
 
+config_version: "1.0.0"
 default_transition_duration: 10
 
+# 服务端心律语义 → Unity stateName
+rhythm_mapping:
+  sinus: "正常窦性心律"
+  stable_narrow: "稳定性窄QRS心动过速"
+  svt: "室上速(SVT)"
+  vt: "单形性室速"
+  vf: "室颤"
+  pea: "无脉电活动"
+  asystole: "心室停搏"
+
+# ================================================================
+# 状态生理基线
+# key = 状态机状态 ID
+# ================================================================
 state_physiology:
 
-  # 初始评估：不稳定起点
   F-000-INITIAL_ASSESSMENT:
     phys.heartRate: 175
     phys.systolicBp: 88
@@ -26,7 +31,6 @@ state_physiology:
     phys.consciousness: "verbal"
     transition_duration: 5
 
-  # 初始设置
   F-000-INITIAL_SETUP:
     phys.heartRate: 175
     phys.systolicBp: 88
@@ -36,7 +40,6 @@ state_physiology:
     phys.consciousness: "verbal"
     transition_duration: 5
 
-  # QRS 宽度判读
   F-102-CHECK_QRS_WIDTH:
     phys.heartRate: 175
     phys.systolicBp: 88
@@ -48,7 +51,6 @@ state_physiology:
     phys.rrIntervalJitter: 0.04
     phys.rhythm: "SVT"
 
-  # 不稳定确认
   F-102-CONFIRM_UNSTABLE:
     phys.heartRate: 178
     phys.systolicBp: 85
@@ -58,7 +60,6 @@ state_physiology:
     phys.consciousness: "verbal"
     transition_duration: 5
 
-  # 电复律准备（模式 + 能量 + 镇静 + 清场）
   F-102-PREP_CARDIOVERSION:
     phys.heartRate: 180
     phys.systolicBp: 82
@@ -68,7 +69,6 @@ state_physiology:
     phys.consciousness: "pain"
     transition_duration: 8
 
-  # 放电
   F-102-DELIVER_SHOCK:
     phys.heartRate: 182
     phys.systolicBp: 78
@@ -78,7 +78,6 @@ state_physiology:
     phys.consciousness: "pain"
     transition_duration: 5
 
-  # 复律后评估（转复成功）
   F-102-POST_SHOCK_ASSESS:
     phys.heartRate: 95
     phys.systolicBp: 118
@@ -89,7 +88,6 @@ state_physiology:
     phys.rhythm: "Sinus"
     transition_duration: 20
 
-  # 窦性监测
   F-102-MONITOR_SINUS_RHYTHM:
     phys.heartRate: 82
     phys.systolicBp: 125
@@ -100,7 +98,6 @@ state_physiology:
     phys.rhythm: "Sinus"
     transition_duration: 25
 
-  # 二次电复律准备
   F-102-SECOND_SHOCK_PREP:
     phys.heartRate: 180
     phys.systolicBp: 80
@@ -110,7 +107,6 @@ state_physiology:
     phys.consciousness: "pain"
     transition_duration: 10
 
-  # 病情恶化（PEA/停搏）
   F-102-DETERIORATION:
     phys.heartRate: 0
     phys.systolicBp: 0
@@ -121,7 +117,6 @@ state_physiology:
     phys.rhythm: "PEA"
     transition_duration: 5
 
-  # 退出到父级
   F-102-EXIT_TO_PARENT:
     phys.heartRate: 85
     phys.systolicBp: 125
@@ -133,10 +128,7 @@ state_physiology:
     transition_duration: 10
 
 # ================================================================
-# 操作效果叠加层
-# 注意：这里的 key 是"操作标识"，由技能执行时按名字引用
-# 子字段（target / delta / duration / recovery / curve）需要与
-# OperationEffect 类的字段名一致；启动如报字段错，按报错信息调整。
+# 操作效果
 # ================================================================
 operation_effects:
 
@@ -150,7 +142,7 @@ operation_effects:
       delta: 40
       duration: 5
       recovery: 10
-      curve: LINEAR_RISE_LINEAR_RECOVER
+      curve: LINEAR_DECAY_LINEAR_RECOVER
 
   CARDIOVERSION_200J:
     - target: phys.heartRate
@@ -162,14 +154,14 @@ operation_effects:
       delta: 45
       duration: 5
       recovery: 10
-      curve: LINEAR_RISE_LINEAR_RECOVER
+      curve: LINEAR_DECAY_LINEAR_RECOVER
 
   SEDATION_MIDAZOLAM:
     - target: phys.consciousness
-      delta: -1
+      delta: 0
       duration: 120
       recovery: 180
-      curve: INSTANT_DROP_LINEAR_RECOVER
+      curve: LINEAR_DECAY_LINEAR_RECOVER
     - target: phys.respiratoryRate
       delta: -4
       duration: 60
@@ -178,10 +170,10 @@ operation_effects:
 
   SEDATION_ETOMIDATE:
     - target: phys.consciousness
-      delta: -1
+      delta: 0
       duration: 120
       recovery: 180
-      curve: INSTANT_DROP_LINEAR_RECOVER
+      curve: LINEAR_DECAY_LINEAR_RECOVER
     - target: phys.respiratoryRate
       delta: -3
       duration: 60
@@ -193,14 +185,14 @@ operation_effects:
       delta: -200
       duration: 1
       recovery: 0
-      curve: INSTANT_DROP_NO_RECOVER
+      curve: INSTANT_DROP_LINEAR_RECOVER
 
   ADENOSINE_WPW_VF:
     - target: phys.heartRate
       delta: -180
       duration: 1
       recovery: 0
-      curve: INSTANT_DROP_NO_RECOVER
+      curve: INSTANT_DROP_LINEAR_RECOVER
 
   SECOND_CARDIOVERSION:
     - target: phys.heartRate
@@ -212,4 +204,18 @@ operation_effects:
       delta: 40
       duration: 5
       recovery: 10
-      curve: LINEAR_RISE_LINEAR_RECOVER
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+evolution_rules:
+  - rhythm: "svt"
+    variable: "phys.systolicBp"
+    after_seconds: 30
+    delta: -10.0
+  - rhythm: "svt"
+    variable: "phys.systolicBp"
+    after_seconds: 60
+    delta: -20.0
+  - rhythm: "vt"
+    variable: "phys.spo2"
+    after_seconds: 20
+    delta: -0.05

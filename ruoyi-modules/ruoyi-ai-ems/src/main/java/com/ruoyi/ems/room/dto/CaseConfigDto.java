@@ -1,5 +1,6 @@
 package com.ruoyi.ems.room.dto;
 
+import com.ruoyi.ems.domain.PhysiologyConfig;
 import com.ruoyi.ems.npc.TeamSize;
 import com.ruoyi.ems.room.dto.PresetChangeDto;
 import com.ruoyi.ems.room.dto.TeamMemberDto;
@@ -79,4 +80,13 @@ public class CaseConfigDto {
 
     /** 扩展字段，预留 */
     private Map<String, Object> extras;
+
+
+    // ==================== 生理配置 ====================
+
+    /**
+     * 生理配置：心律 → 体征基准 + 操作效果 + 演变规则。
+     * Unity 本地缓存，运行时不再向服务端请求。
+     */
+    private PhysiologyConfig physiologyConfig;
 }

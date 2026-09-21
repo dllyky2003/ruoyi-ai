@@ -37,7 +37,7 @@ public class CaseConfigLoader {
     private final YamlStateMachineLoader stateMachineLoader;
     private final ObjectProvider<CaseConfigValidator> validators;
     private final RuleConfigLoader ruleConfigLoader;
-    private final PhysiologyConfigService physiologyConfigService;
+    private final PhysiologyConfigLoader physiologyConfigLoader;
 
     // ==================== 新增 loader ====================
     private final DerivationRuleLoader derivationRuleLoader;
@@ -66,7 +66,7 @@ public class CaseConfigLoader {
                             YamlStateMachineLoader stateMachineLoader,
                             ObjectProvider<CaseConfigValidator> validators,
                             RuleConfigLoader ruleConfigLoader,
-                            PhysiologyConfigService physiologyConfigService,
+                            PhysiologyConfigLoader physiologyConfigLoader,
                             DerivationRuleLoader derivationRuleLoader,
                             ExceptionRuleLoader exceptionRuleLoader,      // ★ 新增
                             SemanticRoutingLoader semanticRoutingLoader,
@@ -84,9 +84,9 @@ public class CaseConfigLoader {
         this.stateMachineLoader = stateMachineLoader;
         this.validators = validators;
         this.ruleConfigLoader = ruleConfigLoader;
-        this.physiologyConfigService = physiologyConfigService;
+        this.physiologyConfigLoader = physiologyConfigLoader;
         this.derivationRuleLoader = derivationRuleLoader;
-        this.exceptionRuleLoader = exceptionRuleLoader;                   // ★ 新增
+        this.exceptionRuleLoader = exceptionRuleLoader;
         this.semanticRoutingLoader = semanticRoutingLoader;
         this.guardRailLoader = guardRailLoader;
         this.reflexRuleLoader = reflexRuleLoader;
@@ -208,7 +208,7 @@ public class CaseConfigLoader {
         Map<String, ResolvedCaseTypeConfig> configs = stateMachineLoader.getConfigs();
         for (String caseId : configs.keySet()) {
             if ("GLOBAL".equals(caseId)) continue;
-            physiologyConfigService.loadCase(caseId);
+            physiologyConfigLoader.loadCase(caseId);
         }
     }
 
@@ -281,7 +281,7 @@ public class CaseConfigLoader {
         guardRailLoader.reloadAll();
         reflexRuleLoader.reloadAll();
 
-        physiologyConfigService.evictAll();
+        physiologyConfigLoader.evictAll();
         loadAllPhysiologyConfigs();
         ruleConfigLoader.reloadAll();
 
@@ -311,8 +311,8 @@ public class CaseConfigLoader {
         guardRailLoader.reloadCase(caseId);
         reflexRuleLoader.reloadCase(caseId);
 
-        physiologyConfigService.evictCache(caseId);
-        physiologyConfigService.loadCase(caseId);
+        physiologyConfigLoader.evictCache(caseId);
+        physiologyConfigLoader.loadCase(caseId);
         ruleConfigLoader.reloadCase(caseId);
 
         validateDrugEnums();
@@ -400,7 +400,7 @@ public class CaseConfigLoader {
     // ====================================================================
     @SuppressWarnings("unused")
     private void validatePhysiology(String caseId, ResolvedCaseTypeConfig config) {
-        PhysiologyConfig physConfig = physiologyConfigService.loadCase(caseId);
+        PhysiologyConfig physConfig = physiologyConfigLoader.loadCase(caseId);
         if (physConfig == null) {
             log.error("案例 [{}] 的生理配置未加载", caseId);
             return;

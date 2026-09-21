@@ -20,13 +20,17 @@ import java.util.Map;
  * case_ready 处理器。
  * <p>
  * Unity 初始化 Pulse + NPC agents 完成后发送。
- * 服务端标记该 client 已就绪，所有必需角色就绪后：
+ * 服务端标记该 client 已就绪，ENGINE 就绪后：
  * <ol>
  *   <li>启动时钟</li>
  *   <li>调用 SessionService.startSession 启动状态机</li>
  *   <li>广播 case_start</li>
  * </ol>
  * </p>
+ *
+ * <p>注：当前允许单角色（ENGINE）启动，不再要求其他必需角色存在。
+ * 未来如恢复多角色要求，将 {@code if (!engineReady)} 改回
+ * {@code if (!room.allRequiredReady())} 即可。</p>
  */
 @Slf4j
 @Component
@@ -65,10 +69,15 @@ public class CaseReadyHandler implements WsMessageRouter.WsMessageHandler {
 
         // 标记就绪
         room.markReady(ctx.clientId());
-        log.info("✅ 引擎就绪: room={}, clientId={}, allRequired={}",
-            ctx.sessionId(), ctx.clientId(), room.allRequiredReady());
 
-        if (!room.allRequiredReady()) {
+        // 只要 ENGINE 就绪即启动
+        boolean engineReady = room.isEngineReady();
+        boolean allReady = room.allRequiredReady();
+
+        log.info("✅ 引擎就绪: room={}, clientId={}, engineReady={}, allRequired={}",
+            ctx.sessionId(), ctx.clientId(), engineReady, allReady);
+
+        if (!engineReady) {
             return;
         }
 

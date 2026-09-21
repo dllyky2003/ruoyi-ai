@@ -40,7 +40,7 @@ public class ContractSnapshotExporter {
     private final YamlSkillLoader yamlSkillLoader;
     private final GuardRailLoader guardRailLoader;
     private final ReflexRuleLoader reflexRuleLoader;
-    private final PhysiologyConfigService physiologyConfigService;
+    private final PhysiologyConfigLoader physiologyConfigLoader;   // ★ 改类型
     private final RuleConfigLoader ruleConfigLoader;
 
     @Value("${acls.snapshot.output-dir:config/contract-snapshot}")
@@ -121,19 +121,11 @@ public class ContractSnapshotExporter {
             st.setName(desc.getOrDefault(stateId, stateId));
             st.setTerminal(terminals.contains(stateId));
             st.setDescription(desc.get(stateId));
-            st.setTags(Collections.emptyList()); // 见下方注释
+            st.setTags(Collections.emptyList());
             list.add(st);
         }
         return list;
     }
-
-    /*
-     * 关于 stateTags：
-     * ResolvedCaseTypeConfig 没有直接的 stateTags 字段。
-     * 若需标签，建议在 _statemachine.yaml 中显式维护 stateTags，
-     * 或从 TransitionRule.intentCode 的 routeGuard.stateTagsAny 反推。
-     * 当前留空，不猜。
-     */
 
     // ==================================================================
     // 意图：从 CaseIntentDefinitionsLoader 拿完整定义
@@ -145,14 +137,12 @@ public class ContractSnapshotExporter {
 
         List<ContractSnapshot.IntentSnapshot> list = new ArrayList<>();
         for (String code : wanted) {
-            // ★ 修正：用 getIntent(code) 拿完整定义
             IntentDefinition def = intentLoader.getIntent(code);
 
             ContractSnapshot.IntentSnapshot s = new ContractSnapshot.IntentSnapshot();
             s.setIntentCode(code);
 
             if (def == null) {
-                // 兜底：只从词典补 name 和 surfaces
                 IntentDictLoader.IntentMetaInfo meta = intentDictLoader.getIntentMeta(code);
                 if (meta != null) s.setNameCn(meta.name());
                 s.setExamples(new ArrayList<>(
@@ -163,7 +153,7 @@ public class ContractSnapshotExporter {
 
             // ===== 直接字段 =====
             s.setNameCn(def.getNameCn());
-            s.setActType(def.getAct());              // 注意：字段名是 act，不是 actType
+            s.setActType(def.getAct());
             s.setDomainCode(def.getDomainCode());
             s.setSubDomain(def.getSubDomain());
             s.setGeneral(def.isGeneral());
@@ -178,7 +168,6 @@ public class ContractSnapshotExporter {
                     ? new ArrayList<>(def.getTrg().getRegex()) : new ArrayList<>());
                 s.setNegativeRegex(def.getTrg().getNegativeRegex() != null
                     ? new ArrayList<>(def.getTrg().getNegativeRegex()) : new ArrayList<>());
-                // slots 若需保留，看 Trg.getSlots() 的类型再映射
             }
 
             // ===== RouteGuard =====
@@ -211,6 +200,7 @@ public class ContractSnapshotExporter {
         }
         return list;
     }
+
     /**
      * 收集本案例相关的意图编码：
      * - 转移规则里引用的
@@ -246,7 +236,6 @@ public class ContractSnapshotExporter {
         String caseId, ResolvedCaseTypeConfig config) {
         ContractSnapshot.VariableSnapshot vs = new ContractSnapshot.VariableSnapshot();
 
-        // ★ 实际 API：getVariablesForCase(caseType)
         Map<String, VariableMeta> metaMap = variableMetaLoader.getVariablesForCase(caseId);
         if (metaMap != null) {
             metaMap.forEach((name, meta) -> {
@@ -259,7 +248,6 @@ public class ContractSnapshotExporter {
             });
         }
 
-        // 前缀统计
         Map<String, Integer> prefixCount = new LinkedHashMap<>();
         for (String name : vs.getReadable()) {
             int idx = name.indexOf('.');
@@ -276,16 +264,12 @@ public class ContractSnapshotExporter {
     // ==================================================================
     private List<ContractSnapshot.DerivationSnapshot> extractDerivations(String caseId) {
         List<ContractSnapshot.DerivationSnapshot> list = new ArrayList<>();
-        // ★ 实际 API：getRulesForCase(caseType)
         List<DerivationRule> rules = derivationRuleLoader.getRulesForCase(caseId);
         if (rules == null) return list;
 
         for (DerivationRule r : rules) {
             ContractSnapshot.DerivationSnapshot d = new ContractSnapshot.DerivationSnapshot();
             // 按 DerivationRule 实际字段映射
-            // d.setTargetVar(r.getTarget());
-            // d.setExpression(r.getExpression());
-            // d.setDependsOn(r.getDependsOn());
             list.add(d);
         }
         return list;
@@ -296,13 +280,11 @@ public class ContractSnapshotExporter {
     // ==================================================================
     private List<ContractSnapshot.SkillSnapshot> extractSkills(String caseId) {
         List<ContractSnapshot.SkillSnapshot> list = new ArrayList<>();
-        // 假设 YamlSkillLoader 有 getAllSkillIds()
         Set<String> ids = yamlSkillLoader.getAllSkillIds();
         if (ids == null) return list;
         for (String id : ids) {
             ContractSnapshot.SkillSnapshot s = new ContractSnapshot.SkillSnapshot();
             s.setSkillId(id);
-            // 若 YamlSkillLoader 有 getSkillMeta(skillId)，在此补充 intentCode/writes/reads
             list.add(s);
         }
         return list;
@@ -313,7 +295,6 @@ public class ContractSnapshotExporter {
     // ==================================================================
     private List<ContractSnapshot.GuardRailSnapshot> extractGuardRails(String caseId) {
         List<ContractSnapshot.GuardRailSnapshot> list = new ArrayList<>();
-        // ★ 实际 API：getIntentToGuardsMap(caseType)
         Map<String, List<GuardRule>> map = guardRailLoader.getIntentToGuardsMap(caseId);
         if (map == null) return list;
 
@@ -323,11 +304,6 @@ public class ContractSnapshotExporter {
                 if (r.getId() == null || !seen.add(r.getId())) continue;
                 ContractSnapshot.GuardRailSnapshot g = new ContractSnapshot.GuardRailSnapshot();
                 g.setRuleId(r.getId());
-                // 按 GuardRule 实际字段映射
-                // g.setTarget(...);
-                // g.setCondition(...);
-                // g.setAction(...);
-                // g.setSeverity(r.getSeverity() != null ? r.getSeverity().name() : null);
                 list.add(g);
             }
         }
@@ -339,16 +315,12 @@ public class ContractSnapshotExporter {
     // ==================================================================
     private List<ContractSnapshot.ReflexRuleSnapshot> extractReflexRules(String caseId) {
         List<ContractSnapshot.ReflexRuleSnapshot> list = new ArrayList<>();
-        // ★ 实际 API：getRulesForCase(caseType)
         List<ReflexRule> rules = reflexRuleLoader.getRulesForCase(caseId);
         if (rules == null) return list;
 
         for (ReflexRule r : rules) {
             ContractSnapshot.ReflexRuleSnapshot f = new ContractSnapshot.ReflexRuleSnapshot();
             f.setRuleId(r.getId());
-            // 按 ReflexRule 实际字段映射
-            // f.setTrigger(r.getCondition());
-            // f.setAction(r.getSpeech());
             list.add(f);
         }
         return list;
@@ -360,7 +332,7 @@ public class ContractSnapshotExporter {
     private Map<String, Object> extractPhysiology(String caseId) {
         Map<String, Object> map = new LinkedHashMap<>();
         try {
-            var cfg = physiologyConfigService.loadCase(caseId);
+            var cfg = physiologyConfigLoader.loadCase(caseId);   // ★ 改这里
             if (cfg != null) {
                 // 按 PhysiologyConfig 实际字段映射
                 // map.put("statePhysiology", cfg.getStatePhysiology());
@@ -376,23 +348,19 @@ public class ContractSnapshotExporter {
     // ==================================================================
     private List<ContractSnapshot.RuleSnapshot> extractRules(String caseId) {
         List<ContractSnapshot.RuleSnapshot> list = new ArrayList<>();
-        // ★ 实际 API：getMergedRulesForCase(caseId)
         List<RuleDefinition> rules = ruleConfigLoader.getMergedRulesForCase(caseId);
         if (rules == null) return list;
 
         for (RuleDefinition r : rules) {
             ContractSnapshot.RuleSnapshot s = new ContractSnapshot.RuleSnapshot();
             s.setRuleId(r.getId());
-            // 按 RuleDefinition 实际字段映射
-            // s.setType(...);
-            // s.setExpression(...);
             list.add(s);
         }
         return list;
     }
 
     // ==================================================================
-    // 2025 AHA + 终止性规则（不变）
+    // 2025 AHA + 终止性规则
     // ==================================================================
     private List<ContractSnapshot.GuidelineRule> defaultGuidelineRules() {
         List<ContractSnapshot.GuidelineRule> list = new ArrayList<>();

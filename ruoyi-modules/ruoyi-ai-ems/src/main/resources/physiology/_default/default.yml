@@ -1,0 +1,220 @@
+# ================================================================
+# 全局默认生理配置
+# 存储位置：classpath:physiology/_default/default.yml
+# 用途：当具体案例没有配置时，作为兜底加载
+# ================================================================
+
+config_version: "default"
+default_transition_duration: 10
+
+# 心律语义映射
+rhythm_mapping:
+  sinus: "正常窦性心律"
+  svt: "室上速(SVT)"
+  vt: "单形性室速"
+  vf: "室颤"
+  pea: "无脉电活动"
+  asystole: "心室停搏"
+
+# ================================================================
+# 最小状态基线（仅兜底用）
+# 若状态机状态 ID 是 GLOBAL-XXX 格式，保留原 key
+# 若是 F-xxx 格式，这些 key 只作参考，实际不会命中
+# ================================================================
+state_physiology:
+
+  GLOBAL-ASSESS:
+    phys.heartRate: 80
+    phys.systolicBp: 120
+    phys.diastolicBp: 80
+    phys.spo2: 98
+    phys.respiratoryRate: 16
+    phys.consciousness: "alert"
+    transition_duration: 5
+
+  GLOBAL-STABLE:
+    phys.heartRate: 75
+    phys.systolicBp: 125
+    phys.diastolicBp: 82
+    phys.spo2: 99
+    phys.respiratoryRate: 14
+    phys.consciousness: "alert"
+
+  GLOBAL-UNSTABLE:
+    phys.heartRate: 130
+    phys.systolicBp: 85
+    phys.diastolicBp: 50
+    phys.spo2: 92
+    phys.respiratoryRate: 28
+    phys.consciousness: "confused"
+    transition_duration: 8
+
+  GLOBAL-CARDIAC_ARREST:
+    phys.heartRate: 0
+    phys.systolicBp: 0
+    phys.diastolicBp: 0
+    phys.spo2: 0
+    phys.respiratoryRate: 0
+    phys.consciousness: "unresponsive"
+
+  GLOBAL-CPR:
+    phys.heartRate: 0
+    phys.systolicBp: 60
+    phys.diastolicBp: 30
+    phys.spo2: 85
+    phys.respiratoryRate: 10
+    phys.consciousness: "unresponsive"
+    transition_duration: 30
+
+  GLOBAL-ROSC:
+    phys.heartRate: 100
+    phys.systolicBp: 110
+    phys.diastolicBp: 70
+    phys.spo2: 96
+    phys.respiratoryRate: 18
+    phys.consciousness: "confused"
+    transition_duration: 20
+
+  GLOBAL-MONITORING:
+    phys.heartRate: 78
+    phys.systolicBp: 122
+    phys.diastolicBp: 78
+    phys.spo2: 99
+    phys.respiratoryRate: 15
+    phys.consciousness: "alert"
+    transition_duration: 25
+
+  GLOBAL-EXIT:
+    phys.heartRate: 75
+    phys.systolicBp: 120
+    phys.diastolicBp: 80
+    phys.spo2: 99
+    phys.respiratoryRate: 14
+    phys.consciousness: "alert"
+    transition_duration: 10
+
+# ================================================================
+# 通用操作效果（跨案例共享，价值最高）
+# ================================================================
+operation_effects:
+
+  EPINEPHRINE:
+    - target: phys.systolicBp
+      delta: 25
+      duration: 20
+      recovery: 15
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+    - target: phys.heartRate
+      delta: 20
+      duration: 15
+      recovery: 10
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  ATROPINE:
+    - target: phys.heartRate
+      delta: 30
+      duration: 25
+      recovery: 20
+      curve: INSTANT_DROP_LINEAR_RECOVER
+
+  AMIODARONE:
+    - target: phys.heartRate
+      delta: -20
+      duration: 30
+      recovery: 25
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+    - target: phys.systolicBp
+      delta: -10
+      duration: 20
+      recovery: 15
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  DOPAMINE:
+    - target: phys.systolicBp
+      delta: 30
+      duration: 30
+      recovery: 20
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+    - target: phys.heartRate
+      delta: 15
+      duration: 20
+      recovery: 15
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  LIDOCAINE:
+    - target: phys.heartRate
+      delta: -15
+      duration: 20
+      recovery: 15
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  DEFIBRILLATION:
+    - target: phys.heartRate
+      delta: -150
+      duration: 5
+      recovery: 10
+      curve: INSTANT_DROP_LINEAR_RECOVER
+    - target: phys.systolicBp
+      delta: 40
+      duration: 15
+      recovery: 10
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  CARDIOVERSION:
+    - target: phys.heartRate
+      delta: -80
+      duration: 5
+      recovery: 15
+      curve: INSTANT_DROP_LINEAR_RECOVER
+    - target: phys.systolicBp
+      delta: 30
+      duration: 20
+      recovery: 15
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  CPR_ONGOING:
+    - target: phys.systolicBp
+      delta: 50
+      duration: 30
+      recovery: 0
+      curve: CONSTANT
+    - target: phys.spo2
+      delta: 10
+      duration: 30
+      recovery: 0
+      curve: CONSTANT
+
+  INTUBATION:
+    - target: phys.spo2
+      delta: 5
+      duration: 30
+      recovery: 10
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+    - target: phys.respiratoryRate
+      delta: -4
+      duration: 30
+      recovery: 10
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  FLUID_RESUSCITATION:
+    - target: phys.systolicBp
+      delta: 20
+      duration: 30
+      recovery: 25
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+    - target: phys.heartRate
+      delta: -10
+      duration: 20
+      recovery: 15
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  # NALOXONE：consciousness 是字符串，不能用 delta 表达
+  # 已移除 consciousness effect，只保留呼吸频率
+  NALOXONE:
+    - target: phys.respiratoryRate
+      delta: 10
+      duration: 20
+      recovery: 10
+      curve: INSTANT_DROP_LINEAR_RECOVER
+
+evolution_rules: []

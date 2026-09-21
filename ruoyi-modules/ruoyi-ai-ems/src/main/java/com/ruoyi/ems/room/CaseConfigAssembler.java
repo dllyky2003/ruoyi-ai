@@ -1,7 +1,9 @@
 package com.ruoyi.ems.room;
 
+import com.ruoyi.ems.config.loader.PhysiologyConfigLoader;
 import com.ruoyi.ems.context.EmsContextManager;
 import com.ruoyi.ems.domain.CaseContext;
+import com.ruoyi.ems.domain.PhysiologyConfig;
 import com.ruoyi.ems.domain.entity.EmsSession;
 
 
@@ -31,6 +33,7 @@ public class CaseConfigAssembler {
     private final EmsContextManager contextManager;
     private final TeamManager teamManager;
     private final SessionService sessionService;
+    private final PhysiologyConfigLoader physiologyConfigLoader;
 
     /**
      * 组装案例配置。
@@ -63,10 +66,9 @@ public class CaseConfigAssembler {
 
         // 3. 团队成员
         List<TeamMember> members = teamManager.getTeamMembers(emsSessionId);
-        TeamSize teamSize =resolveTemplateId(emsSessionId, members);
+        TeamSize teamSize = resolveTemplateId(emsSessionId, members);
 
-
-        // 4. 组装
+        // 4. 组装基础字段
         CaseConfigDto dto = new CaseConfigDto();
         dto.setEmsSessionId(emsSessionId);
         dto.setRoomSessionId(roomSessionId);
@@ -83,15 +85,25 @@ public class CaseConfigAssembler {
         dto.setStateDescriptions(Map.of());                   // 暂空
         dto.setExtras(null);
 
-        log.info("📦 case_config 组装完成: ems={}, teamSize={}, members={}, vars={}",
-            emsSessionId, teamSize,
-            dto.getMembers().size(), initialVitals.size());
-
         if (teamSize == null) {
             log.warn("无法识别团队模板: ems={}, teamSize={}", emsSessionId, teamSize);
         }
 
+        // ===== 5. 加载生理配置（走 default 版本，避免无谓的回退） =====
+        PhysiologyConfig physiologyConfig = physiologyConfigLoader.loadCase(caseType);
+        dto.setPhysiologyConfig(physiologyConfig);
+
+        log.info("📦 case_config 组装完成: ems={}, teamSize={}, members={}, vars={}, " +
+                "physioConfigHash={}",
+            emsSessionId, teamSize, dto.getMembers().size(), initialVitals.size(),
+            physiologyConfig != null ? abbreviate(physiologyConfig.getConfigHash()) : "<null>");
+
         return dto;
+    }
+
+    private static String abbreviate(String hash) {
+        if (hash == null) return "<null>";
+        return hash.length() <= 8 ? hash : hash.substring(0, 8);
     }
 
     // ==================== 团队 ====================
