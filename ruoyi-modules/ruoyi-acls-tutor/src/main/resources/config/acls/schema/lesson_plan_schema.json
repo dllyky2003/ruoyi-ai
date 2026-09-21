@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ruoyi.local/acls/schema/lesson_plan_schema.json",
+  "title": "ACLS lesson_plan.yaml",
+  "description": "教案根文件。约束见 V3.1 §6.2 / §6.3",
+  "type": "object",
+  "required": ["lesson_plan"],
+  "additionalProperties": false,
+  "properties": {
+    "lesson_plan": { "$ref": "#/$defs/lesson_plan" }
+  },
+  "$defs": {
+    "lesson_plan": {
+      "type": "object",
+      "required": [
+        "lesson_plan_id",
+        "lesson_plan_version",
+        "case_id",
+        "scenario_beats_ref",
+        "fallback_paths_ref",
+        "instructor_overrides_ref",
+        "review_status"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "lesson_plan_id":      { "type": "string", "pattern": "^LP_[A-Z0-9_]+$" },
+        "lesson_plan_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+        "case_id":             { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+
+        "title":                 { "type": "string" },
+        "target_audience":       { "type": "string" },
+        "estimated_duration_min":{ "type": "integer", "minimum": 1 },
+        "learning_objectives": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+
+        "instructor_authority_profile": { "type": "string" },
+        "eligible_for_summative_use":   { "type": "boolean" },
+
+        "scenario_beats_ref":       { "$ref": "#/$defs/file_ref" },
+        "fallback_paths_ref":       { "$ref": "#/$defs/file_ref" },
+        "instructor_overrides_ref": { "$ref": "#/$defs/file_ref" },
+
+        "review_status": {
+          "type": "string",
+          "enum": ["pending", "approved", "rejected", "deprecated"]
+        },
+        "reviewed_by": { "type": "string" },
+        "reviewed_at": { "type": "string", "format": "date-time" }
+      }
+    },
+
+    "file_ref": {
+      "type": "object",
+      "required": ["file", "sha256"],
+      "additionalProperties": false,
+      "properties": {
+        "file":   { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    }
+  }
+}

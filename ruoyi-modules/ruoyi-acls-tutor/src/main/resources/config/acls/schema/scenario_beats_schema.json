@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ruoyi.local/acls/schema/scenario_beats_schema.json",
+  "title": "ACLS scenario_beats.yaml",
+  "description": "教案剧情节点表。约束见 V3.1 §6.4 / S1 / S2 / P0-7 / P0-11",
+  "type": "object",
+  "required": ["case_id", "version", "scenario_beats"],
+  "additionalProperties": false,
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "scenario_beats": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/beat" }
+    }
+  },
+  "$defs": {
+
+    "beat": {
+      "type": "object",
+      "required": ["beat_id", "name", "beat_mode", "trigger"],
+      "additionalProperties": false,
+      "properties": {
+        "beat_id":       { "type": "string", "pattern": "^[A-Z][A-Z0-9_-]*$" },
+        "name":          { "type": "string", "minLength": 1 },
+        "beat_mode":     { "type": "string", "enum": ["observation", "branch_selection"] },
+        "sequence_hint": { "type": "integer" },
+
+        "trigger":     { "$ref": "#/$defs/trigger" },
+        "observation": { "$ref": "#/$defs/observation" },
+
+        "selection_group":    { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "selection_priority": { "type": "integer" },
+        "proposed_effect":    { "$ref": "#/$defs/proposed_effect" },
+        "case_outcome_ref":   { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+
+        "eligible_for_summative_use":       { "type": "boolean" },
+        "requires_explicit_learner_notice": { "type": "boolean" },
+        "requires_educational_rationale":   { "type": "boolean" },
+        "requires_medical_review":          { "type": "boolean" },
+        "applicable_scenarios": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "non_applicable_scenarios": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "educational_rationale": { "type": "string" },
+
+        "review": { "$ref": "_shared_schema.json#/$defs/review" }
+      },
+
+      "allOf": [
+        {
+          "description": "S2: beat_mode 与三字段互斥",
+          "if":   { "properties": { "beat_mode": { "const": "observation" } } },
+          "then": {
+            "not": {
+              "anyOf": [
+                { "required": ["selection_group"] },
+                { "required": ["selection_priority"] },
+                { "required": ["proposed_effect"] },
+                { "required": ["case_outcome_ref"] }
+              ]
+            }
+          },
+          "else": {
+            "required": ["selection_group", "selection_priority", "proposed_effect", "case_outcome_ref"]
+          }
+        },
+        {
+          "description": "P0-11: beat 不得复制 trend_labels 与 clinical_state",
+          "not": {
+            "anyOf": [
+              { "required": ["trend_labels"] },
+              { "required": ["clinical_state"] },
+              { "required": ["case_outcome"] }
+            ]
+          }
+        }
+      ]
+    },
+
+    "trigger": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["initial", "event", "compound", "rule_hit", "deterministic_teaching_demo"]
+        },
+        "state":             { "type": "string" },
+        "intent_code":       { "type": "string" },
+        "intervention_id":   { "type": "string" },
+        "shock_index":       { "type": "integer", "minimum": 1 },
+        "rule_id":           { "type": "string" },
+        "all_of": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/trigger" }
+        },
+        "deterministic":            { "type": "boolean" },
+        "requires_instructor_mode": { "type": "boolean" }
+      },
+      "allOf": [
+        {
+          "description": "deterministic_teaching_demo 必须显式声明导师模式与确定性",
+          "if":   { "properties": { "type": { "const": "deterministic_teaching_demo" } } },
+          "then": {
+            "required": ["deterministic", "requires_instructor_mode"],
+            "properties": {
+              "deterministic":            { "const": true },
+              "requires_instructor_mode": { "const": true }
+            }
+          }
+        }
+      ]
+    },
+
+    "proposed_effect": {
+      "type": "object",
+      "description": "S1 / P0-7: 教案层只引用已解析授权，不声明效果参数",
+      "required": ["effect_id", "branch_id", "allowed_by_rule_ids"],
+      "additionalProperties": false,
+      "properties": {
+        "effect_id": { "type": "string", "minLength": 1 },
+        "branch_id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "allowed_by_rule_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ui_banner":      { "type": "string" },
+        "chapter_title":  { "type": "string" },
+        "assessment_tag": { "type": "string" }
+      }
+    }
+  }
+}

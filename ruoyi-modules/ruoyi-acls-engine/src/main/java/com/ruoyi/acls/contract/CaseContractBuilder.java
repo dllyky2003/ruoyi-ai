@@ -2,18 +2,18 @@ package com.ruoyi.acls.contract;
 
 import com.ruoyi.acls.cognitive.ReflexRuleLoader;
 import com.ruoyi.acls.contract.models.*;
+
+import com.ruoyi.acls.contract.util.CaseFileReviewStatusResolver;
+import com.ruoyi.acls.contract.util.DerivationGraphBuilder;
+import com.ruoyi.acls.contract.util.GuardExpressionParser;
 import com.ruoyi.acls.guard.GuardRailLoader;
 import com.ruoyi.acls.guard.GuardRule;
 import com.ruoyi.acls.router.SemanticRoutingLoader;
 import com.ruoyi.acls.skill.registery.SkillRegistry;
 import com.ruoyi.acls.skill.registery.YamlSkillLoader;
 import com.ruoyi.ems.config.ResolvedCaseTypeConfig;
-
 import com.ruoyi.ems.config.TransitionRule;
 import com.ruoyi.ems.config.loader.*;
-import com.ruoyi.acls.contract.*;
-import com.ruoyi.acls.contract.util.DerivationGraphBuilder;
-import com.ruoyi.acls.contract.util.GuardExpressionParser;
 import com.ruoyi.ems.domain.DerivationRule;
 import com.ruoyi.ems.domain.VariableMeta;
 import com.ruoyi.ems.intent.model.IntentDefinition;
@@ -21,9 +21,15 @@ import com.ruoyi.ems.exception.ConfigurationException;
 import com.ruoyi.ems.orchestrator.model.ActionChainConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 
+import java.io.InputStream;
+import java.security.MessageDigest;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -43,6 +49,24 @@ public class CaseContractBuilder {
     private final GuardRailLoader guardRailLoader;
     private final ReflexRuleLoader reflexRuleLoader;
     private final SkillRegistry skillRegistry;
+
+    /** ★ 阶段 3：用于扫描病例 YAML 建立文件基线。 */
+    private final ResourceLoader resourceLoader;
+
+    /** ★ 阶段 4.1：审核状态单点解析器。 */
+    private final CaseFileReviewStatusResolver reviewStatusResolver;
+
+    /** ★ 阶段 3：纳入文件基线的病例 YAML。 */
+    private static final List<String> CASE_FILES = List.of(
+        "clinical_rules.yaml",
+        "lesson_plan.yaml",
+        "scenario_beats.yaml",
+        "fallback_paths.yaml",
+        "instructor_overrides.yaml"
+    );
+
+    /** ★ 阶段 3：文件基线缓存，按 caseId 幂等。 */
+    private final Map<String, CaseFileBaseline> baselineCache = new ConcurrentHashMap<>();
 
     // ====================================================================
     // 主入口
@@ -78,7 +102,7 @@ public class CaseContractBuilder {
         Set<String> cyclicNodes = new LinkedHashSet<>();
         graphBuilder.topologicalSort(derivationGraph, cyclicNodes);
 
-        // 2. 意图 → 写入变量（合并技能 + execution + extraction）
+        // 2. 意图 → 写入变量
         Map<String, Set<String>> intentToWrittenVars = buildIntentToWrittenVars(caseId);
         Map<String, Set<String>> varToIntents = invert(intentToWrittenVars);
 
@@ -124,11 +148,14 @@ public class CaseContractBuilder {
         // 8. 状态契约
         buildStateContracts(caseId, contract);
 
-        // 9. 补齐变量读取源（护栏 / 反射规则 / 技能前置条件）
+        // 9. 补齐变量读取源
         enrichVariableReadSources(caseId, contract);
 
         // 10. 全局诊断
         diagnoseContract(caseId, contract);
+
+        // 11. ★ 阶段 3 / 4.1：文件基线
+        enrichManifestBaseline(caseId, contract);
 
         return contract;
     }
@@ -145,10 +172,8 @@ public class CaseContractBuilder {
             Set<String> writes = new LinkedHashSet<>();
             String intentCode = def.getIntentCode();
 
-            // 来源 A：意图在路由表里关联的技能
             Map<String, String> skillsByState =
                 routingLoader.getIntentToSkillMap(caseId, null);
-            // 逐状态查询
             for (String stateId : stateMachineLoader.getStateIdsForCase(caseId)) {
                 String skillId = routingLoader
                     .getIntentToSkillMap(caseId, stateId).get(intentCode);
@@ -157,7 +182,6 @@ public class CaseContractBuilder {
                 }
             }
 
-            // 来源 B：execution.steps.outputs（执行链声明式输出）
             ActionChainConfig execution = def.getExecution();
             if (execution != null && execution.steps() != null) {
                 for (ActionChainConfig.StepConfig step : execution.steps()) {
@@ -167,7 +191,6 @@ public class CaseContractBuilder {
                 }
             }
 
-            // 来源 C：extraction.targetParams（抽取目标参数）
             if (def.hasExtraction() && def.getExtraction().getTargetParams() != null) {
                 writes.addAll(def.getExtraction().getTargetParams());
             }
@@ -206,7 +229,6 @@ public class CaseContractBuilder {
         tc.setExitReason(rule.getExitReason());
 
         if (rule.getExitReason() != null && !rule.getExitReason().isBlank()) {
-            // exitReason 会写入 process.returnToParent
             tc.getWrittenVariables().add("process.returnToParent");
         }
 
@@ -218,23 +240,18 @@ public class CaseContractBuilder {
                 effect.setValue(e.getValue());
                 effect.setValueExpression(e.getValueExpression());
                 tc.getEffects().add(effect);
-
-                // ★ effects 写入的变量也算 writtenVariables
                 tc.getWrittenVariables().add(e.getVar());
             }
         }
-        // 唯一 ID
         String base = "T-" + rule.getSource() + "-" + rule.getTarget();
         String transitionId = base + "-" + String.format("%02d",
             Math.abs(Objects.hash(rule.getPriority(), rule.getIntentCode(),
                 rule.getEvent(), rule.getCondition())) % 100);
         tc.setTransitionId(transitionId);
 
-        // 读变量：从 Guard 提取
         Set<String> readVars = guardParser.extractReadVariables(rule.getCondition());
         tc.setReadVariables(readVars);
 
-        // 叶子变量：展开 derived.*
         Set<String> leafVars = new LinkedHashSet<>();
         for (String v : readVars) {
             if (v.startsWith("derived.") && derivationGraph.containsKey(v)) {
@@ -245,11 +262,9 @@ public class CaseContractBuilder {
         }
         tc.setReadLeafVariables(leafVars);
 
-        // 写变量：process.currentState + action 的赋值目标
         tc.getWrittenVariables().add("process.currentState");
         tc.getWrittenVariables().addAll(guardParser.extractWriteTargets(rule.getAction()));
 
-        // 触发意图
         Set<String> triggers = new LinkedHashSet<>();
         if (rule.getIntentCode() != null && !rule.getIntentCode().isEmpty()) {
             triggers.add(rule.getIntentCode());
@@ -260,7 +275,6 @@ public class CaseContractBuilder {
         }
         tc.setTriggeringIntents(triggers);
 
-        // 关联技能：从转移的意图反查
         if (rule.getIntentCode() != null) {
             String skillId = routingLoader
                 .getIntentToSkillMap(caseId, rule.getSource())
@@ -268,13 +282,13 @@ public class CaseContractBuilder {
             if (skillId != null) tc.getSkills().add(skillId);
         }
 
-        // 诊断
         boolean hasTrigger = !triggers.isEmpty()
             || tc.isSystemTrigger()
-            || (rule.getEvent() != null && !rule.getEvent().isEmpty());
+            || (rule.getEvent() != null && !rule.getEvent().isEmpty())
+            || tc.hasGuardCondition();
         if (!hasTrigger) {
             tc.setDead(true);
-            tc.getWarnings().add("无触发路径：intentCode / event / systemTrigger 均为空");
+            tc.getWarnings().add("无触发路径：intentCode / event / systemTrigger / condition 均为空");
         }
         if (rule.getSource() != null && rule.getSource().equals(rule.getTarget())) {
             tc.setSelfLoop(true);
@@ -304,25 +318,21 @@ public class CaseContractBuilder {
         vc.setSource(v.getSource());
         vc.setWritableBy(v.getWritableBy());
 
-        // 写入方：意图
         vc.setWrittenByIntents(new LinkedHashSet<>(
             varToIntents.getOrDefault(v.getName(), Set.of())));
 
-        // 写入方：派生规则
         for (Map.Entry<String, Set<String>> e : derivationGraph.entrySet()) {
             if (e.getKey().equals(v.getName())) {
                 vc.getWrittenByDerivations().add(e.getKey());
             }
         }
 
-        // 写入方：状态机转移的 action
         for (TransitionContract tc : contract.getTransitionContracts().values()) {
             if (tc.getWrittenVariables().contains(v.getName())) {
                 vc.getWrittenByTransitions().add(tc.getTransitionId());
             }
         }
 
-        // 写入方：状态机 onEnter
         Map<String, List<String>> onEnterRules =
             stateMachineLoader.getAllOnEnterRules(caseId);
         for (Map.Entry<String, List<String>> e : onEnterRules.entrySet()) {
@@ -333,19 +343,16 @@ public class CaseContractBuilder {
             }
         }
 
-        // 系统变量
         String src = v.getSource();
         vc.setWrittenBySystem("SYSTEM".equalsIgnoreCase(src)
             || "STATE_MACHINE".equalsIgnoreCase(src));
 
-        // 读取方：Guard
         for (TransitionContract tc : contract.getTransitionContracts().values()) {
             if (tc.getReadVariables().contains(v.getName())) {
                 vc.getReadByGuards().add(tc.getTransitionId());
             }
         }
 
-        // 读取方：onEnter
         for (Map.Entry<String, List<String>> e : onEnterRules.entrySet()) {
             for (String expr : e.getValue()) {
                 if (guardParser.extractReadVariables(expr).contains(v.getName())) {
@@ -354,14 +361,12 @@ public class CaseContractBuilder {
             }
         }
 
-        // 读取方：派生规则
         for (Map.Entry<String, Set<String>> e : derivationGraph.entrySet()) {
             if (e.getValue().contains(v.getName())) {
                 vc.getReadByDerivations().add(e.getKey());
             }
         }
 
-        // 诊断
         boolean read = !vc.getReadByGuards().isEmpty()
             || !vc.getReadByOnEnter().isEmpty()
             || !vc.getReadByDerivations().isEmpty()
@@ -396,14 +401,12 @@ public class CaseContractBuilder {
         dv.setLeafDependencies(
             graphBuilder.expandToLeafVariables(r.getTarget(), derivationGraph));
 
-        // 读取方：Guard
         for (TransitionContract tc : contract.getTransitionContracts().values()) {
             if (tc.getReadVariables().contains(r.getTarget())) {
                 dv.getReadByGuards().add(tc.getTransitionId());
             }
         }
 
-        // 读取方：onEnter
         Map<String, List<String>> onEnterRules =
             stateMachineLoader.getAllOnEnterRules(caseId);
         for (Map.Entry<String, List<String>> e : onEnterRules.entrySet()) {
@@ -414,7 +417,6 @@ public class CaseContractBuilder {
             }
         }
 
-        // 读取方：其他派生规则
         for (Map.Entry<String, Set<String>> e : derivationGraph.entrySet()) {
             if (e.getValue().contains(r.getTarget())) {
                 dv.getReadByDerivations().add(e.getKey());
@@ -447,7 +449,6 @@ public class CaseContractBuilder {
             ic.setCaseCode(def.getCaseCode());
             ic.setWriterType(intentLoader.getIntentWriterType(intentCode));
 
-            // 触发模式
             ic.getTriggers().addAll(def.getAllTriggers());
             ic.getNegativeRegex().addAll(def.getNegativeRegexes());
             if (def.getAliases() != null) ic.getAliases().addAll(def.getAliases());
@@ -455,7 +456,6 @@ public class CaseContractBuilder {
             Set<String> surfaces = surfacesMap.get(intentCode);
             if (surfaces != null) ic.getSurfaces().addAll(surfaces);
 
-            // 路由：按状态
             for (String stateId : stateMachineLoader.getStateIdsForCase(caseId)) {
                 String skillId = routingLoader
                     .getIntentToSkillMap(caseId, stateId).get(intentCode);
@@ -464,7 +464,6 @@ public class CaseContractBuilder {
                     ic.getAllSkills().add(skillId);
                 }
             }
-            // 通配状态
             String wildcardSkill = routingLoader
                 .getIntentToSkillMap(caseId, null).get(intentCode);
             if (wildcardSkill != null) {
@@ -472,11 +471,9 @@ public class CaseContractBuilder {
                 ic.getAllSkills().add(wildcardSkill);
             }
 
-            // 写入变量
             ic.getWrittenVariables().addAll(
                 intentToWrittenVars.getOrDefault(intentCode, Set.of()));
 
-            // 护栏
             Map<String, List<GuardRule>> guardMap =
                 guardRailLoader.getIntentToGuardsMap(caseId);
             List<GuardRule> guards = guardMap.get(intentCode);
@@ -486,12 +483,10 @@ public class CaseContractBuilder {
                 }
             }
 
-            // 常驻意图标记
             if (alwaysAllowed.contains(intentCode)) {
                 ic.setAlwaysAllowed(true);
             }
 
-            // 诊断
             if (ic.getAllSkills().isEmpty()) {
                 ic.setNoSkill(true);
             }
@@ -508,7 +503,6 @@ public class CaseContractBuilder {
             contract.getIntentContracts().put(intentCode, ic);
         }
 
-        // 处理"常驻但不在 intentLoader 里"的意图
         for (String alwaysCode : alwaysAllowed) {
             if (!contract.getIntentContracts().containsKey(alwaysCode)) {
                 IntentContract ic = new IntentContract();
@@ -521,10 +515,7 @@ public class CaseContractBuilder {
         }
     }
 
-    /** 惰性从 IntentDictLoader 拿 surfaces（可选依赖） */
     private Map<String, Set<String>> intentDictSurfacesMap() {
-        // 若你已注入 IntentDictLoader，直接调用 getIntentToSurfacesMap()
-        // 这里为了不强依赖，返回空 Map；后续可改为注入
         return Collections.emptyMap();
     }
 
@@ -546,7 +537,6 @@ public class CaseContractBuilder {
             sc.getOnEnterRules().addAll(
                 stateMachineLoader.getOnEnterRules(caseId, stateId));
 
-            // 出边
             for (TransitionContract tc : contract.getTransitionContracts().values()) {
                 if (stateId.equals(tc.getSourceState())) {
                     sc.getTransitions().add(tc);
@@ -560,13 +550,11 @@ public class CaseContractBuilder {
     }
 
     // ====================================================================
-    // 补齐变量的读取源（护栏 / 反射规则 / 技能前置条件）
+    // 补齐变量的读取源
     // ====================================================================
 
     private void enrichVariableReadSources(String caseId, CaseContract contract) {
-        // 护栏
         Map<String, Set<String>> varToGuards = guardRailLoader.getVariableToGuardsMap();
-        // 反射规则
         Map<String, Set<String>> varToRules = reflexRuleLoader.getVariableToRulesMap();
 
         for (VariableContract vc : contract.getVariableContracts().values()) {
@@ -577,7 +565,6 @@ public class CaseContractBuilder {
             if (rules != null) vc.getReadByReflexRules().addAll(rules);
         }
 
-        // 技能前置条件
         for (IntentContract ic : contract.getIntentContracts().values()) {
             for (String skillId : ic.getAllSkills()) {
                 Set<String> reads = skillLoader.getSkillReads(skillId);
@@ -594,7 +581,6 @@ public class CaseContractBuilder {
     // ====================================================================
 
     private void diagnoseContract(String caseId, CaseContract contract) {
-        // 技能覆盖率
         Set<String> declaredInYaml = skillLoader.getAllSkillIds();
         Set<String> registered = skillRegistry.getAllSkillIds();
         Set<String> missing = new LinkedHashSet<>(declaredInYaml);
@@ -603,9 +589,119 @@ public class CaseContractBuilder {
             contract.getBuildWarnings().add("以下技能在 YAML 声明但未注册: " + missing);
         }
 
-        // 路由冲突
         List<String> conflicts = routingLoader.findRoutingConflicts(caseId, null);
         contract.getBuildWarnings().addAll(conflicts);
+    }
+
+    // ====================================================================
+    // ★ 阶段 3 / 4.1：文件基线
+    // ====================================================================
+
+    public CaseFileBaseline buildFileBaseline(String caseId) {
+        if (caseId == null) {
+            throw new IllegalArgumentException("caseId 不能为空");
+        }
+        return baselineCache.computeIfAbsent(caseId, this::doBuildFileBaseline);
+    }
+
+    private CaseFileBaseline doBuildFileBaseline(String caseId) {
+        Map<String, CaseFileBaseline.FileEntry> files = new LinkedHashMap<>();
+        int existing = 0;
+        boolean auditBlocked = false;
+
+        for (String fileName : CASE_FILES) {
+            String relative = "config/acls/cases/" + caseId + "/" + fileName;
+            String sha = sha256Of("classpath:" + relative);
+            boolean exists = sha != null;
+            if (exists) existing++;
+
+            String reviewStatus = reviewStatusResolver.resolve(caseId, fileName);
+            boolean blocked = !CaseFileReviewStatusResolver.PENDING.equals(reviewStatus)
+                && !CaseFileReviewStatusResolver.APPROVED.equals(reviewStatus);
+            if (blocked) auditBlocked = true;
+
+            files.put(fileName, CaseFileBaseline.FileEntry.builder()
+                .relativePath(relative)
+                .sha256(sha)
+                .reviewStatus(reviewStatus)
+                .exists(exists)
+                .build());
+        }
+
+        boolean complete = existing == CASE_FILES.size();
+        CaseFileBaseline baseline = CaseFileBaseline.builder()
+            .caseId(caseId)
+            .files(files)
+            .capturedAt(LocalDateTime.now())
+            .complete(complete)
+            .auditBlocked(auditBlocked)
+            .build();
+
+        log.info("[Contract][Baseline] case={}, files={}/{}, complete={}, auditBlocked={}",
+            caseId, existing, CASE_FILES.size(), complete, auditBlocked);
+        return baseline;
+    }
+
+    private void enrichManifestBaseline(String caseId, CaseContract contract) {
+        CaseFileBaseline baseline;
+        try {
+            baseline = buildFileBaseline(caseId);
+        } catch (Exception e) {
+            contract.getBuildWarnings().add("文件基线构建失败: " + e.getMessage());
+            log.warn("[Contract][Baseline] case={} 基线构建失败: {}", caseId, e.getMessage());
+            return;
+        }
+
+        boolean anyExists = baseline.getFiles().values().stream()
+            .anyMatch(CaseFileBaseline.FileEntry::isExists);
+        if (!anyExists) {
+            return;
+        }
+
+        List<String> missing = baseline.getFiles().values().stream()
+            .filter(f -> !f.isExists())
+            .map(CaseFileBaseline.FileEntry::getRelativePath)
+            .collect(Collectors.toList());
+        if (!missing.isEmpty()) {
+            contract.getBuildWarnings().add(
+                "文件基线缺失: " + missing + "（该案例可能未迁移到 ACLS Tutor 新结构）");
+        }
+
+        if (baseline.isAuditBlocked()) {
+            List<String> blocked = baseline.getFiles().values().stream()
+                .filter(f -> f.getReviewStatus() != null
+                    && !CaseFileReviewStatusResolver.PENDING.equals(f.getReviewStatus())
+                    && !CaseFileReviewStatusResolver.APPROVED.equals(f.getReviewStatus()))
+                .map(f -> f.getRelativePath() + "=" + f.getReviewStatus())
+                .collect(Collectors.toList());
+            contract.getBuildWarnings().add("文件审核状态异常: " + blocked);
+        }
+    }
+
+    private String sha256Of(String location) {
+        try {
+            Resource r = resourceLoader.getResource(location);
+            if (!r.exists()) {
+                return null;
+            }
+            try (InputStream in = r.getInputStream()) {
+                MessageDigest md = MessageDigest.getInstance("SHA-256");
+                byte[] buf = new byte[8192];
+                int n;
+                while ((n = in.read(buf)) > 0) {
+                    md.update(buf, 0, n);
+                }
+                byte[] digest = md.digest();
+                StringBuilder sb = new StringBuilder(digest.length * 2);
+                for (byte b : digest) {
+                    sb.append(String.format("%02x", b));
+                }
+                return sb.toString();
+            }
+        } catch (Exception e) {
+            log.warn("[Contract][Baseline] 计算哈希失败: {}, err={}", location, e.getMessage());
+            return null;
+        }
     }
 
     // ====================================================================

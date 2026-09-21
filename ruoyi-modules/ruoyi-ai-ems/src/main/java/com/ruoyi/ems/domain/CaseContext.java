@@ -34,6 +34,17 @@ public class CaseContext {
 
     private long version = 0L;
 
+    /**
+     * ★ 阶段 3 新增：事件序列。
+     *
+     * <p>与 {@link #version} 分离：{@code version} 用于变量乐观锁与权威状态版本，
+     * {@code eventSequence} 每处理一个事件递增一次，用于事件溯源与 AttemptManifest
+     * 冻结锚点（P0-9）。</p>
+     *
+     * <p>语义：只增不减、单调递增；不参与 copy 后版本比较；copy() 时按值复制。</p>
+     */
+    private long eventSequence = 0L;
+
     // === 动态变量存储 ===
     private Map<String, Object> variables = new ConcurrentHashMap<>();
 
@@ -77,6 +88,8 @@ public class CaseContext {
         this.recentDialogs = new ArrayList<>();
         this.clockStatus = "RUNNING";
         this.version = 0L;
+        // ★ 阶段 3：构造时事件序列归零
+        this.eventSequence = 0L;
         // ★ Phase SM：构造时初始化空 PhaseRuntime，避免调用方到处判空
         this.phaseRuntime = new PhaseRuntime();
     }
@@ -108,6 +121,9 @@ public class CaseContext {
         c.setSessionStartTime(this.sessionStartTime);
         c.setLastUpdateTime(this.lastUpdateTime);
         c.setVersion(this.version);
+
+        // ★ 阶段 3：eventSequence 按值复制，保证冻结锚点一致
+        c.setEventSequence(this.eventSequence);
 
         // ★ Phase SM：phaseRuntime 深拷贝（集合字段新建实例）
         c.setPhaseRuntime(this.phaseRuntime != null ? this.phaseRuntime.copy() : null);
@@ -184,6 +200,36 @@ public class CaseContext {
 
     public int getElapsedSeconds() {
         return elapsedSeconds;
+    }
+
+    // ============================================================
+    // ★ 阶段 3：事件序列便捷方法
+    // ============================================================
+
+    /**
+     * ★ 阶段 3：推进一次事件序列。
+     *
+     * <p>每个事件处理入口调用一次，返回推进后的新序号。
+     * 与 {@link #version} 严格分离：version 只在权威状态变更时调整，
+     * eventSequence 每事件无条件递增。</p>
+     *
+     * @return 递增后的 eventSequence
+     */
+    public long advanceEventSequence() {
+        this.eventSequence++;
+        this.lastUpdateTime = LocalDateTime.now();
+        return this.eventSequence;
+    }
+
+    /**
+     * ★ 阶段 3：读取当前事件序列（只读）。
+     *
+     * <p>注意：{@code @Data} 会为 {@code eventSequence} 生成默认 getter，
+     * 此处显式覆盖以固定语义；如需写值请使用 {@link #advanceEventSequence()}
+     * 或 setter（仅供 copy / 反序列化使用）。</p>
+     */
+    public long getEventSequence() {
+        return eventSequence;
     }
 
     // ============================================================

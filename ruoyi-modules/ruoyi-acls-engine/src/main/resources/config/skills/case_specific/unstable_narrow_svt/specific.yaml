@@ -1,0 +1,201 @@
+# ============================================================================
+# unstable_narrow_svt/specific.yaml - 窄QRS不稳定心动过速专属技能
+#
+# 字段契约（来自 YamlSkillLoader）：
+#   generic_assert: assertExpression / targetVar / successSpeech / valueMap
+#                   / prerequisites / sourceVar / sourceVars / unavailableValue
+#   standard:       vrActionCode / successVar / successSpeech / durationSeconds
+#                   （不支持 outputs）
+#   generic:        vrActionCode / durationSeconds / successSpeech / outputs(List)
+#                   / prerequisites / varMapping / waitForCompletion / timeoutSeconds
+#                   / sourceVar / sourceVars / targetVar / unavailableValue / valueMap
+#
+#   outputs 必须是 List[{var, value}]，不能是 Map
+#   durationSeconds 必填（generic / standard 都一样）
+# ============================================================================
+
+skills:
+
+  # -------- 快速评估类（generic_assert） --------
+
+  - id: assert_qrs_width_unstable
+    duty: MONITOR_DEFIB
+    type: generic_assert
+    params:
+      sourceVar: phys.qrsDuration
+      assertExpression: "#phys.qrsDuration != null && #phys.qrsDuration <= 0.12 ? 'narrow' : 'wide'"
+      targetVar: assert.qrsWidth
+      successSpeech: "QRS宽度 {value}。"
+      valueMap:
+        unknown: "待判读"
+        narrow: "窄QRS"
+        wide: "宽QRS"
+      prerequisites:
+        - variable: process.ecgRecorded
+          expected: true
+          message: "请先完成 12 导联心电图记录！"
+
+  - id: assert_hemodynamics_unstable
+    duty: ASSESS
+    type: generic_assert
+    params:
+      sourceVars: [phys.systolicBp, phys.consciousness, phys.respiratoryRate]
+      assertExpression: "#phys.systolicBp < 90 || #phys.consciousness != 'alert' || (#phys.spo2 != null && #phys.spo2 < 94)"
+      targetVar: assert.stable
+      successSpeech: "血流动力学 {value}。"
+      valueMap:
+        unknown: "待判读"
+        true: "稳定"
+        false: "不稳定"
+
+  # -------- 同步电复律准备（generic，outputs 为 List） --------
+
+  - id: enable_sync_mode
+    duty: MONITOR_DEFIB
+    type: generic
+    params:
+      vrActionCode: ENABLE_SYNC_MODE
+      durationSeconds: 1
+      successSpeech: "除颤仪已切换至 SYNC 同步模式。"
+      outputs:
+        - var: device.defibSyncMode
+          value: true
+
+  - id: select_cardioversion_energy
+    duty: MONITOR_DEFIB
+    type: generic
+    params:
+      vrActionCode: SELECT_CARDIOVERSION_ENERGY
+      durationSeconds: 1
+      successSpeech: "同步电复律能量已设置为 100J。"
+      outputs:
+        - var: device.defibEnergy
+          value: 100
+
+  # -------- 镇静（改 generic，因为要写多个 outputs） --------
+
+  - id: administer_sedation
+    duty: IV_MED
+    type: generic
+    params:
+      vrActionCode: ADMINISTER_SEDATION
+      durationSeconds: 3
+      timeoutSeconds: 10
+      successSpeech: "咪达唑仑已缓慢静推，患者意识水平下降。"
+      outputs:
+        - var: intervention.sedation.given
+          value: true
+        - var: intervention.sedation.drug
+          value: "midazolam"
+        - var: intervention.sedation.dose
+          value: "2mg"
+
+  # -------- 充电（standard，successVar 写 boolean） --------
+
+  - id: charge_defib
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "CHARGE_DEFIB"
+      durationSeconds: 3
+      timeoutSeconds: 8
+      successVar: device.defibCharged
+      successSpeech: "除颤仪充电完成。"
+
+  # -------- 清场（standard） --------
+
+  - id: clear_for_cardioversion
+    duty: MONITOR_DEFIB
+    type: standard
+    params:
+      vrActionCode: "CLEAR_FOR_CARDIOVERSION"
+      durationSeconds: 1
+      successVar: process.allClearForShock
+      successSpeech: "大家离开！确认无人接触患者。"
+
+  # -------- 放电（改 generic，要写多个 outputs；count 由状态机 effects 累加） --------
+
+  - id: deliver_sync_shock
+    duty: MONITOR_DEFIB
+    type: generic
+    params:
+      vrActionCode: DELIVER_SYNC_SHOCK
+      durationSeconds: 2
+      timeoutSeconds: 5
+      successSpeech: "同步放电完成，准备评估心律。"
+      outputs:
+        - var: intervention.cardioversion.lastEnergy
+          value: 100
+        - var: process.emergencyCardioversionPerformed
+          value: true
+        - var: process.lastInterventionTime
+          value: 0
+
+  # -------- 复律后心律评估（generic_assert） --------
+
+  - id: assess_post_shock_rhythm
+    duty: MONITOR_DEFIB
+    type: generic_assert
+    params:
+      sourceVars: [phys.rhythm, phys.heartRate, phys.systolicBp]
+      assertExpression: "#phys.rhythm == 'Sinus'"
+      targetVar: process.rhythmPostCardioversion
+      successSpeech: "复律后心律：{value}。"
+      valueMap:
+        unknown: "待评估"
+        true: "窦性心律，复律成功"
+        false: "仍未转复，考虑二次电复律"
+
+  # -------- 结果报告（generic） --------
+
+  - id: report_cardioversion_result
+    duty: ASSESS
+    type: generic
+    params:
+      vrActionCode: REPORT_CARDIOVERSION_RESULT
+      durationSeconds: 1
+      successSpeech: "电复律结果已报告：转复为窦性心律，血压稳定，继续监测。"
+      outputs:
+        - var: intervention.rhythmConverted
+          value: true
+        - var: process.treatmentResultReported
+          value: true
+
+  # -------- 禁忌操作识别（generic） --------
+
+  - id: blocked_vagal_on_unstable
+    duty: ASSESS
+    type: generic
+    params:
+      vrActionCode: BLOCKED_VAGAL_ON_UNSTABLE
+      durationSeconds: 1
+      successSpeech: "⛔ 患者血流动力学不稳定，迷走神经刺激无效且会延误抢救。应立即同步电复律。"
+      outputs:
+        - var: process.vagalBlockedOnUnstable
+          value: true
+        - var: process.instabilityTriggered
+          value: true
+
+  - id: blocked_adenosine_on_unstable
+    duty: ASSESS
+    type: generic
+    params:
+      vrActionCode: BLOCKED_ADENOSINE_ON_UNSTABLE
+      durationSeconds: 1
+      successSpeech: "⛔ 患者血流动力学不稳定，腺苷可能加重低血压。应立即同步电复律。"
+      outputs:
+        - var: process.adenosineBlockedOnUnstable
+          value: true
+        - var: process.instabilityTriggered
+          value: true
+
+  - id: blocked_cpr_on_pulse
+    duty: ASSESS
+    type: generic
+    params:
+      vrActionCode: BLOCKED_CPR_ON_PULSE
+      durationSeconds: 1
+      successSpeech: "⛔ 患者有脉搏、有灌注，不需要胸外按压。应专注同步电复律。"
+      outputs:
+        - var: process.cprOnPulseBlocked
+          value: true

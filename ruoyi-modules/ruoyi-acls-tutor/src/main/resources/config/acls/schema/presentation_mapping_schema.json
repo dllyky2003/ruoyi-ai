@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ruoyi.local/acls/schema/presentation_mapping_schema.json",
+  "title": "ACLS presentation_mapping.yaml",
+  "description": "表现映射层（V3.1 §5.6）：临床状态/结局到监护、波形、Unity 表现的映射",
+  "type": "object",
+  "required": ["case_id", "version", "presentation_mappings"],
+  "additionalProperties": false,
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "presentation_mappings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/presentation_mapping" }
+    }
+  },
+  "$defs": {
+
+    "presentation_mapping": {
+      "type": "object",
+      "required": ["mapping_id", "branch_id", "monitor"],
+      "additionalProperties": false,
+      "properties": {
+        "mapping_id": {
+          "type": "string",
+          "pattern": "^PM_[A-Z0-9_]+$"
+        },
+        "branch_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "指向 clinical_rules.yaml 中 case_outcome_branches.branch_id"
+        },
+        "monitor":      { "$ref": "#/$defs/monitor" },
+        "unity_hints":  { "$ref": "#/$defs/unity_hints" }
+      }
+    },
+
+    "monitor": {
+      "type": "object",
+      "description": "V3.1 §7.3: 无脉状态不得虚构血压、脉搏或 SpO2",
+      "additionalProperties": false,
+      "properties": {
+        "rhythm_waveform": { "type": "string" },
+        "hr_display":      { "type": ["string", "number", "null"] },
+        "bp_display":      { "type": ["string", "null"] },
+        "spo2_display":    { "type": ["string", "number", "null"] },
+        "etco2_display":   { "type": ["string", "number", "null"] },
+        "trend_labels": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" }
+        }
+      }
+    },
+
+    "unity_hints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "audio":     { "type": "string" },
+        "animation": { "type": "string" },
+        "ui_banner": { "type": "string" },
+        "overlay":   { "type": "string" }
+      }
+    }
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ruoyi.local/acls/schema/fallback_paths_schema.json",
+  "title": "ACLS fallback_paths.yaml",
+  "description": "兜底路径。约束见 V3.1 §4.3 / §6.4 / P0-8：MVP 只提醒，不自动演进",
+  "type": "object",
+  "required": ["case_id", "version", "fallback_paths"],
+  "additionalProperties": false,
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "fallback_paths": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/fallback_path" }
+    }
+  },
+  "$defs": {
+    "fallback_path": {
+      "type": "object",
+      "required": ["fallback_id", "name", "applies_when_state", "after", "fallback_action"],
+      "additionalProperties": false,
+      "properties": {
+        "fallback_id":       { "type": "string", "pattern": "^FB_[A-Z0-9_]+$" },
+        "name":              { "type": "string", "minLength": 1 },
+        "applies_when_state":{ "type": "string", "minLength": 1 },
+        "after":             { "type": "string", "pattern": "^\\d+s$" },
+
+        "fallback_action": { "$ref": "#/$defs/fallback_action" },
+        "escalation":      { "$ref": "#/$defs/escalation" },
+
+        "review": { "$ref": "_shared_schema.json#/$defs/review" }
+      }
+    },
+
+    "fallback_action": {
+      "type": "object",
+      "description": "P0-8: MVP 只允许提醒类动作",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["instructor_alert"]
+        },
+        "message": { "type": "string", "minLength": 1 }
+      }
+    },
+
+    "escalation": {
+      "type": "object",
+      "description": "升级通道：必须是独立事件，不是自动续作（V3.1 §6.4）",
+      "required": ["after", "action", "requires_reason", "requires_medical_review", "affects_formative_score"],
+      "additionalProperties": false,
+      "properties": {
+        "after": { "type": "string", "pattern": "^\\d+s$" },
+        "action": {
+          "type": "string",
+          "enum": ["instructor_confirmation_required"]
+        },
+        "proposed_branch_id":      { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "requires_reason":         { "const": true },
+        "requires_medical_review": { "const": true },
+        "affects_formative_score": { "const": false }
+      }
+    }
+  }
+}

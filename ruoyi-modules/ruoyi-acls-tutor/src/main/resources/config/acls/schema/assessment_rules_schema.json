@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ruoyi.local/acls/schema/assessment_rules_schema.json",
+  "title": "ACLS assessment_rules.yaml",
+  "description": "评分规则。约束见 V3.1 §4.1 / S3",
+  "type": "object",
+  "required": ["case_id", "version", "assessment_rules"],
+  "additionalProperties": false,
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "assessment_rules": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/assessment_rule" }
+    }
+  },
+  "$defs": {
+    "assessment_rule": {
+      "type": "object",
+      "required": [
+        "criterion_id",
+        "name",
+        "time_basis",
+        "severity",
+        "evidence_required"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "criterion_id": {
+          "type": "string",
+          "pattern": "^CA_[A-Z0-9_]+$"
+        },
+        "name":     { "type": "string", "minLength": 1 },
+        "category": {
+          "type": "string",
+          "enum": [
+            "critical_action",
+            "timing",
+            "sequence",
+            "medication",
+            "risk_control",
+            "reassessment"
+          ]
+        },
+
+        "time_basis": { "$ref": "_shared_schema.json#/$defs/time_basis" },
+
+        "severity": { "$ref": "_shared_schema.json#/$defs/severity" },
+
+        "evidence_required": { "type": "boolean" },
+
+        "target_seconds":  { "type": "integer", "minimum": 0 },
+        "max_seconds":     { "type": "integer", "minimum": 0 },
+        "feedback_key":    { "type": "string" },
+        "assessment_tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+
+        "real_time_rationale": { "type": "string" },
+        "pause_sensitive":     { "type": "boolean" },
+
+        "review": { "$ref": "_shared_schema.json#/$defs/review" }
+      },
+      "allOf": [
+        {
+          "description": "S3: time_basis=real 时强制 real_time_rationale 与 pause_sensitive",
+          "if": {
+            "required": ["time_basis"],
+            "properties": { "time_basis": { "const": "real" } }
+          },
+          "then": {
+            "required": ["real_time_rationale", "pause_sensitive"],
+            "properties": {
+              "real_time_rationale": { "minLength": 1 },
+              "pause_sensitive":     { "const": true }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

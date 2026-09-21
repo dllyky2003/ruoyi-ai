@@ -1,0 +1,19 @@
+case_id: stable_narrow
+version: 0.1.0
+
+instructor_overrides:
+  - override_id: IO_PAUSE_CLOCK
+    name: "导师暂停时钟"
+    allowed_when:
+      attempt_status: RUNNING
+    action:
+      type: clock_control
+      operation: pause
+    requires_reason: false
+    audit_required: true
+    affects_formative_score: false
+    review:
+      review_status: approved
+      reviewer_id: test_architect
+      reviewer_role: architect
+      review_date: "2026-09-20"

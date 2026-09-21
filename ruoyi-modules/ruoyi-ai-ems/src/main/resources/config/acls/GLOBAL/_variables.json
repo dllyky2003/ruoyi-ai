@@ -4122,40 +4122,7 @@
       "category": "PROCESS_MARKER",
       "default_value": "unknown"
     },
-    {
-      "name": "process.sedationGiven",
-      "name_cn": "已镇静",
-      "type": "boolean",
-      "description": "同步电复律前是否已镇静",
-      "category": "PROCESS_MARKER",
-      "default_value": false
-    },
-    {
-      "name": "process.sedationAgent",
-      "name_cn": "镇静药物",
-      "type": "string",
-      "enum": [
-        {
-          "value": "midazolam",
-          "label": "咪达唑仑"
-        },
-        {
-          "value": "etomidate",
-          "label": "依托咪酯"
-        },
-        {
-          "value": "none",
-          "label": "未使用"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
-      ],
-      "description": "使用的镇静药物",
-      "category": "PROCESS_MARKER",
-      "default_value": "none"
-    },
+
     {
       "name": "process.firstContactTime",
       "name_cn": "首次接触时间",

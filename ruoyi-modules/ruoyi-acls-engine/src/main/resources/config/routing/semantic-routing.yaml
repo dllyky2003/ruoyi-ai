@@ -6,6 +6,7 @@
 routes:
   # 窄QRS稳定心动过速（导入专属路由）
   - import: "stable_narrow.yaml"
-
+  # 窄QRS不稳定心动过速（导入专属路由）
+  - import: "unstable_narrow_svt.yaml"
   # 通用意图路由（所有案例共享）
   - import: "common.yaml"

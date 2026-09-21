@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ruoyi.local/acls/schema/evidence_manifest_schema.json",
+  "title": "ACLS evidence_manifest.yaml",
+  "description": "医学证据清单。约束见 V3.1 §9.1 / §6.7 / S4",
+  "type": "object",
+  "required": ["case_id", "version", "evidence"],
+  "additionalProperties": false,
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "evidence": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/evidence_entry" }
+    }
+  },
+  "$defs": {
+    "evidence_entry": {
+      "type": "object",
+      "required": [
+        "evidence_id",
+        "topic",
+        "source_class",
+        "review_status"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "evidence_id": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]+$"
+        },
+        "topic": { "type": "string", "minLength": 1 },
+
+        "source_class": { "$ref": "_shared_schema.json#/$defs/source_class" },
+
+        "source_document":  { "type": "string" },
+        "source_version":   { "type": "string" },
+        "source_section":   { "type": "string" },
+        "recommendation_text":  { "type": "string" },
+        "recommendation_class": { "type": "string" },
+        "evidence_level":       { "type": "string" },
+
+        "patient_scope": {
+          "type": "string",
+          "enum": ["adult", "pediatric", "neonate", "general"]
+        },
+        "care_setting": {
+          "type": "string",
+          "enum": ["prehospital", "in_hospital", "prehospital_or_general", "general"]
+        },
+        "local_variance_required": { "type": "boolean" },
+
+        "mapped_rule_ids": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "supporting_guideline_refs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+
+        "review_status": { "$ref": "_shared_schema.json#/$defs/review_status" },
+        "reviewer_id":   { "type": ["string", "null"] },
+        "review_date":   { "type": ["string", "null"], "format": "date" }
+      },
+      "allOf": [
+        {
+          "description": "S4: pedagogical_case_setting 必须有 supporting_guideline_refs",
+          "if": {
+            "required": ["source_class"],
+            "properties": { "source_class": { "const": "pedagogical_case_setting" } }
+          },
+          "then": {
+            "required": ["supporting_guideline_refs"],
+            "properties": {
+              "supporting_guideline_refs": { "minItems": 1 }
+            }
+          }
+        },
+        {
+          "description": "V3.1 §9.1: approved 时必须带审核人与日期",
+          "if": {
+            "required": ["review_status"],
+            "properties": { "review_status": { "const": "approved" } }
+          },
+          "then": {
+            "required": ["reviewer_id", "review_date"],
+            "properties": {
+              "reviewer_id": { "type": "string", "minLength": 1 },
+              "review_date": { "type": "string", "format": "date" }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

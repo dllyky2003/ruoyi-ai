@@ -1,0 +1,28 @@
+lesson_plan:
+  lesson_plan_id: LP_STABLE_NARROW_001
+  lesson_plan_version: 0.1.0
+  case_id: stable_narrow
+
+  title: "稳定窄QRS心动过速决策训练"
+  target_audience: ACLS学员
+  estimated_duration_min: 15
+  learning_objectives:
+    - 识别稳定窄QRS心动过速
+    - 判断腺苷适应证
+
+  instructor_authority_profile: ems_adult_als_v1
+  eligible_for_summative_use: false
+
+  scenario_beats_ref:
+    file: scenario_beats.yaml
+    sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+  fallback_paths_ref:
+    file: fallback_paths.yaml
+    sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+  instructor_overrides_ref:
+    file: instructor_overrides.yaml
+    sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+
+  review_status: approved
+  reviewed_by: test_architect
+  reviewed_at: "2026-09-20T00:00:00Z"

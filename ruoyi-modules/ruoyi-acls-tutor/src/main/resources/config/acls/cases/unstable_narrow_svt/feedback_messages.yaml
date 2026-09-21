@@ -1,0 +1,19 @@
+version: 1.0.0
+# unstable_narrow_svt 案例专属反馈文案。
+# 同名 key 覆盖全局 feedback_messages.yaml。
+# severity 仅作归档参考，不参与匹配。
+messages:
+  # 未开 SYNC 模式就放电 → 严重错误
+  - key: feedback_unsync_shock_blocked
+    text: "⛔ 未开启 SYNC 同步模式就放电，R 波可能落在 T 波易感期诱发室颤。有脉搏的心动过速必须先开 SYNC。"
+    severity: critical
+
+  # 未给镇静就电复律 → 警告
+  - key: feedback_sedation_missing
+    text: "⚠️ 患者清醒，未给镇静就放电会造成疼痛与心理创伤。建议先给咪达唑仑或依托咪酯。"
+    severity: moderate
+
+  # 有脉搏患者启动 CPR → 拦截
+  - key: feedback_cpr_on_pulse_blocked
+    text: "⛔ 患者有脉搏、有灌注，不需要胸外按压。应专注同步电复律。"
+    severity: critical

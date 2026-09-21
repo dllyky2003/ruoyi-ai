@@ -1,0 +1,38 @@
+case_id: stable_narrow
+version: 0.1.0
+
+scenario_beats:
+  # ---------- 观测型（只提示，不改状态） ----------
+  - beat_id: BEAT-OBS-01
+    name: "开场提示（观测型）"
+    beat_mode: observation
+    sequence_hint: 10
+    trigger:
+      type: initial
+      state: F-000-SCENE_START
+    observation:
+      ui_banner: "评估患者气道、呼吸、循环"
+      chapter_title: "第一章：初始评估"
+      assessment_tag: phase_initial
+
+  # ---------- 分支型（引用已解析授权） ----------
+  - beat_id: BEAT-BRANCH-01
+    name: "持续 SVT 分支（分支型）"
+    beat_mode: branch_selection
+    sequence_hint: 20
+    trigger:
+      type: event
+      intervention_id: medication_adenosine
+    selection_group: rhythm_outcome_after_adenosine
+    selection_priority: 100
+    proposed_effect:
+      effect_id: trigger_case_outcome_branch
+      branch_id: persistent_svt_stub
+      allowed_by_rule_ids:
+        - R_ADENOSINE_BEFORE_QRS_CHECK
+    case_outcome_ref: persistent_svt_stub
+    review:
+      review_status: approved
+      reviewer_id: test_architect
+      reviewer_role: architect
+      review_date: "2026-09-20"

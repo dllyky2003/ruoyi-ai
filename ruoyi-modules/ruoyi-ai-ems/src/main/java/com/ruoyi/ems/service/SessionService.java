@@ -568,6 +568,10 @@ public class SessionService {
         boolean success = false;
         String resultText = "";
 
+        // ★ 新增：处理器明确拒绝（带反馈）时记录，区别于"无处理器支持"
+        String rejectedFeedback = null;
+        String rejectedReturnCode = null;
+
         try {
             List<IntelligentCommandProcessor> processors =
                 intelligentProcessorProvider.stream().toList();
@@ -576,8 +580,31 @@ public class SessionService {
                 if (!processor.supports(intentCode)) continue;
 
                 Map<String, Object> result = processor.processCommand(sessionId, command);
-                if (result == null || !Boolean.TRUE.equals(result.get("success"))) continue;
+                if (result == null) continue;
 
+                boolean ok = Boolean.TRUE.equals(result.get("success"));
+
+                if (!ok) {
+                    // ★ 明确拒绝：取 errorMessage（兼容 errorMsg / msg / reason 几种常见 key）
+                    String errMsg = firstNonBlank(
+                        result.get("errorMessage"),
+                        result.get("errorMsg"),
+                        result.get("msg"),
+                        result.get("reason")
+                    );
+                    if (errMsg != null && !errMsg.isBlank()) {
+                        log.info("🚫 处理器明确拒绝: session={}, intent={}, processor={}, msg={}",
+                            sessionId, intentCode,
+                            processor.getClass().getSimpleName(), errMsg);
+                        rejectedFeedback = errMsg;
+                        rejectedReturnCode = (String) result.getOrDefault("returnCode", "BLOCKED");
+                        break;
+                    }
+                    // 无反馈文本 → 视作"不支持"，继续试下一个
+                    continue;
+                }
+
+                // 成功路径
                 success = true;
                 resultText = (String) result.getOrDefault("responseText", "指令已处理");
 
@@ -590,7 +617,8 @@ public class SessionService {
                 break;
             }
 
-            if (!success) {
+            // 只有"没有任何处理器支持该意图"才打 WARN
+            if (!success && rejectedFeedback == null) {
                 log.warn("⚠️ 没有处理器支持意图: {}, 已尝试处理器数: {}",
                     intentCode, processors.size());
             }
@@ -599,6 +627,25 @@ public class SessionService {
             return "LLM_ERROR: " + e.getMessage();
         }
 
+        // ==================== ★ 处理器明确拒绝：走统一反馈路径 ====================
+        if (!success && rejectedFeedback != null) {
+            String reply = "🚫 " + rejectedFeedback;
+            try {
+                ttsClient.synthesizeAndSend(sessionId, rejectedFeedback, "zf_005", 1.2f);
+            } catch (Exception ttsEx) {
+                log.warn("拒绝反馈 TTS 失败（不影响前端下发）: session={}, err={}",
+                    sessionId, ttsEx.getMessage());
+            }
+            messageSender.sendTranscript(webSocketSession, reply, true);
+
+            log.info("📤 拒绝反馈已下发: session={}, intent={}, feedback={}",
+                sessionId, intentCode, rejectedFeedback);
+
+            return (rejectedReturnCode != null ? rejectedReturnCode : "BLOCKED")
+                + ": " + rejectedFeedback;
+        }
+
+        // ==================== 成功路径 ====================
         if (success) {
             ttsClient.synthesizeAndSend(sessionId, resultText, "zf_005", 1.2f);
             messageSender.sendTranscript(webSocketSession, resultText, true);
@@ -608,6 +655,20 @@ public class SessionService {
         }
 
         return "PROCESSING_FAILED: " + intentCode;
+    }
+
+    /**
+     * ★ 新增工具方法：从若干候选中返回第一个非空非 blank 的字符串。
+     * 兼容不同适配器可能使用的 key（errorMessage / errorMsg / msg / reason）。
+     */
+    private static String firstNonBlank(Object... candidates) {
+        if (candidates == null) return null;
+        for (Object c : candidates) {
+            if (c == null) continue;
+            String s = String.valueOf(c);
+            if (!s.isBlank()) return s;
+        }
+        return null;
     }
 
     public void cleanupRuntime(String sessionId) {

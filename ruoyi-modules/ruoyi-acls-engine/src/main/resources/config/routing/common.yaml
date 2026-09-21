@@ -446,7 +446,7 @@ routes:
 
   - id: R-IA-061
     caseType: "*"
-    intent: IA_061_inset_NPA
+    intent: IA_061_insetr_NPA
     targetType: SKILL
     targetId: insert_npa
     priority: 10

@@ -55,6 +55,7 @@ logging:
     org.mybatis.spring.mapper: error
     org.apache.fury: warn
     com.ruoyi.ems.intent.classifier: debug
+    com.ruoyi.ems.engine.StateMachineFacade: DEBUG
   config: classpath:logback-plus.xml
 
 # 用户配置
@@ -377,6 +378,10 @@ ems:
   unmatched-asr:
     file: logs/unmatched-asr.jsonl
 acls:
+  tutor:
+    # 默认关闭：未审核规则不误拦
+    # 打开后：tutor 返回 BLOCK 时状态机不转移
+    block-enabled: true
   room:
     ws-base-url: ws://localhost:8080
     token-ttl-seconds: 300

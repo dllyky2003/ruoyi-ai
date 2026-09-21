@@ -1,0 +1,37 @@
+caseId: "unstable_narrow_svt"
+rules:
+  # 能量选择：窄QRS规则心动过速 50-100J（AHA 2025）
+  - id: "case_unstable_narrow_svt_energy"
+    intent: "S-102-2-2"
+    allowedStates: ["ANY"]
+    conditions:
+      - "#energy >= 50 && #energy <= 100"
+    denyMessage: "窄QRS规则心动过速的同步电复律能量应在 50-100J，当前为 {energy}J"
+    priority: 5
+
+  # 执行放电前必须开启 SYNC 模式
+  - id: "case_unstable_narrow_svt_sync"
+    intent: "S-102-2-6"
+    allowedStates: ["ANY"]
+    conditions:
+      - "#device.defibSyncMode == true"
+    denyMessage: "同步电复律必须开启 SYNC 模式，禁止非同步放电"
+    priority: 8
+
+  # 执行放电前必须已给镇静（清醒患者）
+  - id: "case_unstable_narrow_svt_sedation"
+    intent: "S-102-2-6"
+    allowedStates: ["ANY"]
+    conditions:
+      - "#intervention.sedation.given == true || #phys.consciousness == 'unresponsive'"
+    denyMessage: "同步电复律前必须给予镇静（意识不清者除外）"
+    priority: 6
+
+  # 电复律次数上限
+  - id: "case_unstable_narrow_svt_max_shocks"
+    intent: "S-102-2-6"
+    allowedStates: ["ANY"]
+    conditions:
+      - "#intervention.cardioversion.count == null || #intervention.cardioversion.count < 3"
+    denyMessage: "电复律已尝试 3 次仍未转复，应退出本路径评估其他处理"
+    priority: 7

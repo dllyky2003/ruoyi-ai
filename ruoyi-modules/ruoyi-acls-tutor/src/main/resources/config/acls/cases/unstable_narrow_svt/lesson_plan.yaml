@@ -1,0 +1,31 @@
+lesson_plan:
+  lesson_plan_id: LP_UNSTABLE_NARROW_SVT_001
+  lesson_plan_version: 0.1.0
+  case_id: unstable_narrow_svt
+
+  title: "不稳定窄QRS心动过速紧急同步电复律训练"
+  target_audience: ACLS学员
+  estimated_duration_min: 20
+  learning_objectives:
+    - 识别不稳定窄QRS规则节律心动过速
+    - 掌握紧急同步电复律的完整执行流程
+    - 正确使用 SYNC 模式与 50-100J 能量
+    - 电复律前给予镇静
+    - 理解非同步放电诱发室颤的风险
+
+  instructor_authority_profile: ems_adult_als_v1
+  eligible_for_summative_use: false
+
+  scenario_beats_ref:
+    file: scenario_beats.yaml
+    sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+  fallback_paths_ref:
+    file: fallback_paths.yaml
+    sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+  instructor_overrides_ref:
+    file: instructor_overrides.yaml
+    sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+
+  review_status: approved
+  reviewed_by: test_architect
+  reviewed_at: "2026-09-21T00:00:00Z"

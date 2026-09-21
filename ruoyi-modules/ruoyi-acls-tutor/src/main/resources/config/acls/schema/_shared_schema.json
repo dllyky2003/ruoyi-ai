@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ruoyi.local/acls/schema/_shared_schema.json",
+  "title": "ACLS Shared Schema Definitions",
+  "description": "9 个 ACLS YAML 配置的公共 $defs。修改请评估对其他 Schema 的影响。",
+  "$defs": {
+
+    "decision": {
+      "type": "string",
+      "enum": ["ALLOW", "ALLOW_WITH_WARNING", "BLOCK", "EXECUTE_HARMFUL_ACTION"]
+    },
+
+    "severity": {
+      "type": "string",
+      "enum": ["none", "low", "moderate", "high", "critical"]
+    },
+
+    "source_class": {
+      "type": "string",
+      "enum": [
+        "guideline_requirement",
+        "local_protocol_requirement",
+        "pedagogical_case_setting",
+        "presentation_design"
+      ]
+    },
+
+    "review_status": {
+      "type": "string",
+      "enum": ["pending", "approved", "rejected", "deprecated"]
+    },
+
+    "reviewer_role": {
+      "type": "string",
+      "enum": [
+        "medical_content_owner",
+        "acls_instructor",
+        "local_ems_owner",
+        "architect",
+        "backend_owner"
+      ]
+    },
+
+    "review": {
+      "type": "object",
+      "description": "审核记录（V3.1 P0-11：与 evidence 分离）",
+      "required": ["review_status", "reviewer_id", "reviewer_role", "review_date"],
+      "additionalProperties": false,
+      "properties": {
+        "review_status": { "$ref": "#/$defs/review_status" },
+        "reviewer_id":    { "type": "string", "minLength": 1 },
+        "reviewer_role":  { "$ref": "#/$defs/reviewer_role" },
+        "review_date":    { "type": "string", "format": "date" },
+        "review_comment": { "type": "string" }
+      }
+    },
+
+    "evidence": {
+      "type": "object",
+      "description": "证据来源（V3.1 §6.7）",
+      "required": ["source_class"],
+      "additionalProperties": false,
+      "properties": {
+        "source_class":              { "$ref": "#/$defs/source_class" },
+        "supporting_guideline_refs": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "evidence_manifest_refs":    { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": ["source_class"],
+            "properties": { "source_class": { "const": "pedagogical_case_setting" } }
+          },
+          "then": {
+            "required": ["supporting_guideline_refs"],
+            "properties": {
+              "supporting_guideline_refs": { "minItems": 1 }
+            }
+          }
+        }
+      ]
+    },
+
+    "time_basis": {
+      "type": "string",
+      "enum": ["simulated", "real"]
+    },
+
+    "effect_spec_static": {
+      "type": "object",
+      "description": "规则文件里声明的效果模板（静态）",
+      "required": ["effect_id", "branch_id"],
+      "additionalProperties": false,
+      "properties": {
+        "effect_id":   { "type": "string", "minLength": 1 },
+        "branch_id":   { "type": "string", "minLength": 1 },
+        "constraints": { "type": "object", "additionalProperties": true }
+      }
+    },
+
+    "case_outcome_branch": {
+      "type": "object",
+      "description": "病例结局分支（V3.1 §5.6.1）",
+      "required": ["branch_id", "description", "clinical_state", "evidence", "review"],
+      "additionalProperties": false,
+      "properties": {
+        "branch_id":   { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "description": { "type": "string", "minLength": 1 },
+        "clinical_state": {
+          "type": "object",
+          "required": ["rhythm", "pulse", "perfusion", "consciousness"],
+          "additionalProperties": false,
+          "properties": {
+            "rhythm":        { "type": "string" },
+            "pulse":         { "type": "string" },
+            "perfusion":     { "type": "string" },
+            "consciousness": { "type": "string" },
+            "ventilation":   { "type": "string" },
+            "oxygenation":   { "type": "string" }
+          }
+        },
+        "presentation_mapping_ref": { "type": "string", "minLength": 1 },
+        "trend_labels": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" }
+        },
+        "evidence": { "$ref": "#/$defs/evidence" },
+        "review":   { "$ref": "#/$defs/review" }
+      }
+    }
+  }
+}

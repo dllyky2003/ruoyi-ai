@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ruoyi.local/acls/schema/instructor_overrides_schema.json",
+  "title": "ACLS instructor_overrides.yaml",
+  "description": "导师覆盖通道。约束见 V3.1 §6.4 / §6.5 / D4",
+  "type": "object",
+  "required": ["case_id", "version", "instructor_overrides"],
+  "additionalProperties": false,
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "instructor_overrides": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/override" }
+    }
+  },
+  "$defs": {
+    "override": {
+      "type": "object",
+      "required": [
+        "override_id",
+        "name",
+        "allowed_when",
+        "action",
+        "requires_reason",
+        "audit_required"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "override_id": { "type": "string", "pattern": "^IO_[A-Z0-9_]+$" },
+        "name":        { "type": "string", "minLength": 1 },
+
+        "allowed_when": { "$ref": "#/$defs/allowed_when" },
+        "action":       { "$ref": "#/$defs/action" },
+
+        "requires_reason": { "type": "boolean" },
+        "audit_required":  { "type": "boolean" },
+
+        "triggers_assessment_interruption": { "type": "boolean" },
+        "interrupted_criteria": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "interruption_result_policy": {
+          "type": "string",
+          "enum": ["not_assessable", "instructor_assisted", "interrupted_by_override"]
+        },
+        "affects_formative_score": { "type": "boolean" },
+
+        "review": { "$ref": "_shared_schema.json#/$defs/review" }
+      },
+      "allOf": [
+        {
+          "description": "D4: triggers_assessment_interruption=true 时必须声明受影响项与策略",
+          "if": {
+            "required": ["triggers_assessment_interruption"],
+            "properties": { "triggers_assessment_interruption": { "const": true } }
+          },
+          "then": {
+            "required": ["interrupted_criteria", "interruption_result_policy"],
+            "properties": {
+              "interrupted_criteria": { "minItems": 1 },
+              "affects_formative_score": { "const": false }
+            }
+          }
+        }
+      ]
+    },
+
+    "allowed_when": {
+      "type": "object",
+      "required": ["attempt_status"],
+      "additionalProperties": false,
+      "properties": {
+        "attempt_status": { "type": "string", "enum": ["RUNNING", "PAUSED"] },
+        "current_state_in": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+
+    "action": {
+      "type": "object",
+      "description": "V3.1 §6.4: 覆盖必须映射为受控效果，不能直接写 ClinicalState",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["force_case_outcome_branch", "clock_control"]
+        },
+        "proposed_effect": { "$ref": "#/$defs/proposed_effect" },
+        "operation": {
+          "type": "string",
+          "enum": ["pause", "resume"]
+        }
+      },
+      "allOf": [
+        {
+          "description": "force_case_outcome_branch 必须带 proposed_effect",
+          "if": {
+            "required": ["type"],
+            "properties": { "type": { "const": "force_case_outcome_branch" } }
+          },
+          "then": { "required": ["proposed_effect"] }
+        },
+        {
+          "description": "clock_control 必须带 operation，禁止带 proposed_effect",
+          "if": {
+            "required": ["type"],
+            "properties": { "type": { "const": "clock_control" } }
+          },
+          "then": {
+            "required": ["operation"],
+            "not": { "required": ["proposed_effect"] }
+          }
+        }
+      ]
+    },
+
+    "proposed_effect": {
+      "type": "object",
+      "description": "S1 / P0-7: 与教案层一致，只引用已解析授权",
+      "required": ["effect_id", "branch_id", "allowed_by_rule_ids"],
+      "additionalProperties": false,
+      "properties": {
+        "effect_id": { "type": "string", "minLength": 1 },
+        "branch_id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "allowed_by_rule_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

@@ -19,6 +19,7 @@ import com.ruoyi.ems.domain.PhaseCheckResult;
 import com.ruoyi.ems.domain.TeachingMode.TeachingMode;
 import com.ruoyi.ems.engine.PhaseManager;
 import com.ruoyi.ems.engine.StateMachineFacade;
+import com.ruoyi.ems.engine.TutorBlockedException;
 import com.ruoyi.ems.exception.ExceptionEngine;
 import com.ruoyi.ems.npc.IVrClientService;
 import com.ruoyi.ems.npc.TeamManager;
@@ -256,17 +257,26 @@ public class AclsCommandEngine {
             // （原 7.7 步「异常层评估」已前置到 6.5，此处删除）
 
             // ========== 8. ★ 根据执行结果驱动状态机（使用最新快照） ==========
-            String newState = stateMachineFacade.selectAndTransition(
-                sessionId, config, intentId, freshContext
-            );
+            String newState;
+            try {
+                newState = stateMachineFacade.selectAndTransition(
+                    sessionId, config, intentId, freshContext
+                );
+            } catch (TutorBlockedException e) {
+                log.warn("⛔ tutor 阻断: session={}, intent={}, state={}, ruleId={}, severity={}, feedback={}",
+                    sessionId, intentId, currentState, e.getRuleId(), e.getSeverity(),
+                    e.getFeedbackMessage());
+                return CommandResult.builder()
+                    .success(false)
+                    .errorMessage(e.getFeedbackMessage())
+                    .build();
+            }
 
-            // ★ 学员意图无匹配 → 回退到变量驱动重评估（走纯条件出边）
             if (newState == null) {
                 log.info("学员意图 {} 无匹配转移，尝试变量驱动重评估: session={}, state={}",
                     intentId, sessionId, currentState);
                 newState = stateMachineFacade.reEvaluateOnContextChange(sessionId, intentId);
             }
-
             if (newState == null) {
                 log.warn("⛔ 状态机无匹配转移: session={}, intent={}, state={}",
                     sessionId, intentId, currentState);

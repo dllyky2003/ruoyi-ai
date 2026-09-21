@@ -1,0 +1,166 @@
+# ============================================================
+# unstable_narrow_svt（窄QRS不稳定心动过速）案例专属异常规则
+# 案例编号：102
+# 存放位置：cases/unstable_narrow_svt/_exceptions.yaml
+# 父级：GLOBAL
+# ============================================================
+
+exceptions:
+
+  # ============================================================
+  # 规则 1：不稳定患者尝试迷走神经刺激 → 强制跳转电复律准备
+  # ============================================================
+  - id: "VAGAL_ON_UNSTABLE_NARROW"
+    description: "血流动力学不稳定的窄QRS心动过速患者尝试迷走神经刺激。AHA 2025：不稳定患者应立即同步电复律，迷走神经刺激无效且延误抢救。"
+    triggerIntent: "S-102-3-1"
+    condition: |
+      #derived.unstable == true
+    severity: "CRITICAL"
+    keepCurrent: false
+    jumpTo: "F-102-PREP_CARDIOVERSION"
+    unityStateName: "室上速(SVT)"
+    effects:
+      - var: "process.instabilityTriggered"
+        value: true
+    feedback:
+      teaching:
+        tts: "患者血流动力学不稳定，迷走神经刺激无效且会延误抢救。应立即同步电复律，不要浪费时间做 Valsalva。"
+      learning:
+        tts: "不稳定！跳过迷走神经刺激，直接同步电复律！"
+        interruptCurrentTts: true
+      exam:
+
+  # ============================================================
+  # 规则 2：不稳定患者尝试腺苷推注 → 强制跳转电复律准备
+  # ============================================================
+  - id: "ADENOSINE_ON_UNSTABLE_NARROW"
+    description: "血流动力学不稳定的窄QRS心动过速患者尝试腺苷推注。AHA 2025：不稳定心动过速应立即同步电复律，腺苷可能加重低血压。"
+    triggerIntent: "S-102-3-2"
+    condition: |
+      #derived.unstable == true
+    severity: "CRITICAL"
+    keepCurrent: false
+    jumpTo: "F-102-PREP_CARDIOVERSION"
+    unityStateName: "室上速(SVT)"
+    effects:
+      - var: "process.instabilityTriggered"
+        value: true
+    feedback:
+      teaching:
+        tts: "患者血流动力学不稳定，用药起效慢且腺苷可加重低血压。应立即同步电复律，这是 AHA 2025 的 I 类推荐。"
+      learning:
+        tts: "不稳定！跳过药物，直接同步电复律！"
+        interruptCurrentTts: true
+      exam:
+
+  # ============================================================
+  # 规则 3：有脉搏患者启动 CPR → 拦截（保留当前状态）
+  # ============================================================
+  - id: "CPR_ON_PULSE_PATIENT"
+    description: "对有脉搏、有灌注的不稳定窄QRS心动过速患者启动胸外按压。有脉搏患者不应实施胸外按压。"
+    triggerIntent: "S-102-3-3"
+    condition: |
+      #phys.hasPulse == true
+    severity: "CRITICAL"
+    keepCurrent: true
+    unityStateName: "室上速(SVT)"
+    effects:
+      - var: "process.cprOnPulseBlocked"
+        value: true
+    feedback:
+      teaching:
+        tts: "该患者有脉搏、有灌注。有脉搏心动过速不需要胸外按压，应专注同步电复律。按压会造成肋骨骨折等伤害。"
+      learning:
+        tts: "患者有脉搏！不要按压，直接同步电复律！"
+        interruptCurrentTts: true
+      exam:
+
+  # ============================================================
+  # 规则 4：未开启 SYNC 模式放电 → 诱发室颤（跳转至 DETERIORATION）
+  # ============================================================
+  - id: "UNSYNC_SHOCK_CAUSES_VF"
+    description: "未开启 SYNC 模式对不稳定的有脉搏心动过速放电，可诱发室颤。AHA 2025：有脉搏心动过速电复律必须与 R 波同步。"
+    triggerIntent: "S-102-2-6"
+    condition: |
+      #device.defibSyncMode == false
+    severity: "CRITICAL"
+    keepCurrent: false
+    jumpTo: "F-102-DETERIORATION"
+    unityStateName: "室上速(SVT)"
+    effects:
+      - var: "process.unsyncShockVfTriggered"
+        value: true
+    feedback:
+      teaching:
+        tts: "严重错误：未开启 SYNC 模式就放电，R 波可能落在 T 波易感期诱发室颤。有脉搏的心动过速必须开启同步模式后再放电。"
+      learning:
+        tts: "⛔ 非同步放电已诱发室颤！立即启动 ACLS/CPR！"
+        interruptCurrentTts: true
+      exam:
+
+  # ============================================================
+  # 规则 5：未镇静就放电（保留当前状态，仅警告）
+  # ============================================================
+  - id: "CARDIOVERSION_WITHOUT_SEDATION"
+    description: "未给予镇静就对清醒患者进行同步电复律。AHA 2025：清醒患者同步电复律前应给予镇静。"
+    triggerIntent: "S-102-2-6"
+    condition: |
+      #intervention.sedation.given == false &&
+      #phys.consciousness != 'unresponsive'
+    severity: "MINOR"
+    keepCurrent: true
+    unityStateName: "室上速(SVT)"
+    effects:
+      - var: "process.sedationMissingWarning"
+        value: true
+    feedback:
+      teaching:
+        tts: "患者清醒，未给镇静就放电会造成疼痛与心理创伤。应在放电前给予咪达唑仑或依托咪酯。"
+      learning:
+        tts: "⚠️ 未给予镇静，患者会感到疼痛。下次记得先镇静。"
+        interruptCurrentTts: false
+      exam:
+
+  # ============================================================
+  # 规则 6：对稳定患者误做同步电复律（阻止类）
+  # ============================================================
+  - id: "CARDIOVERSION_ON_STABLE_PATIENT"
+    description: "对血流动力学稳定的窄QRS心动过速患者进行同步电复律属过度医疗。AHA 2025：稳定患者应首选迷走神经刺激 → 腺苷阶梯。"
+    triggerIntent: "S-102-2-6"
+    condition: |
+      #derived.stable == true
+    severity: "CRITICAL"
+    keepCurrent: true
+    unityStateName: "室上速(SVT)"
+    effects:
+      - var: "process.stableCardioversionBlocked"
+        value: true
+    feedback:
+      teaching:
+        tts: "注意：该患者血流动力学稳定。稳定窄QRS心动过速应走迷走神经刺激 → 腺苷阶梯，不应直接电复律。"
+      learning:
+        tts: "患者稳定，不需要电复律！先尝试迷走神经刺激。"
+        interruptCurrentTts: true
+      exam:
+
+  # ============================================================
+  # 规则 7：能量超上限（保留状态，警告）
+  # ============================================================
+  - id: "CARDIOVERSION_ENERGY_TOO_HIGH"
+    description: "窄QRS规则心动过速选择超过 100J 的同步电复律能量。AHA 2025：窄QRS规则心动过速 50-100J 足够。"
+    triggerIntent: "S-102-2-2"
+    condition: |
+      #energy > 100
+    severity: "MINOR"
+    keepCurrent: true
+    unityStateName: "室上速(SVT)"
+    effects:
+      - var: "process.excessEnergyWarning"
+        value: true
+    feedback:
+      teaching:
+        tts: "窄QRS规则心动过速 50-100J 足够，过高能量增加心肌损伤风险。"
+      learning:
+        tts: "⚠️ 能量偏高，窄QRS规则心动过速建议 50-100J。"
+        interruptCurrentTts: false
+      exam:

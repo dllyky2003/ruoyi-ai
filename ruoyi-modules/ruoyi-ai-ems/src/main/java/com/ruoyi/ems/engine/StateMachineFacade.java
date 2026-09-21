@@ -7,8 +7,17 @@ import com.ruoyi.ems.context.EmsContextManager;
 import com.ruoyi.ems.domain.CaseContext;
 import com.ruoyi.ems.domain.StatePhysiology;
 import com.ruoyi.ems.rule.IRuleEvaluator;
+import com.ruoyi.ems.spi.ClinicalRuleService;
+import com.ruoyi.ems.spi.StateTransitionHook;
+import com.ruoyi.ems.spi.TemporalEventSink;
+import com.ruoyi.ems.spi.dto.ClinicalRuleContext;
+import com.ruoyi.ems.spi.dto.ExecutionStrategy;
+import com.ruoyi.ems.spi.dto.TransitionContext;
+import com.ruoyi.ems.spi.dto.ValidationResult;
 import com.ruoyi.ems.websocket.WebSocketMessageSender;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.config.StateMachineBuilder;
@@ -38,6 +47,13 @@ public class StateMachineFacade {
     private final WebSocketMessageSender messageSender;
     private final PhysiologyConfigService physiologyConfigService;
 
+    /** ★ 第六步：tutor 阻断灰度开关，默认 false（关闭） */
+    private final boolean tutorBlockEnabled;
+
+    private final ObjectProvider<ClinicalRuleService> clinicalRuleServiceProvider;
+    private final ObjectProvider<TemporalEventSink> temporalEventSinkProvider;
+    private final ObjectProvider<StateTransitionHook> stateTransitionHookProvider;
+
     private static final String SESSION_CONTEXT_PREFIX = "ems:session:context:";
     private static final long SESSION_TIMEOUT_HOURS = 24;
 
@@ -47,7 +63,11 @@ public class StateMachineFacade {
                               IRuleEvaluator ruleEvaluator,
                               RedisTemplate<String, Object> redisTemplate,
                               WebSocketMessageSender messageSender,
-                              PhysiologyConfigService physiologyConfigService) {
+                              PhysiologyConfigService physiologyConfigService,
+                              ObjectProvider<ClinicalRuleService> clinicalRuleServiceProvider,
+                              ObjectProvider<TemporalEventSink> temporalEventSinkProvider,
+                              ObjectProvider<StateTransitionHook> stateTransitionHookProvider,
+                              @Value("${acls.tutor.block-enabled:false}") boolean tutorBlockEnabled) {
         this.builderFactory = builderFactory;
         this.persister = persister;
         this.contextManager = contextManager;
@@ -55,6 +75,11 @@ public class StateMachineFacade {
         this.redisTemplate = redisTemplate;
         this.messageSender = messageSender;
         this.physiologyConfigService = physiologyConfigService;
+        this.clinicalRuleServiceProvider = clinicalRuleServiceProvider;
+        this.temporalEventSinkProvider = temporalEventSinkProvider;
+        this.stateTransitionHookProvider = stateTransitionHookProvider;
+        this.tutorBlockEnabled = tutorBlockEnabled;
+        log.info("[StateMachineFacade] tutorBlockEnabled={}", tutorBlockEnabled);
     }
 
     /**
@@ -110,28 +135,81 @@ public class StateMachineFacade {
     }
 
     /**
-     * ★ 核心方法：业务层主导的状态转移（带冲突消解、偏差标记、审计日志）
+     * ★ 核心方法：业务层主导的状态转移（带冲突消解、偏差标记、审计日志）。
      *
-     * <p>匹配策略（v2，修复 fall-through 吃掉具体意图）：
+     * <p>第六步新增：读取 tutor 返回的 {@link ValidationResult}。
      * <ul>
-     *   <li>{@code intentCode} 非空（学员意图）：只匹配显式声明了 intentCode/event 的规则；
-     *       无 intentCode/event 的条件路由规则<b>不参与</b>。</li>
-     *   <li>{@code intentCode} 为空（系统触发 / 变量驱动）：只匹配无 intentCode/event 的纯条件规则。</li>
+     *   <li>灰度关闭（默认）→ 完全忽略返回值，行为不变</li>
+     *   <li>灰度打开：
+     *     <ul>
+     *       <li>{@code BLOCK} → 不进入转移，返回 null</li>
+     *       <li>{@code ALLOW_WITH_WARNING} → 记录警告后继续转移</li>
+     *       <li>其他（含 {@code ALLOW}）→ 继续转移</li>
+     *     </ul>
+     *   </li>
      * </ul>
-     *
-     * <p>无匹配处理：
-     * <ul>
-     *   <li><b>有意图入口但 Guard 未通过</b> → 直接返回 null，不兜底默认转移（防止越权跳转）。</li>
-     *   <li><b>完全无意图入口</b>（例如当前状态只有 condition-only 转移）→ 走
-     *       handleDefaultTransition（allowUnlistedTransitions）。这是恢复旧行为的关键分支：
-     *       {@code F-000-BLS_PRIMARY_SURVEY → F-000-INITIAL_ASSESSMENT} 等仅靠
-     *       condition 驱动的转移，学员意图到达时没有 intentCode 入口，必须靠兜底推进。</li>
-     * </ul>
+     * </p>
      */
     public String selectAndTransition(String instanceId,
                                       ResolvedCaseTypeConfig config,
                                       String intentCode,
                                       CaseContext ctx) {
+        // ★ SPI-1: 临床规则校验
+        ValidationResult vr = fireClinicalRuleValidate(instanceId, config, intentCode, ctx);
+
+        // ★ 第六步：按 decision 处理（默认灰度关闭时短路，行为不变）
+        if (tutorBlockEnabled && vr != null && vr.getDecision() != null) {
+            ExecutionStrategy decision = vr.getDecision();
+
+            if (decision == ExecutionStrategy.BLOCK) {
+                log.warn("[Tutor][BLOCK] session={}, case={}, state={}, intent={}, "
+                        + "ruleId={}, severity={}, feedbackKeys={}",
+                    instanceId,
+                    config != null ? config.getCode() : null,
+                    ctx != null ? ctx.getCurrentState() : null,
+                    intentCode,
+                    vr.getPrimaryRuleId(),
+                    vr.getSeverity(),
+                    vr.getFeedbackKeys());
+                recordTutorDecisionAudit(instanceId, "BLOCK", intentCode, ctx, vr);
+
+                // ★ 抛异常而非 return null：
+                //   - 让 AclsCommandEngine 区分"BLOCK"和"无匹配规则"
+                //   - 避免被 fallback 到 reEvaluateOnContextChange 绕过
+                String feedback = vr.getFeedbackText();
+
+// 回退 1：用 feedbackKey（文案未解析出时，至少让学员看到 key）
+                if (feedback == null || feedback.isBlank()) {
+                    if (vr.getFeedbackKeys() != null && !vr.getFeedbackKeys().isEmpty()) {
+                        feedback = vr.getFeedbackKeys().get(0);
+                    }
+                }
+
+// 回退 2：通用兜底
+                if (feedback == null || feedback.isBlank()) {
+                    feedback = "当前临床流程不允许此操作";
+                }
+
+                throw new TutorBlockedException(vr.getPrimaryRuleId(), vr.getSeverity(), feedback);
+            }
+
+
+
+            if (decision == ExecutionStrategy.ALLOW_WITH_WARNING) {
+                log.warn("[Tutor][WARN] session={}, case={}, state={}, intent={}, "
+                        + "ruleId={}, severity={}, feedbackKeys={}",
+                    instanceId,
+                    config != null ? config.getCode() : null,
+                    ctx != null ? ctx.getCurrentState() : null,
+                    intentCode,
+                    vr.getPrimaryRuleId(),
+                    vr.getSeverity(),
+                    vr.getFeedbackKeys());
+                recordTutorDecisionAudit(instanceId, "ALLOW_WITH_WARNING", intentCode, ctx, vr);
+                // 继续往下走
+            }
+        }
+
         return doSelectAndTransition(instanceId, config, intentCode, ctx, 0);
     }
 
@@ -183,17 +261,14 @@ public class StateMachineFacade {
 
             boolean intentMatches;
             if (studentIntent) {
-                // 学员意图：只匹配显式声明 intentCode/event 的规则
                 if (StringUtils.hasText(rule.getIntentCode())) {
                     intentMatches = rule.getIntentCode().equals(intentCode);
                 } else if (StringUtils.hasText(rule.getEvent())) {
                     intentMatches = rule.getEvent().equals(intentCode);
                 } else {
-                    // ★ 关键修复：无 intentCode/event 的条件路由，不参与学员意图匹配
                     intentMatches = false;
                 }
             } else {
-                // 系统触发 / 变量驱动：只匹配无 intentCode/event 的纯条件规则
                 intentMatches = !StringUtils.hasText(rule.getIntentCode())
                     && !StringUtils.hasText(rule.getEvent());
             }
@@ -225,7 +300,6 @@ public class StateMachineFacade {
 
         // 4. 无匹配
         if (matched.isEmpty()) {
-            // 4.1 统计意图匹配数（与主循环口径一致，避免日志误导）
             long intentMatchedCount = candidates.stream()
                 .filter(TransitionRule::isEnabled)
                 .filter(r -> {
@@ -249,9 +323,6 @@ public class StateMachineFacade {
             log.warn("详细匹配失败原因: 状态 [{}] 共有 {} 条候选，其中意图匹配的规则数为 {}，但 Guard 均未通过或不存在。",
                 currentState, candidates.size(), intentMatchedCount);
 
-            // 4.2 ★ 修正：区分"有意图入口但 Guard 失败"与"完全无意图入口"
-            //  - 有意图入口 → 拒绝（P0-1 修复本意：防止 fall-through 越权跳转）
-            //  - 完全无入口 → 走兜底（恢复旧行为，例如 condition-only 转移的场景）
             boolean hasIntentEntry = intentMatchedCount > 0;
 
             if (studentIntent && hasIntentEntry) {
@@ -260,7 +331,6 @@ public class StateMachineFacade {
                 return null;
             }
 
-            // 4.3 完全无入口，或系统触发无匹配 → 走默认转移（allowUnlistedTransitions）
             log.info("学员意图 {} 在状态 {} 无入口，尝试默认转移兜底",
                 intentCode, currentState);
             return handleDefaultTransition(config, intentCode, sm, instanceId);
@@ -292,6 +362,11 @@ public class StateMachineFacade {
 
         // 6. 审计日志
         logAuditTrail(instanceId, currentState, matched, selected, snapshot);
+
+        // ★ SPI-2: 转移前钩子（仅 depth=0，避免自循环递归重复触发）
+        if (depth == 0) {
+            fireBeforeTransition(instanceId, config, currentState, selected.getTarget(), intentCode, ctx);
+        }
 
         // 7. 应用 transition effects（exitReason + effects）
         applyTransitionEffects(instanceId, selected, ctx);
@@ -339,6 +414,11 @@ public class StateMachineFacade {
         log.info("转移成功: {} -> {} (intent={})", currentState, targetState, intentCode);
         pushStateChange(instanceId, currentState, targetState, intentCode);
 
+        // ★ SPI-3: 转移后钩子 + 时间线事件（仅 depth=0）
+        if (depth == 0) {
+            fireAfterTransition(instanceId, config, currentState, targetState, intentCode, ctx);
+        }
+
         // 12. onEnterRules 已废弃：派生变量由 DerivationService 自动重算，无需在状态进入时手动执行。
         //     如果未来有"状态进入副作用"，应通过 transition 的 effects 声明。
 
@@ -346,15 +426,11 @@ public class StateMachineFacade {
         pushPhysiologyUpdate(instanceId, config, targetState);
 
         // 14. ★ 自循环 + effects 已写 → 立即重评估一次，避免依赖外部指令再次驱动
-        //     场景：F_101_DO_VAGAL_MANEUVER 自循环写 count=1，需要立即评估
-        //          `count==1 && effect=='pending'` 推进出边到 ADENOSINE_6MG
-        //     depth 上限保护：最多递归 2 层，防止配置错误导致无限循环
         if (Objects.equals(currentState, targetState) && depth < 2) {
             CaseContext latest = contextManager.getSnapshot(instanceId);
             if (latest != null) {
                 log.info("🔁 [自循环重评估] state={}，effects 已写入，立即重评估条件出边 (depth={}, intent={})",
                     targetState, depth, intentCode);
-                // ★ 保留原 intentCode：自循环由 S-101-2-1 触发，重评估同一意图的所有出边
                 String next = doSelectAndTransition(instanceId, config, intentCode, latest, depth + 1);
                 if (next != null && !Objects.equals(next, targetState)) {
                     return next;
@@ -367,26 +443,16 @@ public class StateMachineFacade {
 
     /**
      * ★ 应用 transition 副作用（替代 SpEL Action）。
-     *
-     * <p>处理两类：
-     * <ul>
-     *   <li>{@code exitReason} → 自动写入 {@code process.returnToParent}</li>
-     *   <li>{@code effects} 列表 → 逐个变量写入（支持字面量和 valueExpression）</li>
-     * </ul>
-     *
-     * <p>走 {@code batchSetVarsWithVersion}，writer="STATE_MACHINE"，不经过 SpEL 写入路径。
      */
     private void applyTransitionEffects(String instanceId, TransitionRule rule, CaseContext ctx) {
         if (rule == null) return;
 
         Map<String, Object> updates = new LinkedHashMap<>();
 
-        // 1. exitReason → process.returnToParent
         if (StringUtils.hasText(rule.getExitReason())) {
             updates.put("process.returnToParent", rule.getExitReason());
         }
 
-        // 2. effects 列表
         if (rule.getEffects() != null && !rule.getEffects().isEmpty()) {
             for (TransitionRule.EffectRule effect : rule.getEffects()) {
                 if (effect == null || !StringUtils.hasText(effect.getVar())) {
@@ -417,7 +483,6 @@ public class StateMachineFacade {
             instanceId, updates, "STATE_MACHINE", version);
 
         if (!ok) {
-            // 版本冲突重试一次
             CaseContext latest = contextManager.getSnapshot(instanceId);
             if (latest != null) {
                 ok = contextManager.batchSetVarsWithVersion(
@@ -431,58 +496,6 @@ public class StateMachineFacade {
         } else {
             log.warn("⚠️ Transition effects 应用失败（重试后仍失败）: session={}, rule={}, updates={}",
                 instanceId, rule.getDisplayName(), updates.keySet());
-        }
-    }
-
-    /**
-     * ★ 对比执行前后变量差异，通过语义化入口批量写入。
-     *
-     * @deprecated 保留供兼容，新代码不应依赖。transition effects 走 applyTransitionEffects。
-     */
-    @Deprecated
-    private void persistCtxChanges(String instanceId,
-                                   Map<String, Object> beforeVars,
-                                   CaseContext ctx) {
-        if (ctx == null) return;
-
-        Map<String, Object> afterVars = ctx.getVariables();
-        Map<String, Object> changes = new LinkedHashMap<>();
-
-        for (Map.Entry<String, Object> e : afterVars.entrySet()) {
-            Object before = beforeVars.get(e.getKey());
-            if (!Objects.equals(before, e.getValue())) {
-                changes.put(e.getKey(), e.getValue());
-            }
-        }
-        for (String k : beforeVars.keySet()) {
-            if (!afterVars.containsKey(k)) {
-                changes.put(k, null);
-            }
-        }
-
-        if (changes.isEmpty()) {
-            log.trace("上下文无实际变更: session={}", instanceId);
-            return;
-        }
-
-        long version = ctx.getVersion();
-        boolean ok = contextManager.batchSetVarsWithVersion(
-            instanceId, changes, "SYSTEM", version);
-
-        if (!ok) {
-            CaseContext latest = contextManager.getSnapshot(instanceId);
-            if (latest != null) {
-                ok = contextManager.batchSetVarsWithVersion(
-                    instanceId, changes, "SYSTEM", latest.getVersion());
-            }
-        }
-
-        if (ok) {
-            log.debug("上下文变更已写入: session={}, changes={}",
-                instanceId, changes.keySet());
-        } else {
-            log.warn("上下文变更写入失败（重试后仍失败）: session={}, changes={}",
-                instanceId, changes.keySet());
         }
     }
 
@@ -542,7 +555,7 @@ public class StateMachineFacade {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("from", from);
         data.put("to", to);
-        data.put("event", event);   // 允许 null
+        data.put("event", event);
 
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("type", "state_change");
@@ -555,8 +568,6 @@ public class StateMachineFacade {
 
     /**
      * 处理默认转移（兼容 allowUnlistedTransitions）
-     *
-     * <p>★ 修复 P2-4：先保存 fromState，再 resetStateMachine，避免 from 被记成 target。
      */
     @SuppressWarnings({"deprecation", "unchecked"})
     private String handleDefaultTransition(ResolvedCaseTypeConfig config,
@@ -568,7 +579,6 @@ public class StateMachineFacade {
             String target = config.getDefaultTargetState(intentCode);
             log.debug("默认目标状态查找结果: intent={} -> target={}", intentCode, target);
             if (target != null) {
-                // ★ 先记录 from，再 reset
                 final String fromState = sm.getState().getId();
                 try {
                     final String finalTarget = target;
@@ -617,6 +627,37 @@ public class StateMachineFacade {
             log.debug("转移历史已记录: {} -> {} (intent={})", fromState, toState, intentCode);
         } catch (Exception e) {
             log.warn("记录转移历史失败: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * ★ 第六步新增：tutor 决策审计落 Redis。
+     *
+     * <p>key: ems:session:context:{sessionId}:tutor_decisions</p>
+     *
+     * <p>记录 BLOCK / ALLOW_WITH_WARNING 两类决策，供后续分析规则命中率与灰度过期评估。</p>
+     */
+    private void recordTutorDecisionAudit(String instanceId,
+                                          String decisionType,
+                                          String intentCode,
+                                          CaseContext ctx,
+                                          ValidationResult vr) {
+        try {
+            String key = SESSION_CONTEXT_PREFIX + instanceId + ":tutor_decisions";
+            Map<String, Object> record = new LinkedHashMap<>();
+            record.put("type", decisionType);
+            record.put("state", ctx != null ? ctx.getCurrentState() : null);
+            record.put("intent", intentCode);
+            record.put("ruleId", vr.getPrimaryRuleId());
+            record.put("severity", vr.getSeverity());
+            record.put("feedbackKeys", vr.getFeedbackKeys());
+            record.put("revision", ctx != null ? ctx.getVersion() : 0L);
+            record.put("timestamp", System.currentTimeMillis());
+
+            redisTemplate.opsForList().rightPush(key, record);
+            redisTemplate.expire(key, SESSION_TIMEOUT_HOURS, TimeUnit.HOURS);
+        } catch (Exception e) {
+            log.warn("[Tutor][{}] 审计写入失败: {}", decisionType, e.getMessage());
         }
     }
 
@@ -686,7 +727,6 @@ public class StateMachineFacade {
         if (ctx == null) {
             log.warn("transition 降级: 上下文不存在，回退到 Spring SM 原生 sendEvent");
             StateMachine<String, String> sm = getOrCreateMachine(instanceId, config);
-            // ★ 先记录 from
             String fromState = sm.getState().getId();
             boolean accepted = sm.sendEvent(eventCode);
             if (!accepted) {
@@ -733,11 +773,138 @@ public class StateMachineFacade {
         configCache.remove(instanceId);
     }
 
+    // =========================================================
+    // ★ SPI 调用封装
+    // =========================================================
+
+    /**
+     * SPI-1：临床规则校验。
+     *
+     * <p>本方法返回 {@link ValidationResult}，由调用方（selectAndTransition）决定是否阻断。
+     * tutor 未部署时（No-Op）或调用异常时返回 null，调用方按 ALLOW 处理。</p>
+     */
+    private ValidationResult fireClinicalRuleValidate(String instanceId,
+                                                      ResolvedCaseTypeConfig config,
+                                                      String intentCode,
+                                                      CaseContext ctx) {
+        if (ctx == null || intentCode == null || intentCode.isBlank()) {
+            return null;
+        }
+        try {
+            ClinicalRuleService svc = clinicalRuleServiceProvider.getIfAvailable();
+            if (svc == null) {
+                return null;
+            }
+            ClinicalRuleContext spiCtx = new ClinicalRuleContext();
+            spiCtx.setSessionId(instanceId);
+            spiCtx.setCaseType(config != null ? config.getCode() : null);
+            spiCtx.setStateRevision(ctx.getVersion());
+            spiCtx.setIntentCode(intentCode);
+            spiCtx.setCurrentState(ctx.getCurrentState());
+            if (ctx.getVariables() != null) {
+                spiCtx.setVariables(new HashMap<>(ctx.getVariables()));
+            }
+
+            ValidationResult vr = svc.validate(spiCtx);
+            if (log.isDebugEnabled() && vr != null) {
+                log.debug("[SPI][ClinicalRule] session={}, case={}, intent={}, decision={}, severity={}",
+                    instanceId,
+                    config != null ? config.getCode() : null,
+                    intentCode,
+                    vr.getDecision(),
+                    vr.getSeverity());
+            }
+            return vr;
+        } catch (Exception e) {
+            log.warn("[SPI][ClinicalRule] 调用失败（不影响状态机）: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * SPI-2：转移前钩子。
+     */
+    private void fireBeforeTransition(String instanceId,
+                                      ResolvedCaseTypeConfig config,
+                                      String fromState,
+                                      String toState,
+                                      String intentCode,
+                                      CaseContext ctx) {
+        try {
+            StateTransitionHook hook = stateTransitionHookProvider.getIfAvailable();
+            if (hook == null) {
+                return;
+            }
+            TransitionContext tc = new TransitionContext();
+            tc.setSessionId(instanceId);
+            tc.setCaseType(config != null ? config.getCode() : null);
+            tc.setFromState(fromState);
+            tc.setToState(toState);
+            tc.setIntentCode(intentCode);
+            tc.setStateRevisionBefore(ctx != null ? ctx.getVersion() : 0L);
+            if (ctx != null && ctx.getVariables() != null) {
+                tc.setVariables(new HashMap<>(ctx.getVariables()));
+            }
+            hook.beforeTransition(tc);
+            if (log.isDebugEnabled()) {
+                log.debug("[SPI][BeforeTransition] {} -> {} (intent={})", fromState, toState, intentCode);
+            }
+        } catch (Exception e) {
+            log.warn("[SPI][BeforeTransition] 调用失败（不影响状态机）: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * SPI-3：转移后钩子 + 时间线事件。
+     */
+    private void fireAfterTransition(String instanceId,
+                                     ResolvedCaseTypeConfig config,
+                                     String fromState,
+                                     String toState,
+                                     String intentCode,
+                                     CaseContext ctx) {
+        // SPI-3a: afterTransition
+        try {
+            StateTransitionHook hook = stateTransitionHookProvider.getIfAvailable();
+            if (hook != null) {
+                TransitionContext tc = new TransitionContext();
+                tc.setSessionId(instanceId);
+                tc.setCaseType(config != null ? config.getCode() : null);
+                tc.setFromState(fromState);
+                tc.setToState(toState);
+                tc.setIntentCode(intentCode);
+                tc.setStateRevisionAfter(ctx != null ? ctx.getVersion() : 0L);
+                hook.afterTransition(tc);
+            }
+        } catch (Exception e) {
+            log.warn("[SPI][AfterTransition] 调用失败（不影响状态机）: {}", e.getMessage());
+        }
+
+        // SPI-3b: onStateExited / onStateEntered
+        try {
+            TemporalEventSink sink = temporalEventSinkProvider.getIfAvailable();
+            if (sink != null) {
+                long rev = ctx != null ? ctx.getVersion() : 0L;
+                if (fromState != null && !fromState.equals(toState)) {
+                    sink.onStateExited(instanceId, fromState, rev);
+                }
+                sink.onStateEntered(instanceId, toState, rev);
+            }
+            if (log.isDebugEnabled()) {
+                log.debug("[SPI][TemporalEvent] exit={}, enter={}, intent={}",
+                    fromState, toState, intentCode);
+            }
+        } catch (Exception e) {
+            log.warn("[SPI][TemporalEvent] 调用失败（不影响状态机）: {}", e.getMessage());
+        }
+    }
+
     /**
      * 变量驱动的状态重评估。
      *
-     * <p>仅在 {@code intentCode == null} 路径下被调用（例如 EmsContextManager 变量变更事件监听器）。
-     * 由于 selectAndTransition 的 null 分支只匹配纯条件规则，不会与学员意图冲突。
+     * <p>仅在 {@code intentCode == null} 路径下被调用。
+     * 由于 fireClinicalRuleValidate 在 intentCode 为空时直接返回 null，
+     * 本路径不受 tutor BLOCK 影响，行为与改动前一致。</p>
      */
     public String reEvaluateOnContextChange(String instanceId, String changedVar) {
         ResolvedCaseTypeConfig config = configCache.get(instanceId);
@@ -788,22 +955,8 @@ public class StateMachineFacade {
     /**
      * 强制状态跳转（异常层专用，带原因）。
      *
-     * <p>绕过所有 guard，直接把状态机推到目标状态。不走 selectAndTransition。
-     *
-     * <p>与 selectAndTransition 的区别：
-     * <ul>
-     *   <li>selectAndTransition：按 intent 找 event，走正常转移，guard 生效</li>
-     *   <li>forceTransition：按 stateId 直接 reset，guard 不生效</li>
-     * </ul>
-     *
-     * <p>调用时机：AclsCommandEngine 第 7.5 步，异常命中后。
-     * 调用方负责：写 effects 到 EmsContextManager、发 state_change(stateName) 给 Unity。
-     * 本方法只做状态机内部转换 + 持久化 + 历史记录，<b>不发 WebSocket 消息</b>。
-     *
-     * @param sessionId   会话 id
-     * @param targetState 目标状态 id（异常规则的 jumpTo）
-     * @param reason      触发原因（异常规则 id，或 "FORCE_TRANSITION"）
-     * @return true=跳转成功（含已在目标状态）；false=失败
+     * <p>绕过所有 guard，直接把状态机推到目标状态。不走 selectAndTransition，
+     * 因此也不触发 tutor 的 BLOCK 判断（异常层优先级最高）。</p>
      */
     @SuppressWarnings("deprecation")
     public boolean forceTransition(String sessionId, String targetState, String reason) {
@@ -827,7 +980,6 @@ public class StateMachineFacade {
             return false;
         }
 
-        // 与 reEvaluateOnContextChange 保持同一把锁，避免与正常转移并发
         synchronized (("sm-lock:" + sessionId).intern()) {
 
             String previous = sm.getState() != null ? sm.getState().getId() : null;
@@ -837,7 +989,6 @@ public class StateMachineFacade {
                 return true;
             }
 
-            // 状态列表校验：仅 warn，不阻断
             List<String> allStates = config.getStates();
             if (allStates != null && !allStates.isEmpty()
                 && !allStates.contains(targetState)) {
@@ -852,9 +1003,9 @@ public class StateMachineFacade {
                     access.resetStateMachine(
                         new DefaultStateMachineContext<String, String>(
                             target,
-                            null,   // 无 event
-                            null,   // 无 eventHeaders
-                            null    // 保留 ExtendedState（与 selectAndTransition 一致）
+                            null,
+                            null,
+                            null
                         )
                     );
                 });

@@ -17,6 +17,13 @@ public class ValidationResult {
     private String severity = "none";
     private List<String> feedbackKeys = new ArrayList<>();
     private List<String> assessmentTags = new ArrayList<>();
+    private String feedbackText;
+
+    // ★ V3.1 新增：已解析授权效果（resolved=true 的可直接执行）
+    private List<EffectSpec> allowedEffects = new ArrayList<>();
+
+    // ★ V3.1 新增：被阻断的效果 ID（供审计与教案层候选过滤使用）
+    private List<String> blockedEffects = new ArrayList<>();
 
     /** tutor 未启用时的默认结果：放行、不评分、无副作用。 */
     public static ValidationResult allowWithoutTutor() {

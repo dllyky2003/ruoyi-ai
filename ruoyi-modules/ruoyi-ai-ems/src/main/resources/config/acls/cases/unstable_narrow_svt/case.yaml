@@ -1,0 +1,20 @@
+caseId: "unstable_narrow_svt"
+caseName: "不稳定窄QRS心动过速（紧急同步电复律）"
+version: "1.0.0"
+parent: "GLOBAL"
+description: "不稳定窄QRS规则节律心动过速 → 同步电复律流程"
+
+stateDescriptions:
+  F-102-CHECK_QRS_WIDTH: "📐 QRS 宽度判读"
+  F-102-CONFIRM_UNSTABLE: "⚠️ 确认血流动力学不稳定"
+  F-102-PREP_CARDIOVERSION: "⚡ 电复律准备（SYNC/能量/镇静/充电/清场）"
+  F-102-DELIVER_SHOCK: "⚡ 执行同步放电"
+  F-102-POST_SHOCK_ASSESS: "📊 复律后心律评估"
+  F-102-MONITOR_SINUS_RHYTHM: "📊 窦性心律监测"
+  F-102-SECOND_SHOCK_PREP: "⚡ 二次电复律准备"
+  F-102-DETERIORATION: "🚨 病情恶化（PEA/停搏）"
+  F-102-EXIT_TO_PARENT: "🚪 退出到父级"
+
+slot_mappings:
+  outcome: intervention.cardioversion.success
+  sync_mode: device.defibSyncMode

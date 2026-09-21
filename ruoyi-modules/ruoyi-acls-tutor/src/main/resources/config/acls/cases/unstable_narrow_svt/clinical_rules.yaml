@@ -1,0 +1,98 @@
+case_id: unstable_narrow_svt
+version: 0.1.0
+
+# 教学规则集：不稳定窄QRS心动过速 → 同步电复律核心决策点
+rules:
+  # 未开 SYNC 就放电 → 严重错误拦截
+  - rule_id: R_UNSYNC_SHOCK_BLOCK
+    match_intent: S-102-2-6
+    applies_when_current_state: F-102-DELIVER_SHOCK
+    decision: BLOCK
+    severity: critical
+    feedback_key: feedback_unsync_shock_blocked
+
+  # 未给镇静就放电 → 警告
+  - rule_id: R_NO_SEDATION_WARN
+    match_intent: S-102-2-6
+    applies_when_current_state: F-102-PREP_CARDIOVERSION
+    decision: ALLOW_WITH_WARNING
+    severity: moderate
+    feedback_key: feedback_sedation_missing
+
+  # 有脉搏患者启动 CPR → 拦截
+  - rule_id: R_CPR_ON_PULSE_BLOCK
+    match_intent: S-102-3-3
+    applies_when_current_state: ANY
+    decision: BLOCK
+    severity: critical
+    feedback_key: feedback_cpr_on_pulse_blocked
+
+# ★ 病例结局分支（V3.1 §5.6.1）
+case_outcome_branches:
+  - branch_id: converted_to_sinus_success
+    description: "同步电复律成功，转复为窦性心律"
+    clinical_state:
+      rhythm: sinus
+      pulse: present
+      perfusion: present
+      consciousness: alert
+    presentation_mapping_ref: PM_SINUS_001
+    trend_labels:
+      - converted
+      - success
+    evidence:
+      source_class: pedagogical_case_setting
+      supporting_guideline_refs:
+        - AHA_2025_TACHYCARDIA_WITH_PULSE
+        - AHA_2025_SYNCHRONIZED_CARDIOVERSION
+    review:
+      review_status: approved
+      reviewer_id: test_architect
+      reviewer_role: architect
+      review_date: "2026-09-21"
+      review_comment: "技术审核通过；医学内容待医学内容负责人签署"
+
+  - branch_id: refractory_unstable_svt
+    description: "同步电复律 3 次未转复，持续不稳定窄QRS心动过速"
+    clinical_state:
+      rhythm: svt
+      pulse: present
+      perfusion: impaired
+      consciousness: pain
+    presentation_mapping_ref: PM_SVT_PERSISTENT_001
+    trend_labels:
+      - persistent_svt
+      - refractory
+    evidence:
+      source_class: pedagogical_case_setting
+      supporting_guideline_refs:
+        - AHA_2025_TACHYCARDIA_WITH_PULSE
+        - AHA_2025_REFRACTORY_TACHYCARDIA
+    review:
+      review_status: approved
+      reviewer_id: test_architect
+      reviewer_role: architect
+      review_date: "2026-09-21"
+      review_comment: "技术审核通过；医学内容待医学内容负责人签署"
+
+  - branch_id: deteriorated_to_arrest
+    description: "病情恶化至 PEA/停搏，转入 CPR 流程"
+    clinical_state:
+      rhythm: pea
+      pulse: absent
+      perfusion: absent
+      consciousness: unresponsive
+    presentation_mapping_ref: PM_PEA_001
+    trend_labels:
+      - deteriorated
+      - arrest
+    evidence:
+      source_class: pedagogical_case_setting
+      supporting_guideline_refs:
+        - AHA_2025_CARDIAC_ARREST_ALGORITHM
+    review:
+      review_status: approved
+      reviewer_id: test_architect
+      reviewer_role: architect
+      review_date: "2026-09-21"
+      review_comment: "技术审核通过；医学内容待医学内容负责人签署"

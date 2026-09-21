@@ -152,7 +152,7 @@ public class TransitionContract {
      * <ol>
      *   <li>转移声明的 intentCode（若有）</li>
      *   <li>从 readVariables 反查：任何能写入这些变量的意图都可能触发它</li>
-     * </ul>
+     * </ol>
      */
     private Set<String> triggeringIntents = new LinkedHashSet<>();
 
@@ -182,7 +182,7 @@ public class TransitionContract {
 
     /**
      * 是否为死转移（无触发路径）。
-     * 判定：无 intentCode、无 event、无 systemTrigger。
+     * 判定：无 intentCode、无 event、无 systemTrigger、无 guardExpression。
      */
     private boolean dead;
 
@@ -217,6 +217,17 @@ public class TransitionContract {
     }
 
     /**
+     * 是否有 Guard 条件。
+     *
+     * <p>有 Guard 条件的纯条件转移（intentCode / event / systemTrigger 均为空）
+     * 由运行时"变量驱动重评估"机制触发，不是死转移。
+     */
+    @JsonIgnore
+    public boolean hasGuardCondition() {
+        return guardExpression != null && !guardExpression.isBlank();
+    }
+
+    /**
      * 是否有系统动作定义。
      */
     @JsonIgnore
@@ -241,17 +252,19 @@ public class TransitionContract {
      *   <li>{@code "INTENT"}：意图触发</li>
      *   <li>{@code "EVENT"}：系统事件触发</li>
      *   <li>{@code "TIMER"}：定时触发</li>
+     *   <li>{@code "CONDITION"}：纯条件转移（变量驱动重评估）</li>
      *   <li>{@code "UNKNOWN"}：无触发路径</li>
      * </ul>
      *
-     * <p>优先级：INTENT > EVENT > TIMER。同一转移可能同时具备多种触发路径，
-     * 此时返回优先级最高的那个。
+     * <p>优先级：INTENT > EVENT > TIMER > CONDITION。
+     * 同一转移可能同时具备多种触发路径，此时返回优先级最高的那个。
      */
     @JsonIgnore
     public String getTriggerType() {
         if (hasIntent()) return "INTENT";
         if (hasEvent()) return "EVENT";
         if (systemTrigger) return "TIMER";
+        if (hasGuardCondition()) return "CONDITION";
         return "UNKNOWN";
     }
 
@@ -302,6 +315,8 @@ public class TransitionContract {
             trigger = event;
         } else if (systemTrigger) {
             trigger = "TIMER";
+        } else if (hasGuardCondition()) {
+            trigger = "COND";
         } else {
             trigger = "?";
         }

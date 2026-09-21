@@ -75,6 +75,10 @@ public class AclsIntelligentProcessor implements IntelligentCommandProcessor {
                 }
             } else {
                 responseText = result.getErrorMessage() != null ? result.getErrorMessage() : "指令执行失败";
+                // ★ 新增：显式映射错误消息，供 SessionService 识别"处理器明确拒绝"
+                if (result.getErrorMessage() != null && !result.getErrorMessage().isBlank()) {
+                    response.put("errorMessage", result.getErrorMessage());
+                }
             }
             response.put("responseText", responseText);
 
@@ -86,6 +90,8 @@ public class AclsIntelligentProcessor implements IntelligentCommandProcessor {
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("responseText", "操作失败: " + e.getMessage());
+            // ★ 新增：与主失败路径保持一致的字段映射
+            response.put("errorMessage", e.getMessage());
             response.put("animations", List.of());
             response.put("contextUpdates", Map.of());
             return response;

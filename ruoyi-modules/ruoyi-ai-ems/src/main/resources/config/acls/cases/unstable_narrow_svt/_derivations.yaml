@@ -1,0 +1,14 @@
+# unstable_narrow_svt 案例专属派生规则
+# GLOBAL 已有的派生变量（derived.stable / qrsWidth / unstable 等）不在此重复声明
+# 字段规范：target / type / description / expression / dependencies
+
+derivations:
+  - target: process.cardioversionWithoutSedation
+    type: boolean
+    description: "未镇静即电复律（案例专属告警）"
+    expression: |
+      #intervention.cardioversion.count > 0 &&
+      #intervention.sedation.given == false
+    dependencies:
+      - intervention.cardioversion.count
+      - intervention.sedation.given

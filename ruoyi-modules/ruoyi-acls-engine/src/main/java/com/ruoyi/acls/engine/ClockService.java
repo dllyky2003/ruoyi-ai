@@ -40,6 +40,21 @@ public class ClockService {
      */
     private final Map<String, Long> pausedAtMap = new ConcurrentHashMap<>();
 
+    // ==================== ★ 阶段 3：评估真实时间（墙上时间） ====================
+
+    /**
+     * 每个会话的评估真实时间起点（墙上时间毫秒）。
+     * <p>在 {@link #start(String)} 首次调用时记录；重复 start 不重置，保证审计锚点稳定。</p>
+     */
+    private final Map<String, Long> assessmentRealStartMap = new ConcurrentHashMap<>();
+
+    /**
+     * 每个会话在 {@link #stop(String)} 时冻结的评估真实秒数。
+     * <p>冻结后 {@link #assessmentRealElapsedSeconds(String)} 优先返回该值，
+     * 避免会话结束后读数继续增长。</p>
+     */
+    private final Map<String, Double> assessmentRealFrozenMap = new ConcurrentHashMap<>();
+
     // ==================== 心跳（原有逻辑，不动） ====================
 
     @Scheduled(fixedRate = 1000)
@@ -70,18 +85,17 @@ public class ClockService {
         contextManager.advanceClock(sessionId);
         teamManager.updateStatus(sessionId);
 
-
         refreshStateDuration(sessionId, context);
     }
 
     private void refreshStateDuration(String sessionId, CaseContext context) {
-        Long enterTime = (Long) context.getVar("process.stateEnterTime",Long.class);
+        Long enterTime = (Long) context.getVar("process.stateEnterTime", Long.class);
         if (enterTime == null) {
             return;
         }
 
         long durationSec = (System.currentTimeMillis() - enterTime) / 1000;
-        Long prev = (Long) context.getVar("process.stateDuration",Long.class);
+        Long prev = (Long) context.getVar("process.stateDuration", Long.class);
         if (prev != null && prev == durationSec) {
             return;  // 无变化不写
         }
@@ -95,22 +109,27 @@ public class ClockService {
         }
     }
 
-    // ==================== 新增：时钟控制 ====================
+    // ==================== 时钟控制 ====================
 
     /**
      * 启动时钟。由 CaseReadyHandler 在 case_start 前调用。
-     * <p>幂等：已运行则忽略。</p>
+     * <p>幂等：已运行则忽略；评估真实时间起点只在首次调用时记录。</p>
      */
     public void start(String sessionId) {
         if (sessionId == null) return;
         pausedAtMap.remove(sessionId);
         contextManager.setClockRunning(sessionId, true);
+        // ★ 阶段 3：评估真实时间起点。putIfAbsent 保证重复 start 不重置锚点。
+        assessmentRealStartMap.putIfAbsent(sessionId, System.currentTimeMillis());
         log.info("⏱️ 时钟启动: session={}", sessionId);
     }
 
     /**
      * 暂停时钟。由 PauseResumeHandler 调用。
      * <p>幂等：已暂停则忽略。</p>
+     * <p>注意：暂停只影响 simulated elapsed（{@link #elapsedSeconds(String)}），
+     * 不影响 assessment real elapsed（{@link #assessmentRealElapsedSeconds(String)}），
+     * 后者按墙上时间累计，包含暂停期间。</p>
      */
     public void pause(String sessionId) {
         if (sessionId == null) return;
@@ -127,7 +146,6 @@ public class ClockService {
     /**
      * 恢复时钟。由 PauseResumeHandler 调用。
      * <p>幂等：未暂停则忽略。</p>
-     * <p>发布 ClockResumedEvent，携带本次暂停时长，供 TeamManager 补偿 taskStartTime。</p>
      */
     public void resume(String sessionId) {
         if (sessionId == null) return;
@@ -144,12 +162,22 @@ public class ClockService {
 
     /**
      * 停止时钟。由 CaseEndListener 在案例结束时调用。
+     * <p>同时冻结评估真实秒数，避免后续读取继续增长。</p>
      */
     public void stop(String sessionId) {
         if (sessionId == null) return;
         pausedAtMap.remove(sessionId);
+
+        // ★ 阶段 3：冻结评估真实时间
+        Long start = assessmentRealStartMap.get(sessionId);
+        if (start != null && !assessmentRealFrozenMap.containsKey(sessionId)) {
+            assessmentRealFrozenMap.put(sessionId,
+                (System.currentTimeMillis() - start) / 1000.0);
+        }
+
         contextManager.setClockRunning(sessionId, false);
-        log.info("⏹️ 时钟停止: session={}", sessionId);
+        log.info("⏹️ 时钟停止: session={}, assessmentReal={}s",
+            sessionId, assessmentRealElapsedSeconds(sessionId));
     }
 
     public boolean isPaused(String sessionId) {
@@ -163,6 +191,27 @@ public class ClockService {
     public double elapsedSeconds(String sessionId) {
         CaseContext ctx = contextManager.getSnapshot(sessionId);
         return ctx != null ? ctx.getElapsedSeconds() : 0.0;
+    }
+
+    /**
+     * ★ 阶段 3：评估真实时间（秒），按墙上时间累计，包含暂停时间。
+     *
+     * <p>口径与 {@link #elapsedSeconds(String)} 分离：
+     * <ul>
+     *   <li>{@code elapsedSeconds} = simulated elapsed，排除暂停；</li>
+     *   <li>{@code assessmentRealElapsedSeconds} = real elapsed，包含暂停，
+     *       用于 D4 评分中断与 S3 的 real time_basis。</li>
+     * </ul>
+     *
+     * <p>优先级：已冻结值 > 起点计算 > 0。</p>
+     */
+    public double assessmentRealElapsedSeconds(String sessionId) {
+        if (sessionId == null) return 0.0;
+        Double frozen = assessmentRealFrozenMap.get(sessionId);
+        if (frozen != null) return frozen;
+        Long start = assessmentRealStartMap.get(sessionId);
+        if (start == null) return 0.0;
+        return (System.currentTimeMillis() - start) / 1000.0;
     }
 
     // ==================== 系统规则（原有，不动） ====================

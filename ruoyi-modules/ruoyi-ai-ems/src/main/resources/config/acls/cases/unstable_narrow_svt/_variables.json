@@ -1,0 +1,115 @@
+{
+  "caseType": "unstable_narrow_svt",
+  "description": "窄QRS不稳定/SVT案例专属变量（含同步电复律前镇静）。此文件只包含本案例使用的变量，通用 ACLS 变量在 GLOBAL/_variables.json。派生规则见同目录 _derivations.yaml。",
+
+  "resetDefaults": {
+    "intervention.sedation": {
+      "status": null,
+      "given": false,
+      "drug": null,
+      "dose": null,
+      "lastTime": null
+    },
+    "process.sedationAssessed": false,
+    "process.cardioversionWithoutSedation": false
+  },
+
+  "variables": [
+    {
+      "name": "intervention.sedation",
+      "name_cn": "镇静记录",
+      "type": "object",
+      "description": "status（given/failed/cancelled）、given、drug、dose、lastTime",
+      "category": "TREATMENT_HISTORY",
+      "source": "EXECUTOR",
+      "writable_by": "EXECUTOR,PARAM_EXTRACTOR",
+      "requiredKeys": ["status", "given"],
+      "default_value": {
+        "status": null,
+        "given": false,
+        "drug": null,
+        "dose": null,
+        "lastTime": null
+      },
+      "persistence": true,
+      "scoring": true
+    },
+    {
+      "name": "process.sedationAssessed",
+      "name_cn": "镇静评估已完成",
+      "type": "boolean",
+      "description": "是否已对镇静需求/禁忌进行评估",
+      "category": "PROCESS_MARKER",
+      "source": "EXECUTOR",
+      "writable_by": "EXECUTOR,PARAM_EXTRACTOR",
+      "default_value": false,
+      "persistence": true,
+      "scoring": true
+    },
+    {
+      "name": "process.cardioversionWithoutSedation",
+      "name_cn": "未镇静即电复律",
+      "type": "boolean",
+      "description": "是否在未给予镇静的情况下执行了同步电复律（用于评分/告警）",
+      "category": "PROCESS_MARKER",
+      "source": "SYSTEM",
+      "writable_by": "SYSTEM",
+      "default_value": false,
+      "persistence": true,
+      "scoring": true
+    },
+    {
+      "name": "derived.unstable",
+      "name_cn": "派生血流动力学不稳定",
+      "type": "boolean",
+      "description": "由 5 个不稳定征象派生的反向标记，等价于 derived.stable == false",
+      "category": "DERIVED",
+      "source": "SYSTEM",
+      "writable_by": "SYSTEM",
+      "default_value": null,
+      "value_labels": {
+        "true": "不稳定",
+        "false": "稳定"
+      }
+    },
+    {
+      "name": "derived.isUnstableNarrowQrs",
+      "name_cn": "派生不稳定窄QRS",
+      "type": "boolean",
+      "description": "是否满足血流动力学不稳定 + 窄QRS，是进入紧急同步电复律分支的核心条件",
+      "category": "DERIVED",
+      "source": "SYSTEM",
+      "writable_by": "SYSTEM",
+      "default_value": null,
+      "value_labels": {
+        "true": "不稳定窄QRS",
+        "false": "不满足"
+      }
+    },
+    {
+      "name": "derived.cardioversionReady",
+      "name_cn": "派生电复律就绪",
+      "type": "boolean",
+      "description": "同步电复律启动条件是否全部就绪：不稳定窄QRS + 除颤仪同步模式 + 已充电 + 已清场",
+      "category": "DERIVED",
+      "source": "SYSTEM",
+      "writable_by": "SYSTEM",
+      "default_value": null,
+      "value_labels": {
+        "true": "就绪",
+        "false": "未就绪"
+      }
+    }
+  ],
+
+  "slot_mappings": {
+    "description": "镇静相关槽位映射（仅案例专属部分，通用映射在 GLOBAL/_variables.json）",
+    "mappings": {
+      "sedation_given": "intervention.sedation.given",
+      "sedation_drug": "intervention.sedation.drug",
+      "sedation_dose": "intervention.sedation.dose",
+      "sedation_assessed": "process.sedationAssessed",
+      "cardioversion_without_sedation": "process.cardioversionWithoutSedation"
+    }
+  }
+}

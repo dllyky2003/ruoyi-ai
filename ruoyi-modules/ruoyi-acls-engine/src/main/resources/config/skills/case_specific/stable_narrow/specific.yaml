@@ -1,10 +1,18 @@
 # ============================================================================
 # stable_narrow/specific.yaml - 窄QRS稳定心动过速专属技能
-# 只有该案例特有的判读/评估技能
+#
+# 字段契约（来自 YamlSkillLoader）：
+#   generic_assert: assertExpression / targetVar / successSpeech / valueMap
+#                   / prerequisites / sourceVar / sourceVars / unavailableValue
+#   standard:       vrActionCode / successVar / successSpeech / durationSeconds
+#   generic:        vrActionCode / durationSeconds / successSpeech
+#                   / outputs(List[{var,value}]) / prerequisites / varMapping
+#                   / waitForCompletion / timeoutSeconds
+#                   / sourceVar / sourceVars / targetVar / unavailableValue / valueMap
 # ============================================================================
 
 skills:
-  # -------- 专属判读技能 --------
+  # -------- 专属判读技能（generic_assert） --------
   - id: assert_qrs_width
     duty: MONITOR_DEFIB
     type: generic_assert
@@ -52,7 +60,7 @@ skills:
         true: "稳定"
         false: "不稳定"
 
-  # -------- 专属标准操作 --------
+  # -------- 专属标准操作（standard） --------
   - id: vagal_maneuver
     duty: ASSESS
     type: standard
@@ -68,84 +76,87 @@ skills:
     params:
       vrActionCode: "ADENOSINE_PUSH"
       durationSeconds: 2
-      timeoutSeconds: 5
-      doseSequence: first
       successVar: intervention.adenosineGiven
       successSpeech: "腺苷推注已完成。"
+
   # ============================================================
-  # 警示 / 宣告型技能（S 类意图统一入口，全部复用 GenericActionSkill）
-  # 模式：配置 vrActionCode + duration + successSpeech + outputs
+  # 警示 / 宣告型技能（generic）
+  # 修正：id / params 嵌套 / durationSeconds / outputs List
   # ============================================================
 
-  - name: wpw_warning
-    type: generic
+  - id: wpw_warning
     duty: ASSESS
-    vrActionCode: WPW_ALERT
-    duration: 1
-    successSpeech: "⚠️ 预激综合征警示：禁用腺苷、CCB、β受体阻滞剂、地高辛；预激合并窄QRS（顺向型AVRT）时腺苷可谨慎使用。"
-    outputs:
-      process.wpwAlertTriggered: true
-
-  - name: alert_drug_induced_vf
     type: generic
+    params:
+      vrActionCode: WPW_ALERT
+      durationSeconds: 1
+      successSpeech: "⚠️ 预激综合征警示：禁用腺苷、CCB、β受体阻滞剂、地高辛；预激合并窄QRS（顺向型AVRT）时腺苷可谨慎使用。"
+      outputs:
+        - var: process.wpwAlertTriggered
+          value: true
+
+  - id: alert_drug_induced_vf
     duty: ASSESS
-    vrActionCode: DRUG_INDUCED_VF_ALERT
-    duration: 1
-    successSpeech: "⚠️ 药物诱发室颤，立即启动 ACLS。"
-    outputs:
-      process.drugInducedVfAlertShown: true
-
-  - name: alert_unsync_shock_vf
     type: generic
+    params:
+      vrActionCode: DRUG_INDUCED_VF_ALERT
+      durationSeconds: 1
+      successSpeech: "⚠️ 药物诱发室颤，立即启动 ACLS。"
+      outputs:
+        - var: process.drugInducedVfAlertShown
+          value: true
+
+  - id: alert_unsync_shock_vf
     duty: ASSESS
-    vrActionCode: UNSYNC_SHOCK_VF_ALERT
-    duration: 1
-    successSpeech: "⚠️ 非同步电击致室颤，立即除颤。"
-    outputs:
-      process.unsynchronizedShockVfAlertShown: true
-
-  - name: alert_pea_asystole
     type: generic
+    params:
+      vrActionCode: UNSYNC_SHOCK_VF_ALERT
+      durationSeconds: 1
+      successSpeech: "⚠️ 非同步电击致室颤，立即除颤。"
+      outputs:
+        - var: process.unsynchronizedShockVfAlertShown
+          value: true
+
+  - id: alert_pea_asystole
     duty: ASSESS
-    vrActionCode: PEA_ASYSTOLE_ALERT
-    duration: 1
-    successSpeech: "⚠️ PEA/停搏，立即开始 CPR。"
-    outputs:
-      process.peaAsystoleAlertShown: true
-
-  - name: block_forbidden_action
     type: generic
+    params:
+      vrActionCode: PEA_ASYSTOLE_ALERT
+      durationSeconds: 1
+      successSpeech: "⚠️ PEA/停搏，立即开始 CPR。"
+      outputs:
+        - var: process.peaAsystoleAlertShown
+          value: true
+
+  - id: block_forbidden_action
     duty: ASSESS
-    vrActionCode: FORBIDDEN_ACTION_BLOCK
-    duration: 1
-    successSpeech: "⛔ 稳定窄QRS禁忌操作，已拦截。"
-    outputs:
-      process.contraindicationBlockTriggered: true
-
-  - name: report_treatment_result
     type: generic
+    params:
+      vrActionCode: FORBIDDEN_ACTION_BLOCK
+      durationSeconds: 1
+      successSpeech: "⛔ 稳定窄QRS禁忌操作，已拦截。"
+      outputs:
+        - var: process.contraindicationBlockTriggered
+          value: true
+
+  - id: report_treatment_result
     duty: ASSESS
-    vrActionCode: TREATMENT_RESULT_REPORT
-    duration: 1
-    successSpeech: "治疗结果已记录。"
-    outputs:
-      process.treatmentResultReported: true
-
-  - name: alert_hemodynamic_deterioration
     type: generic
+    params:
+      vrActionCode: TREATMENT_RESULT_REPORT
+      durationSeconds: 1
+      successSpeech: "治疗结果已记录。"
+      outputs:
+        - var: process.treatmentResultReported
+          value: true
+
+  - id: alert_hemodynamic_deterioration
     duty: ASSESS
-    vrActionCode: HEMODYNAMIC_DETERIORATION_ALERT
-    duration: 1
-    successSpeech: "⚠️ 血流动力学恶化，准备紧急电复律。"
-    outputs:
-      process.hemodynamicDeteriorationAlert: true
-
-  - name: insert_npa
     type: generic
-    duty: AIRWAY
-    vrActionCode: INSERT_NPA
-    duration: 2
-    successSpeech: "已插入鼻咽通气管。"
-    outputs:
-      device.npaPlaced: true
-
+    params:
+      vrActionCode: HEMODYNAMIC_DETERIORATION_ALERT
+      durationSeconds: 1
+      successSpeech: "⚠️ 血流动力学恶化，准备紧急电复律。"
+      outputs:
+        - var: process.hemodynamicDeteriorationAlert
+          value: true

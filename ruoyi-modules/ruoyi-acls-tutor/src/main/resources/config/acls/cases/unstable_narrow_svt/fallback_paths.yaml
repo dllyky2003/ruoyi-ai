@@ -1,0 +1,29 @@
+case_id: unstable_narrow_svt
+version: 0.1.0
+
+fallback_paths:
+  - fallback_id: FB_UNSTABLE_NARROW_001
+    name: "学员未在 120 秒内启动同步电复律"
+    applies_when_state: F-102-CONFIRM_UNSTABLE
+    after: 120s
+    fallback_action:
+      type: instructor_alert
+      message: "已确认不稳定超过 2 分钟仍未启动电复律，建议导师介入提醒"
+    review:
+      review_status: approved
+      reviewer_id: test_architect
+      reviewer_role: architect
+      review_date: "2026-09-21"
+
+  - fallback_id: FB_UNSTABLE_NARROW_002
+    name: "学员在准备阶段停留过久"
+    applies_when_state: F-102-PREP_CARDIOVERSION
+    after: 180s
+    fallback_action:
+      type: instructor_alert
+      message: "电复律准备阶段已停留 3 分钟，建议导师检查设备操作流程"
+    review:
+      review_status: approved
+      reviewer_id: test_architect
+      reviewer_role: architect
+      review_date: "2026-09-21"

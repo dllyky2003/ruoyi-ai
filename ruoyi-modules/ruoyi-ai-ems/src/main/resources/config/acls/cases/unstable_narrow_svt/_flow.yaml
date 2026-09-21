@@ -1,0 +1,371 @@
+# ============================================================
+# 子级流程：unstable_narrow_svt（不稳定窄QRS心动过速 / 紧急同步电复律）
+# 案例编号：102  |  父级：GLOBAL  |  版本：1.0.0
+# 参考：2025 AHA 心动过速伴脉搏算法
+# ============================================================
+caseId: "unstable_narrow_svt"
+caseName: "不稳定窄QRS心动过速（紧急同步电复律）"
+version: "1.0.0"
+parent: "GLOBAL"
+description: "不稳定窄QRS规则节律心动过速 → 同步电复律全流程"
+
+stateDescriptions:
+  F-102-CHECK_QRS_WIDTH: "📐 QRS 宽度判读"
+  F-102-CONFIRM_UNSTABLE: "⚠️ 确认血流动力学不稳定"
+  F-102-PREP_CARDIOVERSION: "⚡ 电复律准备（SYNC/能量/镇静/充电/清场）"
+  F-102-DELIVER_SHOCK: "⚡ 执行同步放电"
+  F-102-POST_SHOCK_ASSESS: "📊 复律后心律评估"
+  F-102-MONITOR_SINUS_RHYTHM: "📊 窦性心律监测"
+  F-102-SECOND_SHOCK_PREP: "⚡ 二次电复律准备"
+  F-102-DETERIORATION: "🚨 病情恶化（PEA/停搏）"
+  F-102-EXIT_TO_PARENT: "🚪 退出到父级"
+
+stateMachine:
+  initial: "F-102-CHECK_QRS_WIDTH"
+  states:
+    - F-102-CHECK_QRS_WIDTH
+    - F-102-CONFIRM_UNSTABLE
+    - F-102-PREP_CARDIOVERSION
+    - F-102-DELIVER_SHOCK
+    - F-102-POST_SHOCK_ASSESS
+    - F-102-MONITOR_SINUS_RHYTHM
+    - F-102-SECOND_SHOCK_PREP
+    - F-102-DETERIORATION
+    - F-102-EXIT_TO_PARENT
+
+  endStates:
+    - F-102-EXIT_TO_PARENT
+
+  # ==========================================================
+  # Phase SM：顶层叶子阶段
+  # ==========================================================
+  phases:
+    - id: "UNSTABLE_NARROW_PATH"
+      displayName: "不稳定窄QRS电复律路径"
+      priority: 96
+      states:
+        - F-102-CHECK_QRS_WIDTH
+        - F-102-CONFIRM_UNSTABLE
+        - F-102-PREP_CARDIOVERSION
+        - F-102-DELIVER_SHOCK
+        - F-102-POST_SHOCK_ASSESS
+        - F-102-MONITOR_SINUS_RHYTHM
+        - F-102-SECOND_SHOCK_PREP
+        - F-102-DETERIORATION
+      entryCondition: "#derived.isUnstableNarrowQrs == true"
+      allowedIntents:
+        - S-102-1-1
+        - S-102-1-2
+        - S-102-2-1
+        - S-102-2-2
+        - S-102-2-3
+        - S-102-2-4
+        - S-102-2-5
+        - S-102-2-6
+        - S-102-2-7
+        - S-102-2-8
+        - IA_010_check_heart_rate
+        - IA_011_check_oxygen_saturation
+        - IA_040_turn_on_ecg
+        - IA_041_connect_leads_to_ecg
+        - IA_043_obtain_ecg_recording
+        - IA_044_interpret_and_report
+        - IA_050_request_aed
+        - IA_051_request_assistance
+      requiresPhases:
+        - SETUP
+      lock:
+        enabled: false
+
+  transitions:
+    # ==========================================================
+    # 0. 父级入口（priority 26 > GLOBAL 的 25，优先命中本病例）
+    # ==========================================================
+    - source: "F-000-INITIAL_SETUP"
+      target: "F-102-CHECK_QRS_WIDTH"
+      intentCode: null
+      condition: "#derived.isUnstableNarrowQrs == true"
+      priority: 26
+      exitReason: null
+      effects: []
+      description: "不稳定窄QRS心动过速 → 进入电复律子级"
+
+    # ==========================================================
+    # 1. QRS 宽度判读
+    # ==========================================================
+    - source: "F-102-CHECK_QRS_WIDTH"
+      target: "F-102-CONFIRM_UNSTABLE"
+      intentCode: "S-102-1-1"
+      condition: "#derived.qrsWidth == 'narrow'"
+      priority: 10
+      exitReason: null
+      effects: []
+      description: "确认窄QRS → 进入不稳定确认"
+
+    - source: "F-102-CHECK_QRS_WIDTH"
+      target: "F-102-EXIT_TO_PARENT"
+      intentCode: "S-102-1-1"
+      condition: "#derived.qrsWidth == 'wide'"
+      priority: 100
+      exitReason: "WIDE_QRS"
+      effects: []
+      description: "QRS 为宽 → 退出父级重新分类"
+
+    # ==========================================================
+    # 2. 确认不稳定
+    # ==========================================================
+    - source: "F-102-CONFIRM_UNSTABLE"
+      target: "F-102-PREP_CARDIOVERSION"
+      intentCode: "S-102-1-2"
+      condition: "#derived.unstable == true"
+      priority: 10
+      exitReason: null
+      effects:
+        - var: "process.instabilityTriggered"
+          value: true
+      description: "确认不稳定 → 进入电复律准备"
+
+    - source: "F-102-CONFIRM_UNSTABLE"
+      target: "F-102-EXIT_TO_PARENT"
+      intentCode: "S-102-1-2"
+      condition: "#derived.stable == true"
+      priority: 100
+      exitReason: "STABLE_REASSESS"
+      effects: []
+      description: "实际稳定 → 退出父级走稳定路径"
+
+    # ==========================================================
+    # 3. 电复律准备（SYNC → 能量 → 镇静 → 充电 → 清场）
+    # 每个子步骤在同一状态自循环，累积设备状态
+    # ==========================================================
+    - source: "F-102-PREP_CARDIOVERSION"
+      target: "F-102-PREP_CARDIOVERSION"
+      intentCode: "S-102-2-1"
+      condition: "#device.defibSyncMode == false"
+      priority: 10
+      exitReason: null
+      effects:
+        - var: "device.defibSyncMode"
+          value: true
+        - var: "process.lastInterventionTime"
+          valueExpression: "T(System).currentTimeMillis()"
+      description: "开启 SYNC 模式"
+
+    - source: "F-102-PREP_CARDIOVERSION"
+      target: "F-102-PREP_CARDIOVERSION"
+      intentCode: "S-102-2-2"
+      condition: "#device.defibSyncMode == true && #device.defibEnergy == null"
+      priority: 11
+      exitReason: null
+      effects:
+        - var: "device.defibEnergy"
+          value: 100
+        - var: "process.lastInterventionTime"
+          valueExpression: "T(System).currentTimeMillis()"
+      description: "选择能量（默认 100J）"
+
+    - source: "F-102-PREP_CARDIOVERSION"
+      target: "F-102-PREP_CARDIOVERSION"
+      intentCode: "S-102-2-3"
+      condition: "#intervention.sedation.given == false"
+      priority: 12
+      exitReason: null
+      effects:
+        - var: "intervention.sedation.given"
+          value: true
+        - var: "process.lastInterventionTime"
+          valueExpression: "T(System).currentTimeMillis()"
+      description: "给予镇静"
+
+    - source: "F-102-PREP_CARDIOVERSION"
+      target: "F-102-PREP_CARDIOVERSION"
+      intentCode: "S-102-2-4"
+      condition: "#device.defibCharged == false && #device.defibSyncMode == true"
+      priority: 13
+      exitReason: null
+      effects:
+        - var: "device.defibCharged"
+          value: true
+        - var: "process.lastInterventionTime"
+          valueExpression: "T(System).currentTimeMillis()"
+      description: "充电"
+
+    - source: "F-102-PREP_CARDIOVERSION"
+      target: "F-102-PREP_CARDIOVERSION"
+      intentCode: "S-102-2-5"
+      condition: "#process.allClearForShock == null || #process.allClearForShock == false"
+      priority: 14
+      exitReason: null
+      effects:
+        - var: "process.allClearForShock"
+          value: true
+      description: "清场确认"
+
+    - source: "F-102-PREP_CARDIOVERSION"
+      target: "F-102-DELIVER_SHOCK"
+      intentCode: "S-102-2-6"
+      condition: "#derived.cardioversionReady == true && #intervention.sedation.given == true && #process.allClearForShock == true"
+      priority: 20
+      exitReason: null
+      effects: []
+      description: "设备就绪 + 镇静 + 清场 → 进入放电"
+
+    # ==========================================================
+    # 4. 执行放电
+    # ==========================================================
+    - source: "F-102-DELIVER_SHOCK"
+      target: "F-102-DELIVER_SHOCK"
+      intentCode: "S-102-2-6"
+      condition: "#intervention.cardioversion.success == false && (#intervention.cardioversion.count == null || #intervention.cardioversion.count < 3)"
+      priority: 15
+      exitReason: null
+      effects:
+        - var: "intervention.cardioversion.count"
+          valueExpression: "(intervention.cardioversion.count == null ? 1 : intervention.cardioversion.count + 1)"
+        - var: "intervention.cardioversion.lastEnergy"
+          value: 100
+        - var: "process.lastInterventionTime"
+          valueExpression: "T(System).currentTimeMillis()"
+      description: "执行同步放电，记录次数与能量"
+
+    - source: "F-102-DELIVER_SHOCK"
+      target: "F-102-POST_SHOCK_ASSESS"
+      intentCode: "S-102-2-7"
+      condition: "#intervention.cardioversion.count != null"
+      priority: 20
+      exitReason: null
+      effects: []
+      description: "放电完成 → 立即进行复律后心律评估"
+
+    - source: "F-102-DELIVER_SHOCK"
+      target: "F-102-EXIT_TO_PARENT"
+      intentCode: null
+      condition: "#intervention.cardioversion.success == false && #intervention.cardioversion.count >= 3"
+      priority: 100
+      exitReason: "REFRACTORY_SHOCK"
+      effects: []
+      description: "3 次电复律失败 → 退出父级"
+
+    # ==========================================================
+    # 5. 复律后心律评估
+    # ==========================================================
+    - source: "F-102-POST_SHOCK_ASSESS"
+      target: "F-102-MONITOR_SINUS_RHYTHM"
+      intentCode: "S-102-2-8"
+      condition: "#derived.isSinusRhythm == true"
+      priority: 10
+      exitReason: null
+      effects:
+        - var: "intervention.rhythmConverted"
+          value: true
+      description: "转复为窦性 → 进入窦性监测"
+
+    - source: "F-102-POST_SHOCK_ASSESS"
+      target: "F-102-SECOND_SHOCK_PREP"
+      intentCode: "S-102-2-8"
+      condition: "#derived.isSinusRhythm == false && (#intervention.cardioversion.count == null || #intervention.cardioversion.count < 3)"
+      priority: 15
+      exitReason: null
+      effects: []
+      description: "未转复 → 准备二次电复律"
+
+    - source: "F-102-POST_SHOCK_ASSESS"
+      target: "F-102-EXIT_TO_PARENT"
+      intentCode: "S-102-2-8"
+      condition: "#derived.isSinusRhythm == false && #intervention.cardioversion.count >= 3"
+      priority: 100
+      exitReason: "REFRACTORY_SHOCK"
+      effects: []
+      description: "3 次后仍未转复 → 退出父级"
+
+    # ==========================================================
+    # 6. 二次电复律准备（能量阶梯：100J → 150J → 200J）
+    # ==========================================================
+    - source: "F-102-SECOND_SHOCK_PREP"
+      target: "F-102-DELIVER_SHOCK"
+      intentCode: "S-102-2-2"
+      condition: "#device.defibEnergy != null && #device.defibEnergy < 200"
+      priority: 10
+      exitReason: null
+      effects:
+        - var: "device.defibEnergy"
+          valueExpression: "(device.defibEnergy == null ? 150 : Math.min(device.defibEnergy + 50, 200))"
+        - var: "device.defibCharged"
+          value: false
+        - var: "process.allClearForShock"
+          value: false
+        - var: "process.lastInterventionTime"
+          valueExpression: "T(System).currentTimeMillis()"
+      description: "能量阶梯上调 50J，重置充电与清场标记 → 回到放电状态"
+
+    # ==========================================================
+    # 7. 窦性监测
+    # ==========================================================
+    - source: "F-102-MONITOR_SINUS_RHYTHM"
+      target: "F-102-EXIT_TO_PARENT"
+      intentCode: "S-102-2-8"
+      condition: "#derived.isSinusRhythm == true"
+      priority: 10
+      exitReason: "ROSC"
+      effects: []
+      description: "窦性稳定 → 退出父级 ROSC 接管"
+
+    - source: "F-102-MONITOR_SINUS_RHYTHM"
+      target: "F-102-DETERIORATION"
+      intentCode: null
+      condition: "#phys.systolicBp < 90 && #derived.isSinusRhythm == false"
+      priority: 50
+      exitReason: null
+      effects: []
+      description: "监测期间再次恶化 → 恶化处理"
+
+    # ==========================================================
+    # 8. 病情恶化（PEA/停搏）
+    # ==========================================================
+    - source: "F-102-DETERIORATION"
+      target: "F-102-EXIT_TO_PARENT"
+      intentCode: null
+      condition: "#process.returnToParent != null"
+      priority: 10
+      exitReason: null
+      effects: []
+      description: "恶化处理完成 → 退出父级 CPR 接管"
+
+    # ==========================================================
+    # 9. 退出
+    # ==========================================================
+    - source: "F-102-EXIT_TO_PARENT"
+      target: "F-000-ROSC_MANAGEMENT"
+      intentCode: null
+      condition: "#process.returnToParent == 'ROSC'"
+      priority: 100
+      exitReason: null
+      effects: []
+      description: "复律成功 → 父级 ROSC 接管"
+
+    - source: "F-102-EXIT_TO_PARENT"
+      target: "F-000-INITIAL_SETUP"
+      intentCode: null
+      condition: "#process.returnToParent == 'WIDE_QRS' || #process.returnToParent == 'STABLE_REASSESS'"
+      priority: 80
+      exitReason: null
+      effects: []
+      description: "状态变化 → 返回父级重新分类"
+
+    - source: "F-102-EXIT_TO_PARENT"
+      target: "F_103_CPR_START"
+      intentCode: null
+      condition: "#phys.rhythm == 'PEA' || #phys.rhythm == 'Asystole' || #phys.rhythm == 'VF' || #phys.rhythm == 'VT'"
+      priority: 95
+      exitReason: null
+      effects: []
+      description: "恶化至骤停心律 → 进入 CPR 子级"
+
+    - source: "F-102-EXIT_TO_PARENT"
+      target: "F-000-ERROR_HANDLING"
+      intentCode: null
+      condition: "#process.returnToParent == 'REFRACTORY_SHOCK'"
+      priority: 90
+      exitReason: null
+      effects: []
+      description: "难治性电复律 → 错误处理"

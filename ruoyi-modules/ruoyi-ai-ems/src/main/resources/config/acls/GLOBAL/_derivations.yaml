@@ -1,12 +1,285 @@
+# 全局派生变量定义（按依赖顺序排列）
+# 变量名采用分层命名体系
+# 每条规则包含 target, type, description, expression, dependencies
+# 从 stable_narrow 迁移而来，供所有案例共享
+
 derivations:
+  # ================================================================
+  # 第一层：血流动力学稳定性评估
+  # 依据 AHA 2025 / Resus Council UK 2025
+  # 不稳定体征：低血压、意识改变、休克征象、缺血性胸痛、急性心衰
+  # ================================================================
+
+  - target: derived.hypotension
+    type: boolean
+    description: "是否低血压（收缩压<90 mmHg）"
+    expression: "#phys.systolicBp != null && #phys.systolicBp < 90"
+    dependencies: [phys.systolicBp]
+
+  - target: derived.alteredMentalStatus
+    type: boolean
+    description: "是否存在意识改变（AVPU 非 alert）"
+    expression: "#phys.consciousness != null && #phys.consciousness != 'alert'"
+    dependencies: [phys.consciousness]
+
+  - target: derived.shockSigns
+    type: boolean
+    description: "是否存在休克征象（湿冷/花斑/毛细血管充盈>3秒）"
+    expression: |
+      (#phys.skinCondition != null &&
+       (#phys.skinCondition == 'cool_moist' ||
+        #phys.skinCondition == 'cold_clammy' ||
+        #phys.skinCondition == 'mottled'))
+      ||
+      (#phys.capillaryRefill != null && #phys.capillaryRefill > 3.0)
+    dependencies: [phys.skinCondition, phys.capillaryRefill]
+
+  - target: derived.ischemicChestPain
+    type: boolean
+    description: "是否存在缺血性胸痛（压榨/烧灼/撕裂样）"
+    expression: |
+      #phys.chestPain == true &&
+      (#phys.chestPainType == 'pressure' ||
+       #phys.chestPainType == 'burning' ||
+       #phys.chestPainType == 'tearing')
+    dependencies: [phys.chestPain, phys.chestPainType]
+
+  - target: derived.acuteHeartFailure
+    type: boolean
+    description: "是否存在急性心衰征象（气促且 SpO2<94%）"
+    expression: |
+      #phys.shortnessOfBreath == true &&
+      #phys.spo2 != null && #phys.spo2 < 94
+    dependencies: [phys.shortnessOfBreath, phys.spo2]
+
+  - target: derived.unstable
+    type: boolean
+    description: "是否存在任一血流动力学不稳定体征（AHA 2025 五类）"
+    expression: |
+      #derived.hypotension == true ||
+      #derived.alteredMentalStatus == true ||
+      #derived.shockSigns == true ||
+      #derived.ischemicChestPain == true ||
+      #derived.acuteHeartFailure == true
+    dependencies:
+      - derived.hypotension
+      - derived.alteredMentalStatus
+      - derived.shockSigns
+      - derived.ischemicChestPain
+      - derived.acuteHeartFailure
+
   - target: derived.stable
-    description: "血流动力学稳定（AHA 标准：收缩压≥90，意识清醒，呼吸频率10-30）"
-    expression: "#phys.systolicBp != null && #phys.systolicBp >= 90 && #phys.consciousness == 'alert' && #phys.respiratoryRate >= 10 && #phys.respiratoryRate <= 30"
+    type: boolean
+    description: "是否血流动力学稳定（无不稳定体征）"
+    expression: "#derived.unstable == false"
+    dependencies: [derived.unstable]
+
+  # ================================================================
+  # 第二层：心电图形态学判定
+  # ================================================================
 
   - target: derived.qrsWidth
-    description: "QRS 宽度分类（≤0.12秒为窄，>0.12秒为宽）"
-    expression: "#phys.qrsDuration != null && #phys.qrsDuration <= 0.12 ? 'narrow' : 'wide'"
+    type: string
+    description: "QRS宽度分类：narrow(<0.12s) / wide(>=0.12s) / unknown"
+    expression: |
+      #phys.qrsDuration == null ? 'unknown' :
+      (#phys.qrsDuration < 0.12 ? 'narrow' : 'wide')
+    dependencies: [phys.qrsDuration]
 
   - target: derived.rhythmRegular
-    description: "心律是否规则（RR间期变异度<0.12秒为规则）"
-    expression: "#phys.rrIntervalJitter != null && #phys.rrIntervalJitter < 0.12"
+    type: boolean
+    description: "心律是否规则（RR间期变异度 < 0.12s）"
+    expression: |
+      #phys.rrIntervalJitter == null ? false :
+      #phys.rrIntervalJitter < 0.12
+    dependencies: [phys.rrIntervalJitter]
+
+  - target: derived.isSinusRhythm
+    type: boolean
+    description: "是否为窦性心律"
+    expression: "#phys.rhythm == 'Sinus'"
+    dependencies: [phys.rhythm]
+
+  - target: derived.wideQrsTachycardia
+    type: boolean
+    description: "是否为宽QRS心动过速（QRS>=0.12s 且 HR>100）"
+    expression: |
+      #derived.qrsWidth == 'wide' &&
+      #phys.heartRate != null && #phys.heartRate > 100
+    dependencies: [derived.qrsWidth, phys.heartRate]
+
+  - target: derived.narrowRegularTachycardia
+    type: boolean
+    description: "是否为窄QRS规则节律心动过速（SVT 典型表现）"
+    expression: |
+      #derived.qrsWidth == 'narrow' &&
+      #derived.rhythmRegular == true &&
+      #phys.heartRate != null && #phys.heartRate > 100
+    dependencies: [derived.qrsWidth, derived.rhythmRegular, phys.heartRate]
+
+  # ================================================================
+  # 第三层：稳定窄QRS规则节律复合判定
+  # ================================================================
+
+  - target: derived.isNarrowRegularStable
+    type: boolean
+    description: "是否为稳定窄QRS规则节律（SVT标准治疗路径条件）"
+    expression: |
+      #derived.stable == true &&
+      #derived.qrsWidth == 'narrow' &&
+      #derived.rhythmRegular == true &&
+      #derived.isSinusRhythm == false
+    dependencies:
+      - derived.stable
+      - derived.qrsWidth
+      - derived.rhythmRegular
+      - derived.isSinusRhythm
+
+  - target: derived.isUnstableNarrowQrs
+    type: boolean
+    description: "是否为不稳定窄QRS心动过速（需紧急同步电复律）"
+    expression: |
+      #derived.unstable == true &&
+      #derived.qrsWidth == 'narrow' &&
+      #phys.heartRate != null && #phys.heartRate > 100
+    dependencies: [derived.unstable, derived.qrsWidth, phys.heartRate]
+
+  # ================================================================
+  # 第四层：BLS初步评估聚合
+  # ================================================================
+
+  - target: process.blsSurveyComplete
+    type: boolean
+    description: "BLS初步评估是否已完成（安全+反应必查，脉搏/呼吸至少一项）"
+    expression: |
+      #process.environmentSafe != null &&
+      #phys.consciousness != null &&
+      (
+        (#phys.hasPulse != null ? 1 : 0) +
+        (#phys.respiratoryRate != null ? 1 : 0)
+      ) >= 1
+    dependencies:
+      - process.environmentSafe
+      - phys.consciousness
+      - phys.hasPulse
+      - phys.respiratoryRate
+
+  # ================================================================
+  # 第五层：治疗响应与时间维度
+  # ================================================================
+
+  - target: derived.vagalFailed
+    type: boolean
+    description: "迷走刺激是否已尝试且效果为失败"
+    expression: |
+      #intervention.vagal.status != null &&
+      #intervention.vagal.effect == 'failure'
+    dependencies:
+      - intervention.vagal
+
+  - target: derived.vagalPendingOrSuccess
+    type: boolean
+    description: "迷走刺激效果待评估或已成功"
+    expression: |
+      #intervention.vagal.status != null &&
+      (#intervention.vagal.effect == 'pending' ||
+       #intervention.vagal.effect == 'success')
+    dependencies:
+      - intervention.vagal
+
+  - target: derived.adenosineFailed
+    type: boolean
+    description: "腺苷已推注且心律未转为窦性"
+    expression: |
+      #intervention.adenosine.status == 'given' &&
+      #intervention.rhythmConverted == false
+    dependencies:
+      - intervention.adenosine
+      - intervention.rhythmConverted
+
+  - target: process.timeElapsedSinceLastIntervention
+    type: integer
+    description: "距上次治疗干预的秒数"
+    expression: |
+      #process.lastInterventionTime != null
+        ? (T(System).currentTimeMillis() - #process.lastInterventionTime) / 1000
+        : 0
+    dependencies: [process.lastInterventionTime]
+
+  - target: derived.svtInterventionTimeout
+    type: boolean
+    description: "距上次干预是否已超过120秒（可能触发超时升级）"
+    expression: |
+      #process.lastInterventionTime != null &&
+      ((T(System).currentTimeMillis() - #process.lastInterventionTime) / 1000) > 120
+    dependencies: [process.lastInterventionTime]
+
+  # ================================================================
+  # 第六层：安全性与禁忌判定
+  # ================================================================
+
+  - target: derived.wpwContraindicationViolated
+    type: boolean
+    description: "WPW患者是否被给予了禁忌药物（腺苷/CCB/BB/地高辛）"
+    expression: |
+      #clinical.isWpw == true &&
+      (
+        #intervention.adenosine.status == 'given' ||
+        #intervention.diltiazem.status == 'given' ||
+        #intervention.metoprolol.status == 'given' ||
+        #intervention.esmolol.status == 'given'
+      )
+    dependencies:
+      - clinical.isWpw
+      - intervention.adenosine
+      - intervention.diltiazem
+      - intervention.metoprolol
+      - intervention.esmolol
+
+  - target: derived.ecg12LeadReady
+    type: boolean
+    description: "12导联心电图是否已完成，可进行QRS判读"
+    expression: |
+      #device.ecg12LeadDone == true || #process.ecgRecorded == true
+    dependencies: [device.ecg12LeadDone, process.ecgRecorded]
+
+  - target: derived.cardioversionReady
+    type: boolean
+    description: "是否满足同步电复律的安全前置条件"
+    expression: |
+      #device.defibConnected == true &&
+      #device.defibPadsAttached == true &&
+      #device.defibSyncMode == true &&
+      #device.defibCharged == true
+    dependencies:
+      - device.defibConnected
+      - device.defibPadsAttached
+      - device.defibSyncMode
+      - device.defibCharged
+
+  # ================================================================
+  # 第七层：其他派生变量
+  # ================================================================
+
+  - target: derived.shockableRhythm
+    type: boolean
+    description: "当前心律是否可电击（VF/VT）"
+    expression: |
+      #phys.rhythm == 'VF' || #phys.rhythm == 'VT'
+    dependencies: [phys.rhythm]
+
+  - target: derived.cprQualityGood
+    type: boolean
+    description: "CPR质量是否达标（深度5-6cm，频率100-120，胸廓回弹完整）"
+    expression: |
+      #process.compressionDepth != null &&
+      #process.compressionDepth >= 5 &&
+      #process.compressionDepth <= 6 &&
+      #process.compressionRate != null &&
+      #process.compressionRate >= 100 &&
+      #process.compressionRate <= 120 &&
+      #process.chestRecoil == true
+    dependencies:
+      - process.compressionDepth
+      - process.compressionRate
+      - process.chestRecoil

@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ruoyi.local/acls/schema/directional_response_rules_schema.json",
+  "title": "ACLS directional_response_rules.yaml",
+  "description": "方向性教学反应规则（V3.1 §5.6：适用性层 + 操作质量层）",
+  "type": "object",
+  "required": ["case_id", "version"],
+  "additionalProperties": false,
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "applicability_rules": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/applicability_rule" }
+    },
+    "action_quality_rules": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/action_quality_rule" }
+    }
+  },
+  "$defs": {
+
+    "applicability_rule": {
+      "type": "object",
+      "description": "适用性层：当前病例是否可考虑该操作",
+      "required": ["rule_id", "intervention_id", "applies_when", "decision"],
+      "additionalProperties": false,
+      "properties": {
+        "rule_id": {
+          "type": "string",
+          "pattern": "^DR_[A-Z0-9_]+$"
+        },
+        "intervention_id": { "type": "string", "minLength": 1 },
+        "applies_when":    { "type": "object", "additionalProperties": true },
+        "decision": {
+          "type": "string",
+          "enum": ["allowed", "blocked", "requires_assessment"]
+        },
+        "rationale":    { "type": "string" },
+        "evidence_ref": { "type": "string" },
+        "review":       { "$ref": "_shared_schema.json#/$defs/review" }
+      }
+    },
+
+    "action_quality_rule": {
+      "type": "object",
+      "description": "操作质量层：给药/除颤/复评是否按规范完成",
+      "required": ["rule_id", "intervention_id", "applies_when", "quality_checks"],
+      "additionalProperties": false,
+      "properties": {
+        "rule_id": {
+          "type": "string",
+          "pattern": "^DQ_[A-Z0-9_]+$"
+        },
+        "intervention_id": { "type": "string", "minLength": 1 },
+        "applies_when":    { "type": "object", "additionalProperties": true },
+        "quality_checks": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/quality_check" }
+        },
+        "on_violation": { "$ref": "#/$defs/on_violation" },
+        "review":       { "$ref": "_shared_schema.json#/$defs/review" }
+      }
+    },
+
+    "quality_check": {
+      "type": "object",
+      "required": ["check", "expect"],
+      "additionalProperties": false,
+      "properties": {
+        "check":     { "type": "string", "minLength": 1 },
+        "expect":    { "type": ["string", "number", "boolean"] },
+        "tolerance": { "type": "string" }
+      }
+    },
+
+    "on_violation": {
+      "type": "object",
+      "description": "违规时的输出：不阻断，只警告（操作质量问题）",
+      "required": ["decision", "severity", "feedback_key"],
+      "additionalProperties": false,
+      "properties": {
+        "decision": {
+          "type": "string",
+          "enum": ["ALLOW_WITH_WARNING", "BLOCK"]
+        },
+        "severity":       { "$ref": "_shared_schema.json#/$defs/severity" },
+        "feedback_key":   { "type": "string" },
+        "assessment_tag": { "type": "string" }
+      }
+    }
+  }
+}

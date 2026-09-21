@@ -1,0 +1,16 @@
+case_id: stable_narrow
+version: 0.1.0
+
+fallback_paths:
+  - fallback_id: FB_STABLE_NARROW_001
+    name: "学员在场景开始状态停留过久"
+    applies_when_state: F-000-SCENE_START
+    after: 180s
+    fallback_action:
+      type: instructor_alert
+      message: "学员已在该状态停留 3 分钟，建议导师介入"
+    review:
+      review_status: approved
+      reviewer_id: test_architect
+      reviewer_role: architect
+      review_date: "2026-09-20"

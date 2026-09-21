@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -23,7 +22,8 @@ public class NpcEventBridge {
     @EventListener
     public void onTaskProgress(TaskProgressUpdatedEvent evt) {
         double p = evt.getProgress();
-        int bucket = (int) Math.round(p * 20); // 5% 一档
+        if (p >= 1.0) return;                                  // ★ 100% 让 COMPLETED 处理
+        int bucket = (int) Math.round(p * 20);                 // 5% 一档
         if (evt.getMember().getLastPushedBucket() == bucket) return;
         evt.getMember().setLastPushedBucket(bucket);
         npcBridge.pushTask(evt.getSessionId(), evt.getMember(), "PROGRESS", null);
@@ -32,8 +32,9 @@ public class NpcEventBridge {
     @EventListener
     public void onTaskCompleted(TaskCompletedEvent evt) {
         TeamMember m = evt.getMember();
-        npcBridge.pushTask(evt.getSessionId(), m, "COMPLETED", evt.getReport());
-        // 报告同时作为 dialogue 播报
-        npcBridge.pushDialogue(evt.getSessionId(), m.getId(), evt.getReport(), m.getTtsVoice(), false);
+        String phase = evt.isSuccess() ? "COMPLETED" : "FAILED";   // ★ 区分成功/失败
+        npcBridge.pushTask(evt.getSessionId(), m, phase, evt.getReport());
+        // ★ 如果已有 taskCompletionListeners 发这条 dialogue，就别在这里再发
+        // npcBridge.pushDialogue(evt.getSessionId(), m.getId(), evt.getReport(), m.getTtsVoice(), false);
     }
 }

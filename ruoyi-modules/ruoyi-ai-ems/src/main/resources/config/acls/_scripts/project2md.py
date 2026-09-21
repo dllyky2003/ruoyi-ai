@@ -8,7 +8,8 @@ Project Structure to Markdown Generator
 
 
 python project2md.py "D:\CaveSystem\Demos\ruoyi-ai\ruoyi-modules\ruoyi-acls-engine\src\main" -o ruyi-acls-engine.md
-python project2md.py "D:\CaveSystem\Demos\ruoyi-ai\ruoyi-modules\ruoyi-ai-ems\src\main" -o ruoyi-ai-ems.md
+python project2md.py "D:\CaveSystem\Demos\ruoyi-ai\ruoyi-modules\ruoyi-ai-ems\src\main" -o ruyi-ai-ems.md
+python project2md.py "D:\CaveSystem\Demos\ruoyi-ai\ruoyi-modules\ruoyi-acls-tutor\src\main" -o ruyi-acls-tutor.md
 """
 import os
 import sys
@@ -45,6 +46,9 @@ CONTENT_EXTS = {
     ".sql", ".dockerfile", ".makefile", ".cmake", ".gradle"
 }
 
+# 无扩展名但需要作为文本处理的特殊文件
+SPECIAL_TEXT_FILES = {"dockerfile", "makefile"}
+
 
 def should_ignore(path: Path, is_dir: bool, ignore_dirs, ignore_files):
     """判断是否应该忽略该路径。"""
@@ -80,7 +84,7 @@ def get_file_info(path: Path) -> dict:
 
 
 def read_file_content(path: Path, max_size: int = 1024) -> str | None:
-    """读取文件内容（仅限于文本文件且大小不超过 max_size）。"""
+    """读取文件内容（仅限于文本文件且大小不超过 max_size KB）。"""
     if path.stat().st_size > max_size * 1024:
         return None
     try:
@@ -106,56 +110,73 @@ def generate_tree(
     if ignore_files is None:
         ignore_files = IGNORE_FILES
 
-    # 获取当前目录下的子项（先目录后文件，按名称排序）
-    items = list(root_dir.iterdir())
-    dirs = sorted([p for p in items if p.is_dir() and not should_ignore(p, True, ignore_dirs, ignore_files)])
-    files = sorted([p for p in items if p.is_file() and not should_ignore(p, False, ignore_dirs, ignore_files)])
-
-    # 当前目录自身显示（根目录特殊处理）
+    # 根目录头部信息（只写一次）
     if depth == 0:
         output_file.write(f"# 📁 项目结构：{root_dir.name}\n\n")
         output_file.write(f"**根路径**: `{root_dir.resolve()}`\n\n")
         output_file.write(f"**生成时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
 
-    # 如果有子项，显示当前目录（除了根目录）
-    if depth > 0 and (dirs or files):
-        output_file.write(f"{prefix}- 📁 **{root_dir.name}**\n")
+    # 收集当前目录下的子项
+    try:
+        items = list(root_dir.iterdir())
+    except (PermissionError, OSError):
+        output_file.write(f"{prefix}└── ⚠️ *(无法访问该目录)*\n")
+        return
 
-    # 递归处理子目录
-    for idx, d in enumerate(dirs):
-        is_last = (idx == len(dirs) - 1 and not files)
-        new_prefix = prefix + ("    " if is_last else "│   ")
+    dirs = sorted(
+        [p for p in items if p.is_dir() and not should_ignore(p, True, ignore_dirs, ignore_files)],
+        key=lambda p: p.name.lower()
+    )
+    files = sorted(
+        [p for p in items if p.is_file() and not should_ignore(p, False, ignore_dirs, ignore_files)],
+        key=lambda p: p.name.lower()
+    )
+
+    # 目录在前、文件在后，统一作为「条目」处理，保证 is_last 判断一致
+    entries = [(d, True) for d in dirs] + [(f, False) for f in files]
+
+    for idx, (entry, is_dir) in enumerate(entries):
+        is_last = (idx == len(entries) - 1)
+        connector = "└── " if is_last else "├── "
+        # 子项使用的前缀：最后一项下面不画竖线，否则补一条竖线
         child_prefix = prefix + ("    " if is_last else "│   ")
-        # 显示目录名（在递归中显示）
-        generate_tree(
-            d, output_file, include_content, max_size_kb,
-            ignore_dirs, ignore_files,
-            prefix=child_prefix,
-            depth=depth + 1
-        )
 
-    # 处理文件
-    for idx, f in enumerate(files):
-        is_last = (idx == len(files) - 1)
-        file_prefix = prefix + ("└── " if is_last else "├── ")
-        info = get_file_info(f)
-        line = f"{file_prefix}📄 **{f.name}**  ({info['size_human']}, {info['mtime']})"
-        output_file.write(line + "\n")
+        if is_dir:
+            output_file.write(f"{prefix}{connector}📁 **{entry.name}**\n")
+            generate_tree(
+                entry, output_file,
+                include_content=include_content,
+                max_size_kb=max_size_kb,
+                ignore_dirs=ignore_dirs,
+                ignore_files=ignore_files,
+                prefix=child_prefix,
+                depth=depth + 1
+            )
+        else:
+            info = get_file_info(entry)
+            output_file.write(
+                f"{prefix}{connector}📄 **{entry.name}**  ({info['size_human']}, {info['mtime']})\n"
+            )
 
-        # 如果允许嵌入内容，且文件扩展名在列表中，且大小允许
-        if include_content and f.suffix.lower() in CONTENT_EXTS:
-            content = read_file_content(f, max_size_kb)
-            if content is not None:
-                # 添加代码块
-                lang = f.suffix[1:] if f.suffix else ""
-                # 对 Dockerfile 等无扩展名的特殊处理
-                if f.name.lower() in ["dockerfile", "makefile"]:
-                    lang = f.name.lower()
-                output_file.write(f"\n```{lang}\n")
-                output_file.write(content.rstrip() + "\n")
-                output_file.write("```\n\n")
-            else:
-                output_file.write(f"  *(内容过大或无法读取，已跳过)*\n")
+            # 可选：嵌入内容
+            if include_content:
+                suffix = entry.suffix.lower()
+                lower_name = entry.name.lower()
+                is_text_candidate = (suffix in CONTENT_EXTS) or (lower_name in SPECIAL_TEXT_FILES)
+
+                if is_text_candidate:
+                    content = read_file_content(entry, max_size_kb)
+                    if content is not None:
+                        # 推断代码块语言
+                        if lower_name in SPECIAL_TEXT_FILES:
+                            lang = lower_name
+                        else:
+                            lang = suffix[1:] if suffix else ""
+                        output_file.write(f"\n```{lang}\n")
+                        output_file.write(content.rstrip() + "\n")
+                        output_file.write("```\n\n")
+                    else:
+                        output_file.write(f"{prefix}    *(内容过大或无法读取，已跳过)*\n")
 
 
 def main():
@@ -171,6 +192,9 @@ def main():
     root = Path(args.path).resolve()
     if not root.exists():
         print(f"错误：路径 '{root}' 不存在。", file=sys.stderr)
+        sys.exit(1)
+    if not root.is_dir():
+        print(f"错误：路径 '{root}' 不是一个目录。", file=sys.stderr)
         sys.exit(1)
 
     # 合并忽略规则

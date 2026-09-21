@@ -1,0 +1,29 @@
+version: 1.0.0
+# 全局反馈文案。case 专属目录下的同名 key 会覆盖此处。
+# severity 仅作归档参考，不参与匹配。
+messages:
+  # 通用兜底
+  - key: feedback_generic_blocked
+    text: "当前临床流程不允许此操作。请先完成前置步骤。"
+    severity: moderate
+
+  # 场景安全
+  - key: feedback_defib_before_scene_safe
+    text: "现场安全尚未确认，禁止除颤。请先评估环境安全。"
+    severity: critical
+  - key: feedback_test_block
+    text: "【测试】当前场景安全未确认，暂不能执行该操作。"
+    severity: critical
+
+  # 心律判读
+  - key: feedback_adenosine_before_qrs_check
+    text: "建议先确认 QRS 宽度再考虑腺苷。窄 QRS 与宽 QRS 的处理路径不同。"
+    severity: moderate
+  - key: feedback_adenosine_before_rhythm_check
+    text: "建议先判读心律规则性，再决定是否使用腺苷。"
+    severity: moderate
+
+  # 稳定性（预留）
+  - key: feedback_unstable_needs_cardioversion
+    text: "患者血流动力学不稳定，应优先考虑同步电复律，而非药物。"
+    severity: critical

@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ruoyi.local/acls/schema/clinical_rules_schema.json",
+  "title": "ACLS clinical_rules.yaml",
+  "description": "临床规则 + 病例结局分支。约束见 V3.1 §5.2 / §5.6.1 / §6.4",
+  "type": "object",
+  "required": ["case_id", "version", "rules"],
+  "additionalProperties": false,
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "rules": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/rule" }
+    },
+    "case_outcome_branches": {
+      "type": "array",
+      "items": { "$ref": "_shared_schema.json#/$defs/case_outcome_branch" }
+    }
+  },
+  "$defs": {
+    "rule": {
+      "type": "object",
+      "required": ["rule_id", "match_intent", "decision", "severity"],
+      "additionalProperties": false,
+      "properties": {
+        "rule_id": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$"
+        },
+        "match_intent": { "type": "string" },
+        "applies_when_current_state": { "type": ["string", "null"] },
+        "decision":     { "$ref": "_shared_schema.json#/$defs/decision" },
+        "severity":     { "$ref": "_shared_schema.json#/$defs/severity" },
+        "feedback_key": { "type": "string" },
+        "assessment_tags": { "type": "array", "items": { "type": "string" } },
+        "priority":     { "type": "integer" },
+        "applies_when": { "type": "object", "additionalProperties": true },
+        "effects": {
+          "type": "array",
+          "items": { "$ref": "_shared_schema.json#/$defs/effect_spec_static" }
+        },
+        "evidence_ref": { "type": "string" },
+        "review":       { "$ref": "_shared_schema.json#/$defs/review" }
+      }
+    }
+  }
+}

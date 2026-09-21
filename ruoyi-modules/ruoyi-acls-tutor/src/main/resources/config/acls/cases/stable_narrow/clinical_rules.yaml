@@ -1,0 +1,64 @@
+case_id: stable_narrow
+version: 0.1.0
+
+# 最小规则集：覆盖场景安全性与 QRS 判读相关的两条路径。
+rules:
+  # 示例 1：在场景未确认安全前要求除颤 → BLOCK
+  - rule_id: R_SCENE_UNSAFE_BLOCK_DEFIB
+    match_intent: IA_056_administer_shock_aed
+    applies_when_current_state: F-000-SCENE_START
+    decision: BLOCK
+    severity: critical
+    feedback_key: feedback_defib_before_scene_safe
+
+  # 示例 2：QRS 判读前给腺苷 → ALLOW_WITH_WARNING
+  - rule_id: R_ADENOSINE_BEFORE_QRS_CHECK
+    match_intent: S-101-2-2
+    applies_when_current_state: F_000_INITIAL_SETUP
+    decision: ALLOW_WITH_WARNING
+    severity: moderate
+    feedback_key: feedback_adenosine_before_qrs_check
+
+# ★ 病例结局分支（V3.1 §5.6.1）
+case_outcome_branches:
+  - branch_id: persistent_svt_stub
+    description: "持续 SVT"
+    clinical_state:
+      rhythm: svt
+      pulse: present
+      perfusion: present
+      consciousness: alert
+    presentation_mapping_ref: PM_SVT_PERSISTENT_001
+    trend_labels:
+      - persistent_svt
+    evidence:
+      source_class: pedagogical_case_setting
+      supporting_guideline_refs:
+        - AHA_2025_TACHYCARDIA_PRINCIPLE
+    review:
+      review_status: approved
+      reviewer_id: test_architect
+      reviewer_role: architect
+      review_date: "2026-09-20"
+      review_comment: "技术审核通过；医学内容待医学内容负责人签署"
+
+  - branch_id: converted_to_sinus_stub
+    description: "转复为窦性心律"
+    clinical_state:
+      rhythm: sinus
+      pulse: present
+      perfusion: present
+      consciousness: alert
+    presentation_mapping_ref: PM_SINUS_001
+    trend_labels:
+      - converted
+    evidence:
+      source_class: pedagogical_case_setting
+      supporting_guideline_refs:
+        - AHA_2025_TACHYCARDIA_PRINCIPLE
+    review:
+      review_status: approved
+      reviewer_id: test_architect
+      reviewer_role: architect
+      review_date: "2026-09-20"
+      review_comment: "技术审核通过；医学内容待医学内容负责人签署"

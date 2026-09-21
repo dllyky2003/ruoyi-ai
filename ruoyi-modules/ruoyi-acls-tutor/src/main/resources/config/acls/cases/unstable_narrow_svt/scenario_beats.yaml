@@ -1,0 +1,50 @@
+case_id: unstable_narrow_svt
+version: 0.1.0
+
+scenario_beats:
+  # ---------- 观测型（只提示，不改状态） ----------
+  - beat_id: BEAT-OBS-01
+    name: "开场提示（观测型）"
+    beat_mode: observation
+    sequence_hint: 10
+    trigger:
+      type: initial
+      state: F-102-CHECK_QRS_WIDTH
+    observation:
+      ui_banner: "评估患者血流动力学稳定性与 QRS 宽度"
+      chapter_title: "第一章：快速识别不稳定窄QRS心动过速"
+      assessment_tag: phase_unstable_assessment
+
+  - beat_id: BEAT-OBS-02
+    name: "电复律准备提示（观测型）"
+    beat_mode: observation
+    sequence_hint: 30
+    trigger:
+      type: event
+      intervention_id: S-102-1-2
+    observation:
+      ui_banner: "启动紧急同步电复律流程：SYNC → 能量 → 镇静 → 充电 → 清场"
+      chapter_title: "第二章：紧急同步电复律准备"
+      assessment_tag: phase_cardioversion_prep
+
+  # ---------- 分支型（引用已解析授权） ----------
+  - beat_id: BEAT-BRANCH-01
+    name: "转复成功分支（分支型）"
+    beat_mode: branch_selection
+    sequence_hint: 60
+    trigger:
+      type: event
+      intervention_id: S-102-2-8
+    selection_group: post_cardioversion_outcome
+    selection_priority: 100
+    proposed_effect:
+      effect_id: trigger_case_outcome_branch
+      branch_id: converted_to_sinus_success
+      allowed_by_rule_ids:
+        - R_NO_SEDATION_WARN
+    case_outcome_ref: converted_to_sinus_success
+    review:
+      review_status: approved
+      reviewer_id: test_architect
+      reviewer_role: architect
+      review_date: "2026-09-21"
