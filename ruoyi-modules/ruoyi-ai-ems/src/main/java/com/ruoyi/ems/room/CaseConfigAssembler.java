@@ -1,11 +1,11 @@
 package com.ruoyi.ems.room;
 
 import com.ruoyi.ems.config.loader.PhysiologyConfigLoader;
+import com.ruoyi.ems.context.AclsInternalVars;
 import com.ruoyi.ems.context.EmsContextManager;
 import com.ruoyi.ems.domain.CaseContext;
 import com.ruoyi.ems.domain.PhysiologyConfig;
 import com.ruoyi.ems.domain.entity.EmsSession;
-
 
 import com.ruoyi.ems.npc.Duty;
 import com.ruoyi.ems.npc.TeamManager;
@@ -21,9 +21,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
 
 @Slf4j
 @Service
@@ -60,7 +60,9 @@ public class CaseConfigAssembler {
             caseType = ems.getScenarioId();
         }
 
-        Map<String, Object> initialVitals = new HashMap<>(ctx.getVariables());
+        // ★ 过滤内部变量，避免 process.clockTickAt / evaluation.errorChain 泄漏到 Unity
+        Map<String, Object> initialVitals = filterInitialVitals(ctx.getVariables());
+
         String currentState = String.valueOf(
             initialVitals.getOrDefault("currentState", "UNKNOWN"));
 
@@ -101,6 +103,26 @@ public class CaseConfigAssembler {
         return dto;
     }
 
+    /**
+     * ★ 过滤 initialVitals：剔除 {@link AclsInternalVars#NAMES} 中的内部变量。
+     *
+     * <p>背景：ClockService 每秒写 process.clockTickAt 用于触发派生刷新；
+     * AclsCommandEngine 写 evaluation.errorChain 用于评分；这些都不该下发 Unity。</p>
+     */
+    private Map<String, Object> filterInitialVitals(Map<String, Object> rawVars) {
+        if (rawVars == null || rawVars.isEmpty()) {
+            return new LinkedHashMap<>();
+        }
+        Map<String, Object> filtered = new LinkedHashMap<>(rawVars.size());
+        for (Map.Entry<String, Object> e : rawVars.entrySet()) {
+            if (AclsInternalVars.isInternal(e.getKey())) {
+                continue;   // ★ 跳过内部变量
+            }
+            filtered.put(e.getKey(), e.getValue());
+        }
+        return filtered;
+    }
+
     private static String abbreviate(String hash) {
         if (hash == null) return "<null>";
         return hash.length() <= 8 ? hash : hash.substring(0, 8);
@@ -108,16 +130,11 @@ public class CaseConfigAssembler {
 
     // ==================== 团队 ====================
 
-    /**
-     * 解析团队模板 code。优先从 TeamManager 拿，拿不到按人数兜底。
-     */
     private TeamSize resolveTemplateId(String emsSessionId, List<TeamMember> members) {
         TeamSize fromManager = teamManager.getTeamTemplateId(emsSessionId);
         if (fromManager != null) {
             return fromManager;
         }
-
-        // 兜底：按 slot 数反推
         int size = members != null ? members.size() : 0;
         return switch (size) {
             case 4 -> TeamSize.TEAM_3MAN;
@@ -150,12 +167,6 @@ public class CaseConfigAssembler {
 
     // ==================== 预设变化 ====================
 
-    /**
-     * 加载案例的预设体征变化。
-     * <p>
-     * 当前返回空列表，后续在案例配置里补 {@code _preset_changes.yaml} 后填充。
-     * </p>
-     */
     private List<PresetChangeDto> loadPresetChanges(String caseType) {
         return List.of();
     }

@@ -1,8 +1,7 @@
 package com.ruoyi.acls.room;
 
 
-import com.ruoyi.acls.engine.ClockService;
-import com.ruoyi.ems.domain.entity.EmsSession;
+import com.ruoyi.ems.clock.ClockService;
 import com.ruoyi.ems.room.model.Role;
 import com.ruoyi.ems.room.model.SessionRoom;
 import com.ruoyi.ems.room.registry.RoomRegistry;
@@ -62,15 +61,16 @@ public class CaseReadyHandler implements WsMessageRouter.WsMessageHandler {
             return;
         }
 
-        if (room.isStarted()) {
-            log.debug("案例已启动，忽略重复 case_ready: room={}", ctx.sessionId());
+        // 幂等：已就绪过就不再处理
+        if (room.isReady(ctx.clientId())) {
+            log.debug("已就绪，忽略重复 case_ready: room={}, client={}",
+                ctx.sessionId(), ctx.clientId());
             return;
         }
 
-        // 标记就绪
+        // 只标记就绪
         room.markReady(ctx.clientId());
 
-        // 只要 ENGINE 就绪即启动
         boolean engineReady = room.isEngineReady();
         boolean allReady = room.allRequiredReady();
 
@@ -81,32 +81,22 @@ public class CaseReadyHandler implements WsMessageRouter.WsMessageHandler {
             return;
         }
 
-        // 启动案例
+        // ★ 只放行，不开始案例
+        // 通知客户端：可以发 start_session 了
         String emsSessionId = room.getEmsSessionId();
-        try {
-            room.markStarted();
-            clockService.start(emsSessionId);
+        broadcaster.broadcast(ctx.sessionId(),
+            RoomBroadcaster.envelope("case_start", Map.of(
+                "emsSessionId", emsSessionId,
+                "readyAt", System.currentTimeMillis()
+            )));
 
-            EmsSession ems = sessionService.getSessionById(emsSessionId);
-            if (ems != null) {
-                sessionService.startSession(ems);
-            }
+        log.info("✅ 引擎已就绪，等待客户端 start_session: room={}, ems={}",
+            ctx.sessionId(), emsSessionId);
 
-            broadcaster.broadcast(ctx.sessionId(),
-                RoomBroadcaster.envelope("case_start", Map.of(
-                    "emsSessionId", emsSessionId,
-                    "startedAt", System.currentTimeMillis()
-                )));
-
-            log.info("🚀 案例正式开始: room={}, ems={}",
-                ctx.sessionId(), emsSessionId);
-
-        } catch (Exception e) {
-            log.error("启动案例失败: room={}, ems={}", ctx.sessionId(), emsSessionId, e);
-            broadcaster.broadcast(ctx.sessionId(),
-                RoomBroadcaster.envelope("case_start_failed", Map.of(
-                    "reason", e.getMessage() != null ? e.getMessage() : "unknown"
-                )));
-        }
+        // ❌ 不再在这里做以下任何事：
+        //   room.markStarted();
+        //   clockService.start(...);
+        //   sessionService.startSession(...);
+        //   log "🚀 案例正式开始";
     }
 }

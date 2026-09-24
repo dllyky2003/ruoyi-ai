@@ -4,6 +4,7 @@ import com.ruoyi.acls.engine.CommandContext;
 import com.ruoyi.acls.engine.CommandResult;
 import com.ruoyi.acls.skill.EmsSkill;
 import com.ruoyi.ems.event.TaskCompletedEvent;
+import com.ruoyi.ems.npc.NpcSpeakerResolver;
 import com.ruoyi.ems.npc.TeamManager;
 import com.ruoyi.ems.npc.TeamMember;
 import lombok.RequiredArgsConstructor;
@@ -13,13 +14,21 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
+/**
+ * ★ 2026-09-23 修改（配合 NpcSpeakerResolver 兜底）：
+ * 在 skill.execute() 之前把"当前执行者"写入 NpcSpeakerResolver 的缓存，
+ * 让技能内部生成 npc_dialogue / npc_action 时能解析到正确的 npcId。
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class NpcSkillExecutor {
 
     private final TeamManager teamManager;
-    private final ApplicationEventPublisher eventPublisher;   // ★ 新增
+    private final ApplicationEventPublisher eventPublisher;
+
+    // ★ 新增：注入 NpcSpeakerResolver，用于写入"当前执行者"缓存
+    private final NpcSpeakerResolver npcSpeakerResolver;
 
     public CommandResult execute(TeamMember member, EmsSkill skill,
                                  CommandContext context, Map<String, Object> slots) {
@@ -34,6 +43,9 @@ public class NpcSkillExecutor {
             );
         }
 
+        // ★ 新增：把执行者写入缓存，供技能内部的 npcSpeakerResolver 兜底
+        npcSpeakerResolver.setCurrentExecutor(context.getSessionId(), member.getId());
+
         try {
             CommandResult validation = skill.validateParams(context, slots);
             if (!validation.isSuccess()) {
@@ -44,7 +56,7 @@ public class NpcSkillExecutor {
             CommandResult result = skill.execute(context, slots, member);
 
             if (result.isSuccess()) {
-                completeAndNotify(context.getSessionId(), member);   // ★ 改这一行
+                completeAndNotify(context.getSessionId(), member);
             } else {
                 member.failTask(result.getErrorMessage());
             }
@@ -58,6 +70,9 @@ public class NpcSkillExecutor {
 
         } finally {
             releaseMemberSafely(member, skillId);
+            // 说明：不在此处清缓存，让下一条指令覆盖即可；
+            //      若确实需要清，可放开下面这行：
+            // npcSpeakerResolver.clearCurrentExecutor(context.getSessionId());
         }
     }
 
@@ -69,6 +84,9 @@ public class NpcSkillExecutor {
 
         member.forceStartTask(skillId, 5, interruptReason);
 
+        // ★ 新增：把执行者写入缓存
+        npcSpeakerResolver.setCurrentExecutor(context.getSessionId(), member.getId());
+
         try {
             CommandResult validation = skill.validateParams(context, slots);
             if (!validation.isSuccess()) {
@@ -79,7 +97,7 @@ public class NpcSkillExecutor {
             CommandResult result = skill.execute(context, slots, member);
 
             if (result.isSuccess()) {
-                completeAndNotify(context.getSessionId(), member);   // ★ 改这一行
+                completeAndNotify(context.getSessionId(), member);
             } else {
                 member.failTask(result.getErrorMessage());
             }
@@ -97,7 +115,7 @@ public class NpcSkillExecutor {
     }
 
     // ====================================================================
-    // ★ 新增：完成任务 + 发布 TaskCompletedEvent
+    // ★ 完成任务 + 发布 TaskCompletedEvent
     // ====================================================================
     /**
      * 把"member.completeTask()"+"发布 TaskCompletedEvent"合并成一步。

@@ -467,7 +467,8 @@ public class SessionService {
         Session webSocketSession = task.getWebSocketSession();
 
         log.info("🧠 [执行同步] 会话 {} 开始处理指令: {}", sessionId, transcript);
-        messageSender.sendTranscript(webSocketSession,
+        // ★ 修改：改用 emsSessionId 走 RoomBroadcaster 新通道（旧 Session 通道 Unity 收不到）
+        messageSender.sendTranscript(sessionId,
             String.format("会话 %s 开始处理指令: %s", sessionId, transcript), true);
 
         if (Thread.interrupted()) {
@@ -529,7 +530,8 @@ public class SessionService {
 
         if (!command.isValid()) {
             String msg = String.format("未识别意图: %s", command.getErrorMessage());
-            messageSender.sendTranscript(webSocketSession, msg, true);
+            // ★ 修改
+            messageSender.sendTranscript(sessionId, msg, true);
             return "UNKNOWN_INTENT: " + command.getErrorMessage();
         }
 
@@ -549,7 +551,8 @@ public class SessionService {
                 case "STRATEGY_CORRECTION" ->
                     handleStrategyCorrection(sessionId, webSocketSession, command, index, total);
                 default -> {
-                    messageSender.sendTranscript(webSocketSession, "收到。", true);
+                    // ★ 修改
+                    messageSender.sendTranscript(sessionId, "收到。", true);
                     yield "SUCCESS: 收到";
                 }
             };
@@ -563,7 +566,8 @@ public class SessionService {
         String prefix = total > 1 ? String.format("[%d/%d] ", index + 1, total) : "";
         String info = String.format("%s🔍 意图: intent=%s, actType=%s, classifyMode=%s",
             prefix, matchedName, command.getActType(), command.getClassifyMode());
-        messageSender.sendTranscript(webSocketSession, info, true);
+        // ★ 修改
+        messageSender.sendTranscript(sessionId, info, true);
 
         boolean success = false;
         String resultText = "";
@@ -636,7 +640,8 @@ public class SessionService {
                 log.warn("拒绝反馈 TTS 失败（不影响前端下发）: session={}, err={}",
                     sessionId, ttsEx.getMessage());
             }
-            messageSender.sendTranscript(webSocketSession, reply, true);
+            // ★ 修改
+            messageSender.sendTranscript(sessionId, reply, true);
 
             log.info("📤 拒绝反馈已下发: session={}, intent={}, feedback={}",
                 sessionId, intentCode, rejectedFeedback);
@@ -648,7 +653,8 @@ public class SessionService {
         // ==================== 成功路径 ====================
         if (success) {
             ttsClient.synthesizeAndSend(sessionId, resultText, "zf_005", 1.2f);
-            messageSender.sendTranscript(webSocketSession, resultText, true);
+            // ★ 修改
+            messageSender.sendTranscript(sessionId, resultText, true);
             // ★ 记录最后一次成功意图，供 VETO / CLOSED_LOOP 回查
             recordLastIntent(sessionId, command);
             return "SUCCESS: " + resultText;
@@ -737,7 +743,8 @@ public class SessionService {
             }
         }
 
-        messageSender.sendTranscript(ws, "🛑 " + msg, true);
+        // ★ 修改
+        messageSender.sendTranscript(sessionId, "🛑 " + msg, true);
         return "SUCCESS: " + msg;
     }
 
@@ -760,7 +767,8 @@ public class SessionService {
         }
 
         log.info("✅ [CLOSED_LOOP] session={}, target={}", sessionId, targetCode);
-        messageSender.sendTranscript(ws, "✅ " + msg, true);
+        // ★ 修改
+        messageSender.sendTranscript(sessionId, "✅ " + msg, true);
         return "SUCCESS: " + msg;
     }
 
@@ -775,7 +783,8 @@ public class SessionService {
         log.info("🔄 [STRATEGY_CORRECTION] session={}, intent={}, raw='{}'",
             sessionId, cmd.getIntentCode(), cmd.getRawText());
 
-        messageSender.sendTranscript(ws, "🔄 收到，已按新策略调整。", true);
+        // ★ 修改
+        messageSender.sendTranscript(sessionId, "🔄 收到，已按新策略调整。", true);
         return "SUCCESS: 策略纠偏已记录";
     }
 
@@ -795,7 +804,8 @@ public class SessionService {
         String prefix = total > 1 ? String.format("[%d/%d] ", index + 1, total) : "";
         String info = String.format("%s🔍 意图: intent=%s, actType=%s, classifyMode=%s",
             prefix, matchedName, command.getActType(), command.getClassifyMode());
-        messageSender.sendTranscript(webSocketSession, info, true);
+        // ★ 修改
+        messageSender.sendTranscript(sessionId, info, true);
 
         boolean success = false;
         String resultText = "";
@@ -836,7 +846,8 @@ public class SessionService {
 
         if (success) {
             ttsClient.synthesizeAndSend(sessionId, resultText, "zf_005", 1.2f);
-            messageSender.sendTranscript(webSocketSession, resultText, true);
+            // ★ 修改
+            messageSender.sendTranscript(sessionId, resultText, true);
             // ★ 记录最后一次成功意图
             recordLastIntent(sessionId, command);
             return "SUCCESS: " + resultText;

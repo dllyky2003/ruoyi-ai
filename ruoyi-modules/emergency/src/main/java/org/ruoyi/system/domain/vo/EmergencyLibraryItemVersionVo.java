@@ -128,6 +128,10 @@ public class EmergencyLibraryItemVersionVo implements Serializable {
     @ExcelProperty(value = "审核人")
     private Long reviewedBy;
 
+    @ExcelProperty(value = "案例模板名称")
+    private String caseType;
+
+
     @ExcelProperty(value = "审核时间")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date reviewedAt;

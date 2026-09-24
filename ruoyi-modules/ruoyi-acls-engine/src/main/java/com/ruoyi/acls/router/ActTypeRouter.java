@@ -91,7 +91,11 @@ public class ActTypeRouter {
             || "PROBE".equals(actType)) {
             return semanticRouter.route(command, context);
         }
-
+        // ========== 6.5 ANNOUNCEMENT（纯认知宣告，不执行动作） ==========
+        if ("ANNOUNCEMENT".equals(actType)) {
+            log.info("💭 [ANNOUNCEMENT] {} 为纯认知操作，无需执行动作", intentCode);
+            return RouteDecision.none();
+        }
         // ========== 7. 未知语用 ==========
         log.warn("⚠️ 未知语用类型: {}, 意图: {}", actType, intentCode);
         return RouteDecision.none();

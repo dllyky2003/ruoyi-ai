@@ -1,6 +1,6 @@
 package com.ruoyi.acls.tutor.service;
 
-import com.ruoyi.acls.engine.ClockService;
+import com.ruoyi.ems.clock.ClockService;
 import com.ruoyi.acls.tutor.domain.AssessmentInterruption;
 import com.ruoyi.acls.tutor.domain.AssessmentState;
 import com.ruoyi.acls.tutor.engine.ScenarioBeatEvaluator;

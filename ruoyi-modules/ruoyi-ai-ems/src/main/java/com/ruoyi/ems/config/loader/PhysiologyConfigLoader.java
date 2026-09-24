@@ -1,10 +1,13 @@
 package com.ruoyi.ems.config.loader;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.ruoyi.ems.domain.OperationEffect;
 import com.ruoyi.ems.domain.PhysiologyConfig;
 import com.ruoyi.ems.domain.StatePhysiology;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
@@ -12,8 +15,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
-import java.util.HexFormat;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -82,7 +84,58 @@ public class PhysiologyConfigLoader {
             return cfg;
         });
     }
+    private static final String SHARED_DIR = "_shared";
+    private final Map<String, Map<String, DrugIndicationRule>> indicationCache = new ConcurrentHashMap<>();
 
+    /**
+     * 加载药物适应症表（全局 + 案例覆盖）。
+     * 合并规则：按 drugCode 整段覆盖。
+     */
+    public Map<String, DrugIndicationRule> loadDrugIndications(String caseId) {
+        if (caseId == null || caseId.isBlank()) return Collections.emptyMap();
+        return indicationCache.computeIfAbsent(caseId, k -> {
+            Map<String, DrugIndicationRule> merged = new LinkedHashMap<>();
+            // 1. 全局
+            Map<String, DrugIndicationRule> global = tryLoadIndications(SHARED_DIR);
+            if (global != null) merged.putAll(global);
+            // 2. 案例覆盖
+            Map<String, DrugIndicationRule> caseOv = tryLoadIndications(caseId);
+            if (caseOv != null) merged.putAll(caseOv);
+            log.info("✅ 药物适应症已加载: case={}, total={}, global={}, case={}",
+                caseId, merged.size(),
+                global != null ? global.size() : 0,
+                caseOv != null ? caseOv.size() : 0);
+            return merged;
+        });
+    }
+
+    private Map<String, DrugIndicationRule> tryLoadIndications(String dir) {
+        String path = String.format("%s/%s/drug_indications.yml", BASE_DIR, dir);
+        ClassPathResource resource = new ClassPathResource(path);
+        if (!resource.exists()) return null;
+        try (InputStream in = resource.getInputStream()) {
+            byte[] bytes = in.readAllBytes();
+            DrugIndicationFile file = yamlMapper.readValue(bytes, DrugIndicationFile.class);
+            return file != null ? file.getDrugIndications() : null;
+        } catch (IOException e) {
+            log.error("药物适应症解析失败: path={}, err={}", path, e.getMessage());
+            return null;
+        }
+    }
+
+    @Data
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+    public static class DrugIndicationFile {
+        private Map<String, DrugIndicationRule> drugIndications;
+    }
+
+    @Data
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+    public static class DrugIndicationRule {
+        private List<String> correctWhen;
+        private List<String> minorWhen;
+        private List<String> criticalWhen;
+    }
     /**
      * 兼容单参调用：只给 caseId，无 version。
      * <p>供 EffectManager / StateMachineFacade / CaseConfigLoader 使用。
@@ -158,12 +211,14 @@ public class PhysiologyConfigLoader {
     public void evictCache(String caseId) {
         if (caseId == null) return;
         cache.keySet().removeIf(k -> k.startsWith(caseId + "@"));
-        log.debug("🧹 清除案例 {} 的生理配置缓存", caseId);
+        indicationCache.remove(caseId);
+        log.debug("🧹 清除案例 {} 的生理配置缓存 + 适应症缓存", caseId);
     }
 
     public void evictAll() {
         cache.clear();
-        log.info("🧹 生理配置缓存已全部清除");
+        indicationCache.clear();
+        log.info("🧹 生理配置 + 适应症缓存已全部清除");
     }
 
     // ============================================================

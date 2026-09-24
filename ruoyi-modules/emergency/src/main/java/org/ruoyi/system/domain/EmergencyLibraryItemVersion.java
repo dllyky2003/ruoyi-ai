@@ -108,4 +108,7 @@ public class EmergencyLibraryItemVersion extends BaseEntity {
 
     @TableField("tags")
     private String tags;
+
+    @TableField("case_type")
+    private String caseType;
 }

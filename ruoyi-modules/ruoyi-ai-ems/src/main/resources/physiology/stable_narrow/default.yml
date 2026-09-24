@@ -4,7 +4,7 @@
 # 存储位置：classpath:physiology/stable_narrow/default.yml
 # ================================================================
 
-config_version: "1.0.0"
+config_version: "1.1.0"
 default_transition_duration: 10
 
 # 服务端心律语义 → Unity stateName
@@ -132,24 +132,211 @@ state_physiology:
 # ================================================================
 # 操作效果：叠加到基线之上
 # 字段：target / delta / duration / recovery / curve
+#
+# ★ key 命名规范（必须严格匹配 Drugs.getEffectId 的输出）：
+#     Drugs.getEffectId(drugCode, dose)
+#       = drugCode.trim().toLowerCase()
+#         + "_"
+#         + dose.trim().replaceAll("\\s+","").toLowerCase()
+#
+#   示例：
+#     getEffectId("adenosine", "6mg")  → "adenosine_6mg"
+#     getEffectId("adenosine", "12mg") → "adenosine_12mg"
+#
+#   因此本文件的 key 必须全小写。
+#   旧版本用 ADENOSINE_6MG（大写）→ lookupTemplates 永远查不到，
+#   体征修正从未生效。本次修正为小写。
+#
+# 查表顺序（EffectManager.lookupTemplates）：
+#   1. {effectKey}__{condition}   ← 优先
+#   2. {effectKey}                ← 兜底（等价 correct）
+#   3. {effectKey}__correct       ← 兜底
+#
+# condition 由 DrugIndicationEvaluator 判定：
+#   correct / wrong_minor / wrong_critical
+#
+# ⚠️ 以下 delta 数值为模拟设计参数，非 AHA 2025 引用值。
+#    AHA 仅给出成功率（6mg 约 52%，12mg 累计约 83%），
+#    不给出具体 HR/BP 降幅。这些数值需临床审阅签署。
+#
+# 说明：
+#   - operation_effects 只放数值型体征修正（HR/BP/RR）
+#   - boolean 型副作用（潮红/头痛/胸痛等）由状态机 effects 直接写
+#   - 心律转复（phys.rhythm → Sinus）由状态机 effects 写
 # ================================================================
 operation_effects:
 
-  ADENOSINE_6MG:
+  # --------------------------------------------------------------
+  # 腺苷 6mg（首剂）
+  # --------------------------------------------------------------
+
+  # 正确场景：规则窄QRS SVT
+  adenosine_6mg__correct:
+    # 心率下降（基线 145 → 目标约 80，delta -65）
     - target: phys.heartRate
-      delta: -150
+      delta: -65
       duration: 8
       recovery: 12
       curve: INSTANT_DROP_LINEAR_RECOVER
+    # 短暂低血压
+    - target: phys.systolicBp
+      delta: -20
+      duration: 3
+      recovery: 6
+      curve: INSTANT_DROP_LINEAR_RECOVER
+    - target: phys.diastolicBp
+      delta: -10
+      duration: 3
+      recovery: 6
+      curve: INSTANT_DROP_LINEAR_RECOVER
 
-  ADENOSINE_12MG:
+  # 轻微错误：重复间隔不足、首剂 12mg 等
+  adenosine_6mg__wrong_minor:
     - target: phys.heartRate
-      delta: -160
+      delta: -40
+      duration: 8
+      recovery: 12
+      curve: INSTANT_DROP_LINEAR_RECOVER
+    - target: phys.systolicBp
+      delta: -15
+      duration: 3
+      recovery: 6
+      curve: INSTANT_DROP_LINEAR_RECOVER
+    - target: phys.diastolicBp
+      delta: -8
+      duration: 3
+      recovery: 6
+      curve: INSTANT_DROP_LINEAR_RECOVER
+
+  # 严重错误：WPW+AFib、哮喘、骤停心律、不稳定、宽QRS不规则、窦性、AVB 等
+  adenosine_6mg__wrong_critical:
+    # 血压急剧下降
+    - target: phys.systolicBp
+      delta: -40
+      duration: 5
+      recovery: 15
+      curve: INSTANT_DROP_LINEAR_RECOVER
+    - target: phys.diastolicBp
+      delta: -20
+      duration: 5
+      recovery: 15
+      curve: INSTANT_DROP_LINEAR_RECOVER
+    # 心率可能加速（旁路传导 / 代偿性心动过速）
+    - target: phys.heartRate
+      delta: 30
+      duration: 5
+      recovery: 15
+      curve: INSTANT_DROP_LINEAR_RECOVER
+    # 呼吸频率升高（哮喘支气管痉挛场景）
+    - target: phys.respiratoryRate
+      delta: 10
+      duration: 5
+      recovery: 60
+      curve: INSTANT_DROP_LINEAR_RECOVER
+
+  # 基础 key 兜底（向后兼容，等价 correct）
+  adenosine_6mg:
+    - target: phys.heartRate
+      delta: -65
+      duration: 8
+      recovery: 12
+      curve: INSTANT_DROP_LINEAR_RECOVER
+    - target: phys.systolicBp
+      delta: -20
+      duration: 3
+      recovery: 6
+      curve: INSTANT_DROP_LINEAR_RECOVER
+
+  # --------------------------------------------------------------
+  # 腺苷 12mg（第二剂）
+  # --------------------------------------------------------------
+
+  # 正确场景：第二剂
+  adenosine_12mg__correct:
+    - target: phys.heartRate
+      delta: -75
       duration: 10
       recovery: 15
       curve: INSTANT_DROP_LINEAR_RECOVER
+    - target: phys.systolicBp
+      delta: -22
+      duration: 3
+      recovery: 6
+      curve: INSTANT_DROP_LINEAR_RECOVER
+    - target: phys.diastolicBp
+      delta: -12
+      duration: 3
+      recovery: 6
+      curve: INSTANT_DROP_LINEAR_RECOVER
+
+  # 轻微错误
+  adenosine_12mg__wrong_minor:
+    - target: phys.heartRate
+      delta: -45
+      duration: 10
+      recovery: 15
+      curve: INSTANT_DROP_LINEAR_RECOVER
+    - target: phys.systolicBp
+      delta: -18
+      duration: 3
+      recovery: 6
+      curve: INSTANT_DROP_LINEAR_RECOVER
+    - target: phys.diastolicBp
+      delta: -10
+      duration: 3
+      recovery: 6
+      curve: INSTANT_DROP_LINEAR_RECOVER
+
+  # 严重错误：同 6mg critical，幅度略大
+  adenosine_12mg__wrong_critical:
+    - target: phys.systolicBp
+      delta: -45
+      duration: 5
+      recovery: 15
+      curve: INSTANT_DROP_LINEAR_RECOVER
+    - target: phys.diastolicBp
+      delta: -22
+      duration: 5
+      recovery: 15
+      curve: INSTANT_DROP_LINEAR_RECOVER
+    - target: phys.heartRate
+      delta: 35
+      duration: 5
+      recovery: 15
+      curve: INSTANT_DROP_LINEAR_RECOVER
+    - target: phys.respiratoryRate
+      delta: 12
+      duration: 5
+      recovery: 60
+      curve: INSTANT_DROP_LINEAR_RECOVER
+
+  # 基础 key 兜底
+  adenosine_12mg:
+    - target: phys.heartRate
+      delta: -75
+      duration: 10
+      recovery: 15
+      curve: INSTANT_DROP_LINEAR_RECOVER
+    - target: phys.systolicBp
+      delta: -22
+      duration: 3
+      recovery: 6
+      curve: INSTANT_DROP_LINEAR_RECOVER
 
 # ================================================================
-# 体征演变规则（原文件没有，先留空，后续需要可补）
+# 体征演变规则
+#
+# 螺旋 2：验证 G2 闸门四
+#   unstable_narrow_svt 静默 30s → SBP 降 10 mmHg
+#   stable_narrow       静默 30s → SBP 降 2 mmHg（明显更慢，5 倍差）
+#
+# 注：不设 rhythm 限制，对所有心律生效，避免依赖 phys.rhythm 默认值。
 # ================================================================
-evolution_rules: []
+evolution_rules:
+  - id: STABLE_SBP_DRIFT_30S
+    branch: delayed
+    description: "稳定窄 QRS 持续 30s，SBP 轻微漂移（对比 unstable 的 -10）"
+    variable: "phys.systolicBp"
+    after_seconds: 30
+    delta: -2.0
+    stop_when: "#variables['intervention.adenosineGiven'] == true"

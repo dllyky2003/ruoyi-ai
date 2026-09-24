@@ -690,6 +690,14 @@ public class CaseIntentDefinitionsLoader {
                 result.addAll(caseIntents);
             }
         }
+
+        log.info("getIntentCodesForCase({}) -> general={}, case={}, total={}, sample={}",
+            caseId,
+            generalIntentCodes == null ? -1 : generalIntentCodes.size(),
+            (caseId != null && intentsByCase.get(caseId) != null) ? intentsByCase.get(caseId).size() : 0,
+            result.size(),
+            result.stream().limit(5).toList());
+
         return Collections.unmodifiableSet(result);
     }
 

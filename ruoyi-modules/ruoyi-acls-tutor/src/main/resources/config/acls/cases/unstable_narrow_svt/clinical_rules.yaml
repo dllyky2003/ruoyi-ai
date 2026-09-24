@@ -12,9 +12,14 @@ rules:
     feedback_key: feedback_unsync_shock_blocked
 
   # 未给镇静就放电 → 警告
+  # 条件：镇静未给（intervention.sedation.given == false）
+  #      且患者意识清醒（phys.consciousness == 'alert'）
+  #      两者同时满足才触发警告
   - rule_id: R_NO_SEDATION_WARN
     match_intent: S-102-2-6
     applies_when_current_state: F-102-PREP_CARDIOVERSION
+    applies_when:
+      expression: "#intervention.sedation.given == false && #phys.consciousness == 'alert'"
     decision: ALLOW_WITH_WARNING
     severity: moderate
     feedback_key: feedback_sedation_missing

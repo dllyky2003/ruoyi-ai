@@ -46,6 +46,9 @@ routes:
     targetType: SKILL
     targetId: drug_push_adenosine
     priority: 10
+    paramMapping:
+      drug: "#intervention.lastDrug"
+      dose: "#intervention.lastDrugDose"
 
   - id: R-101-07
     caseType: "*"

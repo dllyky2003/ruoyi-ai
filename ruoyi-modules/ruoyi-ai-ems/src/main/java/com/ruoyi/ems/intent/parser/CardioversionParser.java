@@ -44,4 +44,33 @@ public class CardioversionParser {
         result.put("procedure", "cardioversion_emergency");
         return result;
     }
+
+    /**
+     * 放电：提取电复律次数、紧急电复律标记。
+     * 供 S-102-2-6 意图的 processor 调用。
+     */
+    public Map<String, Object> parseDischarge(ExtractionContext ctx) {
+        Map<String, Object> result = new HashMap<>();
+        String raw = ctx.getRawText();
+        if (raw == null) {
+            result.put("cardioversionCount", null);
+            result.put("emergencyCardioversionPerformed", null);
+            return result;
+        }
+
+        // 放电动作
+        if (raw.contains("放电") || raw.contains("电击") || raw.contains("shock")) {
+            result.put("cardioversionCount", 1);           // 单次放电
+            result.put("emergencyCardioversionPerformed", true);
+        } else {
+            result.put("cardioversionCount", null);
+            result.put("emergencyCardioversionPerformed", null);
+        }
+
+        // 二次放电："再放一次"/"第二次"
+        if (raw.contains("再放") || raw.contains("第二次") || raw.contains("再次")) {
+            result.put("cardioversionCount", 2);
+        }
+        return result;
+    }
 }

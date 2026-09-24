@@ -30,6 +30,16 @@ import java.util.UUID;
  *   <li>role=instructor 导师</li>
  * </ul>
  * </p>
+ *
+ * <p>★ 2026-09-22 说明（L-11 别名打通后）：</p>
+ * <ul>
+ *   <li>本类的 {@code wsRegistry.register(sessionId, clientId, session)} 仍以
+ *       roomSessionId 为 key 注册物理连接。</li>
+ *   <li>别名映射由 {@link StartCaseHandler} 在创建 emsSession 后调用
+ *       {@link WsSessionRegistry#registerAlias(String, String)} 完成。</li>
+ *   <li>下行时 {@code WebSocketMessageSender} 用 emsSessionId 查询，
+ *        会自动转换到 roomSessionId。</li>
+ * </ul>
  */
 @Slf4j
 @Component
@@ -113,7 +123,6 @@ public class SessionWebSocketHandler {
         }
 
         // ★ 5. 单例角色：WebSocket 真连上来时，先清掉 create 时插的"占位连接"
-        //    ENGINE / SPEAKER 只允许一个连接，占位不算真实物理连接，必须在真连接之前清掉
         if (role == Role.ENGINE || role == Role.SPEAKER) {
             if (room.hasRole(role)) {
                 room.leaveAllOfRole(role);
@@ -138,7 +147,18 @@ public class SessionWebSocketHandler {
         session.getUserProperties().put(ATTR_ROLE, role);
         session.getUserProperties().put(ATTR_USER_ID, entry.userId());
 
-        // 8. 注册物理连接
+        // ★ 7.5 记录 Unity 的 attemptId（契约 V1.0.0）
+        //      来源：握手 URL query。服务器端只透传，不生成。
+        //      若为空，AttemptSnapshotService 会拒绝发快照，Unity 会一直等不到全量基线。
+        String attemptId = WsHandshake.getAttemptId(session);
+        if (attemptId != null && !attemptId.isBlank()) {
+            room.attachAttemptId(attemptId);
+            log.info("📝 记录 attemptId: sessionId={}, attemptId={}", sessionId, attemptId);
+        } else {
+            log.warn("⚠️ 握手未携带 attemptId，后续 SNAPSHOT 将被 Unity 拒绝: sessionId={}", sessionId);
+        }
+
+        // 8. 注册物理连接（以 roomSessionId 为 key）
         wsRegistry.register(sessionId, clientId, session);
 
         log.info("✅ WS 连接建立: sessionId={}, clientId={}, role={}, roomState={}, clients={}",
@@ -213,10 +233,9 @@ public class SessionWebSocketHandler {
         boolean removed = room.leave(clientId);
 
         // ★ 单例角色（ENGINE / SPEAKER）：清理残留占位连接
-        // create 时插的"创建者占位"也要一起清掉，否则之后没人能 join 该角色
         if (role == Role.ENGINE || role == Role.SPEAKER) {
             room.leaveAllOfRole(role);
-            removed = true;    // 至少清掉了占位
+            removed = true;
         }
 
         RoomState after = room.getState();
@@ -272,9 +291,6 @@ public class SessionWebSocketHandler {
         return roomOpt.get().hasRole(role);
     }
 
-
-
-// ★ 新增：业务模块（如 NpcUnityBridgeService）广播入口
     /**
      * 向指定房间所有连接广播一条消息。
      *

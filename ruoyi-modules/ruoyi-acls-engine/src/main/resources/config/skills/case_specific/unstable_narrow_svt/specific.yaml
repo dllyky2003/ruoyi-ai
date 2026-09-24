@@ -126,11 +126,15 @@ skills:
       outputs:
         - var: intervention.cardioversion.lastEnergy
           value: 100
+        # ★ 新增：电复律次数递增（首次 null → 1，后续 1 → 2 → 3…）
+        #   借助 SkillCompletionStateDriver.resolveValue 的算术扩展（见修改 2）
+        - var: intervention.cardioversion.count
+          value: "#intervention.cardioversion.count + 1"
         - var: process.emergencyCardioversionPerformed
           value: true
+        # ★ 保留：lastInterventionTime 的 value 会被 SkillCompletionStateDriver 强制覆盖为当前时间戳
         - var: process.lastInterventionTime
           value: 0
-
   # -------- 复律后心律评估（generic_assert） --------
 
   - id: assess_post_shock_rhythm

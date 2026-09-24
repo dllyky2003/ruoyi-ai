@@ -35,4 +35,27 @@ public class SpiAutoConfiguration {
         log.info("[ACLS SPI] StateTransitionHook 未提供实现，启用 No-Op（tutor 未部署）");
         return new NoOpStateTransitionHook();
     }
+
+
+    @Bean
+    @ConditionalOnMissingBean(AttemptEventSink.class)
+    public AttemptEventSink noOpAttemptEventSink() {
+        log.info("[ACLS SPI] AttemptEventSink 未提供实现，启用 No-Op（tutor 未部署）");
+        return new NoOpAttemptEventSink();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(AssessmentQueryService.class)
+    public AssessmentQueryService noOpAssessmentQueryService() {
+        log.info("[ACLS SPI] AssessmentQueryService 未提供实现，启用 No-Op（tutor 未部署）");
+        return new NoOpAssessmentQueryService();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(OutcomeBranchExecutor.class)
+    public OutcomeBranchExecutor noOpOutcomeBranchExecutor() {
+        log.info("[ACLS SPI] OutcomeBranchExecutor 未提供实现，启用 No-Op（tutor 未部署）");
+        return new NoOpOutcomeBranchExecutor();
+    }
+
 }

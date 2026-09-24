@@ -8,9 +8,11 @@ import com.ruoyi.ems.context.EmsContextManager;
 import com.ruoyi.ems.domain.CaseContext;
 import com.ruoyi.ems.domain.StatePhysiology;
 import com.ruoyi.ems.rule.IRuleEvaluator;
+import com.ruoyi.ems.spi.AttemptEventSink;
 import com.ruoyi.ems.spi.ClinicalRuleService;
 import com.ruoyi.ems.spi.StateTransitionHook;
 import com.ruoyi.ems.spi.TemporalEventSink;
+import com.ruoyi.ems.spi.dto.AttemptEventContext;
 import com.ruoyi.ems.spi.dto.ClinicalRuleContext;
 import com.ruoyi.ems.spi.dto.ExecutionStrategy;
 import com.ruoyi.ems.spi.dto.TransitionContext;
@@ -54,6 +56,8 @@ public class StateMachineFacade {
     private final ObjectProvider<ClinicalRuleService> clinicalRuleServiceProvider;
     private final ObjectProvider<TemporalEventSink> temporalEventSinkProvider;
     private final ObjectProvider<StateTransitionHook> stateTransitionHookProvider;
+    /** ★ 步骤3新增：迁移提交后回调 tutor */
+    private final ObjectProvider<AttemptEventSink> attemptEventSinkProvider;
 
     private static final String SESSION_CONTEXT_PREFIX = "ems:session:context:";
     private static final long SESSION_TIMEOUT_HOURS = 24;
@@ -68,6 +72,7 @@ public class StateMachineFacade {
                               ObjectProvider<ClinicalRuleService> clinicalRuleServiceProvider,
                               ObjectProvider<TemporalEventSink> temporalEventSinkProvider,
                               ObjectProvider<StateTransitionHook> stateTransitionHookProvider,
+                              ObjectProvider<AttemptEventSink> attemptEventSinkProvider,
                               @Value("${acls.tutor.block-enabled:false}") boolean tutorBlockEnabled) {
         this.builderFactory = builderFactory;
         this.persister = persister;
@@ -79,6 +84,7 @@ public class StateMachineFacade {
         this.clinicalRuleServiceProvider = clinicalRuleServiceProvider;
         this.temporalEventSinkProvider = temporalEventSinkProvider;
         this.stateTransitionHookProvider = stateTransitionHookProvider;
+        this.attemptEventSinkProvider = attemptEventSinkProvider;
         this.tutorBlockEnabled = tutorBlockEnabled;
         log.info("[StateMachineFacade] tutorBlockEnabled={}", tutorBlockEnabled);
     }
@@ -150,6 +156,9 @@ public class StateMachineFacade {
      *   </li>
      * </ul>
      * </p>
+     *
+     * <p>★ 步骤3新增：迁移成功后回调 {@link AttemptEventSink#onTransitionCommitted}，
+     * 供 tutor 侧推进 eventSequence 与 beat 选择。</p>
      */
     public String selectAndTransition(String instanceId,
                                       ResolvedCaseTypeConfig config,
@@ -157,6 +166,9 @@ public class StateMachineFacade {
                                       CaseContext ctx) {
         // ★ SPI-1: 临床规则校验
         ValidationResult vr = fireClinicalRuleValidate(instanceId, config, intentCode, ctx);
+
+        // 记录迁移前状态（用于 AttemptEventSink 回调）
+        String previousState = ctx != null ? ctx.getCurrentState() : null;
 
         // ★ 第六步：按 decision 处理（默认灰度关闭时短路，行为不变）
         if (tutorBlockEnabled && vr != null && vr.getDecision() != null) {
@@ -179,22 +191,20 @@ public class StateMachineFacade {
                 //   - 避免被 fallback 到 reEvaluateOnContextChange 绕过
                 String feedback = vr.getFeedbackText();
 
-// 回退 1：用 feedbackKey（文案未解析出时，至少让学员看到 key）
+                // 回退 1：用 feedbackKey（文案未解析出时，至少让学员看到 key）
                 if (feedback == null || feedback.isBlank()) {
                     if (vr.getFeedbackKeys() != null && !vr.getFeedbackKeys().isEmpty()) {
                         feedback = vr.getFeedbackKeys().get(0);
                     }
                 }
 
-// 回退 2：通用兜底
+                // 回退 2：通用兜底
                 if (feedback == null || feedback.isBlank()) {
                     feedback = "当前临床流程不允许此操作";
                 }
 
                 throw new TutorBlockedException(vr.getPrimaryRuleId(), vr.getSeverity(), feedback);
             }
-
-
 
             if (decision == ExecutionStrategy.ALLOW_WITH_WARNING) {
                 log.warn("[Tutor][WARN] session={}, case={}, state={}, intent={}, "
@@ -211,7 +221,14 @@ public class StateMachineFacade {
             }
         }
 
-        return doSelectAndTransition(instanceId, config, intentCode, ctx, 0);
+        String newState = doSelectAndTransition(instanceId, config, intentCode, ctx, 0);
+
+        // ★ 步骤3新增：迁移提交后回调 tutor AttemptEventSink
+        if (newState != null) {
+            fireAttemptEventCommitted(instanceId, config, previousState, newState, intentCode, ctx, vr);
+        }
+
+        return newState;
     }
 
     /**
@@ -823,6 +840,53 @@ public class StateMachineFacade {
     }
 
     /**
+     * ★ 步骤3新增：SPI-4 迁移提交后回调 tutor。
+     *
+     * <p>由 {@link AttemptEventSink#onTransitionCommitted} 承载。
+     * tutor 侧可据此推进 eventSequence、评估 ScenarioBeat、写评分证据。</p>
+     *
+     * <p>try/catch 兜底：任何异常只 warn，不影响状态机。</p>
+     */
+    private void fireAttemptEventCommitted(String instanceId,
+                                           ResolvedCaseTypeConfig config,
+                                           String fromState,
+                                           String toState,
+                                           String intentCode,
+                                           CaseContext ctx,
+                                           ValidationResult vr) {
+        try {
+            AttemptEventSink sink = attemptEventSinkProvider.getIfAvailable();
+            if (sink == null) {
+                return;
+            }
+
+            AttemptEventContext actx = new AttemptEventContext();
+            actx.setSessionId(instanceId);
+            actx.setCaseType(config != null ? config.getCode() : null);
+            actx.setFromState(fromState);
+            actx.setToState(toState);
+            actx.setIntentCode(intentCode);
+            actx.setStateRevision(ctx != null ? ctx.getVersion() : null);
+            if (vr != null) {
+                actx.setPrimaryRuleId(vr.getPrimaryRuleId());
+                actx.setAllowedEffects(vr.getAllowedEffects());
+            }
+            if (ctx != null && ctx.getVariables() != null) {
+                actx.setVariables(new HashMap<>(ctx.getVariables()));
+            }
+
+            sink.onTransitionCommitted(actx);
+
+            if (log.isDebugEnabled()) {
+                log.debug("[SPI][AttemptEventSink] {} -> {} (intent={})",
+                    fromState, toState, intentCode);
+            }
+        } catch (Exception e) {
+            log.warn("[SPI][AttemptEventSink] 调用失败（不影响状态机）: {}", e.getMessage());
+        }
+    }
+
+    /**
      * SPI-2：转移前钩子。
      */
     private void fireBeforeTransition(String instanceId,
@@ -907,11 +971,22 @@ public class StateMachineFacade {
      * 由于 fireClinicalRuleValidate 在 intentCode 为空时直接返回 null，
      * 本路径不受 tutor BLOCK 影响，行为与改动前一致。</p>
      */
-    public String reEvaluateOnContextChange(String instanceId, String changedVar) {
+    /**
+     * 变量驱动的状态机重评估。
+     *
+     * <p>★ 2026-09-23 修改：返回类型从 {@code String} 改为 {@link StateTransitionResult}，
+     * 让调用方能区分"成功转移" / "未转移" / "Tutor 拦截" 三种情况。
+     * 修复 {@code SkillCompletionStateDriver} 因无法判断转移结果而导致的 Effect 泄漏。</p>
+     *
+     * @param instanceId 会话 ID
+     * @param changedVar 触发重评估的变量名（仅用于日志）
+     * @return 转移结果；config 缓存未命中时返回 noChange
+     */
+    public StateTransitionResult reEvaluateOnContextChange(String instanceId, String changedVar) {
         ResolvedCaseTypeConfig config = configCache.get(instanceId);
         if (config == null) {
             log.warn("[变量驱动] config 缓存未命中，跳过: session={}, var={}", instanceId, changedVar);
-            return null;
+            return StateTransitionResult.noChange(null, "config 缓存未命中");
         }
         synchronized (("sm-lock:" + instanceId).intern()) {
             StateMachine<String, String> sm = getOrCreateMachine(instanceId, config);
@@ -920,13 +995,13 @@ public class StateMachineFacade {
             CaseContext ctx = contextManager.getSnapshot(instanceId);
             if (ctx == null) {
                 log.warn("[变量驱动] 上下文不存在，跳过: session={}", instanceId);
-                return currentState;
+                return StateTransitionResult.noChange(currentState, "上下文不存在");
             }
 
             List<TransitionRule> candidates = config.getTransitionsBySource(currentState);
             if (candidates == null || candidates.isEmpty()) {
                 log.debug("[变量驱动] 状态 {} 无出边，跳过", currentState);
-                return currentState;
+                return StateTransitionResult.noChange(currentState, "无出边");
             }
 
             boolean hasConditionOnly = candidates.stream()
@@ -937,12 +1012,34 @@ public class StateMachineFacade {
 
             if (!hasConditionOnly) {
                 log.debug("[变量驱动] 状态 {} 无纯条件出边，跳过 (var={})", currentState, changedVar);
-                return currentState;
+                return StateTransitionResult.noChange(currentState, "无纯条件出边");
             }
 
             log.info("🔁 [变量驱动] 变量 {} 变更，尝试重评估状态 {} 的条件出边", changedVar, currentState);
 
-            return selectAndTransition(instanceId, config, null, ctx);
+            // ★ 捕获 Tutor 拦截异常，转为 blocked 结果
+            String resultState;
+            try {
+                resultState = selectAndTransition(instanceId, config, null, ctx);
+            } catch (TutorBlockedException e) {
+                log.info("⛔ [变量驱动] Tutor 拦截状态转移: session={}, from={}, reason={}",
+                    instanceId, currentState, e.getMessage());
+                return StateTransitionResult.blocked(currentState, "Tutor 拦截: " + e.getMessage());
+            } catch (Exception e) {
+                log.warn("[变量驱动] 状态转移异常: session={}, from={}, err={}",
+                    instanceId, currentState, e.getMessage());
+                return StateTransitionResult.noChange(currentState, "转移异常: " + e.getMessage());
+            }
+
+            // ★ selectAndTransition 返回 String 时，用"状态是否变化"判定是否成功
+            if (resultState == null) {
+                return StateTransitionResult.noChange(currentState, "selectAndTransition 返回 null");
+            }
+            if (resultState.equals(currentState)) {
+                log.info("⛔ 状态机无匹配转移: session={}, state={}", instanceId, currentState);
+                return StateTransitionResult.noChange(currentState, "无匹配转移");
+            }
+            return StateTransitionResult.success(currentState, resultState);
         }
     }
 

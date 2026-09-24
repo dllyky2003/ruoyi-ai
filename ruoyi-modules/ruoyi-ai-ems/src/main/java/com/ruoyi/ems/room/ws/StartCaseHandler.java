@@ -16,6 +16,16 @@ import org.springframework.stereotype.Component;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * 案例启动处理器。
+ *
+ * <p>★ 2026-09-22 改造（L-11 推送通道打通）：</p>
+ * <ul>
+ *   <li>注入 {@link WsSessionRegistry}，创建 emsSession 后立即调用
+ *       {@code registerAlias(emsSessionId, roomSessionId)}，
+ *       让后续所有以 emsSessionId 为 key 的下行推送能正确路由。</li>
+ * </ul>
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -25,6 +35,9 @@ public class StartCaseHandler implements WsMessageRouter.WsMessageHandler {
     private final SessionService sessionService;
     private final CaseConfigAssembler assembler;
     private final RoomBroadcaster broadcaster;
+
+    // ★ 新增：WS 别名注册入口
+    private final WsSessionRegistry wsSessionRegistry;
 
     @Override
     public boolean supports(String type) {
@@ -62,8 +75,10 @@ public class StartCaseHandler implements WsMessageRouter.WsMessageHandler {
             // 分支 2：会话已结束（COMPLETED/INIT 等） → 解绑旧会话，继续走创建流程
             log.info("🔄 旧会话已结束（status={}），解绑后重新创建: room={}, oldEms={}",
                 status, ctx.sessionId(), existingEmsId);
-            // ★ 修复：attachEmsSession(null) 会抛 IllegalArgumentException（见 SessionRoom L276-278）
-            //   改用显式 detach 方法
+
+            // 先清旧别名，避免脏数据残留
+            wsSessionRegistry.unregisterAlias(existingEmsId);
+
             room.detachEmsSession();
         }
 
@@ -104,7 +119,12 @@ public class StartCaseHandler implements WsMessageRouter.WsMessageHandler {
                 return;
             }
 
+            // ★ 关键：绑定 emsSession 到 room
             room.attachEmsSession(emsSession.getId());
+
+            // ★ 关键：注册 WS 别名 emsSessionId -> roomSessionId
+            //   解决 L-11：WebSocketMessageSender 用 emsSessionId 查不到连接的问题
+            wsSessionRegistry.registerAlias(emsSession.getId(), ctx.sessionId());
 
             CaseConfigDto config = assembler.assemble(
                 emsSession.getId(), ctx.sessionId());

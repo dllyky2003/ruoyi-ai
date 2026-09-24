@@ -1,26 +1,36 @@
 package com.ruoyi.acls.skill.impl;
-
 import com.ruoyi.acls.engine.CommandContext;
 import com.ruoyi.acls.engine.CommandResult;
 import com.ruoyi.ems.constant.InterventionFields;
 import com.ruoyi.ems.constant.InterventionKeys;
 import com.ruoyi.ems.context.MapWriteHelper;
+import com.ruoyi.ems.domain.DrugEnum;
 import com.ruoyi.ems.domain.Drugs;
 import com.ruoyi.ems.effect.EffectManager;
 import com.ruoyi.ems.npc.Duty;
-
+import lombok.extern.slf4j.Slf4j;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import static com.ruoyi.ems.domain.DrugEnum.ADENOSINE;
 
 /**
  * 通用药物推注技能（16 种药物共用）。
  *
- * 参数化：keystepId = "drug_push_" + boundDrugCode
+ * <p>参数化：keystepId = "drug_push_" + boundDrugCode</p>
+ * <pre>
  *   new DrugPushSkill(em, helper, "epinephrine")  → drug_push_epinephrine
  *   new DrugPushSkill(em, helper, "adenosine")    → drug_push_adenosine
+ * </pre>
+ *
+ * <p>★ 2026-09-23（路径 A）：effect 触发已统一挪到
+ * {@link com.ruoyi.acls.listener.SkillCompletionStateDriver}，
+ * 本技能不再持有 {@code DrugIndicationEvaluator}，构造器回退到 3 参。</p>
+ *
+ * <p>★ 2026-09-23（P0 修复）：{@link #buildExtraFlatWrites} 补写
+ * {@code intervention.<drug>Given = true}，兼容旧 YAML 契约
+ * （如 {@code intervention.adenosineGiven}），避免删除 case_specific
+ * 层 {@code drug_push_adenosine} 声明后变量断写。</p>
  */
+@Slf4j
 public class DrugPushSkill extends AbstractMapWritingSkill {
 
     private final EffectManager effectManager;
@@ -84,7 +94,6 @@ public class DrugPushSkill extends AbstractMapWritingSkill {
 
     // ============ 可选覆盖 ============
 
-    /** 药物技能读扁平量（intervention.lastDrug），覆盖基类默认的 Map 读 */
     @Override public String getQueryResponse(CommandContext context) {
         String drug = context.getCaseContext()
             .getVar(InterventionKeys.INTERVENTION_LAST_DRUG, String.class);
@@ -114,7 +123,7 @@ public class DrugPushSkill extends AbstractMapWritingSkill {
         String err = Drugs.validateDose(drug, dose, caseType);
         if (err != null) return CommandResult.failure(err);
 
-        if (ADENOSINE.equals(drug)) {
+        if (DrugEnum.fromCode(drug) == DrugEnum.ADENOSINE) {
             double doseValue = Drugs.parseDoseValue(dose);
             if (doseValue != 6 && doseValue != 12)
                 return CommandResult.failure("腺苷剂量应为 6mg 或 12mg，当前为 " + dose);
@@ -122,20 +131,43 @@ public class DrugPushSkill extends AbstractMapWritingSkill {
         return CommandResult.success("剂量校验通过");
     }
 
+    /**
+     * ★ P0 修复（2026-09-23）：补写 {@code intervention.<drug>Given = true}。
+     *
+     * <p>背景：{@code case_specific/stable_narrow/specific.yaml} 曾用
+     * {@code type: standard} 声明同名技能 {@code drug_push_adenosine}，
+     * 覆盖了 shared 层 {@code type: complex} → {@code adenosinePushSkill Bean}
+     * 的注册。删除该覆盖声明后，原 {@code successVar: intervention.adenosineGiven}
+     * 的写入责任转移到本方法。</p>
+     *
+     * <p>写法：使用 {@code "intervention." + drug + "Given"} 动态拼接，
+     * 对 16 种药物统一生效（adenosineGiven、epinephrineGiven 等）。</p>
+     */
     @Override protected Map<String, Object> buildExtraFlatWrites(Map<String, Object> slots) {
-        return Map.of(
-            InterventionKeys.INTERVENTION_LAST_DRUG,       resolveDrug(slots),
-            InterventionKeys.INTERVENTION_LAST_DRUG_DOSE,  String.valueOf(slots.getOrDefault("dose", "")),
-            InterventionKeys.INTERVENTION_LAST_DRUG_ROUTE, String.valueOf(slots.getOrDefault("route", "IV")),
-            InterventionKeys.INTERVENTION_LAST_DRUG_TIME,  nowMs()
-        );
+        String drug = resolveDrug(slots);
+        Map<String, Object> extra = new LinkedHashMap<>();
+        extra.put(InterventionKeys.INTERVENTION_LAST_DRUG,       drug);
+        extra.put(InterventionKeys.INTERVENTION_LAST_DRUG_DOSE,  String.valueOf(slots.getOrDefault("dose", "")));
+        extra.put(InterventionKeys.INTERVENTION_LAST_DRUG_ROUTE, String.valueOf(slots.getOrDefault("route", "IV")));
+        extra.put(InterventionKeys.INTERVENTION_LAST_DRUG_TIME,  nowMs());
+
+        // ★ 兼容旧 YAML 契约 successVar = intervention.<drug>Given
+        // 例如 intervention.adenosineGiven = true
+        extra.put("intervention." + drug + "Given", true);
+        return extra;
     }
 
-    @Override protected void afterSuccessfulExecution(CommandContext context, Map<String, Object> slots) {
+    /**
+     * ★ 路径 A：effect 触发已统一在 {@code SkillCompletionStateDriver} 完成，
+     * 此处不再调用 {@code effectManager.triggerEffect(...)}，避免重复触发。
+     * 保留方法体仅为记录日志，便于观察药物技能执行。
+     */
+    @Override
+    protected void afterSuccessfulExecution(CommandContext context, Map<String, Object> slots) {
         String drug = resolveDrug(slots);
         String dose = String.valueOf(slots.getOrDefault("dose", ""));
-        String effectId = Drugs.getEffectId(drug, dose);
-        effectManager.triggerEffect(effectId, context.getCaseContext());
+        log.debug("DrugPushSkill 完成: drug={}, dose={}（effect 由 Driver 统一触发）",
+            drug, dose);
     }
 
     // ============ 辅助 ============
@@ -144,5 +176,4 @@ public class DrugPushSkill extends AbstractMapWritingSkill {
         if (boundDrugCode != null) return boundDrugCode;
         return String.valueOf(slots.getOrDefault("drug", "unknown"));
     }
-
 }

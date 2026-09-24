@@ -52,6 +52,11 @@ public class ParameterExtractor {
     private final WpwParser wpwParser;
     private final ResultParser resultParser;
     private final AnticoagulantParser anticoagulantParser;
+    private final DeviceParser deviceParser;
+    private final ClearanceParser clearanceParser;
+    private final SedationParser sedationParser;
+
+
 
     public ParameterExtractor(@Qualifier("throttledExtractionChatModel") ChatModel chatModel,
                               PromptTemplateService promptTemplateService,
@@ -67,7 +72,10 @@ public class ParameterExtractor {
                               @Autowired(required = false) ErrorInterceptorParser errorInterceptorParser,
                               @Autowired(required = false) WpwParser wpwParser,
                               @Autowired(required = false) ResultParser resultParser,
-                              @Autowired(required = false) AnticoagulantParser anticoagulantParser) {
+                              @Autowired(required = false) AnticoagulantParser anticoagulantParser,
+                              @Autowired(required = false) DeviceParser deviceParser,
+                              @Autowired(required = false) ClearanceParser clearanceParser,
+                              @Autowired(required = false) SedationParser sedationParser) {
         this.chatModel = chatModel;
         this.promptTemplateService = promptTemplateService;
         this.contextManager = contextManager;
@@ -83,6 +91,9 @@ public class ParameterExtractor {
         this.wpwParser = wpwParser;
         this.resultParser = resultParser;
         this.anticoagulantParser = anticoagulantParser;
+        this.deviceParser = deviceParser;
+        this.clearanceParser = clearanceParser;
+        this.sedationParser = sedationParser;
     }
 
     public Map<String, Object> extract(IntentCommand intentResult, String sessionId) {
@@ -198,6 +209,25 @@ public class ParameterExtractor {
         } else {
             log.warn("anticoagulantParser 为 null，无法注册到 SpEL 上下文");
         }
+        if (deviceParser != null) {
+            spelCtx.setVariable("deviceParser", deviceParser);
+        } else {
+            log.warn("deviceParser 为 null，无法注册到 SpEL 上下文");
+        }
+        if (clearanceParser != null) {
+            spelCtx.setVariable("clearanceParser", clearanceParser);
+        } else {
+            log.warn("clearanceParser 为 null，无法注册到 SpEL 上下文");
+        }
+        if (sedationParser != null) {
+            spelCtx.setVariable("sedationParser", sedationParser);
+        } else {
+            log.warn("sedationParser 为 null，无法注册到 SpEL 上下文");
+        }
+
+
+
+
         spelCtx.setVariable("ctx", ctx);
 
         // ========== 4. 解析 rules 中的 SpEL 表达式（跳过 processor 键） ==========

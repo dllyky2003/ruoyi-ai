@@ -1,0 +1,541 @@
+{
+  "id": "adenosine-effect-mapping",
+  "version": "1.0-aha2025-aligned",
+  "status": "pending_clinical_signoff",
+  "upstream": "ACLS-TUTOR-DESIGN-VIRTUAL-PATIENT-V0.2-candidate",
+  "guideline": "AHA 2025 Guidelines for CPR and ECC, Adult ALS",
+  "generatedAt": "2026-09-24",
+
+  "actionMatcher": {
+    "type": "drug_push",
+    "drug": "adenosine",
+    "adminNote": "rapid IV push over 1-3sec, follow each dose with 20 mL NS flush, elevate arm"
+  },
+
+  "_notes": [
+    "病人永远诚实：模型不阻断、不拦截、不评判。所有操作均产生生理反应。",
+    "评审信号仅由独立评审层消费，不改变病人模型效应。",
+    "首剂6mg成功率参考值52%，第二剂12mg累计成功率83%；12mg首剂成功率83%[reference:1][reference:2]。病例脚本可锁定成功/失败。",
+    "intervention.adenosine.* 为对象子键，需确认 DSL 是否支持对象属性路径。",
+    "AVNRT/AVRT 归入 phys.rhythm == 'SVT'；MAT 当前无枚举。",
+    "宽 QRS 判断用 phys.qrsDuration >= 0.12，不用 derived.qrsWidth。",
+    "潮红、头痛、喉颈下颌不适、一过性完全性AVB 当前无结构化字段，暂用事件标签。",
+    "哮喘、心脏移植、病态窦房结、AVB、药物相互作用、体重当前无结构化字段，列入 extensions。"
+  ],
+
+  "sideEffectProfiles": {
+    "ADN-SE-COMMON": {
+      "description": "腺苷常见并行副作用。AHA 2025: 腺苷半衰期<10秒，副作用通常<60秒内消退。",
+      "effects": [
+        { "target": "phys.chestPain", "op": "set", "value": true, "note": "胸痛/胸闷" },
+        { "target": "phys.shortnessOfBreath", "op": "set", "value": true, "note": "呼吸困难" },
+        { "target": "phys.nausea", "op": "set", "value": true, "note": "恶心" },
+        { "target": "phys.diaphoresis", "op": "set", "value": true, "note": "大汗" },
+        { "target": "phys.anxiety", "op": "set", "value": true, "note": "焦虑/濒死感" },
+        { "target": "phys.systolicBp", "op": "delta", "value": -15, "durationMs": 3000 },
+        { "eventTag": "adenosine_flushing", "note": "面部潮红 — phys.flushing 字段缺失，暂用事件标签" },
+        { "eventTag": "adenosine_headache", "note": "头痛 — phys.headache 字段缺失" },
+        { "eventTag": "adenosine_throat_neck_discomfort", "note": "喉/颈/下颌不适 — 字段缺失" },
+        { "eventTag": "adenosine_transient_av_block", "note": "一过性完全性AVB — phys.transientCompleteAvBlock 字段缺失" }
+      ]
+    },
+    "ADN-SE-ASTHMA": {
+      "description": "哮喘患者腺苷副作用 — 支气管痉挛。AHA 2025: 腺苷在哮喘患者中为禁忌。[reference:3]",
+      "effects": [
+        { "target": "phys.shortnessOfBreath", "op": "set", "value": true },
+        { "target": "phys.spo2", "op": "delta", "value": -10, "durationMs": 120000 },
+        { "target": "phys.respiratoryRate", "op": "delta", "value": 10, "durationMs": 120000 },
+        { "eventTag": "adenosine_bronchospasm", "note": "严重支气管痉挛" }
+      ]
+    }
+  },
+
+  "mappings": [
+    {
+      "id": "ADN-SVT-01",
+      "scene": "A_regular_narrow_tachycardia",
+      "description": "规则窄QRS心动过速 — 首剂6mg",
+      "preconditions": [
+        "phys.rhythm == 'SVT'",
+        "phys.qrsDuration < 0.12",
+        "derived.rhythmRegular == true",
+        "intervention.adenosine.count == 0"
+      ],
+      "effects": [
+        { "target": "phys.rhythm", "op": "set", "value": "Sinus", "probability": 0.52,
+          "note": "AHA 2025: 首剂6mg成功率约52%[reference:4]" },
+        { "target": "phys.rhythm", "op": "no_change", "probability": 0.48 },
+        { "target": "phys.heartRate", "op": "set", "value": 80, "when": "phys.rhythm == 'Sinus'" },
+        { "target": "phys.systolicBp", "op": "delta", "value": -20, "durationMs": 2000 },
+        { "target": "phys.rhythm", "op": "pause", "pauseMs": 1240, "note": "短暂窦性停搏" }
+      ],
+      "sideEffectProfile": "ADN-SE-COMMON",
+      "timing": {
+        "onsetMs": 0,
+        "evaluationWindowMs": 120000,
+        "effectDurationMs": 30000,
+        "pauseMs": 1240
+      },
+      "priority": "drug",
+      "reviewSignals": ["adenosine_svt_first_dose"]
+    },
+    {
+      "id": "ADN-SVT-02",
+      "scene": "A_regular_narrow_tachycardia",
+      "description": "规则窄QRS心动过速 — 重复给药间隔不足（<60s）",
+      "preconditions": [
+        "phys.rhythm == 'SVT'",
+        "phys.qrsDuration < 0.12",
+        "derived.rhythmRegular == true",
+        "intervention.adenosine.count >= 1",
+        "intervention.adenosine.lastTime != null",
+        "(now - intervention.adenosine.lastTime) < 60000"
+      ],
+      "effects": [
+        { "target": "phys.rhythm", "op": "set", "value": "Sinus", "probability": 0.52,
+          "note": "仍可能有效，非无治疗效应" },
+        { "target": "phys.rhythm", "op": "no_change", "probability": 0.48 },
+        { "target": "intervention.adenosine.count", "op": "increment", "value": 1 }
+      ],
+      "sideEffectProfile": "ADN-SE-COMMON",
+      "timing": {
+        "onsetMs": 0,
+        "evaluationWindowMs": 120000,
+        "effectDurationMs": 30000
+      },
+      "priority": "drug",
+      "reviewSignals": ["adenosine_repeat_interval_too_short"]
+    },
+    {
+      "id": "ADN-SVT-03",
+      "scene": "A_regular_narrow_tachycardia",
+      "description": "规则窄QRS心动过速 — 第二剂12mg",
+      "preconditions": [
+        "phys.rhythm == 'SVT'",
+        "phys.qrsDuration < 0.12",
+        "derived.rhythmRegular == true",
+        "intervention.adenosine.count == 1",
+        "intervention.adenosine.lastTime != null",
+        "(now - intervention.adenosine.lastTime) >= 60000"
+      ],
+      "effects": [
+        { "target": "phys.rhythm", "op": "set", "value": "Sinus", "probability": 0.83,
+          "note": "AHA 2025: 第二剂12mg累计成功率约83%[reference:5]" },
+        { "target": "phys.rhythm", "op": "no_change", "probability": 0.17 },
+        { "target": "phys.heartRate", "op": "set", "value": 80, "when": "phys.rhythm == 'Sinus'" },
+        { "target": "phys.systolicBp", "op": "delta", "value": -20, "durationMs": 2000 },
+        { "target": "phys.rhythm", "op": "pause", "pauseMs": 1240 }
+      ],
+      "sideEffectProfile": "ADN-SE-COMMON",
+      "timing": {
+        "onsetMs": 0,
+        "evaluationWindowMs": 120000,
+        "effectDurationMs": 30000,
+        "pauseMs": 1240
+      },
+      "priority": "drug",
+      "reviewSignals": ["adenosine_svt_second_dose"]
+    },
+    {
+      "id": "ADN-WPW-01",
+      "scene": "B_wpw",
+      "description": "WPW预激综合征 — AFib伴预激传导（绝对禁忌）",
+      "preconditions": [
+        "clinical.isWpw == true",
+        "phys.rhythm == 'AFib'",
+        "phys.ecgDeltaWave == true"
+      ],
+      "effects": [
+        { "target": "phys.rhythm", "op": "set", "value": "VF",
+          "note": "AHA 2025: 腺苷阻断AV结后加速旁路传导，可诱发室颤[reference:6]" },
+        { "target": "phys.systolicBp", "op": "delta", "value": -60, "durationMs": 3000 },
+        { "target": "phys.hasPulse", "op": "set", "value": false }
+      ],
+      "sideEffectProfile": "ADN-SE-COMMON",
+      "timing": {
+        "onsetMs": 3000,
+        "evaluationWindowMs": 30000,
+        "effectDurationMs": 30000
+      },
+      "priority": "drug",
+      "reviewSignals": [
+        "class_iii_contraindication_wpw_afib",
+        "drug_induced_vf",
+        "defibrillator_must_be_immediately_available"
+      ]
+    },
+    {
+      "id": "ADN-WPW-02",
+      "scene": "B_wpw",
+      "description": "WPW预激综合征 — 顺向性AVRT（窄QRS规则）",
+      "preconditions": [
+        "clinical.isWpw == true",
+        "phys.rhythm == 'SVT'",
+        "derived.rhythmRegular == true",
+        "phys.qrsDuration < 0.12"
+      ],
+      "effects": [
+        { "target": "phys.rhythm", "op": "set", "value": "Sinus", "probability": 0.95,
+          "note": "AHA 2025: 腺苷终止约95%顺向性AVRT[reference:7]" },
+        { "target": "phys.rhythm", "op": "no_change", "probability": 0.05 }
+      ],
+      "sideEffectProfile": "ADN-SE-COMMON",
+      "timing": {
+        "onsetMs": 0,
+        "evaluationWindowMs": 120000,
+        "effectDurationMs": 30000
+      },
+      "priority": "drug",
+      "reviewSignals": ["wpw_svt_adenosine_caution"]
+    },
+    {
+      "id": "ADN-WCT-01",
+      "scene": "C_wide_qrs",
+      "description": "宽QRS规则心动过速 — 怀疑SVT伴差传",
+      "preconditions": [
+        "phys.qrsDuration >= 0.12",
+        "derived.rhythmRegular == true",
+        "phys.rhythm == 'SVT'",
+        "process.suspectedRhythm == 'svt'"
+      ],
+      "effects": [
+        { "target": "phys.rhythm", "op": "set", "value": "Sinus", "probability": 0.5 },
+        { "target": "phys.rhythm", "op": "no_change", "probability": 0.5 },
+        { "eventTag": "atrial_activity_revealed" }
+      ],
+      "sideEffectProfile": "ADN-SE-COMMON",
+      "timing": {
+        "onsetMs": 0,
+        "evaluationWindowMs": 120000,
+        "effectDurationMs": 30000
+      },
+      "priority": "drug",
+      "reviewSignals": ["adenosine_wide_regular_svt_with_aberrancy_class_iib"]
+    },
+    {
+      "id": "ADN-WCT-02",
+      "scene": "C_wide_qrs",
+      "description": "宽QRS心动过速 — VT",
+      "preconditions": [
+        "phys.rhythm == 'VT'",
+        "phys.qrsDuration >= 0.12"
+      ],
+      "effects": [
+        { "target": "phys.rhythm", "op": "no_change", "value": "VT",
+          "note": "腺苷不终止大多数VT，仅对cAMP介导的触发活动有效" },
+        { "target": "phys.heartRate", "op": "no_change" }
+      ],
+      "sideEffectProfile": "ADN-SE-COMMON",
+      "timing": {
+        "onsetMs": 0,
+        "evaluationWindowMs": 30000,
+        "effectDurationMs": 30000
+      },
+      "priority": "drug",
+      "reviewSignals": ["adenosine_in_vt_no_effect"]
+    },
+    {
+      "id": "ADN-WCT-03",
+      "scene": "C_wide_qrs",
+      "description": "宽QRS不规则 — 疑似预激伴AFib/多形性VT（绝对禁忌）",
+      "preconditions": [
+        "phys.qrsDuration >= 0.12",
+        "derived.rhythmRegular == false"
+      ],
+      "effects": [
+        { "target": "phys.heartRate", "op": "delta", "value": 30, "note": "可能加速心室率" },
+        { "target": "phys.systolicBp", "op": "delta", "value": -30 },
+        { "target": "phys.rhythm", "op": "no_change" }
+      ],
+      "sideEffectProfile": "ADN-SE-COMMON",
+      "timing": {
+        "onsetMs": 0,
+        "evaluationWindowMs": 30000,
+        "effectDurationMs": 30000
+      },
+      "priority": "drug",
+      "reviewSignals": [
+        "class_iii_contraindication_wide_irregular",
+        "avoid_adenosine_pre_excited_afib"
+      ]
+    },
+    {
+      "id": "ADN-IRR-01",
+      "scene": "D_irregular_narrow",
+      "description": "不规则窄QRS心动过速 — AFib/AFlutter",
+      "preconditions": [
+        "phys.qrsDuration < 0.12",
+        "derived.rhythmRegular == false",
+        "phys.rhythm in ['AFib', 'AFlutter']"
+      ],
+      "effects": [
+        { "target": "phys.rhythm", "op": "no_change",
+          "note": "AHA 2025: 腺苷不转复房颤/房扑[reference:8]" },
+        { "target": "phys.heartRate", "op": "delta", "value": -20, "durationMs": 10000,
+          "probability": 0.6, "note": "可能短暂心室率减慢" },
+        { "target": "phys.heartRate", "op": "delta", "value": 20, "durationMs": 10000,
+          "probability": 0.4, "note": "可能加速心室率（并行风险）" },
+        { "eventTag": "atrial_activity_revealed" }
+      ],
+      "sideEffectProfile": "ADN-SE-COMMON",
+      "timing": {
+        "onsetMs": 0,
+        "evaluationWindowMs": 30000,
+        "effectDurationMs": 30000
+      },
+      "priority": "drug",
+      "reviewSignals": ["avoid_adenosine_irregular_narrow"]
+    },
+    {
+      "id": "ADN-NULL-01",
+      "scene": "E_null",
+      "description": "窦性心律",
+      "preconditions": [
+        "phys.rhythm == 'Sinus'"
+      ],
+      "effects": [
+        { "target": "phys.rhythm", "op": "no_change" },
+        { "target": "phys.heartRate", "op": "delta", "value": -10, "durationMs": 5000,
+          "note": "可能短暂窦性心动过缓" }
+      ],
+      "sideEffectProfile": "ADN-SE-COMMON",
+      "timing": {
+        "onsetMs": 0,
+        "evaluationWindowMs": 30000,
+        "effectDurationMs": 30000
+      },
+      "priority": "drug",
+      "reviewSignals": ["adenosine_no_indication_sinus"]
+    },
+    {
+      "id": "ADN-NULL-02",
+      "scene": "E_null",
+      "description": "心脏骤停心律（VF/VT/Asystole/PEA）",
+      "preconditions": [
+        "phys.rhythm in ['VF', 'VT', 'Asystole', 'PEA']"
+      ],
+      "effects": [
+        { "target": "phys.rhythm", "op": "no_change" },
+        { "target": "phys.heartRate", "op": "no_change" }
+      ],
+      "sideEffectProfile": "ADN-SE-COMMON",
+      "timing": {
+        "onsetMs": 0,
+        "evaluationWindowMs": 30000,
+        "effectDurationMs": 30000
+      },
+      "priority": "drug",
+      "reviewSignals": ["adenosine_contraindicated_arrest"]
+    },
+    {
+      "id": "ADN-NULL-03",
+      "scene": "E_null",
+      "description": "未建模心律",
+      "preconditions": [
+        "phys.rhythm not in ['Sinus', 'SVT', 'AFib', 'AFlutter', 'VT', 'VF', 'PEA', 'Asystole']"
+      ],
+      "effects": [
+        { "target": "phys.rhythm", "op": "no_change" },
+        { "target": "phys.heartRate", "op": "no_change" }
+      ],
+      "sideEffectProfile": "ADN-SE-COMMON",
+      "timing": {
+        "onsetMs": 0,
+        "evaluationWindowMs": 30000,
+        "effectDurationMs": 30000
+      },
+      "priority": "drug",
+      "reviewSignals": ["adenosine_unmodeled_rhythm_no_effect"]
+    },
+    {
+      "id": "ADN-DOSE-01",
+      "scene": "F_dose_direction",
+      "description": "首剂12mg（偏离指南剂量阶梯）",
+      "preconditions": [
+        "intervention.adenosine.count == 0",
+        "intervention.adenosine.lastDose == '12mg'"
+      ],
+      "effects": [
+        { "target": "phys.rhythm", "op": "set", "value": "Sinus", "probability": 0.83,
+          "note": "AHA 2025: 首剂12mg成功率约83%[reference:9]；副作用更明显" },
+        { "target": "phys.rhythm", "op": "no_change", "probability": 0.17 }
+      ],
+      "sideEffectProfile": "ADN-SE-COMMON",
+      "timing": {
+        "onsetMs": 0,
+        "evaluationWindowMs": 120000,
+        "effectDurationMs": 30000
+      },
+      "priority": "drug",
+      "reviewSignals": ["adenosine_first_dose_12mg_deviation"]
+    },
+    {
+      "id": "ADN-DOSE-02",
+      "scene": "F_dose_direction",
+      "description": "重复给药间隔不足（<60s）",
+      "preconditions": [
+        "intervention.adenosine.count >= 1",
+        "intervention.adenosine.lastTime != null",
+        "(now - intervention.adenosine.lastTime) < 60000",
+        "action.drug == 'adenosine'"
+      ],
+      "effects": [
+        { "target": "phys.rhythm", "op": "set", "value": "Sinus", "probability": 0.52,
+          "note": "仍可能有效，非无治疗效应" },
+        { "target": "phys.rhythm", "op": "no_change", "probability": 0.48 },
+        { "target": "intervention.adenosine.count", "op": "increment", "value": 1 }
+      ],
+      "sideEffectProfile": "ADN-SE-COMMON",
+      "timing": {
+        "onsetMs": 0,
+        "evaluationWindowMs": 120000,
+        "effectDurationMs": 30000
+      },
+      "priority": "drug",
+      "reviewSignals": ["adenosine_repeat_interval_too_short"]
+    },
+    {
+      "id": "ADN-TRANSPLANT-01",
+      "scene": "G_special_populations",
+      "description": "心脏移植患者 — 减量至1mg",
+      "preconditions": [
+        "clinical.pastMedicalHistory contains '心脏移植'",
+        "intervention.adenosine.count == 0"
+      ],
+      "effects": [
+        { "target": "phys.rhythm", "op": "set", "value": "Sinus", "probability": 0.80,
+          "note": "AHA 2025: 心脏移植患者初始剂量降至1mg[reference:10]" },
+        { "target": "phys.rhythm", "op": "no_change", "probability": 0.20 },
+        { "target": "phys.rhythm", "op": "pause", "pauseMs": 3000,
+          "note": "心脏移植患者对腺苷敏感性增加，停搏时间延长" }
+      ],
+      "sideEffectProfile": "ADN-SE-COMMON",
+      "timing": {
+        "onsetMs": 0,
+        "evaluationWindowMs": 120000,
+        "effectDurationMs": 30000,
+        "pauseMs": 3000
+      },
+      "priority": "drug",
+      "reviewSignals": ["adenosine_cardiac_transplant_reduced_dose"]
+    },
+    {
+      "id": "ADN-ASTHMA-01",
+      "scene": "G_special_populations",
+      "description": "哮喘患者 — 绝对禁忌",
+      "preconditions": [
+        "clinical.pastMedicalHistory contains '哮喘'"
+      ],
+      "effects": [
+        { "target": "phys.shortnessOfBreath", "op": "set", "value": true },
+        { "target": "phys.spo2", "op": "delta", "value": -10, "durationMs": 120000 },
+        { "target": "phys.respiratoryRate", "op": "delta", "value": 10, "durationMs": 120000 },
+        { "eventTag": "adenosine_bronchospasm" }
+      ],
+      "sideEffectProfile": "ADN-SE-ASTHMA",
+      "timing": {
+        "onsetMs": 0,
+        "evaluationWindowMs": 120000,
+        "effectDurationMs": 120000
+      },
+      "priority": "drug",
+      "reviewSignals": ["class_iii_contraindication_asthma"]
+    },
+    {
+      "id": "ADN-DIPYRIDAMOLE-01",
+      "scene": "G_special_populations",
+      "description": "双嘧达莫使用者 — 减量至3mg",
+      "preconditions": [
+        "clinical.medicationList contains '双嘧达莫'",
+        "intervention.adenosine.count == 0"
+      ],
+      "effects": [
+        { "target": "phys.rhythm", "op": "set", "value": "Sinus", "probability": 0.70 },
+        { "target": "phys.rhythm", "op": "no_change", "probability": 0.30 },
+        { "target": "phys.rhythm", "op": "pause", "pauseMs": 3000,
+          "note": "双嘧达莫增强腺苷效应，停搏时间延长" }
+      ],
+      "sideEffectProfile": "ADN-SE-COMMON",
+      "timing": {
+        "onsetMs": 0,
+        "evaluationWindowMs": 120000,
+        "effectDurationMs": 30000,
+        "pauseMs": 3000
+      },
+      "priority": "drug",
+      "reviewSignals": ["adenosine_dipyridamole_reduced_dose"]
+    },
+    {
+      "id": "ADN-PREGNANT-01",
+      "scene": "G_special_populations",
+      "description": "妊娠患者 — 安全有效，常规剂量",
+      "preconditions": [
+        "clinical.isPregnant == true",
+        "phys.rhythm == 'SVT'"
+      ],
+      "effects": [
+        { "target": "phys.rhythm", "op": "set", "value": "Sinus", "probability": 0.85,
+          "note": "AHA 2025: 妊娠期SVT可使用腺苷，常规剂量" },
+        { "target": "phys.rhythm", "op": "no_change", "probability": 0.15 }
+      ],
+      "sideEffectProfile": "ADN-SE-COMMON",
+      "timing": {
+        "onsetMs": 0,
+        "evaluationWindowMs": 120000,
+        "effectDurationMs": 30000
+      },
+      "priority": "drug",
+      "reviewSignals": ["adenosine_pregnancy_safe"]
+    },
+    {
+      "id": "ADN-CARBAMAZEPINE-01",
+      "scene": "G_special_populations",
+      "description": "卡马西平使用者 — 增强腺苷效应",
+      "preconditions": [
+        "clinical.medicationList contains '卡马西平'"
+      ],
+      "effects": [
+        { "target": "phys.rhythm", "op": "pause", "pauseMs": 2000,
+          "note": "卡马西平增强腺苷的AV结阻滞效应" }
+      ],
+      "sideEffectProfile": "ADN-SE-COMMON",
+      "timing": {
+        "onsetMs": 0,
+        "evaluationWindowMs": 120000,
+        "effectDurationMs": 30000,
+        "pauseMs": 2000
+      },
+      "priority": "drug",
+      "reviewSignals": ["adenosine_carbamazepine_enhanced_effect"]
+    }
+  ],
+
+  "extensions": {
+    "reservedPreconditions": [
+      { "field": "clinical.asthma", "status": "missing", "priority": "high",
+        "note": "绝对禁忌 — 支气管痉挛风险[reference:11]" },
+      { "field": "clinical.transplant", "status": "missing", "priority": "high",
+        "note": "需减量至1mg[reference:12]" },
+      { "field": "clinical.sickSinus", "status": "missing", "priority": "high",
+        "note": "病态窦房结综合征 — 腺苷可致严重停搏" },
+      { "field": "clinical.avBlock", "status": "missing", "priority": "high",
+        "note": "二度/三度AVB（无起搏器）— 禁忌" },
+      { "field": "clinical.weightKg", "status": "missing", "priority": "medium",
+        "note": "儿童剂量0.1mg/kg" },
+      { "field": "clinical.dipyridamole", "status": "missing", "priority": "medium",
+        "note": "增强腺苷效应，需减量至3mg" },
+      { "field": "clinical.carbamazepine", "status": "missing", "priority": "medium",
+        "note": "增强腺苷效应" },
+      { "field": "clinical.theophylline", "status": "missing", "priority": "medium",
+        "note": "减弱腺苷效应" },
+      { "field": "phys.flushing", "status": "missing", "priority": "low",
+        "note": "面部潮红 — 常见副作用" },
+      { "field": "phys.headache", "status": "missing", "priority": "low",
+        "note": "头痛 — 常见副作用" },
+      { "field": "phys.throatNeckDiscomfort", "status": "missing", "priority": "low",
+        "note": "喉/颈/下颌不适" },
+      { "field": "phys.transientCompleteAvBlock", "status": "missing", "priority": "low",
+        "note": "一过性完全性AVB" }
+    ]
+  }
+}

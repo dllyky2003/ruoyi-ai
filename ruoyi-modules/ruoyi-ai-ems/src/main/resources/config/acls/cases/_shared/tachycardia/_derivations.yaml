@@ -1,0 +1,14 @@
+# 共享组：心动过速类病例（stable_narrow / unstable_narrow_svt / unstable_wide）
+# 通过病例 case.yaml 的 sharedGroups 字段声明使用
+# 合并优先级：GLOBAL < _shared/tachycardia < 病例层
+
+derivations:
+  # --- 腺苷是否已推注（派生自结构化记录，兼容旧契约 successVar） ---
+  - target: intervention.adenosineGiven
+    type: boolean
+    description: "腺苷是否已推注（派生自 intervention.adenosine.count）"
+    expression: |
+      #intervention.adenosine.count != null &&
+      #intervention.adenosine.count > 0
+    dependencies:
+      - intervention.adenosine

@@ -3,10 +3,12 @@ package com.ruoyi.ems.intent.classifier;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ruoyi.ems.config.loader.CaseIntentDefinitionsLoader;
 import com.ruoyi.ems.context.ClassificationContext;
 import com.ruoyi.ems.domain.IntentCommand;
 import com.ruoyi.ems.intent.model.IntentCandidate;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -19,6 +21,7 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * 向量意图分类器（第二层）
@@ -28,7 +31,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 @Component
 public class VectorIntentClassifier implements IntentClassifier {
-
+    @Autowired
+    private CaseIntentDefinitionsLoader intentRegistry;
     /**
      * 质心文件加载路径（支持 classpath: 或 file: 前缀）
      * 默认加载 classpath*:config/acls/../_training/centroids.json
@@ -64,6 +68,10 @@ public class VectorIntentClassifier implements IntentClassifier {
      * 意图名称缓存：intentCode -> nameCn
      */
     private Map<String, String> intentNameMap = new ConcurrentHashMap<>();
+
+
+
+
 
     /**
      * 加载来源：centroid_file / corpus_computed / none
@@ -402,16 +410,15 @@ public class VectorIntentClassifier implements IntentClassifier {
         if (asrText == null || asrText.trim().isEmpty()) {
             return IntentCommand.noMatch(getMode(), "文本为空");
         }
-
         if (centroidMap.isEmpty()) {
             return IntentCommand.noMatch(getMode(), "未加载任何意图质心");
         }
-
         if (embeddingModel == null || !embeddingModel.isAvailable()) {
             return IntentCommand.noMatch(getMode(), "Embedding 模型不可用");
         }
 
         String text = asrText.trim();
+        String caseId = context != null ? context.getCaseId() : null;
 
         try {
             float[] textEmbedding = embeddingModel.embed(text);
@@ -420,22 +427,47 @@ public class VectorIntentClassifier implements IntentClassifier {
             }
             textEmbedding = normalize(textEmbedding);
 
-            List<IntentCandidate> candidates = new ArrayList<>();
+            // ---------- 1. 计算所有质心的相似度 ----------
+            List<IntentCandidate> allCandidates = new ArrayList<>(centroidMap.size());
             for (Map.Entry<String, float[]> entry : centroidMap.entrySet()) {
                 String intentCode = entry.getKey();
                 float[] centroid = entry.getValue();
                 double score = cosineSimilarity(textEmbedding, centroid);
-                candidates.add(new IntentCandidate(intentCode, score));
+                allCandidates.add(new IntentCandidate(intentCode, score));
             }
 
+            // ---------- 2. ★ 按 caseId 过滤（关键新增） ----------
+            List<IntentCandidate> candidates = filterByCase(allCandidates, caseId);
+
+            // ---------- 3. 排序 ----------
             candidates.sort((a, b) -> Double.compare(b.getScore(), a.getScore()));
 
-            if (candidates.isEmpty() || candidates.get(0).getScore() < threshold) {
-                return IntentCommand.noMatch(getMode(),
-                    String.format("最高相似度 %.3f < 阈值 %.2f",
-                        candidates.isEmpty() ? 0 : candidates.get(0).getScore(), threshold));
+            // ---------- 4. 诊断日志：被 case 过滤掉的高分候选 ----------
+            if (log.isDebugEnabled() && candidates.size() < allCandidates.size()) {
+                List<IntentCandidate> droppedHigh = allCandidates.stream()
+                    .filter(c -> !candidates.contains(c))
+                    .filter(c -> c.getScore() >= threshold)
+                    .sorted((a, b) -> Double.compare(b.getScore(), a.getScore()))
+                    .limit(3)
+                    .collect(Collectors.toList());
+                if (!droppedHigh.isEmpty()) {
+                    log.debug("Vector 按 case [{}] 过滤，丢弃高分候选: {}",
+                        caseId, droppedHigh);
+                }
             }
 
+            // ---------- 5. 阈值判定 ----------
+            if (candidates.isEmpty()) {
+                return IntentCommand.noMatch(getMode(),
+                    String.format("case=%s 过滤后无候选意图", caseId));
+            }
+            if (candidates.get(0).getScore() < threshold) {
+                return IntentCommand.noMatch(getMode(),
+                    String.format("最高相似度 %.3f < 阈值 %.2f (case=%s)",
+                        candidates.get(0).getScore(), threshold, caseId));
+            }
+
+            // ---------- 6. 组装结果 ----------
             IntentCandidate best = candidates.get(0);
             String intentCode = best.getIntentCode();
             String nameCn = intentNameMap.getOrDefault(intentCode, intentCode);
@@ -444,9 +476,12 @@ public class VectorIntentClassifier implements IntentClassifier {
             result.setCandidates(candidates);
             result.setRawText(asrText);
             result.setActType("vector");
-            result.setReason(String.format("向量匹配成功 (score: %.3f, 来源: %s)", best.getScore(), loadSource));
-            result.setMatchDetail(String.format("向量相似度: %.3f, 意图: %s, 来源: %s",
-                best.getScore(), nameCn, loadSource));
+            result.setReason(String.format(
+                "向量匹配成功 (score: %.3f, case: %s, 来源: %s)",
+                best.getScore(), caseId, loadSource));
+            result.setMatchDetail(String.format(
+                "向量相似度: %.3f, 意图: %s, case: %s, 来源: %s",
+                best.getScore(), nameCn, caseId, loadSource));
 
             return result;
 
@@ -454,6 +489,38 @@ public class VectorIntentClassifier implements IntentClassifier {
             log.error("向量分类失败", e);
             return IntentCommand.noMatch(getMode(), "向量分类异常: " + e.getMessage());
         }
+    }
+
+    /**
+     * ★ 新增：按 caseId 过滤候选意图。
+     *
+     * <p>规则：
+     * <ul>
+     *   <li>caseId 为空 → 不过滤（保持向后兼容）</li>
+     *   <li>caseId 非空 → 只保留"通用意图 + 该病例专属意图"</li>
+     *   <li>白名单查不到 → 不过滤（避免误杀）</li>
+     * </ul>
+     */
+    private List<IntentCandidate> filterByCase(List<IntentCandidate> candidates, String caseId) {
+        if (candidates == null || candidates.isEmpty()) {
+            return Collections.emptyList();
+        }
+        if (caseId == null || caseId.isBlank()) {
+            return candidates;
+        }
+        Set<String> allowed = intentRegistry.getIntentCodesForCase(caseId);
+        if (allowed == null || allowed.isEmpty()) {
+            log.warn("Vector caseId={} 白名单为空，跳过过滤", caseId);
+            return candidates;
+        }
+        List<IntentCandidate> filtered = new ArrayList<>(candidates.size());
+        for (IntentCandidate c : candidates) {
+            if (c == null || c.getIntentCode() == null) continue;
+            if (allowed.contains(c.getIntentCode())) {
+                filtered.add(c);
+            }
+        }
+        return filtered;
     }
 
     // ================================================================

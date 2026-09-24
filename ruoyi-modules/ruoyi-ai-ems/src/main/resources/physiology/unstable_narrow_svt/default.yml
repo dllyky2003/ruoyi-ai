@@ -98,6 +98,17 @@ state_physiology:
     phys.rhythm: "Sinus"
     transition_duration: 25
 
+  # ★ 新增：ROSC 管理阶段（循环恢复后稳定期，参考 F-102-MONITOR_SINUS_RHYTHM 微调）
+  F-000-ROSC_MANAGEMENT:
+    phys.heartRate: 85
+    phys.systolicBp: 120
+    phys.diastolicBp: 75
+    phys.spo2: 97
+    phys.respiratoryRate: 18
+    phys.consciousness: "alert"
+    phys.rhythm: "Sinus"
+    transition_duration: 15
+
   F-102-SECOND_SHOCK_PREP:
     phys.heartRate: 180
     phys.systolicBp: 80
@@ -130,7 +141,19 @@ state_physiology:
 # ================================================================
 # 操作效果
 # ================================================================
+# key 命名规则：
+#   基础：{operationOrDrug}_{dose}
+#   分支：{operationOrDrug}_{dose}__{condition}
+#   condition ∈ correct / wrong_minor / wrong_critical / delayed
+#
+# EffectManager 查找顺序：
+#   effectKey__condition → effectKey → effectKey__correct
+# ================================================================
 operation_effects:
+
+  # ============================================================
+  # 基础条目（无 condition 后缀，兼容旧路径）
+  # ============================================================
 
   CARDIOVERSION_100J:
     - target: phys.heartRate
@@ -206,16 +229,282 @@ operation_effects:
       recovery: 10
       curve: LINEAR_DECAY_LINEAR_RECOVER
 
+  # ============================================================
+  # ★ 药物效果：按 condition 分支
+  # ============================================================
+
+  # ---------- 腺苷 6mg ----------
+  adenosine_6mg__correct:
+    - target: phys.heartRate
+      delta: -60
+      duration: 5
+      recovery: 15
+      curve: INSTANT_DROP_LINEAR_RECOVER
+    - target: phys.systolicBp
+      delta: -10
+      duration: 5
+      recovery: 10
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  adenosine_6mg__wrong_minor:
+    - target: phys.heartRate
+      delta: -20
+      duration: 3
+      recovery: 10
+      curve: INSTANT_DROP_LINEAR_RECOVER
+    - target: phys.systolicBp
+      delta: -15
+      duration: 5
+      recovery: 10
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  adenosine_6mg__wrong_critical:
+    - target: phys.heartRate
+      delta: 30           # 反向升高，向VF演变
+      duration: 2
+      recovery: 0
+      curve: INSTANT_DROP_LINEAR_RECOVER
+    - target: phys.systolicBp
+      delta: -40
+      duration: 5
+      recovery: 0
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+    - target: phys.spo2
+      delta: -20
+      duration: 5
+      recovery: 0
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  # ---------- 腺苷 12mg ----------
+  adenosine_12mg__correct:
+    - target: phys.heartRate
+      delta: -70
+      duration: 5
+      recovery: 15
+      curve: INSTANT_DROP_LINEAR_RECOVER
+    - target: phys.systolicBp
+      delta: -12
+      duration: 5
+      recovery: 10
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  adenosine_12mg__wrong_minor:
+    - target: phys.heartRate
+      delta: -25
+      duration: 3
+      recovery: 10
+      curve: INSTANT_DROP_LINEAR_RECOVER
+    - target: phys.systolicBp
+      delta: -18
+      duration: 5
+      recovery: 10
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  adenosine_12mg__wrong_critical:
+    - target: phys.heartRate
+      delta: 35
+      duration: 2
+      recovery: 0
+      curve: INSTANT_DROP_LINEAR_RECOVER
+    - target: phys.systolicBp
+      delta: -45
+      duration: 5
+      recovery: 0
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+    - target: phys.spo2
+      delta: -22
+      duration: 5
+      recovery: 0
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  # ---------- 咪达唑仑 2mg ----------
+  # 注：ENUM_DOWN/UP 表示有序枚举位移，不参与数值曲线插值。
+  #     phys.consciousness 有序枚举（从差到好）：
+  #     unresponsive < pain < verbal < alert
+  #     ENUM_DOWN + steps=1 → 意识下降一级（如 alert → verbal）
+  midazolam_2mg__correct:
+    - target: phys.consciousness
+      type: ENUM_DOWN
+      steps: 1
+      duration: 120
+      recovery: 180
+    - target: phys.respiratoryRate
+      delta: -4
+      duration: 60
+      recovery: 90
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  midazolam_2mg__wrong_minor:
+    - target: phys.systolicBp
+      delta: -12
+      duration: 10
+      recovery: 20
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+    - target: phys.consciousness
+      type: ENUM_DOWN
+      steps: 1
+      duration: 120
+      recovery: 180
+
+  midazolam_2mg__wrong_critical:
+    - target: phys.systolicBp
+      delta: -30
+      duration: 15
+      recovery: 0
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+    - target: phys.respiratoryRate
+      delta: -10
+      duration: 60
+      recovery: 0
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+    - target: phys.consciousness
+      type: ENUM_DOWN
+      steps: 2
+      duration: 180
+      recovery: 0
+
+  # ---------- 胺碘酮 ----------
+  amiodarone__correct:
+    - target: phys.heartRate
+      delta: -50
+      duration: 10
+      recovery: 20
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+    - target: phys.systolicBp
+      delta: -8
+      duration: 10
+      recovery: 15
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  amiodarone__wrong_minor:
+    - target: phys.heartRate
+      delta: -20
+      duration: 10
+      recovery: 20
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  amiodarone__wrong_critical:
+    - target: phys.systolicBp
+      delta: -35
+      duration: 10
+      recovery: 0
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+    - target: phys.heartRate
+      delta: -30
+      duration: 10
+      recovery: 0
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  # ---------- 地尔硫䓬 ----------
+  diltiazem__correct:
+    - target: phys.heartRate
+      delta: -40
+      duration: 10
+      recovery: 20
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+    - target: phys.systolicBp
+      delta: -8
+      duration: 10
+      recovery: 15
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  diltiazem__wrong_critical:
+    - target: phys.systolicBp
+      delta: -45
+      duration: 10
+      recovery: 0
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+    - target: phys.heartRate
+      delta: -40
+      duration: 10
+      recovery: 0
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+    - target: phys.spo2
+      delta: -10
+      duration: 5
+      recovery: 0
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  # ============================================================
+  # ★ 操作类：加 condition 分支
+  # ============================================================
+
+  CARDIOVERSION_100J__correct:
+    - target: phys.heartRate      # 与基础 CARDIOVERSION_100J 一致
+      delta: -100
+      duration: 3
+      recovery: 8
+      curve: INSTANT_DROP_LINEAR_RECOVER
+    - target: phys.systolicBp
+      delta: 40
+      duration: 5
+      recovery: 10
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  CARDIOVERSION_100J__delayed:
+    - target: phys.systolicBp
+      delta: -20
+      duration: 10
+      recovery: 0
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+    - target: phys.spo2
+      delta: -5
+      duration: 10
+      recovery: 0
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+  CARDIOVERSION_100J__wrong_critical:   # 未同步
+    - target: phys.heartRate
+      delta: 40
+      duration: 3
+      recovery: 0
+      curve: INSTANT_DROP_LINEAR_RECOVER
+    - target: phys.systolicBp
+      delta: -30
+      duration: 5
+      recovery: 0
+      curve: LINEAR_DECAY_LINEAR_RECOVER
+
+# ================================================================
+# 演进规则（按时间自动演变）
+#
+# ★ 螺旋 2 改动：
+#   - 加 id（用于 stop_when 停用状态追踪）
+#   - 加 description（日志可读性）
+#   - 加 stop_when（干预达成后停止演化，满足 G2 闸门三）
+#   - rhythm / variable / after_seconds / delta 全部保持原值
+#   - 不加 per_tick（默认 false = 阶跃应用一次，与现有语义一致）
+#
+# ★ 螺旋 3 改动：
+#   - 三条规则各加 branch: delayed
+#   - 语义：仅当学员处于 DELAYED 分支（含从未操作）时生效
+#   - 前置依赖：EvolutionRuleEvaluator.branchMatches 已实现
+#     “无信号 = DELAYED” 的语义对齐（见该文件 Javadoc）
+# ================================================================
 evolution_rules:
-  - rhythm: "svt"
+  - id: SVT_SBP_DROP_30S
+    branch: delayed
+    description: "SVT 持续 30s 未处理，SBP 下降 10 mmHg"
+    rhythm: "svt"
     variable: "phys.systolicBp"
     after_seconds: 30
     delta: -10.0
-  - rhythm: "svt"
+    stop_when: "#variables['intervention.adenosineGiven'] == true"
+
+  - id: SVT_SBP_DROP_60S
+    branch: delayed
+    description: "SVT 持续 60s 未处理，SBP 再降 20 mmHg"
+    rhythm: "svt"
     variable: "phys.systolicBp"
     after_seconds: 60
     delta: -20.0
-  - rhythm: "vt"
+    stop_when: "#variables['intervention.adenosineGiven'] == true"
+
+  - id: VT_SPO2_DROP_20S
+    branch: delayed
+    description: "VT 持续 20s，SpO2 微降"
+    rhythm: "vt"
     variable: "phys.spo2"
     after_seconds: 20
     delta: -0.05
+    stop_when: "#variables['intervention.adenosineGiven'] == true"

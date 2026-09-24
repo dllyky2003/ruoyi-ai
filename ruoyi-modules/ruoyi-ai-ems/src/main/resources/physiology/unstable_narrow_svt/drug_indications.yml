@@ -1,0 +1,34 @@
+# ================================================================
+# 案例覆盖表：unstable_narrow_svt
+# ================================================================
+# 合并规则：按 drugCode 整段覆盖全局条目（不字段合并）。
+# 只写与全局不同的部分。
+# ================================================================
+
+drug_indications:
+
+  # ---------- 腺苷：本案例额外强调 WPW 禁忌 ----------
+  adenosine:
+    correct_when:
+      - "#derived.qrsWidth == 'narrow'"
+      - "#derived.stable == true"
+      - "#phys.rhythm != 'VF' && #phys.rhythm != 'VT'"
+      - "#phys.hasPulse == true"
+      - "#clinical.isWpw != true"
+    minor_when:
+      - "#phys.systolicBp < 100"
+    critical_when:
+      - "#derived.stable == false"
+      - "#phys.rhythm == 'VF' || #phys.rhythm == 'VT'"
+      - "#phys.hasPulse == false"
+      - "#clinical.isWpw == true"
+
+  # ---------- 地尔硫䓬：本案例不稳定时严禁使用 ----------
+  diltiazem:
+    correct_when:
+      - "#derived.qrsWidth == 'narrow'"
+      - "#derived.stable == true"
+    critical_when:
+      - "#derived.stable == false"
+      - "#derived.qrsWidth == 'wide'"
+      - "#derived.isUnstableNarrowQrs == true"

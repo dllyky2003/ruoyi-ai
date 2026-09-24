@@ -1,7 +1,7 @@
 {
-  "version": "2.1.0",
-  "lastUpdated": "2026-09-17",
-  "description": "ACLS Megacode 培训全局变量定义 - 完整生产版 v2.1",
+  "version": "2.2.0",
+  "lastUpdated": "2026-09-24",
+  "description": "ACLS Megacode 培训全局变量定义 - 完整生产版 v2.2（AHA 2025 对齐，新增腺苷/肾上腺素效应映射所需字段）",
   "layer": "GENERAL",
   "variables": [
     {
@@ -12,9 +12,23 @@
       "max": 350,
       "unit": "bpm",
       "description": "实时心率",
-      "writable_by": "PARAM_EXTRACTOR,SKILL_RESULT,UNITY_VITALS",
+      "writable_by": "PARAM_EXTRACTOR,SKILL_RESULT,UNITY_VITALS,PHYSIO_TICK",
       "category": "PHYSIOLOGICAL",
       "default_value": 150
+    },
+    {
+      "name": "process.operationType",
+      "name_cn": "操作类型",
+      "type": "string",
+      "description": "当前执行的操作类型（vagal / cardioversion / drug_push 等）",
+      "category": "PROCESS_MARKER",
+      "default_value": null
+    },
+    {
+      "name": "process.vagalSkippedWarning",
+      "type": "boolean",
+      "defaultValue": false,
+      "description": "患者是否跳过了迷走神经刺激直接用药"
     },
     {
       "name": "phys.systolicBp",
@@ -24,7 +38,7 @@
       "max": 300,
       "unit": "mmHg",
       "description": "收缩压",
-      "writable_by": "PARAM_EXTRACTOR,SKILL_RESULT,UNITY_VITALS",
+      "writable_by": "PARAM_EXTRACTOR,SKILL_RESULT,UNITY_VITALS,PHYSIO_TICK",
       "category": "PHYSIOLOGICAL",
       "default_value": 145
     },
@@ -93,41 +107,18 @@
       "name_cn": "当前心律",
       "type": "string",
       "enum": [
-        {
-          "value": "Sinus",
-          "label": "窦性心律"
-        },
-        {
-          "value": "SVT",
-          "label": "室上性心动过速"
-        },
-        {
-          "value": "AFib",
-          "label": "心房颤动"
-        },
-        {
-          "value": "AFlutter",
-          "label": "心房扑动"
-        },
-        {
-          "value": "VT",
-          "label": "室性心动过速"
-        },
-        {
-          "value": "VF",
-          "label": "心室颤动"
-        },
-        {
-          "value": "PEA",
-          "label": "无脉电活动"
-        },
-        {
-          "value": "Asystole",
-          "label": "心室停搏"
-        }
+        { "value": "Sinus", "label": "窦性心律" },
+        { "value": "SVT", "label": "室上性心动过速" },
+        { "value": "AFib", "label": "心房颤动" },
+        { "value": "AFlutter", "label": "心房扑动" },
+        { "value": "VT", "label": "室性心动过速" },
+        { "value": "VF", "label": "心室颤动" },
+        { "value": "PEA", "label": "无脉电活动" },
+        { "value": "Asystole", "label": "心室停搏" }
       ],
       "description": "当前实时心律",
       "category": "PHYSIOLOGICAL",
+      "writable_by": "PARAM_EXTRACTOR,SKILL_RESULT,UNITY_VITALS,PHYSIO_TICK",
       "default_value": "SVT"
     },
     {
@@ -135,18 +126,9 @@
       "name_cn": "心律来源",
       "type": "string",
       "enum": [
-        {
-          "value": "monitor",
-          "label": "监护仪"
-        },
-        {
-          "value": "ecg_12lead",
-          "label": "12导联心电图"
-        },
-        {
-          "value": "none",
-          "label": "无"
-        }
+        { "value": "monitor", "label": "监护仪" },
+        { "value": "ecg_12lead", "label": "12导联心电图" },
+        { "value": "none", "label": "无" }
       ],
       "description": "心律数据的来源设备",
       "category": "PHYSIOLOGICAL",
@@ -171,7 +153,7 @@
       "max": 100,
       "unit": "%",
       "description": "脉搏血氧饱和度",
-      "writable_by": "PARAM_EXTRACTOR,SKILL_RESULT,UNITY_VITALS",
+      "writable_by": "PARAM_EXTRACTOR,SKILL_RESULT,UNITY_VITALS,PHYSIO_TICK",
       "category": "PHYSIOLOGICAL",
       "default_value": 98
     },
@@ -192,18 +174,9 @@
       "name_cn": "ETCO2变化趋势",
       "type": "string",
       "enum": [
-        {
-          "value": "rising",
-          "label": "上升"
-        },
-        {
-          "value": "stable",
-          "label": "平稳"
-        },
-        {
-          "value": "falling",
-          "label": "下降"
-        }
+        { "value": "rising", "label": "上升" },
+        { "value": "stable", "label": "平稳" },
+        { "value": "falling", "label": "下降" }
       ],
       "description": "ETCO2趋势方向",
       "category": "PHYSIOLOGICAL",
@@ -236,22 +209,10 @@
       "name_cn": "通气模式",
       "type": "string",
       "enum": [
-        {
-          "value": "spontaneous",
-          "label": "自主呼吸"
-        },
-        {
-          "value": "bvm",
-          "label": "球囊面罩通气"
-        },
-        {
-          "value": "ventilator",
-          "label": "机械通气"
-        },
-        {
-          "value": "none",
-          "label": "无通气"
-        }
+        { "value": "spontaneous", "label": "自主呼吸" },
+        { "value": "bvm", "label": "球囊面罩通气" },
+        { "value": "ventilator", "label": "机械通气" },
+        { "value": "none", "label": "无通气" }
       ],
       "description": "当前通气方式",
       "category": "PHYSIOLOGICAL",
@@ -262,22 +223,10 @@
       "name_cn": "意识状态",
       "type": "string",
       "enum": [
-        {
-          "value": "alert",
-          "label": "清醒"
-        },
-        {
-          "value": "verbal",
-          "label": "对呼叫有反应"
-        },
-        {
-          "value": "pain",
-          "label": "对疼痛有反应"
-        },
-        {
-          "value": "unresponsive",
-          "label": "无反应"
-        }
+        { "value": "alert", "label": "清醒" },
+        { "value": "verbal", "label": "对呼叫有反应" },
+        { "value": "pain", "label": "对疼痛有反应" },
+        { "value": "unresponsive", "label": "无反应" }
       ],
       "description": "AVPU意识分级",
       "category": "PHYSIOLOGICAL",
@@ -328,22 +277,10 @@
       "name_cn": "瞳孔反应",
       "type": "string",
       "enum": [
-        {
-          "value": "brisk",
-          "label": "灵敏"
-        },
-        {
-          "value": "sluggish",
-          "label": "迟钝"
-        },
-        {
-          "value": "fixed",
-          "label": "固定"
-        },
-        {
-          "value": "unequal",
-          "label": "不等大"
-        }
+        { "value": "brisk", "label": "灵敏" },
+        { "value": "sluggish", "label": "迟钝" },
+        { "value": "fixed", "label": "固定" },
+        { "value": "unequal", "label": "不等大" }
       ],
       "description": "瞳孔对光反射",
       "category": "PHYSIOLOGICAL",
@@ -354,22 +291,10 @@
       "name_cn": "瞳孔大小",
       "type": "string",
       "enum": [
-        {
-          "value": "normal",
-          "label": "正常"
-        },
-        {
-          "value": "miosis",
-          "label": "缩小"
-        },
-        {
-          "value": "mydriasis",
-          "label": "散大"
-        },
-        {
-          "value": "unequal",
-          "label": "不等大"
-        }
+        { "value": "normal", "label": "正常" },
+        { "value": "miosis", "label": "缩小" },
+        { "value": "mydriasis", "label": "散大" },
+        { "value": "unequal", "label": "不等大" }
       ],
       "description": "瞳孔大小",
       "category": "PHYSIOLOGICAL",
@@ -402,26 +327,11 @@
       "name_cn": "皮肤状况",
       "type": "string",
       "enum": [
-        {
-          "value": "warm_dry",
-          "label": "温暖干燥"
-        },
-        {
-          "value": "cool_dry",
-          "label": "湿冷"
-        },
-        {
-          "value": "cool_moist",
-          "label": "湿冷多汗"
-        },
-        {
-          "value": "cold_clammy",
-          "label": "湿冷黏腻"
-        },
-        {
-          "value": "mottled",
-          "label": "花斑"
-        }
+        { "value": "warm_dry", "label": "温暖干燥" },
+        { "value": "cool_dry", "label": "湿冷" },
+        { "value": "cool_moist", "label": "湿冷多汗" },
+        { "value": "cold_clammy", "label": "湿冷黏腻" },
+        { "value": "mottled", "label": "花斑" }
       ],
       "description": "皮肤颜色、温度、湿度",
       "category": "PHYSIOLOGICAL",
@@ -445,36 +355,18 @@
       "description": "是否存在胸痛",
       "category": "PHYSIOLOGICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "有",
-        "false": "无"
-      }
+      "value_labels": { "true": "有", "false": "无" }
     },
     {
       "name": "phys.chestPainType",
       "name_cn": "胸痛性质",
       "type": "string",
       "enum": [
-        {
-          "value": "pressure",
-          "label": "压榨样"
-        },
-        {
-          "value": "burning",
-          "label": "烧灼样"
-        },
-        {
-          "value": "sharp",
-          "label": "针刺样"
-        },
-        {
-          "value": "tearing",
-          "label": "撕裂样"
-        },
-        {
-          "value": "none",
-          "label": "无"
-        }
+        { "value": "pressure", "label": "压榨样" },
+        { "value": "burning", "label": "烧灼样" },
+        { "value": "sharp", "label": "针刺样" },
+        { "value": "tearing", "label": "撕裂样" },
+        { "value": "none", "label": "无" }
       ],
       "description": "胸痛的性质描述",
       "category": "PHYSIOLOGICAL",
@@ -487,10 +379,7 @@
       "description": "是否存在呼吸困难",
       "category": "PHYSIOLOGICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "有",
-        "false": "无"
-      }
+      "value_labels": { "true": "有", "false": "无" }
     },
     {
       "name": "phys.nausea",
@@ -499,10 +388,7 @@
       "description": "是否存在恶心或呕吐",
       "category": "PHYSIOLOGICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "有",
-        "false": "无"
-      }
+      "value_labels": { "true": "有", "false": "无" }
     },
     {
       "name": "phys.diaphoresis",
@@ -511,10 +397,7 @@
       "description": "是否大汗淋漓",
       "category": "PHYSIOLOGICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "有",
-        "false": "无"
-      }
+      "value_labels": { "true": "有", "false": "无" }
     },
     {
       "name": "phys.anxiety",
@@ -523,10 +406,7 @@
       "description": "是否存在焦虑或濒死感",
       "category": "PHYSIOLOGICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "有",
-        "false": "无"
-      }
+      "value_labels": { "true": "有", "false": "无" }
     },
     {
       "name": "phys.qrsDuration",
@@ -579,10 +459,7 @@
       "description": "是否存在ST段抬高",
       "category": "PHYSIOLOGICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "有",
-        "false": "无"
-      }
+      "value_labels": { "true": "有", "false": "无" }
     },
     {
       "name": "phys.ecgStElevationLeads",
@@ -599,10 +476,7 @@
       "description": "是否存在ST段压低",
       "category": "PHYSIOLOGICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "有",
-        "false": "无"
-      }
+      "value_labels": { "true": "有", "false": "无" }
     },
     {
       "name": "phys.ecgTInversion",
@@ -611,10 +485,7 @@
       "description": "是否存在T波倒置",
       "category": "PHYSIOLOGICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "有",
-        "false": "无"
-      }
+      "value_labels": { "true": "有", "false": "无" }
     },
     {
       "name": "phys.ecgDeltaWave",
@@ -623,28 +494,16 @@
       "description": "是否存在预激综合征δ波",
       "category": "PHYSIOLOGICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "有",
-        "false": "无"
-      }
+      "value_labels": { "true": "有", "false": "无" }
     },
     {
       "name": "phys.ecgVoltage",
       "name_cn": "心电图电压",
       "type": "string",
       "enum": [
-        {
-          "value": "normal",
-          "label": "正常"
-        },
-        {
-          "value": "high",
-          "label": "高电压"
-        },
-        {
-          "value": "low",
-          "label": "低电压"
-        }
+        { "value": "normal", "label": "正常" },
+        { "value": "high", "label": "高电压" },
+        { "value": "low", "label": "低电压" }
       ],
       "description": "心电图电压高低",
       "category": "PHYSIOLOGICAL",
@@ -655,18 +514,9 @@
       "name_cn": "现场安全性",
       "type": "string",
       "enum": [
-        {
-          "value": "safe",
-          "label": "安全"
-        },
-        {
-          "value": "unsafe",
-          "label": "不安全"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "safe", "label": "安全" },
+        { "value": "unsafe", "label": "不安全" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "现场安全评估",
       "category": "PHYSIOLOGICAL",
@@ -677,18 +527,9 @@
       "name_cn": "反应性",
       "type": "string",
       "enum": [
-        {
-          "value": "responsive",
-          "label": "有反应"
-        },
-        {
-          "value": "unresponsive",
-          "label": "无反应"
-        },
-        {
-          "value": "unknown",
-          "label": "待判读"
-        }
+        { "value": "responsive", "label": "有反应" },
+        { "value": "unresponsive", "label": "无反应" },
+        { "value": "unknown", "label": "待判读" }
       ],
       "description": "患者对刺激的反应",
       "category": "PHYSIOLOGICAL",
@@ -699,18 +540,9 @@
       "name_cn": "脉搏检查部位",
       "type": "string",
       "enum": [
-        {
-          "value": "carotid",
-          "label": "颈动脉"
-        },
-        {
-          "value": "radial",
-          "label": "桡动脉"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "carotid", "label": "颈动脉" },
+        { "value": "radial", "label": "桡动脉" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "脉搏触诊部位",
       "category": "PHYSIOLOGICAL",
@@ -721,18 +553,9 @@
       "name_cn": "有无自主呼吸",
       "type": "string",
       "enum": [
-        {
-          "value": "present",
-          "label": "有呼吸"
-        },
-        {
-          "value": "absent",
-          "label": "无呼吸"
-        },
-        {
-          "value": "unknown",
-          "label": "待判读"
-        }
+        { "value": "present", "label": "有呼吸" },
+        { "value": "absent", "label": "无呼吸" },
+        { "value": "unknown", "label": "待判读" }
       ],
       "description": "自主呼吸存在性",
       "category": "PHYSIOLOGICAL",
@@ -743,18 +566,9 @@
       "name_cn": "血压测量部位",
       "type": "string",
       "enum": [
-        {
-          "value": "left_arm",
-          "label": "左臂"
-        },
-        {
-          "value": "right_arm",
-          "label": "右臂"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "left_arm", "label": "左臂" },
+        { "value": "right_arm", "label": "右臂" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "血压测量侧",
       "category": "PHYSIOLOGICAL",
@@ -765,18 +579,9 @@
       "name_cn": "学员判读节律规则性",
       "type": "string",
       "enum": [
-        {
-          "value": "regular",
-          "label": "规则"
-        },
-        {
-          "value": "irregular",
-          "label": "不规则"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "regular", "label": "规则" },
+        { "value": "irregular", "label": "不规则" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "学员报告的节律规则性（区别于 derived.rhythmRegular）",
       "category": "LEARNER_STATEMENT",
@@ -795,18 +600,9 @@
       "name_cn": "呼吸模式",
       "type": "string",
       "enum": [
-        {
-          "value": "regular",
-          "label": "规则"
-        },
-        {
-          "value": "irregular",
-          "label": "不规则"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "regular", "label": "规则" },
+        { "value": "irregular", "label": "不规则" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "呼吸节律模式",
       "category": "PHYSIOLOGICAL",
@@ -817,18 +613,9 @@
       "name_cn": "血糖单位",
       "type": "string",
       "enum": [
-        {
-          "value": "mg_dL",
-          "label": "mg/dL"
-        },
-        {
-          "value": "mmol_L",
-          "label": "mmol/L"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "mg_dL", "label": "mg/dL" },
+        { "value": "mmol_L", "label": "mmol/L" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "血糖测量单位",
       "category": "PHYSIOLOGICAL",
@@ -839,18 +626,9 @@
       "name_cn": "左瞳孔反应",
       "type": "string",
       "enum": [
-        {
-          "value": "reactive",
-          "label": "有反应"
-        },
-        {
-          "value": "non_reactive",
-          "label": "无反应"
-        },
-        {
-          "value": "unknown",
-          "label": "待判读"
-        }
+        { "value": "reactive", "label": "有反应" },
+        { "value": "non_reactive", "label": "无反应" },
+        { "value": "unknown", "label": "待判读" }
       ],
       "description": "左眼瞳孔对光反应",
       "category": "PHYSIOLOGICAL",
@@ -861,18 +639,9 @@
       "name_cn": "右瞳孔反应",
       "type": "string",
       "enum": [
-        {
-          "value": "reactive",
-          "label": "有反应"
-        },
-        {
-          "value": "non_reactive",
-          "label": "无反应"
-        },
-        {
-          "value": "unknown",
-          "label": "待判读"
-        }
+        { "value": "reactive", "label": "有反应" },
+        { "value": "non_reactive", "label": "无反应" },
+        { "value": "unknown", "label": "待判读" }
       ],
       "description": "右眼瞳孔对光反应",
       "category": "PHYSIOLOGICAL",
@@ -883,26 +652,11 @@
       "name_cn": "皮肤颜色",
       "type": "string",
       "enum": [
-        {
-          "value": "pink",
-          "label": "红润"
-        },
-        {
-          "value": "pale",
-          "label": "苍白"
-        },
-        {
-          "value": "cyanotic",
-          "label": "紫绀"
-        },
-        {
-          "value": "mottled",
-          "label": "花斑"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "pink", "label": "红润" },
+        { "value": "pale", "label": "苍白" },
+        { "value": "cyanotic", "label": "紫绀" },
+        { "value": "mottled", "label": "花斑" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "皮肤颜色",
       "category": "PHYSIOLOGICAL",
@@ -913,22 +667,10 @@
       "name_cn": "皮肤温度",
       "type": "string",
       "enum": [
-        {
-          "value": "warm",
-          "label": "温暖"
-        },
-        {
-          "value": "cool",
-          "label": "凉"
-        },
-        {
-          "value": "cold",
-          "label": "冰冷"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "warm", "label": "温暖" },
+        { "value": "cool", "label": "凉" },
+        { "value": "cold", "label": "冰冷" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "皮肤温度",
       "category": "PHYSIOLOGICAL",
@@ -939,18 +681,9 @@
       "name_cn": "皮肤湿度",
       "type": "string",
       "enum": [
-        {
-          "value": "dry",
-          "label": "干燥"
-        },
-        {
-          "value": "diaphoretic",
-          "label": "出汗"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "dry", "label": "干燥" },
+        { "value": "diaphoretic", "label": "出汗" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "皮肤湿度",
       "category": "PHYSIOLOGICAL",
@@ -1025,22 +758,10 @@
       "name_cn": "左侧握力",
       "type": "string",
       "enum": [
-        {
-          "value": "strong",
-          "label": "有力"
-        },
-        {
-          "value": "weak",
-          "label": "无力"
-        },
-        {
-          "value": "absent",
-          "label": "消失"
-        },
-        {
-          "value": "unknown",
-          "label": "待判读"
-        }
+        { "value": "strong", "label": "有力" },
+        { "value": "weak", "label": "无力" },
+        { "value": "absent", "label": "消失" },
+        { "value": "unknown", "label": "待判读" }
       ],
       "description": "左侧握力评估",
       "category": "PHYSIOLOGICAL",
@@ -1051,26 +772,50 @@
       "name_cn": "右侧握力",
       "type": "string",
       "enum": [
-        {
-          "value": "strong",
-          "label": "有力"
-        },
-        {
-          "value": "weak",
-          "label": "无力"
-        },
-        {
-          "value": "absent",
-          "label": "消失"
-        },
-        {
-          "value": "unknown",
-          "label": "待判读"
-        }
+        { "value": "strong", "label": "有力" },
+        { "value": "weak", "label": "无力" },
+        { "value": "absent", "label": "消失" },
+        { "value": "unknown", "label": "待判读" }
       ],
       "description": "右侧握力评估",
       "category": "PHYSIOLOGICAL",
       "default_value": "unknown"
+    },
+    {
+      "name": "phys.flushing",
+      "name_cn": "面部潮红",
+      "type": "boolean",
+      "description": "是否存在面部潮红（腺苷常见副作用）",
+      "category": "PHYSIOLOGICAL",
+      "default_value": false,
+      "value_labels": { "true": "有", "false": "无" }
+    },
+    {
+      "name": "phys.headache",
+      "name_cn": "头痛",
+      "type": "boolean",
+      "description": "是否存在头痛（腺苷常见副作用）",
+      "category": "PHYSIOLOGICAL",
+      "default_value": false,
+      "value_labels": { "true": "有", "false": "无" }
+    },
+    {
+      "name": "phys.throatNeckDiscomfort",
+      "name_cn": "喉/颈/下颌不适",
+      "type": "boolean",
+      "description": "是否存在喉部、颈部或下颌不适（腺苷常见副作用）",
+      "category": "PHYSIOLOGICAL",
+      "default_value": false,
+      "value_labels": { "true": "有", "false": "无" }
+    },
+    {
+      "name": "phys.transientCompleteAvBlock",
+      "name_cn": "一过性完全性AVB",
+      "type": "boolean",
+      "description": "是否出现一过性完全性房室传导阻滞（腺苷可致）",
+      "category": "PHYSIOLOGICAL",
+      "default_value": false,
+      "value_labels": { "true": "有", "false": "无" }
     },
     {
       "name": "device.defibConnected",
@@ -1079,32 +824,17 @@
       "description": "除颤仪是否已连接并开机",
       "category": "DEVICE_STATUS",
       "default_value": false,
-      "value_labels": {
-        "true": "已连接",
-        "false": "未连接"
-      }
+      "value_labels": { "true": "已连接", "false": "未连接" }
     },
     {
       "name": "device.defibMode",
       "name_cn": "除颤仪模式",
       "type": "string",
       "enum": [
-        {
-          "value": "monitor",
-          "label": "监护"
-        },
-        {
-          "value": "defib",
-          "label": "除颤"
-        },
-        {
-          "value": "sync",
-          "label": "同步复律"
-        },
-        {
-          "value": "pacing",
-          "label": "起搏"
-        }
+        { "value": "monitor", "label": "监护" },
+        { "value": "defib", "label": "除颤" },
+        { "value": "sync", "label": "同步复律" },
+        { "value": "pacing", "label": "起搏" }
       ],
       "description": "除颤仪当前工作模式",
       "category": "DEVICE_STATUS",
@@ -1117,10 +847,7 @@
       "description": "除颤仪是否已完成充电",
       "category": "DEVICE_STATUS",
       "default_value": false,
-      "value_labels": {
-        "true": "已充电",
-        "false": "未充电"
-      }
+      "value_labels": { "true": "已充电", "false": "未充电" }
     },
     {
       "name": "device.defibEnergy",
@@ -1140,28 +867,16 @@
       "description": "除颤电极片是否已正确粘贴",
       "category": "DEVICE_STATUS",
       "default_value": false,
-      "value_labels": {
-        "true": "已贴",
-        "false": "未贴"
-      }
+      "value_labels": { "true": "已贴", "false": "未贴" }
     },
     {
       "name": "device.defibPadsPosition",
       "name_cn": "电极片位置",
       "type": "string",
       "enum": [
-        {
-          "value": "anterior_anterior",
-          "label": "前后位"
-        },
-        {
-          "value": "anterior_posterior",
-          "label": "前后位（AP）"
-        },
-        {
-          "value": "none",
-          "label": "未贴"
-        }
+        { "value": "anterior_anterior", "label": "前后位" },
+        { "value": "anterior_posterior", "label": "前后位（AP）" },
+        { "value": "none", "label": "未贴" }
       ],
       "description": "除颤电极片粘贴位置",
       "category": "DEVICE_STATUS",
@@ -1183,10 +898,7 @@
       "description": "除颤仪是否处于同步模式",
       "category": "DEVICE_STATUS",
       "default_value": false,
-      "value_labels": {
-        "true": "是",
-        "false": "否"
-      }
+      "value_labels": { "true": "是", "false": "否" }
     },
     {
       "name": "device.aedOn",
@@ -1195,10 +907,7 @@
       "description": "AED是否已开启",
       "category": "DEVICE_STATUS",
       "default_value": false,
-      "value_labels": {
-        "true": "已开启",
-        "false": "未开启"
-      }
+      "value_labels": { "true": "已开启", "false": "未开启" }
     },
     {
       "name": "device.pacerOn",
@@ -1207,28 +916,16 @@
       "description": "临时起搏器是否已开启",
       "category": "DEVICE_STATUS",
       "default_value": false,
-      "value_labels": {
-        "true": "已开启",
-        "false": "未开启"
-      }
+      "value_labels": { "true": "已开启", "false": "未开启" }
     },
     {
       "name": "device.pacerMode",
       "name_cn": "起搏模式",
       "type": "string",
       "enum": [
-        {
-          "value": "demand",
-          "label": "按需"
-        },
-        {
-          "value": "fixed",
-          "label": "固定频率"
-        },
-        {
-          "value": "none",
-          "label": "未起搏"
-        }
+        { "value": "demand", "label": "按需" },
+        { "value": "fixed", "label": "固定频率" },
+        { "value": "none", "label": "未起搏" }
       ],
       "description": "起搏器工作模式",
       "category": "DEVICE_STATUS",
@@ -1252,10 +949,7 @@
       "description": "起搏是否夺获",
       "category": "DEVICE_STATUS",
       "default_value": false,
-      "value_labels": {
-        "true": "已夺获",
-        "false": "未夺获"
-      }
+      "value_labels": { "true": "已夺获", "false": "未夺获" }
     },
     {
       "name": "device.pacerThreshold",
@@ -1273,34 +967,13 @@
       "name_cn": "当前气道设备",
       "type": "string",
       "enum": [
-        {
-          "value": "none",
-          "label": "无"
-        },
-        {
-          "value": "bvm",
-          "label": "球囊面罩"
-        },
-        {
-          "value": "npa",
-          "label": "鼻咽通气管"
-        },
-        {
-          "value": "opa",
-          "label": "口咽通气管"
-        },
-        {
-          "value": "sga",
-          "label": "声门上气道"
-        },
-        {
-          "value": "ett",
-          "label": "气管插管"
-        },
-        {
-          "value": "cric",
-          "label": "环甲膜切开"
-        }
+        { "value": "none", "label": "无" },
+        { "value": "bvm", "label": "球囊面罩" },
+        { "value": "npa", "label": "鼻咽通气管" },
+        { "value": "opa", "label": "口咽通气管" },
+        { "value": "sga", "label": "声门上气道" },
+        { "value": "ett", "label": "气管插管" },
+        { "value": "cric", "label": "环甲膜切开" }
       ],
       "description": "当前使用的气道管理设备",
       "category": "DEVICE_STATUS",
@@ -1313,10 +986,7 @@
       "description": "气管插管是否已放置",
       "category": "DEVICE_STATUS",
       "default_value": false,
-      "value_labels": {
-        "true": "已放置",
-        "false": "未放置"
-      }
+      "value_labels": { "true": "已放置", "false": "未放置" }
     },
     {
       "name": "device.ettDepth",
@@ -1336,10 +1006,7 @@
       "description": "气管插管气囊是否已充气",
       "category": "DEVICE_STATUS",
       "default_value": false,
-      "value_labels": {
-        "true": "已充气",
-        "false": "未充气"
-      }
+      "value_labels": { "true": "已充气", "false": "未充气" }
     },
     {
       "name": "device.sgaPlaced",
@@ -1348,32 +1015,17 @@
       "description": "声门上气道是否已放置",
       "category": "DEVICE_STATUS",
       "default_value": false,
-      "value_labels": {
-        "true": "已放置",
-        "false": "未放置"
-      }
+      "value_labels": { "true": "已放置", "false": "未放置" }
     },
     {
       "name": "device.sgaType",
       "name_cn": "声门上气道类型",
       "type": "string",
       "enum": [
-        {
-          "value": "lma",
-          "label": "喉罩"
-        },
-        {
-          "value": "iGel",
-          "label": "iGel"
-        },
-        {
-          "value": "king",
-          "label": "King 喉管"
-        },
-        {
-          "value": "none",
-          "label": "无"
-        }
+        { "value": "lma", "label": "喉罩" },
+        { "value": "iGel", "label": "iGel" },
+        { "value": "king", "label": "King 喉管" },
+        { "value": "none", "label": "无" }
       ],
       "description": "声门上气道具体类型",
       "category": "DEVICE_STATUS",
@@ -1386,10 +1038,7 @@
       "description": "球囊面罩是否密封良好",
       "category": "DEVICE_STATUS",
       "default_value": false,
-      "value_labels": {
-        "true": "密封良好",
-        "false": "漏气"
-      }
+      "value_labels": { "true": "密封良好", "false": "漏气" }
     },
     {
       "name": "device.ivEstablished",
@@ -1398,36 +1047,18 @@
       "description": "外周静脉通路是否已建立",
       "category": "DEVICE_STATUS",
       "default_value": false,
-      "value_labels": {
-        "true": "已建立",
-        "false": "未建立"
-      }
+      "value_labels": { "true": "已建立", "false": "未建立" }
     },
     {
       "name": "device.ivLocation",
       "name_cn": "静脉通路位置",
       "type": "string",
       "enum": [
-        {
-          "value": "left_arm",
-          "label": "左臂"
-        },
-        {
-          "value": "right_arm",
-          "label": "右臂"
-        },
-        {
-          "value": "left_foot",
-          "label": "左足"
-        },
-        {
-          "value": "right_foot",
-          "label": "右足"
-        },
-        {
-          "value": "none",
-          "label": "未建立"
-        }
+        { "value": "left_arm", "label": "左臂" },
+        { "value": "right_arm", "label": "右臂" },
+        { "value": "left_foot", "label": "左足" },
+        { "value": "right_foot", "label": "右足" },
+        { "value": "none", "label": "未建立" }
       ],
       "description": "静脉通路建立位置",
       "category": "DEVICE_STATUS",
@@ -1440,28 +1071,16 @@
       "description": "骨内通路是否已建立",
       "category": "DEVICE_STATUS",
       "default_value": false,
-      "value_labels": {
-        "true": "已建立",
-        "false": "未建立"
-      }
+      "value_labels": { "true": "已建立", "false": "未建立" }
     },
     {
       "name": "device.ioLocation",
       "name_cn": "骨内通路位置",
       "type": "string",
       "enum": [
-        {
-          "value": "tibia",
-          "label": "胫骨"
-        },
-        {
-          "value": "humerus",
-          "label": "肱骨"
-        },
-        {
-          "value": "none",
-          "label": "未建立"
-        }
+        { "value": "tibia", "label": "胫骨" },
+        { "value": "humerus", "label": "肱骨" },
+        { "value": "none", "label": "未建立" }
       ],
       "description": "骨内通路建立位置",
       "category": "DEVICE_STATUS",
@@ -1474,10 +1093,7 @@
       "description": "心电图导联是否已连接",
       "category": "DEVICE_STATUS",
       "default_value": false,
-      "value_labels": {
-        "true": "已连接",
-        "false": "未连接"
-      }
+      "value_labels": { "true": "已连接", "false": "未连接" }
     },
     {
       "name": "device.ecg12LeadDone",
@@ -1486,10 +1102,7 @@
       "description": "12导联心电图是否已完成采集",
       "category": "DEVICE_STATUS",
       "default_value": false,
-      "value_labels": {
-        "true": "已完成",
-        "false": "未完成"
-      }
+      "value_labels": { "true": "已完成", "false": "未完成" }
     },
     {
       "name": "device.oxygenFlow",
@@ -1507,30 +1120,12 @@
       "name_cn": "氧疗设备",
       "type": "string",
       "enum": [
-        {
-          "value": "nasal_cannula",
-          "label": "鼻导管"
-        },
-        {
-          "value": "simple_mask",
-          "label": "普通面罩"
-        },
-        {
-          "value": "non_rebreather",
-          "label": "储氧面罩"
-        },
-        {
-          "value": "bvm",
-          "label": "球囊面罩"
-        },
-        {
-          "value": "ventilator",
-          "label": "呼吸机"
-        },
-        {
-          "value": "none",
-          "label": "未给氧"
-        }
+        { "value": "nasal_cannula", "label": "鼻导管" },
+        { "value": "simple_mask", "label": "普通面罩" },
+        { "value": "non_rebreather", "label": "储氧面罩" },
+        { "value": "bvm", "label": "球囊面罩" },
+        { "value": "ventilator", "label": "呼吸机" },
+        { "value": "none", "label": "未给氧" }
       ],
       "description": "当前使用的氧疗设备",
       "category": "DEVICE_STATUS",
@@ -1543,10 +1138,7 @@
       "description": "吸引器是否已准备好",
       "category": "DEVICE_STATUS",
       "default_value": false,
-      "value_labels": {
-        "true": "已就绪",
-        "false": "未就绪"
-      }
+      "value_labels": { "true": "已就绪", "false": "未就绪" }
     },
     {
       "name": "device.monitorConnected",
@@ -1555,10 +1147,7 @@
       "description": "监护仪是否已连接到患者",
       "category": "DEVICE_STATUS",
       "default_value": false,
-      "value_labels": {
-        "true": "已连接",
-        "false": "未连接"
-      }
+      "value_labels": { "true": "已连接", "false": "未连接" }
     },
     {
       "name": "device.glucometerReady",
@@ -1581,22 +1170,10 @@
       "name_cn": "备皮部位",
       "type": "string",
       "enum": [
-        {
-          "value": "chest",
-          "label": "胸部"
-        },
-        {
-          "value": "limbs",
-          "label": "四肢"
-        },
-        {
-          "value": "both",
-          "label": "全身"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "chest", "label": "胸部" },
+        { "value": "limbs", "label": "四肢" },
+        { "value": "both", "label": "全身" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "电极片备皮部位",
       "category": "DEVICE_STATUS",
@@ -1615,26 +1192,11 @@
       "name_cn": "导联标签",
       "type": "string",
       "enum": [
-        {
-          "value": "LA",
-          "label": "左上肢"
-        },
-        {
-          "value": "RA",
-          "label": "右上肢"
-        },
-        {
-          "value": "LL",
-          "label": "左下肢"
-        },
-        {
-          "value": "RL",
-          "label": "右下肢"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "LA", "label": "左上肢" },
+        { "value": "RA", "label": "右上肢" },
+        { "value": "LL", "label": "左下肢" },
+        { "value": "RL", "label": "右下肢" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "心电图导联标签",
       "category": "DEVICE_STATUS",
@@ -1653,14 +1215,8 @@
       "name_cn": "V1位置",
       "type": "string",
       "enum": [
-        {
-          "value": "4th_ics_right_sternal",
-          "label": "胸骨右缘第4肋间"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "4th_ics_right_sternal", "label": "胸骨右缘第4肋间" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "V1电极位置",
       "category": "DEVICE_STATUS",
@@ -1671,14 +1227,8 @@
       "name_cn": "V2位置",
       "type": "string",
       "enum": [
-        {
-          "value": "4th_ics_left_sternal",
-          "label": "胸骨左缘第4肋间"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "4th_ics_left_sternal", "label": "胸骨左缘第4肋间" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "V2电极位置",
       "category": "DEVICE_STATUS",
@@ -1689,14 +1239,8 @@
       "name_cn": "V3位置",
       "type": "string",
       "enum": [
-        {
-          "value": "between_v2_v4",
-          "label": "V2-V4之间"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "between_v2_v4", "label": "V2-V4之间" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "V3电极位置",
       "category": "DEVICE_STATUS",
@@ -1707,14 +1251,8 @@
       "name_cn": "V4位置",
       "type": "string",
       "enum": [
-        {
-          "value": "5th_ics_midclavicular",
-          "label": "第5肋间锁骨中线"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "5th_ics_midclavicular", "label": "第5肋间锁骨中线" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "V4电极位置",
       "category": "DEVICE_STATUS",
@@ -1725,14 +1263,8 @@
       "name_cn": "V5位置",
       "type": "string",
       "enum": [
-        {
-          "value": "anterior_axillary",
-          "label": "腋前线"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "anterior_axillary", "label": "腋前线" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "V5电极位置",
       "category": "DEVICE_STATUS",
@@ -1743,14 +1275,8 @@
       "name_cn": "V6位置",
       "type": "string",
       "enum": [
-        {
-          "value": "midaxillary",
-          "label": "腋中线"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "midaxillary", "label": "腋中线" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "V6电极位置",
       "category": "DEVICE_STATUS",
@@ -1761,18 +1287,9 @@
       "name_cn": "心电图机电源",
       "type": "string",
       "enum": [
-        {
-          "value": "on",
-          "label": "开机"
-        },
-        {
-          "value": "off",
-          "label": "关机"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "on", "label": "开机" },
+        { "value": "off", "label": "关机" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "心电图机电源状态",
       "category": "DEVICE_STATUS",
@@ -1799,18 +1316,9 @@
       "name_cn": "心电图已采集",
       "type": "string",
       "enum": [
-        {
-          "value": "obtained",
-          "label": "已采集"
-        },
-        {
-          "value": "not_obtained",
-          "label": "未采集"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "obtained", "label": "已采集" },
+        { "value": "not_obtained", "label": "未采集" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "心电图记录状态",
       "category": "DEVICE_STATUS",
@@ -1821,18 +1329,9 @@
       "name_cn": "气道开放手法",
       "type": "string",
       "enum": [
-        {
-          "value": "head_tilt_chin_lift",
-          "label": "仰头抬颏"
-        },
-        {
-          "value": "jaw_thrust",
-          "label": "下颌托举"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "head_tilt_chin_lift", "label": "仰头抬颏" },
+        { "value": "jaw_thrust", "label": "下颌托举" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "气道开放手法",
       "category": "DEVICE_STATUS",
@@ -1843,18 +1342,9 @@
       "name_cn": "气道通畅",
       "type": "string",
       "enum": [
-        {
-          "value": "yes",
-          "label": "通畅"
-        },
-        {
-          "value": "no",
-          "label": "阻塞"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "yes", "label": "通畅" },
+        { "value": "no", "label": "阻塞" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "气道是否通畅",
       "category": "DEVICE_STATUS",
@@ -1914,46 +1404,16 @@
       "name_cn": "最后给药途径",
       "type": "string",
       "enum": [
-        {
-          "value": "IV",
-          "label": "静脉注射"
-        },
-        {
-          "value": "IO",
-          "label": "骨内注射"
-        },
-        {
-          "value": "IM",
-          "label": "肌肉注射"
-        },
-        {
-          "value": "IN",
-          "label": "鼻内"
-        },
-        {
-          "value": "SL",
-          "label": "舌下"
-        },
-        {
-          "value": "PO",
-          "label": "口服"
-        },
-        {
-          "value": "ET",
-          "label": "气管内"
-        },
-        {
-          "value": "NEB",
-          "label": "雾化"
-        },
-        {
-          "value": "SC",
-          "label": "皮下"
-        },
-        {
-          "value": "PR",
-          "label": "直肠"
-        }
+        { "value": "IV", "label": "静脉注射" },
+        { "value": "IO", "label": "骨内注射" },
+        { "value": "IM", "label": "肌肉注射" },
+        { "value": "IN", "label": "鼻内" },
+        { "value": "SL", "label": "舌下" },
+        { "value": "PO", "label": "口服" },
+        { "value": "ET", "label": "气管内" },
+        { "value": "NEB", "label": "雾化" },
+        { "value": "SC", "label": "皮下" },
+        { "value": "PR", "label": "直肠" }
       ],
       "description": "最后给药的途径",
       "category": "TREATMENT_HISTORY",
@@ -1966,11 +1426,7 @@
       "description": "status（given/failed/cancelled）、lastTime、count、totalDose、lastDose、lastRoute",
       "category": "TREATMENT_HISTORY",
       "writable_by": "EXECUTOR,SYSTEM",
-      "requiredKeys": [
-        "status",
-        "count",
-        "totalDose"
-      ],
+      "requiredKeys": ["status", "count", "totalDose"],
       "default_value": {
         "status": null,
         "lastTime": null,
@@ -1987,11 +1443,7 @@
       "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
       "category": "TREATMENT_HISTORY",
       "writable_by": "EXECUTOR,SYSTEM",
-      "requiredKeys": [
-        "status",
-        "count",
-        "totalDose"
-      ],
+      "requiredKeys": ["status", "count", "totalDose"],
       "default_value": {
         "status": null,
         "lastTime": null,
@@ -2008,11 +1460,7 @@
       "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
       "category": "TREATMENT_HISTORY",
       "writable_by": "EXECUTOR,SYSTEM",
-      "requiredKeys": [
-        "status",
-        "count",
-        "totalDose"
-      ],
+      "requiredKeys": ["status", "count", "totalDose"],
       "default_value": {
         "status": null,
         "lastTime": null,
@@ -2029,11 +1477,7 @@
       "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
       "category": "TREATMENT_HISTORY",
       "writable_by": "EXECUTOR,SYSTEM",
-      "requiredKeys": [
-        "status",
-        "count",
-        "totalDose"
-      ],
+      "requiredKeys": ["status", "count", "totalDose"],
       "default_value": {
         "status": null,
         "lastTime": null,
@@ -2050,12 +1494,7 @@
       "description": "status、lastTime、count、totalDose、lastDose、lastRoute、flushDone",
       "category": "TREATMENT_HISTORY",
       "writable_by": "EXECUTOR,SYSTEM",
-      "requiredKeys": [
-        "status",
-        "count",
-        "totalDose",
-        "flushDone"
-      ],
+      "requiredKeys": ["status", "count", "totalDose", "flushDone"],
       "default_value": {
         "status": null,
         "lastTime": null,
@@ -2073,11 +1512,7 @@
       "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
       "category": "TREATMENT_HISTORY",
       "writable_by": "EXECUTOR,SYSTEM",
-      "requiredKeys": [
-        "status",
-        "count",
-        "totalDose"
-      ],
+      "requiredKeys": ["status", "count", "totalDose"],
       "default_value": {
         "status": null,
         "lastTime": null,
@@ -2094,11 +1529,7 @@
       "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
       "category": "TREATMENT_HISTORY",
       "writable_by": "EXECUTOR,SYSTEM",
-      "requiredKeys": [
-        "status",
-        "count",
-        "totalDose"
-      ],
+      "requiredKeys": ["status", "count", "totalDose"],
       "default_value": {
         "status": null,
         "lastTime": null,
@@ -2115,11 +1546,7 @@
       "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
       "category": "TREATMENT_HISTORY",
       "writable_by": "EXECUTOR,SYSTEM",
-      "requiredKeys": [
-        "status",
-        "count",
-        "totalDose"
-      ],
+      "requiredKeys": ["status", "count", "totalDose"],
       "default_value": {
         "status": null,
         "lastTime": null,
@@ -2136,11 +1563,7 @@
       "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
       "category": "TREATMENT_HISTORY",
       "writable_by": "EXECUTOR,SYSTEM",
-      "requiredKeys": [
-        "status",
-        "count",
-        "totalDose"
-      ],
+      "requiredKeys": ["status", "count", "totalDose"],
       "default_value": {
         "status": null,
         "lastTime": null,
@@ -2157,11 +1580,7 @@
       "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
       "category": "TREATMENT_HISTORY",
       "writable_by": "EXECUTOR,SYSTEM",
-      "requiredKeys": [
-        "status",
-        "count",
-        "totalDose"
-      ],
+      "requiredKeys": ["status", "count", "totalDose"],
       "default_value": {
         "status": null,
         "lastTime": null,
@@ -2178,11 +1597,7 @@
       "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
       "category": "TREATMENT_HISTORY",
       "writable_by": "EXECUTOR,SYSTEM",
-      "requiredKeys": [
-        "status",
-        "count",
-        "totalDose"
-      ],
+      "requiredKeys": ["status", "count", "totalDose"],
       "default_value": {
         "status": null,
         "lastTime": null,
@@ -2199,11 +1614,7 @@
       "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
       "category": "TREATMENT_HISTORY",
       "writable_by": "EXECUTOR,SYSTEM",
-      "requiredKeys": [
-        "status",
-        "count",
-        "totalDose"
-      ],
+      "requiredKeys": ["status", "count", "totalDose"],
       "default_value": {
         "status": null,
         "lastTime": null,
@@ -2220,11 +1631,7 @@
       "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
       "category": "TREATMENT_HISTORY",
       "writable_by": "EXECUTOR,SYSTEM",
-      "requiredKeys": [
-        "status",
-        "count",
-        "totalDose"
-      ],
+      "requiredKeys": ["status", "count", "totalDose"],
       "default_value": {
         "status": null,
         "lastTime": null,
@@ -2241,11 +1648,7 @@
       "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
       "category": "TREATMENT_HISTORY",
       "writable_by": "EXECUTOR,SYSTEM",
-      "requiredKeys": [
-        "status",
-        "count",
-        "totalDose"
-      ],
+      "requiredKeys": ["status", "count", "totalDose"],
       "default_value": {
         "status": null,
         "lastTime": null,
@@ -2262,11 +1665,7 @@
       "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
       "category": "TREATMENT_HISTORY",
       "writable_by": "EXECUTOR,SYSTEM",
-      "requiredKeys": [
-        "status",
-        "count",
-        "totalDose"
-      ],
+      "requiredKeys": ["status", "count", "totalDose"],
       "default_value": {
         "status": null,
         "lastTime": null,
@@ -2283,11 +1682,7 @@
       "description": "status、lastTime、count、totalDose、lastDose、lastRoute",
       "category": "TREATMENT_HISTORY",
       "writable_by": "EXECUTOR,SYSTEM",
-      "requiredKeys": [
-        "status",
-        "count",
-        "totalDose"
-      ],
+      "requiredKeys": ["status", "count", "totalDose"],
       "default_value": {
         "status": null,
         "lastTime": null,
@@ -2304,10 +1699,7 @@
       "description": "status、count、lastTime、lastEnergy、lastSync",
       "category": "TREATMENT_HISTORY",
       "writable_by": "EXECUTOR,SYSTEM",
-      "requiredKeys": [
-        "status",
-        "count"
-      ],
+      "requiredKeys": ["status", "count"],
       "default_value": {
         "status": null,
         "count": 0,
@@ -2323,10 +1715,7 @@
       "description": "status、success、emergency、count、lastTime、lastEnergy",
       "category": "TREATMENT_HISTORY",
       "writable_by": "EXECUTOR,SYSTEM",
-      "requiredKeys": [
-        "status",
-        "count"
-      ],
+      "requiredKeys": ["status", "count"],
       "default_value": {
         "status": null,
         "success": false,
@@ -2343,15 +1732,8 @@
       "description": "status、count、lastTime",
       "category": "TREATMENT_HISTORY",
       "writable_by": "EXECUTOR,SYSTEM",
-      "requiredKeys": [
-        "status",
-        "count"
-      ],
-      "default_value": {
-        "status": null,
-        "count": 0,
-        "lastTime": null
-      }
+      "requiredKeys": ["status", "count"],
+      "default_value": { "status": null, "count": 0, "lastTime": null }
     },
     {
       "name": "intervention.intubation",
@@ -2360,15 +1742,8 @@
       "description": "status、count、lastTime",
       "category": "TREATMENT_HISTORY",
       "writable_by": "EXECUTOR,SYSTEM",
-      "requiredKeys": [
-        "status",
-        "count"
-      ],
-      "default_value": {
-        "status": null,
-        "count": 0,
-        "lastTime": null
-      }
+      "requiredKeys": ["status", "count"],
+      "default_value": { "status": null, "count": 0, "lastTime": null }
     },
     {
       "name": "intervention.sga",
@@ -2377,16 +1752,8 @@
       "description": "status、type、count、lastTime",
       "category": "TREATMENT_HISTORY",
       "writable_by": "EXECUTOR,SYSTEM",
-      "requiredKeys": [
-        "status",
-        "count"
-      ],
-      "default_value": {
-        "status": null,
-        "type": null,
-        "count": 0,
-        "lastTime": null
-      }
+      "requiredKeys": ["status", "count"],
+      "default_value": { "status": null, "type": null, "count": 0, "lastTime": null }
     },
     {
       "name": "intervention.cpr",
@@ -2395,16 +1762,8 @@
       "description": "status、count、startTime、stopTime",
       "category": "TREATMENT_HISTORY",
       "writable_by": "EXECUTOR,SYSTEM",
-      "requiredKeys": [
-        "status",
-        "count"
-      ],
-      "default_value": {
-        "status": null,
-        "count": 0,
-        "startTime": null,
-        "stopTime": null
-      }
+      "requiredKeys": ["status", "count"],
+      "default_value": { "status": null, "count": 0, "startTime": null, "stopTime": null }
     },
     {
       "name": "intervention.vagal",
@@ -2413,17 +1772,8 @@
       "description": "status（attempted/performed/failed）、effect（pending/success/failure）、count、lastTime",
       "category": "TREATMENT_HISTORY",
       "writable_by": "EXECUTOR,SYSTEM",
-      "requiredKeys": [
-        "status",
-        "effect",
-        "count"
-      ],
-      "default_value": {
-        "status": null,
-        "effect": "pending",
-        "count": 0,
-        "lastTime": null
-      }
+      "requiredKeys": ["status", "effect", "count"],
+      "default_value": { "status": null, "effect": "pending", "count": 0, "lastTime": null }
     },
     {
       "name": "intervention.ttm",
@@ -2432,14 +1782,8 @@
       "description": "status、targetTemp、lastTime",
       "category": "TREATMENT_HISTORY",
       "writable_by": "EXECUTOR,SYSTEM",
-      "requiredKeys": [
-        "status"
-      ],
-      "default_value": {
-        "status": null,
-        "targetTemp": null,
-        "lastTime": null
-      }
+      "requiredKeys": ["status"],
+      "default_value": { "status": null, "targetTemp": null, "lastTime": null }
     },
     {
       "name": "intervention.fluid",
@@ -2448,15 +1792,8 @@
       "description": "bolusGiven、totalVolume、lastTime",
       "category": "TREATMENT_HISTORY",
       "writable_by": "EXECUTOR,SYSTEM",
-      "requiredKeys": [
-        "bolusGiven",
-        "totalVolume"
-      ],
-      "default_value": {
-        "bolusGiven": false,
-        "totalVolume": 0,
-        "lastTime": null
-      }
+      "requiredKeys": ["bolusGiven", "totalVolume"],
+      "default_value": { "bolusGiven": false, "totalVolume": 0, "lastTime": null }
     },
     {
       "name": "intervention.rhythmConverted",
@@ -2465,10 +1802,7 @@
       "description": "经过治疗后心律是否转为窦性",
       "category": "CLINICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "已转复",
-        "false": "未转复"
-      }
+      "value_labels": { "true": "已转复", "false": "未转复" }
     },
     {
       "name": "intervention.secondLineFailed",
@@ -2477,10 +1811,7 @@
       "description": "二线药物是否无效",
       "category": "CLINICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "无效",
-        "false": "有效"
-      }
+      "value_labels": { "true": "无效", "false": "有效" }
     },
     {
       "name": "intervention.salineFlushDone",
@@ -2489,28 +1820,16 @@
       "description": "盐水冲管是否已完成",
       "category": "TREATMENT_HISTORY",
       "default_value": false,
-      "value_labels": {
-        "true": "已完成",
-        "false": "未完成"
-      }
+      "value_labels": { "true": "已完成", "false": "未完成" }
     },
     {
       "name": "intervention.drugResponse",
       "name_cn": "药物反应",
       "type": "string",
       "enum": [
-        {
-          "value": "effective",
-          "label": "有效"
-        },
-        {
-          "value": "partial",
-          "label": "部分有效"
-        },
-        {
-          "value": "ineffective",
-          "label": "无效"
-        }
+        { "value": "effective", "label": "有效" },
+        { "value": "partial", "label": "部分有效" },
+        { "value": "ineffective", "label": "无效" }
       ],
       "description": "最近一次药物的反应效果",
       "category": "TREATMENT_HISTORY",
@@ -2521,14 +1840,8 @@
       "name_cn": "学员判断QRS宽度",
       "type": "string",
       "enum": [
-        {
-          "value": "narrow",
-          "label": "窄QRS"
-        },
-        {
-          "value": "wide",
-          "label": "宽QRS"
-        }
+        { "value": "narrow", "label": "窄QRS" },
+        { "value": "wide", "label": "宽QRS" }
       ],
       "description": "学员报告或判断的QRS宽度",
       "category": "LEARNER_STATEMENT",
@@ -2541,10 +1854,7 @@
       "description": "学员报告或判断的节律规则性",
       "category": "LEARNER_STATEMENT",
       "default_value": null,
-      "value_labels": {
-        "true": "规则",
-        "false": "不规则"
-      }
+      "value_labels": { "true": "规则", "false": "不规则" }
     },
     {
       "name": "assert.stable",
@@ -2553,52 +1863,22 @@
       "description": "学员报告或判断的血流动力学稳定性",
       "category": "LEARNER_STATEMENT",
       "default_value": null,
-      "value_labels": {
-        "true": "稳定",
-        "false": "不稳定"
-      }
+      "value_labels": { "true": "稳定", "false": "不稳定" }
     },
     {
       "name": "assert.rhythmType",
       "name_cn": "学员判断心律类型",
       "type": "string",
       "enum": [
-        {
-          "value": "sinus",
-          "label": "窦性心律"
-        },
-        {
-          "value": "svt",
-          "label": "室上性心动过速"
-        },
-        {
-          "value": "afib",
-          "label": "心房颤动"
-        },
-        {
-          "value": "aflutter",
-          "label": "心房扑动"
-        },
-        {
-          "value": "vt",
-          "label": "室性心动过速"
-        },
-        {
-          "value": "vf",
-          "label": "心室颤动"
-        },
-        {
-          "value": "pea",
-          "label": "无脉电活动"
-        },
-        {
-          "value": "asystole",
-          "label": "心室停搏"
-        },
-        {
-          "value": "unknown",
-          "label": "未确认"
-        }
+        { "value": "sinus", "label": "窦性心律" },
+        { "value": "svt", "label": "室上性心动过速" },
+        { "value": "afib", "label": "心房颤动" },
+        { "value": "aflutter", "label": "心房扑动" },
+        { "value": "vt", "label": "室性心动过速" },
+        { "value": "vf", "label": "心室颤动" },
+        { "value": "pea", "label": "无脉电活动" },
+        { "value": "asystole", "label": "心室停搏" },
+        { "value": "unknown", "label": "未确认" }
       ],
       "description": "学员判断的具体心律类型",
       "category": "LEARNER_STATEMENT",
@@ -2642,22 +1922,10 @@
       "name_cn": "学员报告意识状态",
       "type": "string",
       "enum": [
-        {
-          "value": "alert",
-          "label": "清醒"
-        },
-        {
-          "value": "verbal",
-          "label": "对呼叫有反应"
-        },
-        {
-          "value": "pain",
-          "label": "对疼痛有反应"
-        },
-        {
-          "value": "unresponsive",
-          "label": "无反应"
-        }
+        { "value": "alert", "label": "清醒" },
+        { "value": "verbal", "label": "对呼叫有反应" },
+        { "value": "pain", "label": "对疼痛有反应" },
+        { "value": "unresponsive", "label": "无反应" }
       ],
       "description": "学员报告的意识状态",
       "category": "LEARNER_STATEMENT",
@@ -2693,10 +1961,7 @@
       "description": "12导联心电图是否已完成记录",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已记录",
-        "false": "未记录"
-      }
+      "value_labels": { "true": "已记录", "false": "未记录" }
     },
     {
       "name": "process.currentState",
@@ -2737,38 +2002,14 @@
       "name_cn": "算法分支",
       "type": "string",
       "enum": [
-        {
-          "value": "svt",
-          "label": "室上性心动过速"
-        },
-        {
-          "value": "afib",
-          "label": "心房颤动"
-        },
-        {
-          "value": "vt",
-          "label": "室性心动过速"
-        },
-        {
-          "value": "vf",
-          "label": "心室颤动"
-        },
-        {
-          "value": "pea",
-          "label": "无脉电活动"
-        },
-        {
-          "value": "asystole",
-          "label": "心室停搏"
-        },
-        {
-          "value": "bradycardia",
-          "label": "心动过缓"
-        },
-        {
-          "value": "unknown",
-          "label": "未确认"
-        }
+        { "value": "svt", "label": "室上性心动过速" },
+        { "value": "afib", "label": "心房颤动" },
+        { "value": "vt", "label": "室性心动过速" },
+        { "value": "vf", "label": "心室颤动" },
+        { "value": "pea", "label": "无脉电活动" },
+        { "value": "asystole", "label": "心室停搏" },
+        { "value": "bradycardia", "label": "心动过缓" },
+        { "value": "unknown", "label": "未确认" }
       ],
       "description": "当前遵循的ACLS算法分支",
       "category": "SYSTEM",
@@ -2781,10 +2022,7 @@
       "description": "是否偏离标准流程",
       "category": "SYSTEM",
       "default_value": false,
-      "value_labels": {
-        "true": "已偏离",
-        "false": "未偏离"
-      }
+      "value_labels": { "true": "已偏离", "false": "未偏离" }
     },
     {
       "name": "process.deviationReason",
@@ -2799,42 +2037,15 @@
       "name_cn": "返回父级原因",
       "type": "string",
       "enum": [
-        {
-          "value": "ROSC",
-          "label": "自主循环恢复"
-        },
-        {
-          "value": "UNSTABLE",
-          "label": "血流动力学不稳定"
-        },
-        {
-          "value": "WIDE_QRS",
-          "label": "宽QRS"
-        },
-        {
-          "value": "IRREGULAR_RHYTHM",
-          "label": "不规则节律"
-        },
-        {
-          "value": "REFRACTORY_SVT",
-          "label": "难治性室上速"
-        },
-        {
-          "value": "PERSISTENT_SVT",
-          "label": "持续性室上速"
-        },
-        {
-          "value": "REFRACTORY_SHOCK",
-          "label": "难治性室颤"
-        },
-        {
-          "value": "WPW_CONTRADICTION",
-          "label": "WPW禁忌"
-        },
-        {
-          "value": "TERMINATE_ARREST",
-          "label": "终止复苏"
-        }
+        { "value": "ROSC", "label": "自主循环恢复" },
+        { "value": "UNSTABLE", "label": "血流动力学不稳定" },
+        { "value": "WIDE_QRS", "label": "宽QRS" },
+        { "value": "IRREGULAR_RHYTHM", "label": "不规则节律" },
+        { "value": "REFRACTORY_SVT", "label": "难治性室上速" },
+        { "value": "PERSISTENT_SVT", "label": "持续性室上速" },
+        { "value": "REFRACTORY_SHOCK", "label": "难治性室颤" },
+        { "value": "WPW_CONTRADICTION", "label": "WPW禁忌" },
+        { "value": "TERMINATE_ARREST", "label": "终止复苏" }
       ],
       "description": "子级返回父级的原因",
       "category": "SYSTEM",
@@ -2855,10 +2066,7 @@
       "description": "安全清场是否已完成",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已完成",
-        "false": "未完成"
-      }
+      "value_labels": { "true": "已完成", "false": "未完成" }
     },
     {
       "name": "process.contraindicationsChecked",
@@ -2867,10 +2075,7 @@
       "description": "操作禁忌症是否已检查",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已检查",
-        "false": "未检查"
-      }
+      "value_labels": { "true": "已检查", "false": "未检查" }
     },
     {
       "name": "process.environmentSafe",
@@ -2879,10 +2084,7 @@
       "description": "操作环境是否安全",
       "category": "PROCESS_MARKER",
       "default_value": true,
-      "value_labels": {
-        "true": "安全",
-        "false": "不安全"
-      }
+      "value_labels": { "true": "安全", "false": "不安全" }
     },
     {
       "name": "process.teamRolesAssigned",
@@ -2891,10 +2093,7 @@
       "description": "团队成员角色是否已分配",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已分配",
-        "false": "未分配"
-      }
+      "value_labels": { "true": "已分配", "false": "未分配" }
     },
     {
       "name": "process.acknowledged",
@@ -2903,10 +2102,7 @@
       "description": "闭环确认是否已完成",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已确认",
-        "false": "未确认"
-      }
+      "value_labels": { "true": "已确认", "false": "未确认" }
     },
     {
       "name": "process.timeRecorded",
@@ -2915,10 +2111,7 @@
       "description": "关键时间点是否已记录",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已记录",
-        "false": "未记录"
-      }
+      "value_labels": { "true": "已记录", "false": "未记录" }
     },
     {
       "name": "process.consultCalled",
@@ -2927,10 +2120,7 @@
       "description": "专家咨询是否已呼叫",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已呼叫",
-        "false": "未呼叫"
-      }
+      "value_labels": { "true": "已呼叫", "false": "未呼叫" }
     },
     {
       "name": "process.strategyOverridden",
@@ -2939,10 +2129,7 @@
       "description": "策略是否已被覆盖",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已覆盖",
-        "false": "未覆盖"
-      }
+      "value_labels": { "true": "已覆盖", "false": "未覆盖" }
     },
     {
       "name": "process.operationStarted",
@@ -2951,10 +2138,7 @@
       "description": "主要操作是否已开始",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已开始",
-        "false": "未开始"
-      }
+      "value_labels": { "true": "已开始", "false": "未开始" }
     },
     {
       "name": "process.familyChecked",
@@ -2963,10 +2147,7 @@
       "description": "家属情况是否已检查",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已检查",
-        "false": "未检查"
-      }
+      "value_labels": { "true": "已检查", "false": "未检查" }
     },
     {
       "name": "process.transportReady",
@@ -2975,10 +2156,7 @@
       "description": "转运准备是否已完成",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已就绪",
-        "false": "未就绪"
-      }
+      "value_labels": { "true": "已就绪", "false": "未就绪" }
     },
     {
       "name": "process.reassessed",
@@ -2987,10 +2165,7 @@
       "description": "患者是否已完成重新评估",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已评估",
-        "false": "未评估"
-      }
+      "value_labels": { "true": "已评估", "false": "未评估" }
     },
     {
       "name": "process.bpMeasured",
@@ -2999,10 +2174,7 @@
       "description": "血压是否已测量",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已测量",
-        "false": "未测量"
-      }
+      "value_labels": { "true": "已测量", "false": "未测量" }
     },
     {
       "name": "process.hrMeasured",
@@ -3011,10 +2183,7 @@
       "description": "心率是否已测量",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已测量",
-        "false": "未测量"
-      }
+      "value_labels": { "true": "已测量", "false": "未测量" }
     },
     {
       "name": "process.oximetryMeasured",
@@ -3023,10 +2192,7 @@
       "description": "血氧饱和度是否已测量",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已测量",
-        "false": "未测量"
-      }
+      "value_labels": { "true": "已测量", "false": "未测量" }
     },
     {
       "name": "process.consciousnessChecked",
@@ -3035,10 +2201,7 @@
       "description": "意识状态是否已检查",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已检查",
-        "false": "未检查"
-      }
+      "value_labels": { "true": "已检查", "false": "未检查" }
     },
     {
       "name": "process.historyCollected",
@@ -3047,10 +2210,7 @@
       "description": "病史是否已采集",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已采集",
-        "false": "未采集"
-      }
+      "value_labels": { "true": "已采集", "false": "未采集" }
     },
     {
       "name": "process.errorFixed",
@@ -3059,10 +2219,7 @@
       "description": "错误是否已纠正",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已纠正",
-        "false": "未纠正"
-      }
+      "value_labels": { "true": "已纠正", "false": "未纠正" }
     },
     {
       "name": "process.errorOccurred",
@@ -3071,44 +2228,20 @@
       "description": "是否发生了错误",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已发生",
-        "false": "未发生"
-      }
+      "value_labels": { "true": "已发生", "false": "未发生" }
     },
     {
       "name": "process.errorType",
       "name_cn": "错误类型",
       "type": "string",
       "enum": [
-        {
-          "value": "medication_dose",
-          "label": "药物剂量错误"
-        },
-        {
-          "value": "defib_timing",
-          "label": "除颤时机错误"
-        },
-        {
-          "value": "algorithm_deviation",
-          "label": "流程偏离"
-        },
-        {
-          "value": "communication",
-          "label": "沟通问题"
-        },
-        {
-          "value": "cpr_quality",
-          "label": "CPR质量不达标"
-        },
-        {
-          "value": "airway",
-          "label": "气道管理问题"
-        },
-        {
-          "value": "other",
-          "label": "其他"
-        }
+        { "value": "medication_dose", "label": "药物剂量错误" },
+        { "value": "defib_timing", "label": "除颤时机错误" },
+        { "value": "algorithm_deviation", "label": "流程偏离" },
+        { "value": "communication", "label": "沟通问题" },
+        { "value": "cpr_quality", "label": "CPR质量不达标" },
+        { "value": "airway", "label": "气道管理问题" },
+        { "value": "other", "label": "其他" }
       ],
       "description": "错误的具体类型",
       "category": "PROCESS_MARKER",
@@ -3121,10 +2254,7 @@
       "description": "团队决定终止复苏",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已决定",
-        "false": "未决定"
-      }
+      "value_labels": { "true": "已决定", "false": "未决定" }
     },
     {
       "name": "process.timeoutOccurred",
@@ -3133,10 +2263,7 @@
       "description": "是否发生了超时",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已发生",
-        "false": "未发生"
-      }
+      "value_labels": { "true": "已发生", "false": "未发生" }
     },
     {
       "name": "process.symptoms",
@@ -3157,10 +2284,7 @@
       "description": "患者是否存在心动过缓导致的临床症状",
       "category": "PHYSIOLOGICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "有",
-        "false": "无"
-      }
+      "value_labels": { "true": "有", "false": "无" }
     },
     {
       "name": "process.terminationDocumented",
@@ -3169,10 +2293,7 @@
       "description": "终止复苏相关记录是否已全部填写完毕",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已完成",
-        "false": "未完成"
-      }
+      "value_labels": { "true": "已完成", "false": "未完成" }
     },
     {
       "name": "process.blsSurveyComplete",
@@ -3181,10 +2302,7 @@
       "description": "表示学员已完成BLS初步评估",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已完成",
-        "false": "未完成"
-      }
+      "value_labels": { "true": "已完成", "false": "未完成" }
     },
     {
       "name": "process.timeoutResolved",
@@ -3193,10 +2311,7 @@
       "description": "超时是否已解决",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已解决",
-        "false": "未解决"
-      }
+      "value_labels": { "true": "已解决", "false": "未解决" }
     },
     {
       "name": "process.lastError",
@@ -3204,6 +2319,25 @@
       "type": "string",
       "description": "最后一次错误信息",
       "category": "PROCESS_MARKER",
+      "default_value": null
+    },
+    {
+      "name": "process.tutorWarning",
+      "name_cn": "Tutor 警告文案 key",
+      "type": "string",
+      "description": "最近一次 Tutor 警告的 message key（如 feedback_adenosine_recheck_warn）",
+      "category": "PROCESS_MARKER",
+      "writable_by": "TUTOR_WARN,SYSTEM",
+      "default_value": null
+    },
+    {
+      "name": "process.tutorWarningAt",
+      "name_cn": "Tutor 警告时间",
+      "type": "long",
+      "unit": "timestamp",
+      "description": "最近一次 Tutor 警告的时间戳（ms）",
+      "category": "TIMELINE",
+      "writable_by": "TUTOR_WARN,SYSTEM",
       "default_value": null
     },
     {
@@ -3219,22 +2353,10 @@
       "name_cn": "刺激类型",
       "type": "string",
       "enum": [
-        {
-          "value": "verbal",
-          "label": "呼叫"
-        },
-        {
-          "value": "painful",
-          "label": "疼痛刺激"
-        },
-        {
-          "value": "shake",
-          "label": "摇晃"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "verbal", "label": "呼叫" },
+        { "value": "painful", "label": "疼痛刺激" },
+        { "value": "shake", "label": "摇晃" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "反应评估使用的刺激方式",
       "category": "PROCESS_MARKER",
@@ -3245,22 +2367,10 @@
       "name_cn": "呼吸评估手法",
       "type": "string",
       "enum": [
-        {
-          "value": "look",
-          "label": "看"
-        },
-        {
-          "value": "listen",
-          "label": "听"
-        },
-        {
-          "value": "feel",
-          "label": "感受"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "look", "label": "看" },
+        { "value": "listen", "label": "听" },
+        { "value": "feel", "label": "感受" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "呼吸评估使用的手法",
       "category": "PROCESS_MARKER",
@@ -3271,14 +2381,8 @@
       "name_cn": "用药上下文",
       "type": "string",
       "enum": [
-        {
-          "value": "current",
-          "label": "当前"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "current", "label": "当前" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "用药询问上下文",
       "category": "PROCESS_MARKER",
@@ -3289,34 +2393,13 @@
       "name_cn": "抗凝药类型",
       "type": "string",
       "enum": [
-        {
-          "value": "warfarin",
-          "label": "华法林"
-        },
-        {
-          "value": "rivaroxaban",
-          "label": "利伐沙班"
-        },
-        {
-          "value": "apixaban",
-          "label": "阿哌沙班"
-        },
-        {
-          "value": "dabigatran",
-          "label": "达比加群"
-        },
-        {
-          "value": "edoxaban",
-          "label": "依度沙班"
-        },
-        {
-          "value": "none",
-          "label": "未使用"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "warfarin", "label": "华法林" },
+        { "value": "rivaroxaban", "label": "利伐沙班" },
+        { "value": "apixaban", "label": "阿哌沙班" },
+        { "value": "dabigatran", "label": "达比加群" },
+        { "value": "edoxaban", "label": "依度沙班" },
+        { "value": "none", "label": "未使用" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "抗凝药物类型",
       "category": "PROCESS_MARKER",
@@ -3335,26 +2418,11 @@
       "name_cn": "物质使用",
       "type": "string",
       "enum": [
-        {
-          "value": "alcohol",
-          "label": "酒精"
-        },
-        {
-          "value": "drugs",
-          "label": "毒品"
-        },
-        {
-          "value": "both",
-          "label": "两者"
-        },
-        {
-          "value": "none",
-          "label": "无"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "alcohol", "label": "酒精" },
+        { "value": "drugs", "label": "毒品" },
+        { "value": "both", "label": "两者" },
+        { "value": "none", "label": "无" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "酒精或药物使用情况",
       "category": "PROCESS_MARKER",
@@ -3373,18 +2441,9 @@
       "name_cn": "握力对称性",
       "type": "string",
       "enum": [
-        {
-          "value": "symmetric",
-          "label": "对称"
-        },
-        {
-          "value": "asymmetric",
-          "label": "不对称"
-        },
-        {
-          "value": "unknown",
-          "label": "待判读"
-        }
+        { "value": "symmetric", "label": "对称" },
+        { "value": "asymmetric", "label": "不对称" },
+        { "value": "unknown", "label": "待判读" }
       ],
       "description": "双侧握力对称性评估",
       "category": "PROCESS_MARKER",
@@ -3395,18 +2454,9 @@
       "name_cn": "面部下垂检查",
       "type": "string",
       "enum": [
-        {
-          "value": "symmetric",
-          "label": "对称"
-        },
-        {
-          "value": "asymmetric",
-          "label": "不对称"
-        },
-        {
-          "value": "unknown",
-          "label": "待判读"
-        }
+        { "value": "symmetric", "label": "对称" },
+        { "value": "asymmetric", "label": "不对称" },
+        { "value": "unknown", "label": "待判读" }
       ],
       "description": "面部下垂检查结果",
       "category": "PROCESS_MARKER",
@@ -3417,18 +2467,9 @@
       "name_cn": "卒中侧",
       "type": "string",
       "enum": [
-        {
-          "value": "left",
-          "label": "左侧"
-        },
-        {
-          "value": "right",
-          "label": "右侧"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "left", "label": "左侧" },
+        { "value": "right", "label": "右侧" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "卒中累及侧",
       "category": "PROCESS_MARKER",
@@ -3439,26 +2480,11 @@
       "name_cn": "手臂下垂检查",
       "type": "string",
       "enum": [
-        {
-          "value": "none",
-          "label": "无漂移"
-        },
-        {
-          "value": "left",
-          "label": "左侧下垂"
-        },
-        {
-          "value": "right",
-          "label": "右侧下垂"
-        },
-        {
-          "value": "bilateral",
-          "label": "双侧下垂"
-        },
-        {
-          "value": "unknown",
-          "label": "待判读"
-        }
+        { "value": "none", "label": "无漂移" },
+        { "value": "left", "label": "左侧下垂" },
+        { "value": "right", "label": "右侧下垂" },
+        { "value": "bilateral", "label": "双侧下垂" },
+        { "value": "unknown", "label": "待判读" }
       ],
       "description": "手臂漂移检查结果",
       "category": "PROCESS_MARKER",
@@ -3477,22 +2503,10 @@
       "name_cn": "语言异常检查",
       "type": "string",
       "enum": [
-        {
-          "value": "clear",
-          "label": "清晰"
-        },
-        {
-          "value": "slurred",
-          "label": "含糊"
-        },
-        {
-          "value": "abnormal",
-          "label": "异常"
-        },
-        {
-          "value": "unknown",
-          "label": "待判读"
-        }
+        { "value": "clear", "label": "清晰" },
+        { "value": "slurred", "label": "含糊" },
+        { "value": "abnormal", "label": "异常" },
+        { "value": "unknown", "label": "待判读" }
       ],
       "description": "语言异常检查结果",
       "category": "PROCESS_MARKER",
@@ -3511,18 +2525,9 @@
       "name_cn": "平衡评估",
       "type": "string",
       "enum": [
-        {
-          "value": "normal",
-          "label": "正常"
-        },
-        {
-          "value": "abnormal",
-          "label": "异常"
-        },
-        {
-          "value": "unknown",
-          "label": "待判读"
-        }
+        { "value": "normal", "label": "正常" },
+        { "value": "abnormal", "label": "异常" },
+        { "value": "unknown", "label": "待判读" }
       ],
       "description": "平衡能力评估结果",
       "category": "PROCESS_MARKER",
@@ -3533,18 +2538,9 @@
       "name_cn": "协调评估",
       "type": "string",
       "enum": [
-        {
-          "value": "normal",
-          "label": "正常"
-        },
-        {
-          "value": "abnormal",
-          "label": "异常"
-        },
-        {
-          "value": "unknown",
-          "label": "待判读"
-        }
+        { "value": "normal", "label": "正常" },
+        { "value": "abnormal", "label": "异常" },
+        { "value": "unknown", "label": "待判读" }
       ],
       "description": "协调能力评估结果",
       "category": "PROCESS_MARKER",
@@ -3563,18 +2559,9 @@
       "name_cn": "LKW目击者",
       "type": "string",
       "enum": [
-        {
-          "value": "yes",
-          "label": "有"
-        },
-        {
-          "value": "no",
-          "label": "无"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "yes", "label": "有" },
+        { "value": "no", "label": "无" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "LKW 目击者情况",
       "category": "PROCESS_MARKER",
@@ -3585,26 +2572,11 @@
       "name_cn": "视野缺损",
       "type": "string",
       "enum": [
-        {
-          "value": "none",
-          "label": "无"
-        },
-        {
-          "value": "left",
-          "label": "左侧"
-        },
-        {
-          "value": "right",
-          "label": "右侧"
-        },
-        {
-          "value": "bilateral",
-          "label": "双侧"
-        },
-        {
-          "value": "unknown",
-          "label": "待判读"
-        }
+        { "value": "none", "label": "无" },
+        { "value": "left", "label": "左侧" },
+        { "value": "right", "label": "右侧" },
+        { "value": "bilateral", "label": "双侧" },
+        { "value": "unknown", "label": "待判读" }
       ],
       "description": "视野缺损评估",
       "category": "PROCESS_MARKER",
@@ -3615,18 +2587,9 @@
       "name_cn": "视野切割",
       "type": "string",
       "enum": [
-        {
-          "value": "yes",
-          "label": "有"
-        },
-        {
-          "value": "no",
-          "label": "无"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "yes", "label": "有" },
+        { "value": "no", "label": "无" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "视野切割情况",
       "category": "PROCESS_MARKER",
@@ -3637,22 +2600,10 @@
       "name_cn": "失语症类型",
       "type": "string",
       "enum": [
-        {
-          "value": "expressive",
-          "label": "表达性"
-        },
-        {
-          "value": "receptive",
-          "label": "感受性"
-        },
-        {
-          "value": "global",
-          "label": "完全性"
-        },
-        {
-          "value": "unknown",
-          "label": "待判读"
-        }
+        { "value": "expressive", "label": "表达性" },
+        { "value": "receptive", "label": "感受性" },
+        { "value": "global", "label": "完全性" },
+        { "value": "unknown", "label": "待判读" }
       ],
       "description": "失语症评估结果",
       "category": "PROCESS_MARKER",
@@ -3663,22 +2614,10 @@
       "name_cn": "失语症严重程度",
       "type": "string",
       "enum": [
-        {
-          "value": "mild",
-          "label": "轻度"
-        },
-        {
-          "value": "moderate",
-          "label": "中度"
-        },
-        {
-          "value": "severe",
-          "label": "重度"
-        },
-        {
-          "value": "unknown",
-          "label": "待判读"
-        }
+        { "value": "mild", "label": "轻度" },
+        { "value": "moderate", "label": "中度" },
+        { "value": "severe", "label": "重度" },
+        { "value": "unknown", "label": "待判读" }
       ],
       "description": "失语症严重程度",
       "category": "PROCESS_MARKER",
@@ -3689,18 +2628,9 @@
       "name_cn": "忽略侧",
       "type": "string",
       "enum": [
-        {
-          "value": "left",
-          "label": "左侧"
-        },
-        {
-          "value": "right",
-          "label": "右侧"
-        },
-        {
-          "value": "unknown",
-          "label": "待判读"
-        }
+        { "value": "left", "label": "左侧" },
+        { "value": "right", "label": "右侧" },
+        { "value": "unknown", "label": "待判读" }
       ],
       "description": "忽略体征侧",
       "category": "PROCESS_MARKER",
@@ -3727,18 +2657,9 @@
       "name_cn": "心电图知情同意",
       "type": "string",
       "enum": [
-        {
-          "value": "yes",
-          "label": "同意"
-        },
-        {
-          "value": "no",
-          "label": "拒绝"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "yes", "label": "同意" },
+        { "value": "no", "label": "拒绝" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "患者是否知情同意",
       "category": "PROCESS_MARKER",
@@ -3757,18 +2678,9 @@
       "name_cn": "患者活动",
       "type": "string",
       "enum": [
-        {
-          "value": "none",
-          "label": "不动"
-        },
-        {
-          "value": "moving",
-          "label": "活动"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "none", "label": "不动" },
+        { "value": "moving", "label": "活动" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "记录期间患者活动情况",
       "category": "PROCESS_MARKER",
@@ -3787,26 +2699,11 @@
       "name_cn": "心电图判读",
       "type": "string",
       "enum": [
-        {
-          "value": "normal",
-          "label": "正常"
-        },
-        {
-          "value": "abnormal",
-          "label": "异常"
-        },
-        {
-          "value": "stemi",
-          "label": "STEMI"
-        },
-        {
-          "value": "arrhythmia",
-          "label": "心律失常"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "normal", "label": "正常" },
+        { "value": "abnormal", "label": "异常" },
+        { "value": "stemi", "label": "STEMI" },
+        { "value": "arrhythmia", "label": "心律失常" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "心电图判读结果",
       "category": "PROCESS_MARKER",
@@ -3857,22 +2754,10 @@
       "name_cn": "协助类型",
       "type": "string",
       "enum": [
-        {
-          "value": "bystander",
-          "label": "旁观者"
-        },
-        {
-          "value": "team",
-          "label": "团队"
-        },
-        {
-          "value": "code_team",
-          "label": "抢救团队"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "bystander", "label": "旁观者" },
+        { "value": "team", "label": "团队" },
+        { "value": "code_team", "label": "抢救团队" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "请求协助对象类型",
       "category": "PROCESS_MARKER",
@@ -3947,26 +2832,11 @@
       "name_cn": "气道分泌物",
       "type": "string",
       "enum": [
-        {
-          "value": "blood",
-          "label": "血"
-        },
-        {
-          "value": "vomit",
-          "label": "呕吐物"
-        },
-        {
-          "value": "secretions",
-          "label": "痰液"
-        },
-        {
-          "value": "none",
-          "label": "无"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "blood", "label": "血" },
+        { "value": "vomit", "label": "呕吐物" },
+        { "value": "secretions", "label": "痰液" },
+        { "value": "none", "label": "无" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "气道吸引出的分泌物",
       "category": "PROCESS_MARKER",
@@ -3977,14 +2847,8 @@
       "name_cn": "转运目的地",
       "type": "string",
       "enum": [
-        {
-          "value": "ambulance",
-          "label": "救护车"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "ambulance", "label": "救护车" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "转运目的地",
       "category": "PROCESS_MARKER",
@@ -4011,22 +2875,10 @@
       "name_cn": "搬运方式",
       "type": "string",
       "enum": [
-        {
-          "value": "lift",
-          "label": "抬起"
-        },
-        {
-          "value": "scoop",
-          "label": "铲式"
-        },
-        {
-          "value": "slide",
-          "label": "平移"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "lift", "label": "抬起" },
+        { "value": "scoop", "label": "铲式" },
+        { "value": "slide", "label": "平移" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "患者搬运方式",
       "category": "PROCESS_MARKER",
@@ -4101,28 +2953,15 @@
       "name_cn": "交接形式",
       "type": "string",
       "enum": [
-        {
-          "value": "verbal",
-          "label": "口头"
-        },
-        {
-          "value": "written",
-          "label": "书面"
-        },
-        {
-          "value": "structured",
-          "label": "结构化SBAR"
-        },
-        {
-          "value": "unknown",
-          "label": "未知"
-        }
+        { "value": "verbal", "label": "口头" },
+        { "value": "written", "label": "书面" },
+        { "value": "structured", "label": "结构化SBAR" },
+        { "value": "unknown", "label": "未知" }
       ],
       "description": "患者交接形式",
       "category": "PROCESS_MARKER",
       "default_value": "unknown"
     },
-
     {
       "name": "process.firstContactTime",
       "name_cn": "首次接触时间",
@@ -4301,10 +3140,7 @@
       "description": "胸廓是否完全回弹",
       "category": "CPR_QUALITY",
       "default_value": true,
-      "value_labels": {
-        "true": "完整回弹",
-        "false": "回弹不完整"
-      }
+      "value_labels": { "true": "完整回弹", "false": "回弹不完整" }
     },
     {
       "name": "process.shockCount",
@@ -4321,10 +3157,7 @@
       "description": "最近一次电击是否已完成",
       "category": "TREATMENT_HISTORY",
       "default_value": false,
-      "value_labels": {
-        "true": "已完成",
-        "false": "未完成"
-      }
+      "value_labels": { "true": "已完成", "false": "未完成" }
     },
     {
       "name": "process.shockTiming",
@@ -4365,10 +3198,7 @@
       "description": "患者是否处于不稳定状态",
       "category": "CLINICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "不稳定",
-        "false": "稳定"
-      }
+      "value_labels": { "true": "不稳定", "false": "稳定" }
     },
     {
       "name": "process.patientStable",
@@ -4377,10 +3207,7 @@
       "description": "患者是否处于稳定状态",
       "category": "CLINICAL",
       "default_value": true,
-      "value_labels": {
-        "true": "稳定",
-        "false": "不稳定"
-      }
+      "value_labels": { "true": "稳定", "false": "不稳定" }
     },
     {
       "name": "process.suspectedRhythm",
@@ -4397,10 +3224,7 @@
       "description": "是否疑似高钾血症",
       "category": "CLINICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "疑似",
-        "false": "非疑似"
-      }
+      "value_labels": { "true": "疑似", "false": "非疑似" }
     },
     {
       "name": "process.suspectedAcidosis",
@@ -4409,10 +3233,7 @@
       "description": "是否疑似酸中毒",
       "category": "CLINICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "疑似",
-        "false": "非疑似"
-      }
+      "value_labels": { "true": "疑似", "false": "非疑似" }
     },
     {
       "name": "process.suspectedHypovolemia",
@@ -4421,10 +3242,7 @@
       "description": "是否疑似低血容量",
       "category": "CLINICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "疑似",
-        "false": "非疑似"
-      }
+      "value_labels": { "true": "疑似", "false": "非疑似" }
     },
     {
       "name": "process.suspectedTensionPneumothorax",
@@ -4433,10 +3251,7 @@
       "description": "是否疑似张力性气胸",
       "category": "CLINICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "疑似",
-        "false": "非疑似"
-      }
+      "value_labels": { "true": "疑似", "false": "非疑似" }
     },
     {
       "name": "process.suspectedTamponade",
@@ -4445,10 +3260,7 @@
       "description": "是否疑似心包填塞",
       "category": "CLINICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "疑似",
-        "false": "非疑似"
-      }
+      "value_labels": { "true": "疑似", "false": "非疑似" }
     },
     {
       "name": "process.suspectedPe",
@@ -4457,10 +3269,7 @@
       "description": "是否疑似肺栓塞",
       "category": "CLINICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "疑似",
-        "false": "非疑似"
-      }
+      "value_labels": { "true": "疑似", "false": "非疑似" }
     },
     {
       "name": "process.suspectedHypothermia",
@@ -4469,10 +3278,7 @@
       "description": "是否疑似低体温",
       "category": "CLINICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "疑似",
-        "false": "非疑似"
-      }
+      "value_labels": { "true": "疑似", "false": "非疑似" }
     },
     {
       "name": "process.suspectedToxicity",
@@ -4481,10 +3287,7 @@
       "description": "是否疑似药物或毒物中毒",
       "category": "CLINICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "疑似",
-        "false": "非疑似"
-      }
+      "value_labels": { "true": "疑似", "false": "非疑似" }
     },
     {
       "name": "process.initialRhythm",
@@ -4539,18 +3342,9 @@
       "name_cn": "操作执行状态",
       "type": "string",
       "enum": [
-        {
-          "value": "start",
-          "label": "已开始"
-        },
-        {
-          "value": "done",
-          "label": "已完成"
-        },
-        {
-          "value": "pending",
-          "label": "待执行"
-        }
+        { "value": "start", "label": "已开始" },
+        { "value": "done", "label": "已完成" },
+        { "value": "pending", "label": "待执行" }
       ],
       "description": "当前操作执行状态",
       "category": "PROCESS_MARKER",
@@ -4561,18 +3355,9 @@
       "name_cn": "会话时钟状态",
       "type": "string",
       "enum": [
-        {
-          "value": "RUNNING",
-          "label": "运行中"
-        },
-        {
-          "value": "PAUSED",
-          "label": "已暂停"
-        },
-        {
-          "value": "RESET",
-          "label": "已重置"
-        }
+        { "value": "RUNNING", "label": "运行中" },
+        { "value": "PAUSED", "label": "已暂停" },
+        { "value": "RESET", "label": "已重置" }
       ],
       "description": "会话时钟状态",
       "category": "SYSTEM",
@@ -4629,10 +3414,7 @@
       "description": "是否触发了不稳定标志",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已触发",
-        "false": "未触发"
-      }
+      "value_labels": { "true": "已触发", "false": "未触发" }
     },
     {
       "name": "process.wpwAlertTriggered",
@@ -4641,10 +3423,7 @@
       "description": "WPW警报是否已触发",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已触发",
-        "false": "未触发"
-      }
+      "value_labels": { "true": "已触发", "false": "未触发" }
     },
     {
       "name": "process.hemodynamicDeteriorationAlert",
@@ -4653,10 +3432,7 @@
       "description": "血流动力学恶化警报是否已触发",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已触发",
-        "false": "未触发"
-      }
+      "value_labels": { "true": "已触发", "false": "未触发" }
     },
     {
       "name": "process.emergencyMode",
@@ -4665,10 +3441,7 @@
       "description": "是否处于紧急处理模式",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已启用",
-        "false": "未启用"
-      }
+      "value_labels": { "true": "已启用", "false": "未启用" }
     },
     {
       "name": "process.wpwAlertShown",
@@ -4677,10 +3450,7 @@
       "description": "WPW警报是否已显示",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已显示",
-        "false": "未显示"
-      }
+      "value_labels": { "true": "已显示", "false": "未显示" }
     },
     {
       "name": "process.treatmentResultReported",
@@ -4689,10 +3459,7 @@
       "description": "治疗效果是否已报告",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已报告",
-        "false": "未报告"
-      }
+      "value_labels": { "true": "已报告", "false": "未报告" }
     },
     {
       "name": "process.anticoagulationAssessed",
@@ -4701,10 +3468,7 @@
       "description": "抗凝治疗情况是否已评估",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已评估",
-        "false": "未评估"
-      }
+      "value_labels": { "true": "已评估", "false": "未评估" }
     },
     {
       "name": "process.drugInducedVfAlertShown",
@@ -4713,10 +3477,7 @@
       "description": "药物诱发室颤警报是否已显示",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已显示",
-        "false": "未显示"
-      }
+      "value_labels": { "true": "已显示", "false": "未显示" }
     },
     {
       "name": "process.unsynchronizedShockVfAlertShown",
@@ -4725,10 +3486,7 @@
       "description": "非同步电击室颤警报是否已显示",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已显示",
-        "false": "未显示"
-      }
+      "value_labels": { "true": "已显示", "false": "未显示" }
     },
     {
       "name": "process.peaAsystoleAlertShown",
@@ -4737,10 +3495,7 @@
       "description": "PEA停搏警报是否已显示",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已显示",
-        "false": "未显示"
-      }
+      "value_labels": { "true": "已显示", "false": "未显示" }
     },
     {
       "name": "process.contraindicationBlockTriggered",
@@ -4749,24 +3504,15 @@
       "description": "禁忌操作拦截是否已触发",
       "category": "PROCESS_MARKER",
       "default_value": false,
-      "value_labels": {
-        "true": "已触发",
-        "false": "未触发"
-      }
+      "value_labels": { "true": "已触发", "false": "未触发" }
     },
     {
       "name": "derived.qrsWidth",
       "name_cn": "派生QRS宽度",
       "type": "string",
       "enum": [
-        {
-          "value": "narrow",
-          "label": "窄QRS"
-        },
-        {
-          "value": "wide",
-          "label": "宽QRS"
-        }
+        { "value": "narrow", "label": "窄QRS" },
+        { "value": "wide", "label": "宽QRS" }
       ],
       "description": "由客观心律推导的QRS宽度",
       "category": "DERIVED",
@@ -4779,10 +3525,7 @@
       "description": "由客观心律推导的节律规则性",
       "category": "DERIVED",
       "default_value": null,
-      "value_labels": {
-        "true": "规则",
-        "false": "不规则"
-      }
+      "value_labels": { "true": "规则", "false": "不规则" }
     },
     {
       "name": "derived.stable",
@@ -4791,10 +3534,7 @@
       "description": "由 5 个不稳定征象推导的血流动力学稳定性",
       "category": "DERIVED",
       "default_value": null,
-      "value_labels": {
-        "true": "稳定",
-        "false": "不稳定"
-      }
+      "value_labels": { "true": "稳定", "false": "不稳定" }
     },
     {
       "name": "derived.isSinusRhythm",
@@ -4803,10 +3543,7 @@
       "description": "是否窦性心律",
       "category": "DERIVED",
       "default_value": null,
-      "value_labels": {
-        "true": "是",
-        "false": "否"
-      }
+      "value_labels": { "true": "是", "false": "否" }
     },
     {
       "name": "derived.isNarrowRegularStable",
@@ -4815,10 +3552,7 @@
       "description": "是否满足稳定+窄QRS+规则节律",
       "category": "DERIVED",
       "default_value": null,
-      "value_labels": {
-        "true": "是",
-        "false": "否"
-      }
+      "value_labels": { "true": "是", "false": "否" }
     },
     {
       "name": "derived.shockableRhythm",
@@ -4827,10 +3561,7 @@
       "description": "当前心律是否可电击",
       "category": "DERIVED",
       "default_value": null,
-      "value_labels": {
-        "true": "可电击",
-        "false": "不可电击"
-      }
+      "value_labels": { "true": "可电击", "false": "不可电击" }
     },
     {
       "name": "derived.cprQualityGood",
@@ -4839,10 +3570,7 @@
       "description": "CPR质量是否达标",
       "category": "DERIVED",
       "default_value": null,
-      "value_labels": {
-        "true": "达标",
-        "false": "不达标"
-      }
+      "value_labels": { "true": "达标", "false": "不达标" }
     },
     {
       "name": "clinical.rosc",
@@ -4851,10 +3579,7 @@
       "description": "是否已恢复自主循环",
       "category": "CLINICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "已恢复",
-        "false": "未恢复"
-      }
+      "value_labels": { "true": "已恢复", "false": "未恢复" }
     },
     {
       "name": "clinical.roscStabilized",
@@ -4863,10 +3588,7 @@
       "description": "ROSC后血流动力学是否稳定",
       "category": "CLINICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "稳定",
-        "false": "不稳定"
-      }
+      "value_labels": { "true": "稳定", "false": "不稳定" }
     },
     {
       "name": "clinical.postRoscComplete",
@@ -4875,10 +3597,7 @@
       "description": "复苏后护理是否完成",
       "category": "CLINICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "已完成",
-        "false": "未完成"
-      }
+      "value_labels": { "true": "已完成", "false": "未完成" }
     },
     {
       "name": "clinical.roscConfirmed",
@@ -4887,10 +3606,7 @@
       "description": "ROSC是否已确认",
       "category": "CLINICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "已确认",
-        "false": "未确认"
-      }
+      "value_labels": { "true": "已确认", "false": "未确认" }
     },
     {
       "name": "clinical.isWpw",
@@ -4899,10 +3615,7 @@
       "description": "是否为WPW预激综合征患者",
       "category": "CLINICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "是",
-        "false": "否"
-      }
+      "value_labels": { "true": "是", "false": "否" }
     },
     {
       "name": "clinical.isPregnant",
@@ -4911,10 +3624,7 @@
       "description": "是否为妊娠患者",
       "category": "CLINICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "是",
-        "false": "否"
-      }
+      "value_labels": { "true": "是", "false": "否" }
     },
     {
       "name": "clinical.obesity",
@@ -4923,10 +3633,7 @@
       "description": "是否为肥胖患者",
       "category": "CLINICAL",
       "default_value": false,
-      "value_labels": {
-        "true": "是",
-        "false": "否"
-      }
+      "value_labels": { "true": "是", "false": "否" }
     },
     {
       "name": "clinical.age",
@@ -4943,18 +3650,9 @@
       "name_cn": "患者性别",
       "type": "string",
       "enum": [
-        {
-          "value": "male",
-          "label": "男"
-        },
-        {
-          "value": "female",
-          "label": "女"
-        },
-        {
-          "value": "unknown",
-          "label": "未确认"
-        }
+        { "value": "male", "label": "男" },
+        { "value": "female", "label": "女" },
+        { "value": "unknown", "label": "未确认" }
       ],
       "description": "患者性别",
       "category": "CLINICAL",
@@ -4983,6 +3681,80 @@
       "description": "患者既往病史",
       "category": "CLINICAL",
       "default_value": null
+    },
+    {
+      "name": "clinical.asthma",
+      "name_cn": "哮喘",
+      "type": "boolean",
+      "description": "是否为哮喘患者（腺苷绝对禁忌，可致严重支气管痉挛）",
+      "category": "CLINICAL",
+      "default_value": false,
+      "value_labels": { "true": "是", "false": "否" }
+    },
+    {
+      "name": "clinical.transplant",
+      "name_cn": "心脏移植",
+      "type": "boolean",
+      "description": "是否为心脏移植患者（腺苷初始剂量需降至1mg）",
+      "category": "CLINICAL",
+      "default_value": false,
+      "value_labels": { "true": "是", "false": "否" }
+    },
+    {
+      "name": "clinical.sickSinus",
+      "name_cn": "病态窦房结综合征",
+      "type": "boolean",
+      "description": "是否存在病态窦房结综合征（腺苷禁忌，可致严重停搏）",
+      "category": "CLINICAL",
+      "default_value": false,
+      "value_labels": { "true": "是", "false": "否" }
+    },
+    {
+      "name": "clinical.avBlock",
+      "name_cn": "二度/三度房室传导阻滞",
+      "type": "boolean",
+      "description": "是否存在二度或三度房室传导阻滞（无起搏器时腺苷禁忌）",
+      "category": "CLINICAL",
+      "default_value": false,
+      "value_labels": { "true": "是", "false": "否" }
+    },
+    {
+      "name": "clinical.weightKg",
+      "name_cn": "体重",
+      "type": "number",
+      "min": 0,
+      "max": 300,
+      "unit": "kg",
+      "description": "患者体重（儿童剂量按体重计算）",
+      "category": "CLINICAL",
+      "default_value": null
+    },
+    {
+      "name": "clinical.dipyridamole",
+      "name_cn": "使用双嘧达莫",
+      "type": "boolean",
+      "description": "是否在使用双嘧达莫（增强腺苷效应，初始剂量降至3mg）",
+      "category": "CLINICAL",
+      "default_value": false,
+      "value_labels": { "true": "是", "false": "否" }
+    },
+    {
+      "name": "clinical.carbamazepine",
+      "name_cn": "使用卡马西平",
+      "type": "boolean",
+      "description": "是否在使用卡马西平（增强腺苷效应，可致延长停搏）",
+      "category": "CLINICAL",
+      "default_value": false,
+      "value_labels": { "true": "是", "false": "否" }
+    },
+    {
+      "name": "clinical.theophylline",
+      "name_cn": "使用茶碱/咖啡因",
+      "type": "boolean",
+      "description": "是否在使用茶碱或咖啡因（减弱腺苷效应）",
+      "category": "CLINICAL",
+      "default_value": false,
+      "value_labels": { "true": "是", "false": "否" }
     },
     {
       "name": "evaluation.rhythmInterpretationScore",

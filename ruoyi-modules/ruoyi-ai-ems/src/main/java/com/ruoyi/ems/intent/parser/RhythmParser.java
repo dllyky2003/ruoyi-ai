@@ -31,4 +31,26 @@ public class RhythmParser {
         else result.put("suspectedRhythm", "unknown");
         return result;
     }
+
+    /**
+     * 复律后心律：窦性/仍为室上速/未转复。
+     * 供 S-102-2-7 意图的 processor 调用。
+     */
+    public Map<String, Object> parsePostShock(ExtractionContext ctx) {
+        Map<String, Object> result = new HashMap<>();
+        String raw = ctx.getRawText();
+        if (raw == null) {
+            result.put("rhythmPostCardioversion", null);
+            return result;
+        }
+
+        if (raw.contains("窦性") || raw.contains("转复") || raw.contains("恢复窦性")) {
+            result.put("rhythmPostCardioversion", "sinus");
+        } else if (raw.contains("未转复") || raw.contains("仍为") || raw.contains("还是")) {
+            result.put("rhythmPostCardioversion", "unchanged");
+        } else {
+            result.put("rhythmPostCardioversion", null);
+        }
+        return result;
+    }
 }

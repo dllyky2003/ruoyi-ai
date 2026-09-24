@@ -22,7 +22,7 @@ scenario_beats:
     sequence_hint: 20
     trigger:
       type: event
-      intervention_id: medication_adenosine
+      intervention_id: S-101-2-2
     selection_group: rhythm_outcome_after_adenosine
     selection_priority: 100
     proposed_effect:

@@ -13,8 +13,13 @@
     "intervention.adenosine": {
       "count": 0,
       "status": null,
-      "lastTime": null
+      "lastTime": null,
+      "lastDose": null,
+      "lastRoute": null,
+      "totalDose": 0.0,
+      "flushDone": false
     },
+    "intervention.adenosineGiven": false,
     "intervention.diltiazem": {
       "count": 0,
       "status": null,
@@ -31,7 +36,9 @@
     "phys.qrsDuration": 0.1,
     "phys.rrIntervalJitter": 0.05,
     "phys.heartRate": 151,
-    "phys.hasPulse": true
+    "phys.hasPulse": true,
+    "scenario.adenosine_6mg_success": true,
+    "scenario.adenosine_12mg_success": true
   },
 
   "variables": [{
@@ -221,6 +228,18 @@
       "scoring": true
     },
     {
+      "name": "intervention.adenosineGiven",
+      "name_cn": "腺苷已推注标记",
+      "type": "boolean",
+      "description": "是否已推注腺苷（兼容旧 YAML 契约 successVar）",
+      "category": "TREATMENT_HISTORY",
+      "source": "EXECUTOR",
+      "writable_by": "EXECUTOR",
+      "default_value": false,
+      "persistence": true,
+      "scoring": true
+    },
+    {
       "name": "process.anticoagulationDecisionTriggered",
       "name_cn": "抗凝评估已触发",
       "type": "boolean",
@@ -231,6 +250,30 @@
       "default_value": false,
       "persistence": true,
       "scoring": true
+    },
+    {
+      "name": "scenario.adenosine_6mg_success",
+      "name_cn": "教案预设：腺苷6mg转复结果",
+      "type": "boolean",
+      "description": "本教案预设的腺苷6mg生理结果。true=转复为窦性，false=无效。由教案设计时确定，不随学员操作变化。用于驱动 intervention.rhythmConverted 的写入。",
+      "category": "SYSTEM",
+      "source": "SYSTEM",
+      "writable_by": "SYSTEM",
+      "default_value": true,
+      "persistence": true,
+      "scoring": false
+    },
+    {
+      "name": "scenario.adenosine_12mg_success",
+      "name_cn": "教案预设：腺苷12mg转复结果",
+      "type": "boolean",
+      "description": "本教案预设的腺苷12mg生理结果。true=转复为窦性，false=无效。由教案设计时确定，不随学员操作变化。用于驱动 intervention.rhythmConverted 的写入。",
+      "category": "SYSTEM",
+      "source": "SYSTEM",
+      "writable_by": "SYSTEM",
+      "default_value": true,
+      "persistence": true,
+      "scoring": false
     }
   ],
 

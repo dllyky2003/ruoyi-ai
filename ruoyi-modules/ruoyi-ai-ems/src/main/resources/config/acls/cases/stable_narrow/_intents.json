@@ -609,7 +609,8 @@
                   "intervention.vagalEffectObserved"
                 ],
                 "outputs": {
-                  "operation_status": "process.operationStatus"
+                  "operation_status": "process.operationStatus",
+                  "procedure": "process.operationType"
                 },
                 "rules": {
                   "processor": "#{vagalParser.parse(#ctx)}"
@@ -1306,7 +1307,8 @@
                 ],
                 "outputs": {
                   "vagalEffectObserved": "process.vagalEffectObserved",
-                  "rhythmConfirmed": "intervention.rhythmConfirmed"
+                  "rhythmConfirmed":    "intervention.rhythmConfirmed",
+                  "rhythmConverted":    "intervention.rhythmConverted"
                 },
                 "rules": {
                   "processor": "#{resultParser.parse(#ctx)}"

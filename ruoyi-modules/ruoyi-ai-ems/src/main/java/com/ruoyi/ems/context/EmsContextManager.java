@@ -16,9 +16,39 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * 会话上下文管理器。
+ *
+ * <p>★ 2026-09-22 改造点（P0-B 会话初始态隔离）：</p>
+ * <ul>
+ *   <li>新增 {@link #FALLBACK_INITIAL_STATE} 兜底初始状态；</li>
+ *   <li>{@link #getOrCreate(String)} 新会话创建时显式写入 currentState，
+ *       避免 CaseContext.currentState 为 null 或继承上一局脏值；</li>
+ *   <li>新增 {@link #seedInitialStateIfAbsent(String, String)}，
+ *       供 SessionService 在案例配置加载后用真实初始状态覆盖 fallback 值；</li>
+ *   <li>{@link #applyResetDefaults(String, String, String)} 在写入案例变量之后，
+ *       再次确保 currentState 非空（防止 resetDefaults 里意外清空它）。</li>
+ * </ul>
+ *
+ * <p><b>背景</b>：改造前，新会话的 CaseContext.currentState 在创建时为 null，
+ * 后续第一次向 Unity 推送 currentState 时可能带上上一局的脏值
+ * （日志中观测到 F_101_UNSTABLE_CARDIOVERSION 被推给新局的 Unity），
+ * 导致 Unity 侧状态显示错误。</p>
+ */
 @Component
 @Slf4j
 public class EmsContextManager {
+
+    /**
+     * ★ 2026-09-22 新增：兜底初始状态。
+     *
+     * <p>语义：当外部未通过 {@link #seedInitialStateIfAbsent(String, String)}
+     * 显式指定初始状态时，新会话默认落到这个状态，与 GLOBAL/_flow.yaml 的入口一致。</p>
+     *
+     * <p>注意：这是保守兜底值。真实场景下 SessionService 应该在案例配置加载后
+     * 用该案例真实的初始状态覆盖它。</p>
+     */
+    public static final String FALLBACK_INITIAL_STATE = "F-000-SCENE_START";
 
     /**
      * 案例类型 → 变量默认值表。懒加载，第一次访问某 caseType 时构建。
@@ -63,10 +93,44 @@ public class EmsContextManager {
     @Autowired
     @Lazy
     private DerivationService derivationService;
+    @Autowired
+    private com.ruoyi.ems.room.ws.WsSessionRegistry wsRegistry;
+    /**
+     * 过滤出可广播的变量。返回 null 表示"无可广播内容"。
+     *
+     * <p>★ 内部变量白名单见 {@link AclsInternalVars}。写入 Context 并触发派生刷新，
+     * 但**不下发**给 WebSocket 客户端，也**不进入** case_config 的 initialVitals。</p>
+     */
+    private Map<String, Object> filterBroadcastVars(Map<String, Object> vars) {
+        if (vars == null || vars.isEmpty()) {
+            return null;
+        }
+        Map<String, Object> filtered = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> e : vars.entrySet()) {
+            if (e.getKey() != null && !AclsInternalVars.isInternal(e.getKey())) {
+                filtered.put(e.getKey(), e.getValue());
+            }
+        }
+        return filtered.isEmpty() ? null : filtered;
+    }
 
     // =========================================================
     // 1. 获取或创建上下文
     // =========================================================
+
+    /**
+     * 获取或创建上下文。
+     *
+     * <p>★ 2026-09-22 改造：新创建时显式写入 currentState。</p>
+     *
+     * <p>原实现中 CaseContext 是无参构造，currentState 为 null。
+     * 后续某个路径把 currentState 推给 Unity 时，如果此前没有正确初始化，
+     * 就可能把上一局的脏值推给新局。这里在创建瞬间就写入 fallback 初始状态，
+     * 使新会话的第一条下行消息永远是合法初始态。</p>
+     *
+     * <p>真实初始状态由 SessionService 在加载案例配置后通过
+     * {@link #seedInitialStateIfAbsent(String, String)} 覆盖。</p>
+     */
     public CaseContext getOrCreate(String sessionId) {
         if (sessionId == null) {
             throw new IllegalArgumentException("sessionId cannot be null");
@@ -81,8 +145,64 @@ public class EmsContextManager {
             ctx.setContextManager(this);
             // ★ Phase SM：确保 phaseRuntime 非空（无参构造器不会初始化）
             ctx.ensurePhaseRuntime();
+
+            // ★ 2026-09-22 新增：显式初始状态，避免 null / 脏值
+            ctx.setCurrentState(FALLBACK_INITIAL_STATE);
+
+            log.info("[EmsContextManager] 新建上下文: sessionId={}, currentState={}",
+                id, FALLBACK_INITIAL_STATE);
             return ctx;
         });
+    }
+
+    /**
+     * ★ 2026-09-22 新增：为新会话设置真实初始状态。
+     *
+     * <p>调用方：SessionService.createSession。在案例配置加载完成后调用，
+     * 用从 _flow.yaml 读到的真实初始状态覆盖 {@link #FALLBACK_INITIAL_STATE}。</p>
+     *
+     * <p>幂等语义：若当前 currentState 已经不是 fallback 值，说明已经被外部更新过，
+     * 此时不再覆盖，只记录 WARN。这样避免覆盖了正常运行中产生的合法状态变更。</p>
+     *
+     * @param sessionId      会话 ID
+     * @param initialState   真实初始状态（来自状态机配置）
+     * @return true=已写入或已存在；false=上下文不存在
+     */
+    public boolean seedInitialStateIfAbsent(String sessionId, String initialState) {
+        if (sessionId == null || initialState == null || initialState.isEmpty()) {
+            return false;
+        }
+
+        synchronized (cache) {
+            CaseContext current = cache.get(sessionId);
+            if (current == null) {
+                log.warn("[EmsContextManager] seedInitialStateIfAbsent 失败：上下文不存在, sessionId={}",
+                    sessionId);
+                return false;
+            }
+
+            String existing = current.getCurrentState();
+
+            // 已设置成非 fallback 的值（外部已主动设置），保留现状
+            if (existing != null && !FALLBACK_INITIAL_STATE.equals(existing)) {
+                if (!existing.equals(initialState)) {
+                    log.info("[EmsContextManager] currentState 已为 {}，不覆盖为 {}: sessionId={}",
+                        existing, initialState, sessionId);
+                }
+                return true;
+            }
+
+            // existing == null 或 existing == fallback → 覆盖为真实初始值
+            CaseContext draft = current.copy();
+            draft.setCurrentState(initialState);
+            draft.setLastUpdateTime(LocalDateTime.now());
+            draft.setVersion(current.getVersion() + 1);
+            cache.put(sessionId, draft);
+
+            log.info("[EmsContextManager] 初始状态已设为真实值: sessionId={}, {} -> {}",
+                sessionId, existing, initialState);
+            return true;
+        }
     }
 
     // =========================================================
@@ -109,10 +229,12 @@ public class EmsContextManager {
         }
         return cache.get(sessionId);
     }
+
     public void clearDefaultCache() {
         defaultCache.clear();
         log.info("默认值缓存已清空");
     }
+
     // =========================================================
     // 3. 获取变量默认值
     // =========================================================
@@ -289,7 +411,8 @@ public class EmsContextManager {
             newCtx = draft;
             changedKeys = localChangedKeys;
 
-            log.info("上下文更新成功: sessionId={}, caller={}, newVersion={}, changedKeys={}",
+
+            log.debug("上下文更新成功: sessionId={}, caller={}, newVersion={}, changedKeys={}",
                 sessionId, caller, newVersion, changedKeys);
         }
 
@@ -393,7 +516,7 @@ public class EmsContextManager {
         boolean ok = doUpdateWithVersion(
             sessionId, updates, ctx.getVersion(), "SYSTEM_DERIVED", false);
         if (ok) {
-            log.info("♻️ 派生变量已刷新: sessionId={}, changes={}", sessionId, changes);
+            log.debug("♻️ 派生变量已刷新: sessionId={}, changes={}", sessionId, changes);
         } else {
             log.warn("派生变量写回失败（版本冲突）: sessionId={}", sessionId);
         }
@@ -418,6 +541,35 @@ public class EmsContextManager {
     // 6. 语义化写入入口
     // =========================================================
 
+    /**
+     * 单变量写入。
+     *
+     * <p>★ 若目标变量属于 {@link AclsInternalVars} 白名单，
+     * 只写 Context，不广播给 WebSocket 客户端。</p>
+     */
+    /**
+     * 单变量写入。
+     *
+     * <p>★ 跳过 {@code derived.*} 和 {@link AclsInternalVars} 白名单内部变量的权限校验：
+     * 前者由系统计算，后者是心跳/评分链内部数据；两者都不走 {@code VariableMetaLoader}，
+     * 避免触发"变量未定义，允许写入"的 WARN 刷屏。</p>
+     *
+     * <p>★ 广播前判断：若目标变量属于 {@link AclsInternalVars} 白名单，
+     * 只写 Context，不广播给 WebSocket 客户端。</p>
+     */
+    /**
+     * 单变量写入。
+     *
+     * <p>★ 跳过 {@code derived.*} 和 {@link AclsInternalVars} 白名单内部变量的权限校验：
+     * 前者由系统计算，后者是心跳/评分链内部数据；两者都不走 {@code VariableMetaLoader}，
+     * 避免触发"变量未定义，允许写入"的 WARN 刷屏。</p>
+     *
+     * <p>★ 广播前判断：</p>
+     * <ul>
+     *   <li>目标变量属于 {@link AclsInternalVars} 白名单 → 只写 Context，不广播</li>
+     *   <li>别名未注册（`start_case` 之前）→ 静默跳过广播，避免创建期 WARN 刷屏</li>
+     * </ul>
+     */
     public boolean setVarWithVersion(String sessionId, String varName, Object value,
                                      String writer, long expectedVersion) {
         CaseContext ctx = getSnapshot(sessionId);
@@ -426,7 +578,9 @@ public class EmsContextManager {
         }
         String caseType = ctx.getCaseType();
 
-        if (!varName.startsWith("derived.")) {
+        // ★ 跳过 derived.* 和内部变量：前者由系统计算，后者是内部心跳/评分链。
+        //   两者都不经过 VariableMetaLoader 的权限/类型校验，避免刷屏 WARN。
+        if (!varName.startsWith("derived.") && !AclsInternalVars.isInternal(varName)) {
             if (!metaManager.checkWritePermission(caseType, varName, writer)) {
                 throw new VariableAccessDeniedException("变量 " + varName + " 不允许 " + writer + " 写入");
             }
@@ -439,16 +593,54 @@ public class EmsContextManager {
         boolean success = updateWithVersion(sessionId, updates, expectedVersion, writer);
 
         if (success) {
-            Map<String, Object> payload = Map.of(
-                "type", "variable_update",
-                "data", Map.of("varName", varName, "newValue", value),
-                "timestamp", System.currentTimeMillis()
-            );
-            messageSender.send(sessionId, payload);
+            // ★ 内部变量不广播
+            if (AclsInternalVars.isInternal(varName)) {
+                log.debug("单变量写入仅含内部变量，跳过广播: sessionId={}, varName={}",
+                    sessionId, varName);
+            }
+            // ★ 别名未注册（start_case 尚未触发）：静默跳过广播
+            else if (wsRegistry.resolveToRoomSessionId(sessionId) == null) {
+                log.debug("别名未注册，静默跳过广播: sessionId={}, varName={}",
+                    sessionId, varName);
+            }
+            else {
+                Map<String, Object> payload = Map.of(
+                    "type", "variable_update",
+                    "data", Map.of("varName", varName, "newValue", value),
+                    "timestamp", System.currentTimeMillis()
+                );
+                messageSender.send(sessionId, payload);
+            }
         }
         return success;
     }
 
+    /**
+     * 批量变量写入。
+     *
+     * <p>★ 广播前用 {@link #filterBroadcastVars} 过滤内部变量。
+     * 过滤后为空则不发送任何 WebSocket 消息。</p>
+     */
+    /**
+     * 批量变量写入。
+     *
+     * <p>★ 跳过 {@code derived.*} 和 {@link AclsInternalVars} 白名单内部变量的权限校验：
+     * 前者由系统计算，后者是心跳/评分链内部数据；两者都不走 {@code VariableMetaLoader}，
+     * 避免触发"变量未定义，允许写入"的 WARN 刷屏。</p>
+     *
+     * <p>★ 广播前用 {@link #filterBroadcastVars} 过滤内部变量。
+     * 过滤后为空则不发送任何 WebSocket 消息。</p>
+     */
+    /**
+     * 批量变量写入。
+     *
+     * <p>★ 跳过 {@code derived.*} 和 {@link AclsInternalVars} 白名单内部变量的权限校验：
+     * 前者由系统计算，后者是心跳/评分链内部数据；两者都不走 {@code VariableMetaLoader}，
+     * 避免触发"变量未定义，允许写入"的 WARN 刷屏。</p>
+     *
+     * <p>★ 广播前用 {@link #filterBroadcastVars} 过滤内部变量。
+     * 过滤后为空或别名未注册则不发送任何 WebSocket 消息。</p>
+     */
     public boolean batchSetVarsWithVersion(String sessionId, Map<String, Object> varMap,
                                            String writer, long expectedVersion) {
 
@@ -476,6 +668,16 @@ public class EmsContextManager {
 
             // ★ 2. derived.* 由系统计算，跳过权限与校验
             if (varName != null && varName.startsWith("derived.")) {
+                updates.put("vars." + varName, value);
+                changedVars.put(varName, value);
+                continue;
+            }
+
+            // ★ 2.5 内部变量（process.clockTickAt / process.lastInterventionTime /
+            //        evaluation.errorChain 等）跳过权限与校验，避免 VariableMetaLoader
+            //        每次 tick 打一条"变量未定义，允许写入"WARN。
+            //        变量字典外的写入由 AclsInternalVars 白名单统一放行。
+            if (AclsInternalVars.isInternal(varName)) {
                 updates.put("vars." + varName, value);
                 changedVars.put(varName, value);
                 continue;
@@ -509,12 +711,25 @@ public class EmsContextManager {
         boolean success = updateWithVersion(sessionId, updates, expectedVersion, writer);
 
         if (success) {
-            Map<String, Object> payload = Map.of(
-                "type", "batch_variable_update",
-                "data", Map.of("changes", changedVars),
-                "timestamp", System.currentTimeMillis()
-            );
-            messageSender.send(sessionId, payload);
+            // ★ 过滤内部变量，避免每秒把 process.clockTickAt 等广播给 Unity
+            Map<String, Object> broadcastVars = filterBroadcastVars(changedVars);
+            if (broadcastVars == null) {
+                log.debug("batch 写入仅含内部变量，跳过广播: sessionId={}, writer={}, keys={}",
+                    sessionId, writer, changedVars.keySet());
+            }
+            // ★ 别名未注册（start_case 尚未触发）：静默跳过广播
+            else if (wsRegistry.resolveToRoomSessionId(sessionId) == null) {
+                log.debug("别名未注册，静默跳过广播: sessionId={}, writer={}, keys={}",
+                    sessionId, writer, broadcastVars.keySet());
+            }
+            else {
+                Map<String, Object> payload = Map.of(
+                    "type", "batch_variable_update",
+                    "data", Map.of("changes", broadcastVars),
+                    "timestamp", System.currentTimeMillis()
+                );
+                messageSender.send(sessionId, payload);
+            }
         }
         return success;
     }
@@ -533,7 +748,55 @@ public class EmsContextManager {
         CaseContext ctx = getSnapshot(sessionId);
         return ctx != null ? ctx.getCurrentPhysiology() : null;
     }
+    /**
+     * ★ 写入内部变量，不递增版本号。
+     *
+     * <p>用途：{@code process.clockTickAt} 等心跳/计时类变量。它们：
+     * <ul>
+     *   <li>只改 CaseContext.variables 里的对应字段</li>
+     *   <li>不递增版本号（避免每秒无意义的乐观锁更新）</li>
+     *   <li>不更新 lastUpdateTime</li>
+     *   <li>但仍然触发派生刷新（因为 process.timeElapsedSinceLastIntervention 依赖它）</li>
+     * </ul>
+     *
+     * <p>语义与 {@link #advanceClock(String)} 一致：系统内部状态变化不占用业务版本号。</p>
+     *
+     * @param sessionId 会话 ID
+     * @param varName   变量名（必须是 {@link AclsInternalVars} 白名单内的内部变量）
+     * @param value     值
+     * @return 是否成功；值为 null 或与旧值相同返回 true（幂等）
+     */
+    public boolean setInternalVarNoVersion(String sessionId, String varName, Object value) {
+        if (sessionId == null || varName == null || value == null) {
+            return false;
+        }
 
+        CaseContext newCtx;
+        synchronized (cache) {
+            CaseContext current = cache.get(sessionId);
+            if (current == null) {
+                return false;
+            }
+
+            Object old = current.getVariables().get(varName);
+            if (Objects.equals(old, value)) {
+                return true;  // 值相同，不写
+            }
+
+            CaseContext draft = current.copy();
+            draft.setVar(varName, value, "SYSTEM_TICK");
+            // ★ 关键：不递增版本号、不更新 lastUpdateTime
+            cache.put(sessionId, draft);
+            newCtx = draft;
+        }
+
+        // ★ 锁外触发派生刷新
+        //   process.timeElapsedSinceLastIntervention 依赖 process.clockTickAt，
+        //   必须在心跳写入后立刻重算，否则延时规则不会触发。
+        refreshDerivedLocked(sessionId, newCtx);
+
+        return true;
+    }
     // =========================================================
     // 6.5 ★ Phase SM：PhaseRuntime 读写入口
     // =========================================================
@@ -692,11 +955,16 @@ public class EmsContextManager {
      *    内部已通过 doUpdateWithVersion 触发过一次派生刷新，重复调用会导致
      *    Reactor subscriber chain 叠加。
      * 2. 补齐 getSnapshot 为 null 后 getOrCreate 的二次判空。
+     *
+     * <p>★ 2026-09-22 新增：写完后确保 currentState 非空。防止某些案例的
+     * resetDefaults 意外把 currentState 清空，或者创建路径绕过 getOrCreate 的
+     * 初始状态设置。防御性兜底，仅在 currentState 为空时才写入 fallback。</p>
      */
     public boolean applyResetDefaults(String sessionId, String caseType, String writer) {
         Map<String, Object> defaults = metaManager.getResetDefaults(caseType);
         if (defaults == null || defaults.isEmpty()) {
             log.info("案例 {} 没有配置 resetDefaults，跳过初始化", caseType);
+            ensureInitialState(sessionId);
             return true;
         }
 
@@ -719,11 +987,40 @@ public class EmsContextManager {
 
         long currentVersion = ctx.getVersion();
         Map<String, Object> varMap = new LinkedHashMap<>(defaults);
-        return batchSetVarsWithVersion(sessionId, varMap, writer, currentVersion);
+        boolean ok = batchSetVarsWithVersion(sessionId, varMap, writer, currentVersion);
+
+        // ★ 2026-09-22 新增：写完后兜底 currentState
+        ensureInitialState(sessionId);
+        return ok;
     }
 
     public boolean applyResetDefaults(String sessionId, String caseType) {
         return applyResetDefaults(sessionId, caseType, "SYSTEM");
+    }
+
+    /**
+     * ★ 2026-09-22 新增：兜底 currentState 非空。
+     *
+     * <p>只在 currentState 为 null 时写入 {@link #FALLBACK_INITIAL_STATE}；
+     * 已有值（包括 fallback 之外的真实状态）绝不覆盖，避免误改运行中的状态。</p>
+     */
+    private void ensureInitialState(String sessionId) {
+        if (sessionId == null) return;
+
+        synchronized (cache) {
+            CaseContext current = cache.get(sessionId);
+            if (current == null) return;
+            if (current.getCurrentState() != null) return;
+
+            CaseContext draft = current.copy();
+            draft.setCurrentState(FALLBACK_INITIAL_STATE);
+            draft.setLastUpdateTime(LocalDateTime.now());
+            draft.setVersion(current.getVersion() + 1);
+            cache.put(sessionId, draft);
+
+            log.info("[EmsContextManager] ensureInitialState 兜底写入: sessionId={}, currentState={}",
+                sessionId, FALLBACK_INITIAL_STATE);
+        }
     }
 
     // =========================================================
@@ -769,18 +1066,7 @@ public class EmsContextManager {
         cache.remove(sessionId);
         log.debug("上下文已清除: sessionId={}", sessionId);
     }
-    /**
-     * 设置会话时钟运行状态。
-     * <p>
-     * true  → CaseContext.resumeClock()，tick() 会累加 elapsedSeconds
-     * false → CaseContext.pauseClock()，tick() 跳过累加
-     * 幂等：状态未变化时不做写入。
-     * </p>
-     *
-     * @param sessionId 业务会话 ID
-     * @param running   true=运行，false=暂停
-     * @return 是否成功
-     */
+
     /**
      * 设置会话时钟运行状态。
      * <p>

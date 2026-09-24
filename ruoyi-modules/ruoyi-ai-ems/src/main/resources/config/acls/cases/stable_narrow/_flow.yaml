@@ -4,7 +4,8 @@
 # 存放位置：stable_narrow/_flow.yaml
 # 父级：GLOBAL
 # 版本：1.1.0
-# 修订：1.2.5（★ 第12步 S-101-2-8 直接跳 F-000-ROSC_MANAGEMENT，绕过 F_101_EXIT_TO_PARENT 中转）
+# 修订：1.2.6（★ F_101_DO_SECOND_LINE_DRUG → F_101_EXIT_TO_PARENT 的 intentCode 改为 null，
+#                让 30 秒时间窗纯条件触发，修复二线药物执行后状态机卡死问题）
 # ============================================================
 caseId: "stable_narrow"
 caseName: "窄QRS稳定心动过速（SVT）"
@@ -427,7 +428,7 @@ stateMachine:
     - source: "F_101_DO_ADENOSINE_6MG"
       target: "F_101_DO_ADENOSINE_6MG"
       intentCode: "S-101-2-2"
-      condition: "#clinical.isWpw == false && (#intervention.adenosine.count == null || #intervention.adenosine.count == 0)"
+      condition: "#clinical.isWpw == false && #intervention.adenosine.flushDone == false"
       priority: 10
       exitReason: null
       effects:
@@ -435,9 +436,27 @@ stateMachine:
           value: 1
         - var: "intervention.adenosine.status"
           value: "given"
+        - var: "intervention.adenosine.flushDone"
+          value: true
+        - var: "intervention.rhythmConverted"
+          value: false
+        - var: "phys.flushing"
+          value: true
+        - var: "phys.headache"
+          value: true
+        - var: "phys.chestPain"
+          value: true
+        - var: "phys.shortnessOfBreath"
+          value: true
+        - var: "phys.nausea"
+          value: true
+        - var: "phys.diaphoresis"
+          value: true
+        - var: "phys.anxiety"
+          value: true
         - var: "process.lastInterventionTime"
           valueExpression: "T(System).currentTimeMillis()"
-      description: "腺苷 6mg 推注执行"
+      description: "腺苷 6mg 推注执行（含副作用布尔 + 教案 outcome）"
 
     - source: "F_101_DO_ADENOSINE_6MG"
       target: "F_101_DO_ADENOSINE_12MG"
@@ -480,7 +499,7 @@ stateMachine:
     - source: "F_101_DO_ADENOSINE_12MG"
       target: "F_101_DO_ADENOSINE_12MG"
       intentCode: "S-101-2-2"
-      condition: "#clinical.isWpw == false && #intervention.adenosine.count == 1"
+      condition: "#clinical.isWpw == false && #intervention.adenosine.flushDone == false"
       priority: 10
       exitReason: null
       effects:
@@ -488,9 +507,27 @@ stateMachine:
           value: 2
         - var: "intervention.adenosine.status"
           value: "given"
+        - var: "intervention.adenosine.flushDone"
+          value: true
+        - var: "intervention.rhythmConverted"
+          value: false
+        - var: "phys.flushing"
+          value: true
+        - var: "phys.headache"
+          value: true
+        - var: "phys.chestPain"
+          value: true
+        - var: "phys.shortnessOfBreath"
+          value: true
+        - var: "phys.nausea"
+          value: true
+        - var: "phys.diaphoresis"
+          value: true
+        - var: "phys.anxiety"
+          value: true
         - var: "process.lastInterventionTime"
           valueExpression: "T(System).currentTimeMillis()"
-      description: "腺苷 12mg 推注执行"
+      description: "腺苷 12mg 推注执行（含副作用布尔 + 教案 outcome）"
 
     # ★★★ 修改点：新增 S-101-2-5 → 二线药物 的出边 ★★★
     # 学员在 12mg 状态下直接声明"用二线药物"，无需再连发两次 S-101-2-2
@@ -550,19 +587,19 @@ stateMachine:
     - source: "F_101_DO_SECOND_LINE_DRUG"
       target: "F-000-ROSC_MANAGEMENT"
       intentCode: "S-101-2-8"
-      condition: "#clinical.isWpw == false"
+      condition: "#intervention.rhythmConverted == true && #clinical.isWpw == false"
       priority: 8
       exitReason: null
       effects: []
       description: "学员宣布转复为窦性 → 直接跳到父级 ROSC 接管"
 
-    # ★★★ 修改点（本次）：exit guard 加 30 秒时间窗 ★★★
-    # 原因：B-1 自循环重评估（depth=0）在自循环后立即触发，此时 timeElapsedSinceLastIntervention=0，
-    #      原 guard rhythmConverted==false 立即为 true → 直接退出到父级。
-    #      加时间窗后，30 秒内留在原地等学员下一步指令，30 秒后才判 REFRACTORY_SVT。
+    # ★★★ 修改点（v1.2.6，本次）：intentCode 从 "S-101-2-5" 改为 null ★★★
+    # 原因：学员说完"用二线药物"后不会重复说 S-101-2-5，原规则的 intentCode 让 30 秒时间窗
+    #      永远无法被评估，导致状态机在二线药物执行后卡死。
+    #      改为 null 后，纯条件出边在每次状态机重评估时检查；30 秒后自动推进到 F_101_EXIT_TO_PARENT。
     - source: "F_101_DO_SECOND_LINE_DRUG"
       target: "F_101_EXIT_TO_PARENT"
-      intentCode: "S-101-2-5"
+      intentCode: null
       condition: "#intervention.rhythmConverted == false && #process.timeElapsedSinceLastIntervention > 30"
       priority: 10
       exitReason: "REFRACTORY_SVT"

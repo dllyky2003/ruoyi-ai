@@ -112,6 +112,12 @@ public class SemanticRouter {
 
     // ==================== 私有辅助方法 ====================
 
+    /**
+     * 求值规则条件。
+     *
+     * <p>★ 2026-09-23（P0 修复）：改用 CaseContext 版本 API。
+     * Map 版本的 {@code evaluateValue(String, Map, Class)} 已被团队禁用。</p>
+     */
     private boolean evaluateCondition(RouteRule rule, CaseContext context, Map<String, Object> slots) {
         String condition = rule.getCondition();
         if (condition == null || condition.isEmpty()) {
@@ -119,12 +125,7 @@ public class SemanticRouter {
         }
 
         try {
-            Map<String, Object> evalContext = new HashMap<>();
-            evalContext.put("context", context);
-            evalContext.put("slots", slots);
-            evalContext.put("vars", context.getVariables());
-
-            Boolean result = spelEvaluator.evaluateValue(condition, evalContext, Boolean.class);
+            Boolean result = spelEvaluator.evaluateValue(condition, context, Boolean.class);
             return result != null && result;
         } catch (Exception e) {
             log.warn("⚠️ SpEL 条件评估失败: rule={}, condition={}, error={}",
@@ -160,24 +161,34 @@ public class SemanticRouter {
         return result;
     }
 
+    /**
+     * 求值 paramMapping 里的单个表达式。
+     *
+     * <p>★ 2026-09-23（P0 修复）：改用 CaseContext 版本 API。
+     * 表达式内用 {@code #<domain>.<field>} 形式，例如 {@code #intervention.lastDrug}；
+     * 由 {@code SpELExpressionEvaluator.buildContext(CaseContext)} 组装可用变量域
+     * （{@code #phys} / {@code #process} / {@code #intervention} / {@code #device} /
+     * {@code #clinical} / {@code #derived}）。</p>
+     */
     private Object evaluateParamExpression(String expression, Map<String, Object> slots, CaseContext context) {
-        if (!expression.contains("$") && !expression.contains("#") && !expression.contains("{")) {
+        if (expression == null || expression.isEmpty()) {
+            return null;
+        }
+        // 常量（不含表达式符号）直接返回
+        if (!expression.contains("#") && !expression.contains("$") && !expression.contains("{")) {
             return expression;
         }
 
         try {
-            Map<String, Object> evalContext = new HashMap<>();
-            evalContext.put("slots", slots);
-            evalContext.put("context", context);
-            evalContext.put("vars", context.getVariables());
-
+            // 归一化写法：$vars.x / ${vars.x} / $slots.x → # 形式
             String normalized = expression
                 .replace("$slots.", "#slots.")
                 .replace("${slots.", "#slots.")
                 .replace("$vars.", "#vars.")
                 .replace("${vars.", "#vars.");
 
-            return spelEvaluator.evaluateValue(normalized, evalContext, Object.class);
+            // ★ 走 CaseContext 版本（Map 版本已被团队禁用）
+            return spelEvaluator.evaluateValue(normalized, context, Object.class);
         } catch (Exception e) {
             log.warn("⚠️ 参数表达式评估失败: expression={}, error={}", expression, e.getMessage());
             return null;

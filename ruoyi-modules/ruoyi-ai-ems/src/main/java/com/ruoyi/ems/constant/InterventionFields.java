@@ -9,7 +9,8 @@ package com.ruoyi.ems.constant;
  */
 public final class InterventionFields {
     private InterventionFields() {}
-
+/** 对象子键拼接符 */
+    public static final String SEP = ".";
     public static final String STATUS     = "status";
     public static final String LAST_TIME  = "lastTime";
     public static final String COUNT      = "count";
@@ -17,4 +18,6 @@ public final class InterventionFields {
     public static final String LAST_DOSE  = "lastDose";
     public static final String LAST_ROUTE = "lastRoute";
     public static final String EFFECT     = "effect";
+    /** 冲管是否完成（腺苷专用子键） */
+    public static final String FLUSH_DONE = "flushDone";
 }

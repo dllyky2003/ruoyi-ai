@@ -2,6 +2,8 @@ package com.ruoyi.acls.engine;
 
 import com.ruoyi.acls.arbiter.ArbiterResult;
 import com.ruoyi.acls.arbiter.OperationArbiter;
+import com.ruoyi.acls.branch.StudentResponseBranch;
+import com.ruoyi.acls.branch.StudentResponseResolver;
 import com.ruoyi.acls.guard.ConfidenceGate;
 import com.ruoyi.acls.guard.GuardRail;
 import com.ruoyi.acls.router.ActTypeRouter;
@@ -19,6 +21,7 @@ import com.ruoyi.ems.domain.PhaseCheckResult;
 import com.ruoyi.ems.domain.TeachingMode.TeachingMode;
 import com.ruoyi.ems.engine.PhaseManager;
 import com.ruoyi.ems.engine.StateMachineFacade;
+import com.ruoyi.ems.engine.StateTransitionResult;
 import com.ruoyi.ems.engine.TutorBlockedException;
 import com.ruoyi.ems.exception.ExceptionEngine;
 import com.ruoyi.ems.npc.IVrClientService;
@@ -29,6 +32,7 @@ import com.ruoyi.ems.room.registry.RoomRegistry;
 import com.ruoyi.ems.room.ws.RoomBroadcaster;
 import com.ruoyi.ems.rule.IRuleEvaluator;
 import com.ruoyi.ems.service.SessionService;
+import com.ruoyi.ems.spi.ExceptionTickProcessor;
 import com.ruoyi.ems.tts.KokoroTtsClient;
 import com.ruoyi.ems.websocket.WebSocketMessageSender;
 import lombok.RequiredArgsConstructor;
@@ -68,7 +72,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 @ConditionalOnProperty(name = "acls.engine.mode", havingValue = "hybrid", matchIfMissing = true)
 @RequiredArgsConstructor
-public class AclsCommandEngine {
+public class AclsCommandEngine implements ExceptionTickProcessor {
 
     // ========== 核心依赖 ==========
     private final OperationArbiter operationArbiter;
@@ -102,6 +106,9 @@ public class AclsCommandEngine {
     // ========== ★ 房间通道（用于把消息真正发给 Unity） ==========
     private final RoomRegistry roomRegistry;
     private final RoomBroadcaster roomBroadcaster;
+
+
+    private final StudentResponseResolver responseResolver;
     /**
      * ★ 定时评估去重：sessionId → (ruleId → 上次触发时间毫秒)。
      * 避免同一规则每秒重复触发。
@@ -244,9 +251,34 @@ public class AclsCommandEngine {
 
             if (!result.isSuccess()) {
                 log.warn("动作执行失败，状态机不转换: session={}, intent={}", sessionId, intentId);
+                responseResolver.record(sessionId, StudentResponseBranch.ERROR, intentId,
+                    "处理器拒绝: " + result.getErrorMessage());
                 return result;
             }
+// ========== 7.2 ★ P2-15：ANNOUNCEMENT 短路，不进状态机 ==========
+            if ("ANNOUNCEMENT".equalsIgnoreCase(actType)) {
+                log.info("💭 [ANNOUNCEMENT] {} 已处理，跳过状态机: session={}", intentId, sessionId);
+                responseResolver.record(sessionId, StudentResponseBranch.NORMAL, intentId,
+                    "ANNOUNCEMENT 纯认知操作，豁免状态机");
 
+                if (result.getContextUpdates() != null && !result.getContextUpdates().isEmpty()) {
+                    persistUpdates(sessionId, result.getContextUpdates(), caseContext,
+                        "ANNOUNCEMENT_SKIP");
+                }
+
+                Map<String, Object> annoUpdates = new HashMap<>();
+                if (result.getContextUpdates() != null) {
+                    annoUpdates.putAll(result.getContextUpdates());
+                }
+                annoUpdates.put("currentState", caseContext.getCurrentState());
+
+                return CommandResult.builder()
+                    .success(true)
+                    .responseText(result.getResponseText())
+                    .contextUpdates(annoUpdates)
+                    .animations(result.getAnimations())
+                    .build();
+            }
             // ========== 7.5 ★ P0-2：持久化技能返回的 contextUpdates ==========
             if (result.getContextUpdates() != null && !result.getContextUpdates().isEmpty()) {
                 persistUpdates(sessionId, result.getContextUpdates(), caseContext,
@@ -277,6 +309,8 @@ public class AclsCommandEngine {
                 log.warn("⛔ tutor 阻断: session={}, intent={}, state={}, ruleId={}, severity={}, feedback={}",
                     sessionId, intentId, currentState, e.getRuleId(), e.getSeverity(),
                     e.getFeedbackMessage());
+                responseResolver.record(sessionId, StudentResponseBranch.ERROR, intentId,
+                    "Tutor 阻断: " + e.getRuleId());
                 return CommandResult.builder()
                     .success(false)
                     .errorMessage(e.getFeedbackMessage())
@@ -286,11 +320,27 @@ public class AclsCommandEngine {
             if (newState == null) {
                 log.info("学员意图 {} 无匹配转移，尝试变量驱动重评估: session={}, state={}",
                     intentId, sessionId, currentState);
-                newState = stateMachineFacade.reEvaluateOnContextChange(sessionId, intentId);
+
+                // ★ 2026-09-23 修改：reEvaluateOnContextChange 返回 StateTransitionResult，
+                //   仅在 success=true 时取其 toState；未成功时 newState 保持 null，
+                //   交由下方"无匹配转移"分支处理，避免误把当前状态当新状态。
+                StateTransitionResult transition =
+                    stateMachineFacade.reEvaluateOnContextChange(sessionId, intentId);
+
+                if (transition != null && transition.isSuccess()) {
+                    newState = transition.getToState();
+                    log.info("🔁 变量驱动兜底成功: {} -> {} (reason=none)",
+                        currentState, newState);
+                } else {
+                    log.debug("🔁 变量驱动兜底未成功: reason={}",
+                        transition != null ? transition.getReason() : "null");
+                }
             }
             if (newState == null) {
                 log.warn("⛔ 状态机无匹配转移: session={}, intent={}, state={}",
                     sessionId, intentId, currentState);
+                responseResolver.record(sessionId, StudentResponseBranch.ERROR, intentId,
+                    "状态机无匹配转移: " + currentState + " --[" + intentId + "]--> 无候选");
                 return CommandResult.builder()
                     .success(false)
                     .errorMessage("当前临床流程不允许此操作")
@@ -298,6 +348,8 @@ public class AclsCommandEngine {
             }
 
             log.info("✅ 状态机转换成功: {} -> {}", currentState, newState);
+            responseResolver.record(sessionId, StudentResponseBranch.NORMAL, intentId,
+                "状态转移成功");
 
             // ========== 8.5 ★ Phase 主阶段更新（含锁定/滞回） ==========
             try {
@@ -343,7 +395,7 @@ public class AclsCommandEngine {
     /**
      * ★ 定时异常评估入口。
      *
-     * <p>由 {@link com.ruoyi.ems.engine.ClockService} 每秒调用一次。
+     * <p>由 {@link  com.ruoyi.ems.engine  ClockService} 每秒调用一次。
      * 只评估"无 triggerIntent 声明"的延时类规则（triggerIntent 为空）。
      *
      * <p>去重策略：同一规则在 {@link #SCHEDULED_TRIGGER_COOLDOWN_MS} 内不重复触发。
@@ -352,6 +404,7 @@ public class AclsCommandEngine {
      *
      * @param sessionId 会话 id
      */
+    @Override
     public void tickExceptionsForSession(String sessionId) {
         if (sessionId == null) return;
 
@@ -430,6 +483,14 @@ public class AclsCommandEngine {
         log.warn("⚡ 异常命中: session={}, intent={}, phase={}, count={}, top={} [{}]",
             sessionId, intentId, currentPhase, hits.size(), top.getId(), top.getSeverity());
 
+        // ★ 螺旋 3：定时路径 → DELAYED；学员路径 → ERROR
+        if (intentId == null || intentId.isBlank()) {
+            responseResolver.record(sessionId, StudentResponseBranch.DELAYED, null,
+                "异常命中: " + top.getId());
+        } else {
+            responseResolver.record(sessionId, StudentResponseBranch.ERROR, intentId,
+                "异常命中: " + top.getId());
+        }
         // 2. 所有命中的 effects 全写（不取最高，全写）
         Map<String, Object> allEffects = new LinkedHashMap<>();
         for (ExceptionRule rule : hits) {
@@ -469,7 +530,13 @@ public class AclsCommandEngine {
                 log.error("异常规则 jumpTo 为空且非 keepCurrent: rule={}", top.getId());
                 return null;
             }
-
+            // ★ P2-17：记录恶化前状态作为返回锚点
+            String previousState = (freshContext != null) ? freshContext.getCurrentState() : null;
+            if (previousState != null && !previousState.isBlank()) {
+                Map<String, Object> anchor = new LinkedHashMap<>();
+                anchor.put("process.deteriorationFrom", previousState);
+                persistUpdates(sessionId, anchor, freshContext, "EXCEPTION_DETERIORATION");
+            }
             // 7. forceTransition（服务器乐观先行）
             boolean jumped = stateMachineFacade.forceTransition(sessionId, jumpTo, top.getId());
             if (!jumped) {

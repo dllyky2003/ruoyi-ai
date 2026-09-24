@@ -14,17 +14,26 @@ rules:
   # 示例 2：QRS 判读前给腺苷 → ALLOW_WITH_WARNING
   - rule_id: R_ADENOSINE_BEFORE_QRS_CHECK
     match_intent: S-101-2-2
-    applies_when_current_state: F_000_INITIAL_SETUP
+    applies_when_current_state: F_101_DO_ADENOSINE_6MG
+    applies_when:
+      expression: "#variables['assert.qrsWidth'] == null"
     decision: ALLOW_WITH_WARNING
     severity: moderate
     feedback_key: feedback_adenosine_before_qrs_check
 
 # ★ 病例结局分支（V3.1 §5.6.1）
 case_outcome_branches:
+  # ★ FIX 2026-09-22（选项 A）：
+  #   移除 clinical_state.rhythm: svt。
+  #   原因：映射层会把它写成 phys.rhythm=svt，但 phys.rhythm 的合法枚举
+  #   不含 svt，EmsContextManager 会打 "跳过非法变量值: phys.rhythm=svt"。
+  #   状态机推进不依赖此变量（靠 intervention.adenosine.count /
+  #   intervention.rhythmConverted），故最小处理为删除该行。
+  #   保留 pulse / perfusion / consciousness，继续向快照与展示层提供
+  #   灌注与意识信息。
   - branch_id: persistent_svt_stub
     description: "持续 SVT"
     clinical_state:
-      rhythm: svt
       pulse: present
       perfusion: present
       consciousness: alert

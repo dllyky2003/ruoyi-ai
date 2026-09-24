@@ -1,8 +1,23 @@
 # unstable_narrow_svt 案例专属派生规则
-# GLOBAL 已有的派生变量（derived.stable / qrsWidth / unstable 等）不在此重复声明
+# 说明：
+#   - derived.stable / derived.unstable 在此显式覆盖，避免沿用 GLOBAL 的默认值
+#   - 覆盖依据：本案例进入 F-102-CONFIRM_UNSTABLE 即代表"有脉搏的窄 QRS 不稳定心动过速"
+#   - 不再依赖 #assert.stable / #phys.systolicBp / #phys.heartRate
+#     （三者在该时点分别为 null / GLOBAL 默认 / 150，都会算错）
+#   - ★ 2026-09-23 新增：覆盖 derived.isSinusRhythm（修复 D：转复后未刷新）
+#   - ★ 2026-09-23 新增：覆盖 derived.svtInterventionTimeout /
+#                        process.timeElapsedSinceLastIntervention（修复 C-2：0 值误触发 TIMING）
+#   - ★ 2026-09-23 新增（快照 ACLS-TUTOR-SNAPSHOT-20260923-10 方案A/B 配套）：
+#                        覆盖 derived.qrsWidth 与 derived.isUnstableNarrowQrs，
+#                        使 F-000-INITIAL_SETUP → F-102-CHECK_QRS_WIDTH 的
+#                        priority 26 入口转移（condition=#derived.isUnstableNarrowQrs == true）
+#                        不再依赖 GLOBAL 中未公开的定义，闭环可控。
 # 字段规范：target / type / description / expression / dependencies
 
 derivations:
+  # ============================================================
+  # 案例专属告警：未镇静即电复律
+  # ============================================================
   - target: process.cardioversionWithoutSedation
     type: boolean
     description: "未镇静即电复律（案例专属告警）"
@@ -12,3 +27,113 @@ derivations:
     dependencies:
       - intervention.cardioversion.count
       - intervention.sedation.given
+
+  # ============================================================
+  # ★ 覆盖 derived.unstable
+  #   语义依据：本案例进入 F-102-CONFIRM_UNSTABLE 状态时，
+  #            已确认 QRS 为窄，患者具有脉搏，且属于"不稳定"路径，
+  #            因此此状态下必然 unstable。
+  #   实现依据：phys.hasPulse 是布尔量，永远非 null，不会 SpEL 异常。
+  # ============================================================
+  - target: derived.unstable
+    type: boolean
+    description: "血流动力学不稳定（本案例进入 F-102-CONFIRM_UNSTABLE 后必为不稳定）"
+    expression: "#phys.hasPulse == true"
+    dependencies:
+      - phys.hasPulse
+
+  # ============================================================
+  # ★ 覆盖 derived.stable（取 derived.unstable 的反）
+  # ============================================================
+  - target: derived.stable
+    type: boolean
+    description: "血流动力学稳定（= 非 unstable）"
+    expression: "#derived.unstable == false"
+    dependencies:
+      - derived.unstable
+
+  # ============================================================
+  # ★ 覆盖 derived.isSinusRhythm（修复问题 D）
+  #   问题：GLOBAL 里 isSinusRhythm 只依赖 phys.rhythm，
+  #         但服务端 phys.rhythm 在"转复为窦性心律了"指令后未同步更新，
+  #         导致 derived.isSinusRhythm 一直为 false，卡死 F-102-POST_SHOCK_ASSESS。
+  #   修复：当 intervention.rhythmConverted=true 且当前心律非 VF/VT 时，
+  #         即认为已恢复窦性（覆盖 phys.rhythm 尚未同步的过渡期）。
+  # ============================================================
+  - target: derived.isSinusRhythm
+    type: boolean
+    description: "是否为窦性心律（phys.rhythm 为 Sinus 或已报告转复成功）"
+    expression: |
+      #phys.rhythm == 'Sinus' ||
+      (#intervention.rhythmConverted == true &&
+       #phys.rhythm != 'VF' &&
+       #phys.rhythm != 'VT')
+    dependencies:
+      - phys.rhythm
+      - intervention.rhythmConverted
+
+  # ============================================================
+  # ★ 覆盖 derived.svtInterventionTimeout（修复问题 C-2）
+  #   问题：lastInterventionTime=0（技能未正确初始化）时，
+  #         (now - 0)/1000 必然 > 120，导致 TIMING 异常误触发。
+  #   修复：增加 lastInterventionTime > 0 保护；
+  #         未初始化（null 或 0）视为"尚无干预"，不触发超时。
+  # ============================================================
+  - target: derived.svtInterventionTimeout
+    type: boolean
+    description: "距上次干预是否已超过120秒（lastInterventionTime 未初始化时不触发）"
+    expression: |
+      #process.lastInterventionTime != null &&
+      #process.lastInterventionTime > 0 &&
+      ((T(System).currentTimeMillis() - #process.lastInterventionTime) / 1000) > 120
+    dependencies:
+      - process.lastInterventionTime
+
+  # ============================================================
+  # ★ 覆盖 process.timeElapsedSinceLastIntervention（修复问题 C-2）
+  #   问题：同 svtInterventionTimeout，lastInterventionTime=0 时返回巨大的秒数。
+  #   修复：未初始化（null 或 0）返回 0，语义为"尚无干预"。
+  # ============================================================
+  - target: process.timeElapsedSinceLastIntervention
+    type: integer
+    description: "距上次治疗干预的秒数（lastInterventionTime 未初始化时返回 0）"
+    expression: |
+      (#process.lastInterventionTime != null && #process.lastInterventionTime > 0)
+        ? (T(System).currentTimeMillis() - #process.lastInterventionTime) / 1000
+        : 0
+    dependencies:
+      - process.lastInterventionTime
+
+  # ============================================================
+  # ★ 新增（快照 10 方案A/B 配套）：覆盖 derived.qrsWidth
+  #   本案例 entryCondition（_flow.yaml 中 UNSTABLE_NARROW_PATH 的
+  #   entryCondition: "#derived.isUnstableNarrowQrs == true"）以及
+  #   F-102-CHECK_QRS_WIDTH 出边（condition: "#derived.qrsWidth == 'narrow'"）
+  #   均依赖 derived.qrsWidth。
+  #   本案例语义上"必然窄 QRS"（caseName = 不稳定窄QRS心动过速），
+  #   故直接返回 'narrow'，不依赖 GLOBAL 未公开定义，闭环可控。
+  #   注意：若学员在 F-102-CHECK_QRS_WIDTH 实际判读为 wide，
+  #         _flow.yaml 里 priority 100 的 WIDE_QRS 出边会覆盖本默认值，
+  #         不影响"退出父级重新分类"分支。
+  # ============================================================
+  - target: derived.qrsWidth
+    type: string
+    description: "QRS 宽度分类（本案例固定 narrow，与 GLOBAL 覆盖一致）"
+    expression: "'narrow'"
+    dependencies: []
+
+  # ============================================================
+  # ★ 新增（快照 10 方案A/B 配套）：覆盖 derived.isUnstableNarrowQrs
+  #   作用：F-000-INITIAL_SETUP → F-102-CHECK_QRS_WIDTH 的 priority 26
+  #         入口转移唯一 condition。
+  #   语义：血流动力学不稳定（有脉搏的不稳定心动过速）+ 窄 QRS。
+  #   实现：直接由已覆盖的 derived.unstable 与 derived.qrsWidth 组合，
+  #         不再回退到 GLOBAL 中定义（若有），闭环可控。
+  # ============================================================
+  - target: derived.isUnstableNarrowQrs
+    type: boolean
+    description: "血流动力学不稳定 + 窄QRS（本案例 F-000-INITIAL_SETUP 入口条件）"
+    expression: "#derived.unstable == true && #derived.qrsWidth == 'narrow'"
+    dependencies:
+      - derived.unstable
+      - derived.qrsWidth

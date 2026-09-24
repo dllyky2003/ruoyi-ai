@@ -1,0 +1,120 @@
+# ================================================================
+# 全局药物适应症表
+# ================================================================
+# key = DrugEnum.code（小写）
+# 判定顺序（在 DrugIndicationEvaluator 中实现）：
+#   1. critical_when 任一命中 → wrong_critical
+#   2. minor_when 任一命中    → wrong_minor
+#   3. 声明了 correct_when 但未全部命中 → wrong_minor
+#   4. 否则 → correct
+#
+# 表达式用 SpEL：
+#   #var == value / #var > N / && / ||
+# 可用变量前缀：phys / derived / intervention / device / clinical / process
+# ================================================================
+
+drug_indications:
+
+  # ---------- 腺苷：稳定窄QRS室上速 ----------
+  # 依据 AHA 2025 ACLS 心动过速伴脉搏算法
+  adenosine:
+    correct_when:
+      - "#derived.qrsWidth == 'narrow'"
+      - "#derived.rhythmRegular == true"
+      - "#derived.stable == true"
+      - "#phys.rhythm == 'SVT'"
+      - "#phys.hasPulse == true"
+      - "#clinical.isWpw == false"
+    minor_when:
+      # 重复给药间隔不足（<60s）
+      - "#intervention.adenosine.count != null && #intervention.adenosine.count > 0 && #process.timeElapsedSinceLastIntervention < 60"
+      # 首剂 12mg 偏离指南（应 6mg 起始）
+      - "#intervention.adenosine.count != null && #intervention.adenosine.count == 0 && #intervention.adenosine.lastDose != null && #intervention.adenosine.lastDose != '6mg'"
+    critical_when:
+      # 血流动力学不稳定
+      - "#derived.stable == false"
+      # 宽 QRS 不规则（疑似预激伴 AFib / 多形性 VT）
+      - "#phys.qrsDuration >= 0.12 && #derived.rhythmRegular == false"
+      # WPW 伴 AFib（腺苷阻断 AV 结，加速旁路传导，可诱发 VF）
+      - "#clinical.isWpw == true && #phys.rhythm == 'AFib'"
+      # 哮喘（腺苷可致严重支气管痉挛）
+      - "#clinical.asthma == true"
+      # 窦性心律（无适应症）
+      - "#phys.rhythm == 'Sinus'"
+      # 心脏骤停心律（无适应症）
+      - "#phys.rhythm == 'VF' || #phys.rhythm == 'VT' || #phys.rhythm == 'PEA' || #phys.rhythm == 'Asystole'"
+      # 无脉搏
+      - "#phys.hasPulse == false"
+      # 病态窦房结 / 二度三度 AVB（腺苷可致严重停搏）
+      - "#clinical.sickSinus == true"
+      - "#clinical.avBlock == true"
+
+  # ---------- 咪达唑仑：电复律前镇静 ----------
+  midazolam:
+    correct_when:
+      - "#phys.systolicBp > 90"
+      - "#phys.consciousness != 'unresponsive'"
+    minor_when:
+      - "#phys.systolicBp > 80 && #phys.systolicBp <= 90"
+    critical_when:
+      - "#phys.systolicBp <= 80"
+      - "#phys.consciousness == 'unresponsive'"
+      - "#phys.respiratoryRate < 8"
+
+  # ---------- 胺碘酮：宽QRS / 有脉搏VT ----------
+  amiodarone:
+    correct_when:
+      - "#phys.hasPulse == true"
+      - "#phys.rhythm == 'VT' || #derived.qrsWidth == 'wide'"
+    minor_when:
+      - "#derived.qrsWidth == 'narrow'"
+    critical_when:
+      - "#phys.systolicBp < 80"
+
+  # ---------- 地尔硫䓬：稳定窄QRS ----------
+  diltiazem:
+    correct_when:
+      - "#derived.qrsWidth == 'narrow'"
+      - "#derived.stable == true"
+    critical_when:
+      - "#derived.stable == false"
+      - "#derived.qrsWidth == 'wide'"
+
+  # ---------- 肾上腺素：心脏骤停 ----------
+  epinephrine:
+    correct_when:
+      - "#phys.hasPulse == false"
+      - "#phys.rhythm == 'VF' || #phys.rhythm == 'VT' || #phys.rhythm == 'PEA' || #phys.rhythm == 'Asystole'"
+    critical_when:
+      - "#phys.hasPulse == true"
+      - "#phys.systolicBp > 160"
+
+  # ---------- 阿托品：有症状的心动过缓 ----------
+  atropine:
+    correct_when:
+      - "#phys.heartRate < 50"
+      - "#phys.hasPulse == true"
+    critical_when:
+      - "#phys.heartRate > 100"
+      - "#phys.rhythm == 'VF' || #phys.rhythm == 'VT'"
+
+  # ---------- 多巴胺：低血压 ----------
+  dopamine:
+    correct_when:
+      - "#phys.systolicBp < 90"
+      - "#phys.hasPulse == true"
+    minor_when:
+      - "#phys.heartRate > 120"
+    critical_when:
+      - "#phys.heartRate > 150"
+      - "#phys.rhythm == 'VF' || #phys.rhythm == 'VT'"
+
+  # ---------- 利多卡因：有脉搏VT ----------
+  lidocaine:
+    correct_when:
+      - "#phys.hasPulse == true"
+      - "#phys.rhythm == 'VT'"
+    minor_when:
+      - "#derived.qrsWidth == 'narrow'"
+    critical_when:
+      - "#phys.hasPulse == false"

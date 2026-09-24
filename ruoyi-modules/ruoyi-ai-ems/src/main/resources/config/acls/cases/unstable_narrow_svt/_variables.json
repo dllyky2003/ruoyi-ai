@@ -11,7 +11,20 @@
       "lastTime": null
     },
     "process.sedationAssessed": false,
-    "process.cardioversionWithoutSedation": false
+    "process.cardioversionWithoutSedation": false,
+    "process.stepSyncModeRequested": false,
+    "process.stepEnergySelected": false,
+    "process.stepSedationGiven": false,
+    "process.stepDefibCharged": false,
+    "process.stepClearAnnounced": false,
+    "process.emergencyCardioversionPerformed": false,
+
+    "phys.rhythm": "SVT",
+    "phys.systolicBp": 88,
+    "phys.heartRate": 175,
+    "phys.spo2": 94,
+    "phys.respiratoryRate": 28,
+    "phys.consciousness": "verbal"
   },
 
   "variables": [
@@ -54,6 +67,78 @@
       "category": "PROCESS_MARKER",
       "source": "SYSTEM",
       "writable_by": "SYSTEM",
+      "default_value": false,
+      "persistence": true,
+      "scoring": true
+    },
+    {
+      "name": "process.stepSyncModeRequested",
+      "name_cn": "步骤：已请求开启同步模式",
+      "type": "boolean",
+      "description": "状态机步骤标记。仅由 transition effects 写入。用于让 F-102-PREP_CARDIOVERSION 的 Guard 保持事前语义。与 device.defibSyncMode 解耦。",
+      "category": "PROCESS_MARKER",
+      "source": "SYSTEM",
+      "writable_by": "SYSTEM",
+      "default_value": false,
+      "persistence": true,
+      "scoring": false
+    },
+    {
+      "name": "process.stepEnergySelected",
+      "name_cn": "步骤：已选择能量",
+      "type": "boolean",
+      "description": "状态机步骤标记。仅由 transition effects 写入。",
+      "category": "PROCESS_MARKER",
+      "source": "SYSTEM",
+      "writable_by": "SYSTEM",
+      "default_value": false,
+      "persistence": true,
+      "scoring": false
+    },
+    {
+      "name": "process.stepSedationGiven",
+      "name_cn": "步骤：已给予镇静",
+      "type": "boolean",
+      "description": "状态机步骤标记。仅由 transition effects 写入。",
+      "category": "PROCESS_MARKER",
+      "source": "SYSTEM",
+      "writable_by": "SYSTEM",
+      "default_value": false,
+      "persistence": true,
+      "scoring": false
+    },
+    {
+      "name": "process.stepDefibCharged",
+      "name_cn": "步骤：已充电",
+      "type": "boolean",
+      "description": "状态机步骤标记。仅由 transition effects 写入。",
+      "category": "PROCESS_MARKER",
+      "source": "SYSTEM",
+      "writable_by": "SYSTEM",
+      "default_value": false,
+      "persistence": true,
+      "scoring": false
+    },
+    {
+      "name": "process.stepClearAnnounced",
+      "name_cn": "步骤：已宣布清场",
+      "type": "boolean",
+      "description": "状态机步骤标记。仅由 transition effects 写入。",
+      "category": "PROCESS_MARKER",
+      "source": "SYSTEM",
+      "writable_by": "SYSTEM",
+      "default_value": false,
+      "persistence": true,
+      "scoring": false
+    },
+    {
+      "name": "process.emergencyCardioversionPerformed",
+      "name_cn": "已执行紧急同步电复律",
+      "type": "boolean",
+      "description": "本案例是否为血流动力学不稳定而执行的紧急同步电复律（区别于择期电复律）。由 deliver_sync_shock 技能或 LLM 抽取写入。",
+      "category": "PROCESS_MARKER",
+      "source": "EXECUTOR",
+      "writable_by": "EXECUTOR,PARAM_EXTRACTOR,SYSTEM",
       "default_value": false,
       "persistence": true,
       "scoring": true

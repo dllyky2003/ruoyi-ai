@@ -31,4 +31,9 @@ public final class WsHandshake {
     public static String getToken(Session session) {
         return getQuery(session, "token");
     }
+
+
+    public static String getAttemptId(Session session) {
+        return getQuery(session, "attemptId");
+    }
 }

@@ -10,14 +10,39 @@ import org.springframework.stereotype.Component;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * 生理效果管理器。
+ *
+ * <p>职责：接收"操作/药物"触发，按条件查表得到效果模板，转成
+ * {@link ActiveEffect} 存入会话级列表，由 {@link #getCurrentModifiers(String)}
+ * 每帧计算当前修正量。</p>
+ *
+ * <p>★ 2026-09-23 扩展：支持按 condition 分支查表，用于"正确/错误/延时"
+ * 三种结果对应不同体征反应。查找顺序：
+ * <ol>
+ *   <li>{@code effectKey__condition}（如 {@code adenosine_6mg__wrong_critical}）</li>
+ *   <li>{@code effectKey}（基础 key，兼容旧配置）</li>
+ *   <li>{@code effectKey__correct}（兜底到正确分支）</li>
+ * </ol>
+ *
+ * <p>★ 2026-09-23 螺旋 3：新增 {@link EffectBranch} 维度。branch 由学员操作质量决定
+ * （NORMAL / ERROR / DELAYED），用于审计与日志；condition 仍由调用方决定，
+ * ERROR/DELAYED 分支可直接用 {@link EffectBranch#getDefaultCondition()} 作为 condition。</p>
+ *
+ * <p>★ 效果类型：
+ * <ul>
+ *   <li>{@code DELTA}（默认）：数值型变量加减，走曲线插值</li>
+ *   <li>{@code ENUM_DOWN} / {@code ENUM_UP}：有序枚举位移（如 phys.consciousness），
+ *       通过特殊 key {@code target + "__enum_shift"} 向上游传递 ±steps</li>
+ * </ul>
+ */
 @Component
 @Slf4j
 public class EffectManager {
 
-    // 每个会话的活跃效果列表（包含效果定义、开始时间、当前进度等）
+    /** 每个会话的活跃效果列表 */
     private final Map<String, List<ActiveEffect>> activeEffects = new ConcurrentHashMap<>();
 
-    // 注入配置加载器以获取效果模板（统一入口 PhysiologyConfigLoader）
     private final PhysiologyConfigLoader configLoader;
 
     public EffectManager(PhysiologyConfigLoader configLoader) {
@@ -25,24 +50,106 @@ public class EffectManager {
     }
 
     // ============================================================
-    // 3 参版本：最底层实现
+    // 入口 0（螺旋 3 新增）：带 branch + condition
     // ============================================================
+
     /**
-     * 触发一个操作效果
+     * 触发效果（带 branch + condition）。
      *
-     * @param sessionId 会话ID
-     * @param caseId    案例ID（用于加载效果配置）
-     * @param effectKey 操作标识（如 "OP_ADENOSINE"）
+     * <p>branch 仅用于审计/日志，不参与查表（查表仍按 condition）。
+     * 调用方如需按 branch 分派效果，应自行把 branch 映射到 condition
+     * （见 {@link EffectBranch#getDefaultCondition()}）。</p>
+     *
+     * @param effectKey 效果标识，如 {@code adenosine_6mg} / {@code CARDIOVERSION_100J}
+     * @param condition 条件分支，{@code correct / wrong_minor / wrong_critical / delayed}；
+     *                  传 null 或空串表示只查基础 key
+     * @param branch    学员操作分支；传 null 表示未指定（向后兼容）
+     * @param context   案例上下文（提供 sessionId + caseType）
+     */
+    public void triggerEffect(String effectKey, String condition,
+                              EffectBranch branch, CaseContext context) {
+        if (context == null) {
+            log.warn("CaseContext 为 null，跳过: effectKey={}, branch={}", effectKey, branch);
+            return;
+        }
+        String sessionId = context.getSessionId();
+        String caseId = context.getCaseType();
+        if (caseId == null || caseId.isBlank()) {
+            log.warn("caseType 未设置，跳过: session={}, effectKey={}, branch={}",
+                sessionId, effectKey, branch);
+            return;
+        }
+
+        PhysiologyConfig config = configLoader.loadCase(caseId);
+        if (config == null || config.getOperationEffects() == null) {
+            log.debug("案例 {} 生理配置不存在或未配 operation_effects", caseId);
+            return;
+        }
+
+        Map<String, List<OperationEffect>> all = config.getOperationEffects();
+        List<OperationEffect> templates = lookupTemplates(all, effectKey, condition);
+        if (templates == null || templates.isEmpty()) {
+            log.debug("操作/药物 {} 未配置效果 (condition={}, branch={})",
+                effectKey, condition, branch);
+            return;
+        }
+
+        long now = System.currentTimeMillis();
+        List<ActiveEffect> newEffects = buildActiveEffects(templates, now, branch);
+        activeEffects.computeIfAbsent(sessionId, k -> new ArrayList<>()).addAll(newEffects);
+
+        log.info("✅ 效果已触发: session={}, effect={}, condition={}, branch={}, count={}",
+            sessionId, effectKey, condition, branch, newEffects.size());
+    }
+
+    // ============================================================
+    // 入口 1（旧，保留）：带 condition，无 branch
+    // ============================================================
+
+    /**
+     * 触发效果（带 condition 分支，无 branch）。
+     *
+     * <p>等价于 {@code triggerEffect(effectKey, condition, null, context)}。</p>
+     *
+     * @param effectKey 效果标识，如 {@code adenosine_6mg} / {@code CARDIOVERSION_100J}
+     * @param condition 条件分支，{@code correct / wrong_minor / wrong_critical / delayed}；
+     *                  传 null 或空串表示只查基础 key
+     * @param context   案例上下文（提供 sessionId + caseType）
+     */
+    public void triggerEffect(String effectKey, String condition, CaseContext context) {
+        triggerEffect(effectKey, condition, null, context);
+    }
+
+    // ============================================================
+    // 入口 2（旧，兼容）：无 condition、无 branch
+    // ============================================================
+
+    /**
+     * 触发效果（简化版，无 condition）。
+     *
+     * <p>等价于 {@code triggerEffect(effectKey, null, null, context)}，只查基础 key。</p>
+     */
+    public void triggerEffect(String effectKey, CaseContext context) {
+        triggerEffect(effectKey, null, null, context);
+    }
+
+    // ============================================================
+    // 入口 3（最底层，保留旧签名）：sessionId + caseId + effectKey
+    // ============================================================
+
+    /**
+     * 触发效果（最底层，无 condition、无 branch）。
+     *
+     * <p>仅查 {@code effectKey}，供 {@code StateMachineFacade} / 异常层等
+     * 不感知 condition / branch 的调用点使用。</p>
      */
     public void triggerEffect(String sessionId, String caseId, String effectKey) {
-        // 防御：caseId 为空时直接跳过
         if (caseId == null || caseId.isBlank()) {
             log.warn("triggerEffect 收到空 caseId，跳过: session={}, effectKey={}",
                 sessionId, effectKey);
             return;
         }
 
-        // 从配置中获取效果模板列表
         PhysiologyConfig config = configLoader.loadCase(caseId);
         if (config == null) {
             log.debug("案例 {} 生理配置不存在，跳过效果触发", caseId);
@@ -52,71 +159,36 @@ public class EffectManager {
             log.debug("案例 {} 未配置任何操作效果", caseId);
             return;
         }
+
         List<OperationEffect> templates = config.getOperationEffects().get(effectKey);
         if (templates == null || templates.isEmpty()) {
             log.debug("操作 {} 未配置效果", effectKey);
             return;
         }
 
-        // 为每个模板创建一个活跃效果实例
-        List<ActiveEffect> newEffects = new ArrayList<>();
         long now = System.currentTimeMillis();
-        for (OperationEffect template : templates) {
-            ActiveEffect effect = new ActiveEffect();
-            effect.setTarget(template.getTarget());
-            effect.setDelta((int) template.getDelta());
-
-            // duration / recovery 单位：秒 → 毫秒。加 null 防御。
-            Integer durationSec = template.getDuration();
-            effect.setDuration(durationSec != null ? durationSec * 1000L : 0L);
-
-            Integer recoverySec = template.getRecovery();
-            effect.setRecovery(recoverySec != null ? recoverySec * 1000L : 0L);
-
-            effect.setCurve(template.getCurve());
-            effect.setStartTime(now);
-            newEffects.add(effect);
-        }
-
-        // 添加到该会话的活跃列表
+        List<ActiveEffect> newEffects = buildActiveEffects(templates, now, null);
         activeEffects.computeIfAbsent(sessionId, k -> new ArrayList<>()).addAll(newEffects);
+
         log.info("✅ 效果已触发: session={}, effect={}, count={}",
             sessionId, effectKey, newEffects.size());
     }
 
     // ============================================================
-    // 2 参版本：便捷重载
-    // ============================================================
-    /**
-     * 触发效果（简化版本，自动提取 sessionId 和 caseType）。
-     *
-     * <p>防御：caseType 未设置时不抛 NPE，只打 WARN 并跳过。
-     * 场景：测试 / 早期初始化阶段上下文可能尚未设置 caseType。
-     */
-    public void triggerEffect(String effectId, CaseContext context) {
-        if (context == null) {
-            log.warn("CaseContext 为 null，跳过效果触发: effectId={}", effectId);
-            return;
-        }
-        String sessionId = context.getSessionId();
-        String caseId = context.getCaseType();
-
-        if (caseId == null || caseId.isBlank()) {
-            log.warn("caseType 未设置，跳过效果触发: sessionId={}, effectId={}",
-                sessionId, effectId);
-            return;
-        }
-        triggerEffect(sessionId, caseId, effectId);
-    }
-
-    // ============================================================
     // 效果修正量计算
     // ============================================================
+
     /**
-     * 获取当前时刻所有活跃效果的修正量（按参数汇总）
+     * 获取当前时刻所有活跃效果的修正量（按参数汇总）。
      *
-     * @param sessionId 会话ID
-     * @return Map<参数名, 修正量>（例如 phys.heartRate → -20）
+     * <p>返回两类 key：
+     * <ul>
+     *   <li>普通数值型 target：{@code phys.heartRate → -20}</li>
+     *   <li>枚举型 target（ENUM_DOWN/UP）：{@code phys.consciousness__enum_shift → -1}</li>
+     * </ul>
+     *
+     * <p>调用方需理解 {@code __enum_shift} 约定：value 为 ±steps，
+     * 表示该枚举变量应向上/下移动 N 级。</p>
      */
     public Map<String, Integer> getCurrentModifiers(String sessionId) {
         Map<String, Integer> modifiers = new HashMap<>();
@@ -130,15 +202,27 @@ public class EffectManager {
         while (it.hasNext()) {
             ActiveEffect effect = it.next();
 
-            // 已过期：duration == 0 视为立即结束
+            // 已过期：duration > 0 且当前时刻已超出
             if (effect.getDuration() > 0
                 && now > effect.getStartTime() + effect.getDuration()) {
                 it.remove();
-                log.debug("效果已过期: target={}", effect.getTarget());
+                log.debug("效果已过期: target={}, branch={}",
+                    effect.getTarget(), effect.getBranch());
                 continue;
             }
 
-            // 计算当前时刻的修正量（根据曲线类型）
+            // ★ 枚举位移：不走曲线插值，直接给 ±steps（同会话内累积）
+            if (isEnumShift(effect)) {
+                int dir = "ENUM_UP".equals(effect.getType()) ? 1 : -1;
+                int shift = dir * (effect.getSteps() != null ? effect.getSteps() : 1);
+                if (shift != 0) {
+                    String enumKey = effect.getTarget() + "__enum_shift";
+                    modifiers.merge(enumKey, shift, Integer::sum);
+                }
+                continue;
+            }
+
+            // DELTA：按曲线计算当前修正量
             int currentDelta = calculateCurrentDelta(effect, now);
             if (currentDelta != 0) {
                 modifiers.merge(effect.getTarget(), currentDelta, Integer::sum);
@@ -147,8 +231,14 @@ public class EffectManager {
         return modifiers;
     }
 
+    /** 判断是否为枚举位移效果 */
+    private boolean isEnumShift(ActiveEffect effect) {
+        String type = effect.getType();
+        return "ENUM_DOWN".equals(type) || "ENUM_UP".equals(type);
+    }
+
     /**
-     * 根据曲线类型计算当前修正量
+     * 根据曲线类型计算当前修正量（仅 DELTA 类型使用）。
      */
     private int calculateCurrentDelta(ActiveEffect effect, long now) {
         long elapsed = now - effect.getStartTime();
@@ -158,7 +248,6 @@ public class EffectManager {
         if (totalDuration <= 0) {
             return effect.getDelta();
         }
-
         if (elapsed <= 0) {
             return effect.getDelta();
         }
@@ -199,7 +288,7 @@ public class EffectManager {
     }
 
     /**
-     * 清除会话的所有效果（会话结束时调用）
+     * 清除会话的所有效果（会话结束时调用）。
      */
     public void clearEffects(String sessionId) {
         activeEffects.remove(sessionId);
@@ -207,8 +296,69 @@ public class EffectManager {
     }
 
     // ============================================================
+    // 内部工具
+    // ============================================================
+
+    /**
+     * 按 condition 查找效果模板。
+     * 查找顺序：{@code effectKey__condition} → {@code effectKey}
+     * → {@code effectKey__correct}。
+     */
+    private List<OperationEffect> lookupTemplates(Map<String, List<OperationEffect>> all,
+                                                  String effectKey,
+                                                  String condition) {
+        // 1) effectKey__condition
+        if (condition != null && !condition.isBlank()) {
+            List<OperationEffect> t = all.get(effectKey + "__" + condition);
+            if (t != null && !t.isEmpty()) {
+                return t;
+            }
+        }
+        // 2) 基础 key
+        List<OperationEffect> base = all.get(effectKey);
+        if (base != null && !base.isEmpty()) {
+            return base;
+        }
+        // 3) 兜底 correct
+        return all.get(effectKey + "__correct");
+    }
+
+    /**
+     * 把效果模板列表转成 ActiveEffect 列表。
+     *
+     * @param templates 模板列表
+     * @param now       当前时刻（毫秒）
+     * @param branch    学员操作分支（审计用，可 null）
+     */
+    private List<ActiveEffect> buildActiveEffects(List<OperationEffect> templates,
+                                                  long now,
+                                                  EffectBranch branch) {
+        List<ActiveEffect> newEffects = new ArrayList<>(templates.size());
+        for (OperationEffect template : templates) {
+            ActiveEffect effect = new ActiveEffect();
+            effect.setTarget(template.getTarget());
+            effect.setDelta((int) template.getDelta());
+            effect.setType(template.getType() != null ? template.getType() : "DELTA");
+            effect.setSteps(template.getSteps() != null ? template.getSteps() : 0);
+
+            Integer durationSec = template.getDuration();
+            effect.setDuration(durationSec != null ? durationSec * 1000L : 0L);
+
+            Integer recoverySec = template.getRecovery();
+            effect.setRecovery(recoverySec != null ? recoverySec * 1000L : 0L);
+
+            effect.setCurve(template.getCurve());
+            effect.setStartTime(now);
+            effect.setBranch(branch);        // ★ 螺旋 3：审计用
+            newEffects.add(effect);
+        }
+        return newEffects;
+    }
+
+    // ============================================================
     // 内部类：活跃效果实例
     // ============================================================
+
     @lombok.Data
     private static class ActiveEffect {
         private String target;
@@ -217,5 +367,14 @@ public class EffectManager {
         private long recovery;
         private String curve;
         private long startTime;
+
+        /** 效果类型：DELTA（默认） / ENUM_DOWN / ENUM_UP / SET */
+        private String type;
+
+        /** 枚举位移级数（ENUM_DOWN/UP 时使用） */
+        private Integer steps;
+
+        /** ★ 螺旋 3：触发本效果时的学员操作分支（审计用，可 null） */
+        private EffectBranch branch;
     }
 }

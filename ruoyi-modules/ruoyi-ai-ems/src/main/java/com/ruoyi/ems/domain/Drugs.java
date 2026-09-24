@@ -189,10 +189,19 @@ public final class Drugs {
      * 获取药物的效果ID（用于追踪特定剂量下的药物效果）
      * <p>格式: {drugCode}_{normalizedDose}
      */
+    /**
+     * 获取药物的效果ID（用于追踪特定剂量下的药物效果）
+     * <p>格式: {drugCode}_{normalizedDose}，均归一为小写、去空格。</p>
+     * <p>示例：{@code adenosine + "6mg" → "adenosine_6mg"}；
+     * {@code Midazolam + "2 MG" → "midazolam_2mg"}。</p>
+     */
     public static String getEffectId(String drugCode, String dose) {
         if (drugCode == null) return null;
-        String normalizedDose = dose != null ? dose.trim().replaceAll("\\s+", "") : "";
-        return drugCode + "_" + normalizedDose;
+        String normalizedDrug = drugCode.trim().toLowerCase();
+        String normalizedDose = dose != null
+            ? dose.trim().replaceAll("\\s+", "").toLowerCase()
+            : "";
+        return normalizedDrug + "_" + normalizedDose;
     }
 
     // ============================================================

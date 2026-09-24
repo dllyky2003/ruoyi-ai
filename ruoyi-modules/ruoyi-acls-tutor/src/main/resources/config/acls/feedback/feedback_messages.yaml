@@ -27,3 +27,8 @@ messages:
   - key: feedback_unstable_needs_cardioversion
     text: "患者血流动力学不稳定，应优先考虑同步电复律，而非药物。"
     severity: critical
+
+  # 腺苷二次推药（60s 观察窗内重复给药）→ 警告
+  - key: feedback_adenosine_recheck_warn
+    text: "⚠️ 60s 内二次推注腺苷，需评估首次剂量效果与血压。"
+    severity: moderate

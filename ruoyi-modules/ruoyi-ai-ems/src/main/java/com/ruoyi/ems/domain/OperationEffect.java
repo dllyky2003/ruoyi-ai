@@ -12,6 +12,7 @@ public class OperationEffect {
     private String variable;
     private String type;
     private Float value;
+    private Integer steps;
     private String jumpTo;
     private String unityStateName;
     private Integer transitionDuration;

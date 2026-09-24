@@ -3,6 +3,17 @@
 # 案例编号：102
 # 存放位置：cases/unstable_narrow_svt/_exceptions.yaml
 # 父级：GLOBAL
+#
+# 本次修改（2026-09-22）：
+#   DELAYED_FIRST_INTERVENTION:
+#     - condition 增加 #process.timeoutOccurred != true，避免每轮指令反复命中。
+#
+# 命名规范说明：
+#   unstable_narrow_svt 状态机真实状态名使用短横线（F-102-XXX），
+#   与 stable_narrow 的下划线命名不同，以 _flow.yaml 与契约诊断日志为准。
+#   因此本文件中的 jumpTo（F-102-PREP_CARDIOVERSION、F-102-DETERIORATION、
+#   F-102-SECOND_SHOCK_PREP、F-102-POST_SHOCK_ASSESS）保持短横线，不做修改。
+#   ⚠️ 若你后续确认 _flow.yaml 里用的是下划线，再统一切换命名规范。
 # ============================================================
 
 exceptions:
@@ -166,25 +177,43 @@ exceptions:
       exam:
 
   # ============================================================
-  # 规则 8：首次干预超过 5 分钟 → 恶化
+  # 规则 8：首次干预超过 2 分钟 → 恶化
+  #
+  # ★ 修复要点（2026-09-21）：
+  #   删除 #evaluation.timeToFirstIntervention == null 条件。
+  #   该变量从未被任何技能写入，默认值若为 0 则 == null 恒 false，
+  #   导致整个 condition 永远不成立。
+  #   process.timeElapsedSinceLastIntervention 已覆盖语义：
+  #   每次有效技能执行后会重置为 0，> 120 即代表"已过 120 秒无干预"。
+  #
+  #   注：本规则未写 triggerIntent（保持原状），与定时评估路径的
+  #   intentId=null 匹配。请勿添加 triggerIntent: "*"。
+  #
+  # ★ 修复要点（2026-09-22）：
+  #   condition 增加 #process.timeoutOccurred != true。
+  #   本规则 effects 会写入 process.timeoutOccurred=true；
+  #   若不判断它，则后续每条指令都会再次命中，导致"异常层命中，
+  #   跳过正常 skill"刷屏。变量未写入时为 null，null != true 求值为 true，
+  #   所以首次触发不会被短路。
   # ============================================================
   - id: "DELAYED_FIRST_INTERVENTION"
-    description: "超过 5 分钟仍未对不稳定窄QRS心动过速进行干预。"
+    description: "超过 2 分钟仍未对不稳定窄QRS心动过速进行干预。"
     # ★ 不写 triggerIntent（空 = 任意意图都匹配）
+    # ★ FIX 2026-09-22：加 timeoutOccurred 短路，避免每轮指令反复命中
     condition: |
+      #process.timeoutOccurred != true &&
       #process.timeElapsedSinceLastIntervention != null &&
-      #process.timeElapsedSinceLastIntervention > 300 &&
-      #evaluation.timeToFirstIntervention == null
+      #process.timeElapsedSinceLastIntervention > 120
     severity: "TIMING"
     keepCurrent: false
     jumpTo: "F-102-DETERIORATION"
-    unityStateName: "心搏停止(Asystole)"     # ★ 改这里，用白名单值
+    unityStateName: "心搏停止(Asystole)"     # ★ 白名单值
     effects:
       - var: "process.timeoutOccurred"
         value: true
     feedback:
       teaching:
-        tts: "已超过 5 分钟未采取干预。不稳定心动过速每延误一分钟，死亡率显著上升。患者已出现循环崩溃。"
+        tts: "已超过 2 分钟未采取干预。不稳定心动过速每延误一分钟，死亡率显著上升。患者已出现循环崩溃。"
       learning:
         tts: "太慢了！不稳定心动过速应立即电复律。"
         interruptCurrentTts: true

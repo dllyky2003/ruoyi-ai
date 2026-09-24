@@ -2,7 +2,6 @@ package com.ruoyi.ems.config.loader;
 
 import com.ruoyi.ems.domain.DerivationRule;
 import com.ruoyi.ems.domain.DerivationsConfig;
-import jakarta.annotation.PostConstruct;   // ★ 改为 jakarta
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -19,8 +18,14 @@ import java.util.regex.Pattern;
 @Component
 public class DerivationRuleLoader {
 
-    /** 每个案例的合并后规则（全局 + 案例专属） */
+    /** 每个案例的合并后规则（GLOBAL + _shared/<group> + 案例专属） */
     private final Map<String, List<DerivationRule>> caseRules = new ConcurrentHashMap<>();
+
+    /** 共享组规则：key = 组名（tachycardia / bradycardia / ...） */
+    private final Map<String, List<DerivationRule>> sharedRules = new ConcurrentHashMap<>();
+
+    /** 案例 → 声明的共享组列表（来自 case.yaml 的 sharedGroups 字段） */
+    private final Map<String, List<String>> caseSharedGroups = new ConcurrentHashMap<>();
 
     /** 全局规则 */
     private volatile List<DerivationRule> globalRules = new ArrayList<>();
@@ -31,7 +36,6 @@ public class DerivationRuleLoader {
     // ====================================================================
     // 加载入口
     // ====================================================================
-
 
     public void loadAll() {
         if (loaded) {
@@ -49,6 +53,8 @@ public class DerivationRuleLoader {
     public synchronized void reloadAll() {
         log.info("🔄 重新加载派生规则（全量）...");
         caseRules.clear();
+        sharedRules.clear();
+        caseSharedGroups.clear();
         globalRules = new ArrayList<>();
         loaded = false;
         doLoadAll();
@@ -57,7 +63,7 @@ public class DerivationRuleLoader {
 
     /**
      * 重新加载单个案例。
-     * 供 CaseConfigLoader.reloadCase(caseId) 调用。
+     * 注意：共享组规则不重载；如需刷新共享组，请调用 reloadAll()。
      */
     public synchronized void reloadCase(String caseId) {
         if (caseId == null || caseId.isEmpty()) {
@@ -75,16 +81,19 @@ public class DerivationRuleLoader {
                 return;
             }
 
+            // 重新读该案例声明的共享组
+            List<String> groups = loadSharedGroups(resolver, caseId);
+            caseSharedGroups.put(caseId, groups);
+
             Yaml yaml = new Yaml();
             for (Resource resource : resources) {
                 try (InputStream is = resource.getInputStream()) {
                     DerivationsConfig config = yaml.loadAs(is, DerivationsConfig.class);
                     if (config != null && config.getDerivations() != null) {
-                        // 合并：全局规则 + 案例专属（案例覆盖全局同名 target）
-                        List<DerivationRule> merged = mergeWithGlobal(config.getDerivations());
+                        List<DerivationRule> merged = mergeWithShared(config.getDerivations(), groups);
                         caseRules.put(caseId, merged);
-                        log.info("📄 重载案例 [{}] 派生规则: 原始 {} 条, 合并后 {} 条",
-                            caseId, config.getDerivations().size(), merged.size());
+                        log.info("📄 重载案例 [{}] 派生规则: 原始 {} 条, 合并后 {} 条 (sharedGroups={})",
+                            caseId, config.getDerivations().size(), merged.size(), groups);
                     }
                 }
             }
@@ -100,36 +109,48 @@ public class DerivationRuleLoader {
     private void doLoadAll() {
         try {
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-            Resource[] resources = resolver.getResources("classpath*:config/acls/**/_derivations.yaml");
 
+            // ★ 1. 先加载 GLOBAL
+            loadGlobalRules(resolver);
+
+            // ★ 2. 加载共享层：cases/_shared/<group>/_derivations.yaml
+            loadSharedRules(resolver);
+
+            // ★ 3. 加载病例层：cases/<caseId>/_derivations.yaml
             Yaml yaml = new Yaml();
+            Resource[] resources = resolver.getResources(
+                "classpath*:config/acls/cases/*/_derivations.yaml");
             for (Resource resource : resources) {
                 String path = resource.getURL().toString();
                 String caseId = extractCaseId(path);
+                if (caseId == null) {
+                    // _shared 下的已被 loadSharedRules 处理，跳过
+                    continue;
+                }
                 try (InputStream is = resource.getInputStream()) {
                     DerivationsConfig config = yaml.loadAs(is, DerivationsConfig.class);
                     if (config != null && config.getDerivations() != null) {
-                        if ("GLOBAL".equals(caseId)) {
-                            globalRules = config.getDerivations();
-                            log.info("📄 加载全局派生规则: {} 条", globalRules.size());
-                        } else {
-                            caseRules.put(caseId, config.getDerivations());
-                            log.info("📄 加载案例 [{}] 派生规则: {} 条",
-                                caseId, config.getDerivations().size());
-                        }
+                        caseRules.put(caseId, config.getDerivations());
+                        log.info("📄 加载案例 [{}] 派生规则: {} 条",
+                            caseId, config.getDerivations().size());
                     }
                 }
             }
 
-            // 合并：每个案例 = 全局规则 + 案例专属规则（案例覆盖全局同名 target）
+            // ★ 4. 读每个病例的 case.yaml 的 sharedGroups
+            loadAllCaseSharedGroups(resolver);
+
+            // ★ 5. 合并：GLOBAL → _shared/<group> → 病例
             for (Map.Entry<String, List<DerivationRule>> entry : caseRules.entrySet()) {
                 String caseId = entry.getKey();
-                List<DerivationRule> merged = mergeWithGlobal(entry.getValue());
+                List<String> groups = caseSharedGroups.getOrDefault(caseId, Collections.emptyList());
+                List<DerivationRule> merged = mergeWithShared(entry.getValue(), groups);
                 entry.setValue(merged);
-                log.info("✅ 案例 [{}] 合并后派生规则: {} 条", caseId, merged.size());
+                log.info("✅ 案例 [{}] 合并后派生规则: {} 条 (sharedGroups={})",
+                    caseId, merged.size(), groups);
             }
 
-            // 全局规则单独作为 "GLOBAL" 案例存储
+            // GLOBAL 自身也存一份（供 fallback）
             caseRules.put("GLOBAL", globalRules);
 
         } catch (Exception e) {
@@ -137,47 +158,159 @@ public class DerivationRuleLoader {
         }
     }
 
-    /**
-     * 合并：全局规则 + 案例专属规则。
-     * 同名 target 时，案例规则覆盖全局规则。
-     */
-    private List<DerivationRule> mergeWithGlobal(List<DerivationRule> caseOnly) {
-        Map<String, DerivationRule> targetMap = new LinkedHashMap<>();
-        for (DerivationRule rule : globalRules) {
-            if (rule.getTarget() != null) {
-                targetMap.put(rule.getTarget(), rule);
+    private void loadGlobalRules(PathMatchingResourcePatternResolver resolver) throws Exception {
+        Resource[] resources = resolver.getResources(
+            "classpath*:config/acls/GLOBAL/_derivations.yaml");
+        Yaml yaml = new Yaml();
+        for (Resource resource : resources) {
+            try (InputStream is = resource.getInputStream()) {
+                DerivationsConfig config = yaml.loadAs(is, DerivationsConfig.class);
+                if (config != null && config.getDerivations() != null) {
+                    globalRules = config.getDerivations();
+                    log.info("📄 加载全局派生规则: {} 条", globalRules.size());
+                }
             }
         }
-        if (caseOnly != null) {
-            for (DerivationRule rule : caseOnly) {
-                if (rule.getTarget() != null) {
-                    targetMap.put(rule.getTarget(), rule);
+    }
+
+    private void loadSharedRules(PathMatchingResourcePatternResolver resolver) throws Exception {
+        Resource[] resources = resolver.getResources(
+            "classpath*:config/acls/cases/_shared/*/_derivations.yaml");
+        Yaml yaml = new Yaml();
+        for (Resource resource : resources) {
+            String path = resource.getURL().toString();
+            String group = extractSharedGroup(path);
+            if (group == null) continue;
+            try (InputStream is = resource.getInputStream()) {
+                DerivationsConfig config = yaml.loadAs(is, DerivationsConfig.class);
+                if (config != null && config.getDerivations() != null) {
+                    sharedRules.put(group, config.getDerivations());
+                    log.info("📄 加载共享组 [{}] 派生规则: {} 条",
+                        group, config.getDerivations().size());
                 }
+            }
+        }
+    }
+
+    private void loadAllCaseSharedGroups(PathMatchingResourcePatternResolver resolver) {
+        try {
+            Resource[] caseYamls = resolver.getResources(
+                "classpath*:config/acls/cases/*/case.yaml");
+            for (Resource res : caseYamls) {
+                String path = res.getURL().toString();
+                String caseId = extractCaseIdFromCaseYaml(path);
+                if (caseId == null) continue;
+                List<String> groups = readSharedGroups(res);
+                caseSharedGroups.put(caseId, groups);
+                if (!groups.isEmpty()) {
+                    log.info("📎 案例 [{}] 声明共享组: {}", caseId, groups);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("读取 case.yaml 的 sharedGroups 失败", e);
+        }
+    }
+
+    private List<String> loadSharedGroups(PathMatchingResourcePatternResolver resolver,
+                                          String caseId) {
+        try {
+            Resource[] resources = resolver.getResources(
+                "classpath*:config/acls/cases/" + caseId + "/case.yaml");
+            if (resources.length > 0) {
+                return readSharedGroups(resources[0]);
+            }
+        } catch (Exception e) {
+            log.warn("读取案例 [{}] 的 sharedGroups 失败", caseId, e);
+        }
+        return Collections.emptyList();
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<String> readSharedGroups(Resource resource) {
+        try (InputStream is = resource.getInputStream()) {
+            Yaml yaml = new Yaml();
+            Map<String, Object> map = yaml.load(is);
+            if (map == null) return Collections.emptyList();
+            Object raw = map.get("sharedGroups");
+            if (raw instanceof List) {
+                List<String> result = new ArrayList<>();
+                for (Object o : (List<Object>) raw) {
+                    if (o != null) result.add(o.toString());
+                }
+                return result;
+            }
+        } catch (Exception e) {
+            log.warn("解析 case.yaml 的 sharedGroups 失败: {}", e.getMessage());
+        }
+        return Collections.emptyList();
+    }
+
+    /**
+     * 合并顺序：GLOBAL → _shared/<group>（按声明顺序）→ 病例层。
+     * 同名 target 后者覆盖前者。
+     */
+    private List<DerivationRule> mergeWithShared(List<DerivationRule> caseOnly,
+                                                 List<String> groups) {
+        Map<String, DerivationRule> targetMap = new LinkedHashMap<>();
+        // 1. GLOBAL（最低优先级）
+        for (DerivationRule r : globalRules) {
+            if (r.getTarget() != null) targetMap.put(r.getTarget(), r);
+        }
+        // 2. _shared/<group>（按声明顺序覆盖）
+        if (groups != null) {
+            for (String g : groups) {
+                List<DerivationRule> gr = sharedRules.get(g);
+                if (gr != null) {
+                    for (DerivationRule r : gr) {
+                        if (r.getTarget() != null) targetMap.put(r.getTarget(), r);
+                    }
+                }
+            }
+        }
+        // 3. 病例层（最高优先级）
+        if (caseOnly != null) {
+            for (DerivationRule r : caseOnly) {
+                if (r.getTarget() != null) targetMap.put(r.getTarget(), r);
             }
         }
         return new ArrayList<>(targetMap.values());
     }
 
     private String extractCaseId(String path) {
-        if (path.contains("/GLOBAL/") || path.contains("\\GLOBAL\\")) {
-            return "GLOBAL";
-        }
+        if (path.contains("/_shared/")) return null;
+        if (path.contains("/GLOBAL/")) return "GLOBAL";
         Pattern p = Pattern.compile(".*/cases/([^/]+)/.*");
         Matcher m = p.matcher(path);
         if (m.find()) {
-            return m.group(1);
+            String id = m.group(1);
+            if (id.startsWith("_")) return null;   // 保险：_ 开头目录一律跳过
+            return id;
         }
         return "GLOBAL";
+    }
+
+    private String extractCaseIdFromCaseYaml(String path) {
+        Pattern p = Pattern.compile(".*/cases/([^/]+)/case\\.yaml");
+        Matcher m = p.matcher(path);
+        if (m.find()) {
+            String id = m.group(1);
+            if (id.startsWith("_")) return null;
+            return id;
+        }
+        return null;
+    }
+
+    private String extractSharedGroup(String path) {
+        Pattern p = Pattern.compile(".*/cases/_shared/([^/]+)/_derivations\\.yaml");
+        Matcher m = p.matcher(path);
+        if (m.find()) return m.group(1);
+        return null;
     }
 
     // ====================================================================
     // 对外查询
     // ====================================================================
 
-    /**
-     * 取某案例的合并后派生规则。
-     * 若案例不存在，回退到 GLOBAL。
-     */
     public List<DerivationRule> getRulesForCase(String caseType) {
         List<DerivationRule> rules = caseRules.get(caseType);
         if (rules == null) {
@@ -186,16 +319,10 @@ public class DerivationRuleLoader {
         return rules != null ? Collections.unmodifiableList(rules) : Collections.emptyList();
     }
 
-    /**
-     * 取全局派生规则。
-     */
     public List<DerivationRule> getGlobalRules() {
         return Collections.unmodifiableList(globalRules);
     }
 
-    /**
-     * 列出所有已加载的案例 ID（含 GLOBAL）。
-     */
     public Set<String> getAllCaseIds() {
         return Collections.unmodifiableSet(caseRules.keySet());
     }

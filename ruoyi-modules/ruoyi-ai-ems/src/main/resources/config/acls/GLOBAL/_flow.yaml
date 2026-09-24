@@ -8,6 +8,9 @@
 # 修订：2.1.0（★ Phase SM：新增 initialPhase + phases 段）
 # 修订：2.2.0（★ 删除 GLOBAL 中 F_101_EXIT_TO_PARENT 的 4 条冗余转移，避免与 case 层重复导致 priority 冲突）
 # 修订：2.3.0（★ 删除 GLOBAL 中 F_102/103/104_EXIT_TO_PARENT 的 4 条冗余转移，全部改由 case 层定义）
+# 修订：2.4.0（★ 修复 ROSC 卡死兜底：新增 F-000-ROSC_MANAGEMENT 自循环转移，
+#                在 roscStabilized == false 时由任一学员意图自动确认稳定，
+#                避免子级遗漏 effects 时状态机永久卡死）
 # ============================================================
 caseId: "GLOBAL"
 caseName: "ACLS全局父级编排"
@@ -364,6 +367,37 @@ stateMachine:
     # ★ F_101/F_102/F_103/F_104_EXIT_TO_PARENT 的出边均在 case 层定义，
     #   GLOBAL 侧不再重复，避免合并时 priority 冲突
     # ==========================================================
+
+    # ==========================================================
+    # 7a. ROSC 管理 —— 兜底自循环（★ 2.4.0 新增）
+    # ----------------------------------------------------------
+    # 目的：防止子级在进入 F-000-ROSC_MANAGEMENT 时遗漏置位
+    #       clinical.roscStabilized，导致第 7 节的出边 Guard 永不通过、
+    #       状态机卡死并拒绝所有学员意图。
+    #
+    # 语义：F-000-ROSC_MANAGEMENT 阶段的语义即为"循环已恢复、等待确认稳定"；
+    #       学员在此阶段执行的任一意图（尤其是评估类）即视为"确认稳定"。
+    #
+    # 触发条件：clinical.roscStabilized == false（尚未确认稳定）
+    # 效果：置位 clinical.roscStabilized = true
+    #       下一次条件重评估时，第 7 节的出边 Guard 通过，
+    #       自动推进到 F-000-POST_ROSC_CARE。
+    #
+    # 与第 7 节的优先级关系：
+    #   - 若子级已正确置位（roscStabilized == true），本规则 Guard 为 false，
+    #     不触发，第 7 节直接命中；
+    #   - 若子级遗漏（roscStabilized == false），本规则命中，
+    #     本状态 effects 应用后触发自循环重评估，随即第 7 节命中。
+    # ==========================================================
+    - source: "F-000-ROSC_MANAGEMENT"
+      target: "F-000-ROSC_MANAGEMENT"
+      intentCode: null
+      condition: "#clinical.roscStabilized == false"
+      priority: 50
+      description: "ROSC 管理阶段任一意图 → 自动确认稳定（兜底）"
+      effects:
+        - var: "clinical.roscStabilized"
+          value: true
 
     # ==========================================================
     # 7. ROSC → 复苏后护理 → 结束

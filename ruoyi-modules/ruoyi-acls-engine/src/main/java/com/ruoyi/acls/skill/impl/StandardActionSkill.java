@@ -15,7 +15,7 @@ public class StandardActionSkill extends AbstractEmsSkill {
     private final int durationSeconds;
     private final String successVarName;
     private final String successSpeech;
-
+    private static final String STATUS_GIVEN = "given";
     public StandardActionSkill(String keystepId, Duty requiredDuty,
                                String vrActionCode, int durationSeconds,
                                String successVarName, String successSpeech) {
@@ -51,8 +51,23 @@ public class StandardActionSkill extends AbstractEmsSkill {
     }
     @Override
     public Map<String, Object> getSuccessOutputs() {
-        return Map.of(successVarName, true);
+        return Map.of(successVarName, resolveSuccessValue());
     }
+
+    /**
+     * 按变量名语义决定写入值：
+     * - intervention.*.status   → "given"（字符串，与 _variables.json 声明一致）
+     * - 其他（如 device.ecgOn） → Boolean.TRUE（保持原行为）
+     */
+    private Object resolveSuccessValue() {
+        if (successVarName != null
+            && successVarName.startsWith("intervention.")
+            && successVarName.endsWith(".status")) {
+            return STATUS_GIVEN;
+        }
+        return Boolean.TRUE;
+    }
+
     /** 供完成监听器读取 successVarName */
     public String getSuccessVarName() {
         return successVarName;

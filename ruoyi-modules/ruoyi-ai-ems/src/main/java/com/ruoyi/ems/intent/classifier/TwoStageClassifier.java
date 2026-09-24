@@ -55,6 +55,7 @@ public class TwoStageClassifier implements IntentClassifier {
         String response = ollamaClient.chat(systemPrompt, userPrompt);
         log.debug(response);
     }
+
     private String normalizeActType(String llmActType) {
         if (llmActType == null) return null;
         switch (llmActType.trim()) {
@@ -65,22 +66,24 @@ public class TwoStageClassifier implements IntentClassifier {
             case "探查性询问": return ActType.PROBE.name();
             case "宣告": return ActType.ANNOUNCEMENT.name();
             default:
-                // LLM 有时直接给枚举名
                 try { return ActType.valueOf(llmActType).name(); }
                 catch (Exception e) { return ActType.COMMAND.name(); }
         }
     }
+
     @Override
     public IntentCommand classify(String asrText, ClassificationContext context) {
         // ★ 提升作用域：供 catch 分支把已获得的 LLM 响应带出去
         String llmResponseForRecord = null;
+        // ★ 提取 caseId（可能为 null，此时不过滤，保持向后兼容）
+        String caseId = context != null ? context.getCaseId() : null;
+
         try {
             // 第一阶段：域路由（传入上下文）
             DomainResult domainResult = classifyDomain(asrText, context);
             if (domainResult == null || domainResult.getDomain() == null) {
                 String reason = "域路由失败（LLM 未给出有效 domain，且 act_type 兜底也未命中）";
                 log.warn("TwoStage 分类失败: {}", reason);
-                // ★ 不再直接记录；诊断塞 errorMessage，交由 Service 统一记录
                 IntentCommand invalid = IntentCommand.invalid(asrText, reason);
                 invalid.setErrorMessage(reason);
                 return invalid;
@@ -90,10 +93,21 @@ public class TwoStageClassifier implements IntentClassifier {
             String domainActType = domainResult.getActType();
             log.debug("TwoStage 域路由结果: domain={}, actType={}", domain, domainActType);
 
-            // 第二阶段：细粒度分类（传入上下文）
-            List<IntentDefinition> candidates = registry.getIntentsByDomain(domain);
+            // ============================================================
+            // ★ 修复：候选意图列表按 caseId 过滤，避免跨病例串场
+            //   例如 unstable_narrow_svt 会话里，候选列表不应包含 stable_narrow 的 S-101-3-2
+            // ============================================================
+            List<IntentDefinition> rawCandidates = registry.getIntentsByDomain(domain);
+            List<IntentDefinition> candidates = filterCandidatesByCase(rawCandidates, caseId);
+
+            if (log.isDebugEnabled()) {
+                log.debug("TwoStage 候选意图 (domain={}, caseId={}): {} -> {}",
+                    domain, caseId, rawCandidates == null ? 0 : rawCandidates.size(), candidates.size());
+            }
+
             if (candidates.isEmpty()) {
-                String reason = "域 " + domain + " 下无候选意图";
+                String reason = "域 " + domain + " 下无候选意图" +
+                    (caseId != null ? "（已按病例 " + caseId + " 过滤）" : "");
                 log.warn("TwoStage 分类失败: {}", reason);
                 IntentCommand invalid = IntentCommand.invalid(asrText, reason);
                 invalid.setErrorMessage(reason);
@@ -106,10 +120,8 @@ public class TwoStageClassifier implements IntentClassifier {
 
             String systemPrompt = promptService.buildFineClassifierSystemPrompt(subDomain);
             String userPrompt = promptService.buildFineClassifierUserPrompt(asrText, context);
-            //     log.debug("系统提示词:\r\n {}", systemPrompt);
-            //     log.debug("用户提示词:\r\n {}", userPrompt);
             String response = ollamaClient.chat(systemPrompt, userPrompt);
-            llmResponseForRecord = response;   // ★ 记录到外层作用域
+            llmResponseForRecord = response;
             log.debug("Ollama 细粒度响应: {}", response);
             JsonNode root = objectMapper.readTree(response);
 
@@ -124,9 +136,6 @@ public class TwoStageClassifier implements IntentClassifier {
             double confidence = root.path("confidence").asDouble(0.5);
             String reasoning = root.path("reasoning").asText("");
 
-            // ============================================================
-            // 修正2：提取细粒度阶段的 act_type，优先使用
-            // ============================================================
             String fineActType = root.path("act_type").asText("");
             String finalActType = (!fineActType.isEmpty()) ? fineActType : domainActType;
             finalActType = (finalActType == null) ? "发令性指令" : finalActType;
@@ -135,8 +144,10 @@ public class TwoStageClassifier implements IntentClassifier {
             log.debug("TwoStage 细粒度结果: code={}, actType={}, confidence={}",
                 intentCode, finalActType, confidence);
 
-            // 校验意图是否在白名单中
-            if (registry.isValidIntentCode(intentCode)) {
+            // ============================================================
+            // ★ 修复：校验意图是否在"当前病例的白名单"中，而不只是全局白名单
+            // ============================================================
+            if (isValidIntentCodeForCase(intentCode, caseId)) {
                 IntentDefinition def = registry.getIntent(intentCode);
 
                 IntentCandidate candidate = IntentCandidate.builder()
@@ -159,13 +170,12 @@ public class TwoStageClassifier implements IntentClassifier {
                     .matchedDefinition(def)
                     .build();
             } else {
-                // ★★★ 修正编码：既包括原 S1-2 之类的特例规则，也包括"短编码 → 完整编码"前缀补全 ★★★
-                String corrected = tryCorrectIntentCode(intentCode);
-                if (corrected != null && registry.isValidIntentCode(corrected)) {
+                // ★ 修正编码时也按 caseId 过滤
+                String corrected = tryCorrectIntentCode(intentCode, caseId);
+                if (corrected != null && isValidIntentCodeForCase(corrected, caseId)) {
                     log.warn("修正意图编码: {} -> {}", intentCode, corrected);
                     IntentDefinition correctedDef = registry.getIntent(corrected);
 
-                    // 只对"特例规则修正"做置信度衰减；前缀补全属于"格式修复"，不衰减
                     double correctedConfidence = confidence;
                     if (!corrected.startsWith(intentCode + "_")) {
                         correctedConfidence = confidence * 0.8;
@@ -192,20 +202,20 @@ public class TwoStageClassifier implements IntentClassifier {
                         .build();
                 }
 
-                // ★ 修正失败：诊断放 errorMessage，LLM 响应放 llmRawResponse
                 String reason = String.format(
-                    "意图编码不在白名单:\n" +
+                    "意图编码不在当前病例白名单:\n" +
                         "  llmIntentCode=%s\n" +
+                        "  caseId=%s\n" +
                         "  domain=%s\n" +
                         "  actType=%s\n" +
                         "  confidence=%.2f\n" +
                         " systemPrompts=%s \n" +
                         " userPrompts=%s",
-                    intentCode, domain, finalActType, confidence,systemPrompt,userPrompt);
+                    intentCode, caseId, domain, finalActType, confidence, systemPrompt, userPrompt);
                 log.warn("TwoStage 分类失败: {}", reason);
 
                 IntentCommand invalid = IntentCommand.invalid(asrText,
-                    "意图编码不在白名单中: " + intentCode);
+                    "意图编码不在当前病例白名单中: " + intentCode);
                 invalid.setErrorMessage(reason);
                 invalid.setLlmRawResponse(response);
                 invalid.setActType(finalActType);
@@ -221,21 +231,66 @@ public class TwoStageClassifier implements IntentClassifier {
         }
     }
 
+    // ============================================================
+    // ★ 新增：按病例过滤候选意图
+    // ============================================================
+
+    /**
+     * 按病例过滤候选意图列表。
+     *
+     * <p>规则：
+     * <ul>
+     *   <li>{@code caseId} 为空 → 不过滤（保持向后兼容）</li>
+     *   <li>{@code caseId} 非空 → 只保留"通用意图 + 该病例专属意图"</li>
+     * </ul>
+     */
+    private List<IntentDefinition> filterCandidatesByCase(
+        List<IntentDefinition> candidates, String caseId) {
+
+        if (candidates == null || candidates.isEmpty()) return Collections.emptyList();
+        if (caseId == null || caseId.isBlank()) return candidates;
+
+        Set<String> allowed = registry.getIntentCodesForCase(caseId);
+        if (allowed == null || allowed.isEmpty()) {
+            // 查不到白名单时不过滤，避免误杀
+            return candidates;
+        }
+
+        List<IntentDefinition> filtered = new ArrayList<>(candidates.size());
+        for (IntentDefinition def : candidates) {
+            if (def != null && def.getIntentCode() != null && allowed.contains(def.getIntentCode())) {
+                filtered.add(def);
+            }
+        }
+        return filtered;
+    }
+
+    /**
+     * 判断意图编码是否是"当前病例下有效"。
+     *
+     * <p>与 {@code registry.isValidIntentCode} 的区别：
+     * 前者只校验全局白名单，本方法额外校验该意图是否属于当前病例（通用 + 专属）。
+     */
+    private boolean isValidIntentCodeForCase(String intentCode, String caseId) {
+        if (intentCode == null || intentCode.isBlank()) return false;
+        if (!registry.isValidIntentCode(intentCode)) return false;
+        if (caseId == null || caseId.isBlank()) return true;
+
+        Set<String> allowed = registry.getIntentCodesForCase(caseId);
+        if (allowed == null || allowed.isEmpty()) return true;
+        return allowed.contains(intentCode);
+    }
+
     // ========== 域路由（带上下文） ==========
 
     private DomainResult classifyDomain(String asrText, ClassificationContext context) {
         try {
             String systemPrompt = promptService.buildDomainRouterSystemPrompt();
             String userPrompt = promptService.buildDomainRouterUserPrompt(asrText, context);
-            //  log.debug("系统提示词:\r\n {}", systemPrompt);
-            //  log.debug("用户提示词:\r\n {}", userPrompt);
             String response = ollamaClient.chat(systemPrompt, userPrompt);
             log.debug("Ollama 域路由响应: {}", response);
             JsonNode root = objectMapper.readTree(response);
 
-            // ============================================================
-            // 修正4：移除无效的 reasoning_chain 路径，直接读取 act_type
-            // ============================================================
             String domain = root.path("domain").asText().trim();
             String actType = root.path("act_type").asText("");
             double confidence = root.path("confidence").asDouble(0.5);
@@ -251,9 +306,9 @@ public class TwoStageClassifier implements IntentClassifier {
                 log.warn("LLM 域路由置信度低或无效域: domain={}, conf={}", domain, confidence);
             }
 
-            // 利用 act_type 修正域（修正5：改用动态查询）
+            // 利用 act_type 修正域（★ 传入 context，让过滤感知病例）
             if (!actType.isEmpty() && !domain.isEmpty() && !validDomains.contains(domain)) {
-                String correctedDomain = correctDomainByActType(actType, asrText);
+                String correctedDomain = correctDomainByActType(actType, asrText, context);
                 if (correctedDomain != null && validDomains.contains(correctedDomain)) {
                     log.info("🔧 利用 act_type 修正域: {} → {}", domain, correctedDomain);
                     return new DomainResult(correctedDomain, actType);
@@ -276,22 +331,20 @@ public class TwoStageClassifier implements IntentClassifier {
         return null;
     }
 
-    // ============================================================
-    // 修正5：动态获取域列表，替代硬编码映射
-    // ============================================================
-
     /**
-     * 根据 act_type 和语音文本，从动态域列表中匹配合适的域
-     * 完全依赖注册表中的域定义和意图关键词，无硬编码域名称
+     * 根据 act_type 和语音文本，从动态域列表中匹配合适的域。
+     * ★ 修改：按 caseId 过滤该域下的意图，避免把 case 无关的意图计入打分。
      */
-    private String correctDomainByActType(String actType, String asrText) {
+    private String correctDomainByActType(String actType, String asrText, ClassificationContext context) {
         Set<String> validDomains = registry.getIntentsByDomain().keySet();
+        String caseId = context != null ? context.getCaseId() : null;
 
         String bestDomain = null;
         int bestScore = 0;
 
         for (String domain : validDomains) {
-            List<IntentDefinition> intents = registry.getIntentsByDomain(domain);
+            List<IntentDefinition> intents = filterCandidatesByCase(
+                registry.getIntentsByDomain(domain), caseId);
             if (intents == null || intents.isEmpty()) {
                 continue;
             }
@@ -332,18 +385,9 @@ public class TwoStageClassifier implements IntentClassifier {
 
     /**
      * 修正意图编码。
-     * <p>处理两类 LLM 输出问题：
-     * <ol>
-     *   <li><b>特例规则</b>：如 {@code S1-2 → S1-2a}，属于业务特定映射；</li>
-     *   <li><b>短编码补全</b>：LLM 常输出前缀（如 {@code IA_020}），而白名单中是完整编码
-     *       （{@code IA_020_arm_drift_check}）。若 {@code code + "_"} 能唯一命中一个已注册意图，
-     *       则补全为完整编码。</li>
-     * </ol>
-     *
-     * @param code LLM 输出的原始编码
-     * @return 修正后的编码；无匹配返回 {@code null}
+     * ★ 修改：前缀补全时只在该 caseId 的白名单里查找。
      */
-    private String tryCorrectIntentCode(String code) {
+    private String tryCorrectIntentCode(String code, String caseId) {
         if (code == null || code.isEmpty()) {
             return null;
         }
@@ -355,15 +399,28 @@ public class TwoStageClassifier implements IntentClassifier {
 
         // ---- 2. 短编码 → 完整编码 前缀补全 ----
         String prefix = code + "_";
-        Map<String, Set<String>> byDomain = registry.getIntentsByDomain();
+
+        // ★ 优先在 caseId 白名单里查
+        Set<String> allowed = (caseId != null && !caseId.isBlank())
+            ? registry.getIntentCodesForCase(caseId)
+            : null;
+
         List<String> matches = new ArrayList<>();
-        for (Set<String> intents : byDomain.values()) {
-            if (intents == null) {
-                continue;
-            }
-            for (String fullCode : intents) {
+        if (allowed != null && !allowed.isEmpty()) {
+            for (String fullCode : allowed) {
                 if (fullCode != null && fullCode.startsWith(prefix)) {
                     matches.add(fullCode);
+                }
+            }
+        } else {
+            // 无 caseId 时回退全局（保持向后兼容）
+            Map<String, Set<String>> byDomain = registry.getIntentsByDomain();
+            for (Set<String> intents : byDomain.values()) {
+                if (intents == null) continue;
+                for (String fullCode : intents) {
+                    if (fullCode != null && fullCode.startsWith(prefix)) {
+                        matches.add(fullCode);
+                    }
                 }
             }
         }

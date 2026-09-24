@@ -3,6 +3,17 @@
 # 案例编号：101
 # 存放位置：cases/stable_narrow/_exceptions.yaml
 # 父级：GLOBAL
+#
+# 本次修改（2026-09-22）：
+#   1. DELAYED_FIRST_INTERVENTION:
+#      - jumpTo 短横线 → 下划线：F-101-UNSTABLE_CARDIOVERSION → F_101_UNSTABLE_CARDIOVERSION
+#      - condition 增加 #process.timeoutOccurred != true，避免每轮指令反复命中
+#   2. NO_POST_CONVERSION_REASSESSMENT:
+#      - jumpTo 短横线 → 下划线：F-101-MONITOR_SINUS_RHYTHM → F_101_MONITOR_SINUS_RHYTHM
+#
+# 命名规范说明：
+#   stable_narrow 状态机真实状态名全部使用下划线（F_101_XXX），
+#   以 _flow.yaml 与契约诊断日志为准。
 # ============================================================
 
 exceptions:
@@ -40,6 +51,7 @@ exceptions:
       #derived.stable == false
     severity: "CRITICAL"
     keepCurrent: false
+    # jumpTo 已为下划线，无需修改
     jumpTo: "F_101_UNSTABLE_CARDIOVERSION"
     unityStateName: "室上速(SVT)"
     effects:
@@ -76,18 +88,42 @@ exceptions:
       exam:
 
   # ============================================================
-  # 规则 4：首次干预超过 5 分钟 → 恶化
+  # 规则 4：首次干预超过 2 分钟 → 恶化
+  #
+  # ★ 修复要点（2026-09-21）：
+  #   1. 删除 triggerIntent: "*"，与 unstable_narrow_svt 规则 8 保持一致。
+  #      定时评估路径 intentId=null，只有"空 triggerIntent"的规则才会被
+  #      ExceptionEngine 匹配；"*" 既不是 null 也不是具体意图 ID，可能被跳过。
+  #   2. 删除 #evaluation.timeToFirstIntervention == null 条件。
+  #      该变量从未被任何技能写入，默认值若为 0 则 == null 恒 false，
+  #      导致整个 condition 永远不成立。
+  #      process.timeElapsedSinceLastIntervention 已覆盖语义：
+  #      每次有效技能执行后会重置为 0，> 120 即代表"已过 120 秒无干预"。
+  #   3. 阈值 120 秒 = 2 分钟（验证期临时值，正式版可改回 300）。
+  #
+  # ★ 修复要点（2026-09-22）：
+  #   4. jumpTo 修正为下划线：F-101-UNSTABLE_CARDIOVERSION →
+  #      F_101_UNSTABLE_CARDIOVERSION。短横线名不在状态机配置里，
+  #      会打出 "targetState 不在配置状态列表中（继续执行）" 的 WARN，
+  #      并让状态机进入未配置状态。
+  #   5. condition 增加 #process.timeoutOccurred != true。
+  #      本规则 effects 会写入 process.timeoutOccurred=true；
+  #      若不判断它，则后续每一条指令（timeElapsed 仍 > 120）都会再次命中，
+  #      导致"异常层命中，跳过正常 skill"刷屏，正常状态机完全走不动。
+  #      注意：变量未写入时为 null，null != true 求值为 true，
+  #      所以首次触发不会被短路。
   # ============================================================
   - id: "DELAYED_FIRST_INTERVENTION"
-    description: "超过 5 分钟仍未对稳定窄QRS心动过速进行干预。AHA 2025：稳定心动过速应及时评估并推进治疗流程，延误将导致病情恶化。"
-    triggerIntent: "*"
+    description: "超过 2 分钟仍未对稳定窄QRS心动过速进行干预。AHA 2025：稳定心动过速应及时评估并推进治疗流程，延误将导致病情恶化。"
+    # ★ FIX 2026-09-22：加 timeoutOccurred 短路，避免每轮指令反复命中
     condition: |
+      #process.timeoutOccurred != true &&
       #process.timeElapsedSinceLastIntervention != null &&
-      #process.timeElapsedSinceLastIntervention > 300 &&
-      #evaluation.timeToFirstIntervention == null
+      #process.timeElapsedSinceLastIntervention > 120
     severity: "TIMING"
     keepCurrent: false
-    jumpTo: "F-101-UNSTABLE_CARDIOVERSION"
+    # ★ FIX 2026-09-22：短横线 → 下划线
+    jumpTo: "F_101_UNSTABLE_CARDIOVERSION"
     unityStateName: "室上速(SVT)"
     effects:
       - var: "process.timeoutOccurred"
@@ -96,7 +132,7 @@ exceptions:
         value: true
     feedback:
       teaching:
-        tts: "已超过 5 分钟未采取干预。稳定心动过速虽不急，但持续心动过速会增加心肌耗氧、诱发心衰。患者已转为不稳定状态。"
+        tts: "已超过 2 分钟未采取干预。稳定心动过速虽不急，但持续心动过速会增加心肌耗氧、诱发心衰。患者已转为不稳定状态。"
       learning:
         tts: "太慢了！心动过速拖太久，患者转为不稳定，需要立即同步电复律。"
         interruptCurrentTts: true
@@ -109,7 +145,7 @@ exceptions:
     description: "稳定窄QRS心动过速患者未先尝试迷走神经刺激，直接使用腺苷。AHA 2025：稳定窄QRS心动过速应走阶梯：迷走神经刺激 → 腺苷 6mg → 腺苷 12mg → 二线药物。"
     triggerIntent: "S-101-2-2"
     condition: |
-      #process.vagalManeuverPerformed == false &&
+      (#intervention.vagal.count == null || #intervention.vagal.count == 0) &&
       #derived.stable == true
     severity: "TIMING"
     keepCurrent: true
@@ -138,7 +174,8 @@ exceptions:
       #process.reassessed == false
     severity: "TIMING"
     keepCurrent: false
-    jumpTo: "F-101-MONITOR_SINUS_RHYTHM"
+    # ★ FIX 2026-09-22：短横线 → 下划线
+    jumpTo: "F_101_MONITOR_SINUS_RHYTHM"
     unityStateName: "正常窦性心律"
     effects:
       - var: "process.reassessed"

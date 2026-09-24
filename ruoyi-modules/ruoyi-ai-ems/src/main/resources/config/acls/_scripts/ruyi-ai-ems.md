@@ -2,7 +2,7 @@
 
 **根路径**: `D:\CaveSystem\Demos\ruoyi-ai\ruoyi-modules\ruoyi-ai-ems\src\main`
 
-**生成时间**: 2026-09-19 17:33:37
+**生成时间**: 2026-09-24 08:18:48
 
 ├── 📁 **java**
 │   └── 📁 **com**
@@ -28,15 +28,22 @@
 │               │   ├── 📄 **AsrUnavailableException.java**  (679.0 B, 2026-09-15 09:19:22)
 │               │   ├── 📄 **AsrWebSocketConfig.java**  (1.4 KB, 2026-09-13 20:06:09)
 │               │   └── 📄 **AsrWebSocketHandler.java**  (22.8 KB, 2026-09-15 09:17:50)
+│               ├── 📁 **audit**
+│               │   ├── 📄 **AttemptLogService.java**  (4.1 KB, 2026-09-23 11:37:46)
+│               │   └── 📄 **AuditEventType.java**  (535.0 B, 2026-09-23 11:37:33)
+│               ├── 📁 **clock**
+│               │   ├── 📁 **event**
+│               │   │   └── 📄 **SimulationTickEvent.java**  (1021.0 B, 2026-09-23 19:54:02)
+│               │   └── 📄 **ClockService.java**  (14.3 KB, 2026-09-23 19:54:56)
 │               ├── 📁 **config**
 │               │   ├── 📁 **loader**
-│               │   │   ├── 📄 **CaseIntentDefinitionsLoader.java**  (35.1 KB, 2026-09-17 14:28:05)
+│               │   │   ├── 📄 **CaseIntentDefinitionsLoader.java**  (35.5 KB, 2026-09-22 21:47:38)
 │               │   │   ├── 📄 **CaseLoaderService.java**  (2.2 KB, 2026-09-07 09:13:26)
-│               │   │   ├── 📄 **DerivationRuleLoader.java**  (7.7 KB, 2026-09-13 21:04:11)
+│               │   │   ├── 📄 **DerivationRuleLoader.java**  (13.4 KB, 2026-09-23 17:44:29)
 │               │   │   ├── 📄 **EventLogDerivationLoader.java**  (6.6 KB, 2026-09-14 10:43:23)
 │               │   │   ├── 📄 **ExceptionRuleLoader.java**  (12.9 KB, 2026-09-18 09:43:01)
 │               │   │   ├── 📄 **IntentDictLoader.java**  (11.2 KB, 2026-09-13 21:03:57)
-│               │   │   ├── 📄 **PhysiologyConfigService.java**  (7.6 KB, 2026-09-14 13:00:59)
+│               │   │   ├── 📄 **PhysiologyConfigLoader.java**  (11.1 KB, 2026-09-23 13:29:33)
 │               │   │   ├── 📄 **RuleCaseConfigValidator.java**  (1.1 KB, 2026-09-05 10:22:23)
 │               │   │   ├── 📄 **RuleConfigLoader.java**  (10.4 KB, 2026-09-05 10:24:19)
 │               │   │   ├── 📄 **VariableMetaLoader.java**  (30.2 KB, 2026-09-17 19:50:32)
@@ -55,24 +62,26 @@
 │               │   ├── 📄 **TransitionConfig.java**  (4.9 KB, 2026-08-29 10:23:39)
 │               │   └── 📄 **TransitionRule.java**  (6.8 KB, 2026-09-14 11:24:40)
 │               ├── 📁 **constant**
-│               │   ├── 📄 **AllVarKeys.java**  (9.8 KB, 2026-09-14 12:10:45)
-│               │   ├── 📄 **AssertKeys.java**  (1016.0 B, 2026-09-14 12:10:45)
-│               │   ├── 📄 **CaseKeys.java**  (679.0 B, 2026-09-14 12:10:45)
-│               │   ├── 📄 **ClinicalKeys.java**  (1.8 KB, 2026-09-14 12:10:45)
-│               │   ├── 📄 **DerivedKeys.java**  (1.4 KB, 2026-09-14 12:10:45)
-│               │   ├── 📄 **DeviceKeys.java**  (4.3 KB, 2026-09-14 12:10:45)
-│               │   ├── 📄 **EvaluationKeys.java**  (2.3 KB, 2026-09-14 12:10:45)
+│               │   ├── 📄 **AllVarKeys.java**  (14.3 KB, 2026-09-23 19:56:05)
+│               │   ├── 📄 **AssertKeys.java**  (1016.0 B, 2026-09-23 19:56:05)
+│               │   ├── 📄 **CaseKeys.java**  (679.0 B, 2026-09-23 19:56:05)
+│               │   ├── 📄 **ClinicalKeys.java**  (1.8 KB, 2026-09-23 19:56:05)
+│               │   ├── 📄 **DerivedKeys.java**  (2.0 KB, 2026-09-23 19:56:05)
+│               │   ├── 📄 **DeviceKeys.java**  (6.4 KB, 2026-09-23 19:56:05)
+│               │   ├── 📄 **EvaluationKeys.java**  (2.3 KB, 2026-09-23 19:56:05)
 │               │   ├── 📄 **InterventionFields.java**  (788.0 B, 2026-09-14 12:03:32)
-│               │   ├── 📄 **InterventionKeys.java**  (5.3 KB, 2026-09-14 12:10:45)
-│               │   ├── 📄 **PhysKeys.java**  (5.1 KB, 2026-09-14 12:10:45)
-│               │   ├── 📄 **ProcessKeys.java**  (13.1 KB, 2026-09-14 12:10:45)
-│               │   └── 📄 **ReportKeys.java**  (1.2 KB, 2026-09-14 12:10:45)
+│               │   ├── 📄 **InterventionKeys.java**  (5.8 KB, 2026-09-23 19:56:05)
+│               │   ├── 📄 **PhysKeys.java**  (7.6 KB, 2026-09-23 19:56:05)
+│               │   ├── 📄 **ProcessKeys.java**  (22.4 KB, 2026-09-23 19:56:05)
+│               │   └── 📄 **ReportKeys.java**  (1.2 KB, 2026-09-23 19:56:05)
 │               ├── 📁 **context**
+│               │   ├── 📄 **AclsInternalVars.java**  (985.0 B, 2026-09-21 18:58:58)
 │               │   ├── 📄 **ClassificationContext.java**  (12.2 KB, 2026-09-11 19:26:11)
-│               │   ├── 📄 **EmsContextManager.java**  (34.0 KB, 2026-09-17 19:25:13)
+│               │   ├── 📄 **EmsContextManager.java**  (47.4 KB, 2026-09-23 11:51:12)
 │               │   └── 📄 **MapWriteHelper.java**  (6.9 KB, 2026-09-14 13:03:55)
 │               ├── 📁 **controller**
 │               │   ├── 📄 **AgentTestController.java**  (1.6 KB, 2026-09-01 14:00:11)
+│               │   ├── 📄 **AssessmentDebugController.java**  (1.5 KB, 2026-09-22 17:21:12)
 │               │   ├── 📄 **EvaluationController.java**  (7.1 KB, 2026-08-29 21:04:27)
 │               │   ├── 📄 **ReportController.java**  (5.3 KB, 2026-08-24 12:00:16)
 │               │   ├── 📄 **RoomController.java**  (7.8 KB, 2026-09-15 09:51:26)
@@ -108,28 +117,33 @@
 │               │   │   └── 📄 **TeachingMode.java**  (532.0 B, 2026-09-18 09:10:34)
 │               │   ├── 📁 **vo**
 │               │   │   └── 📄 **EmsSessionVo.java**  (793.0 B, 2026-08-23 22:05:16)
-│               │   ├── 📄 **CaseContext.java**  (17.0 KB, 2026-09-16 11:07:14)
+│               │   ├── 📄 **AttemptLog.java**  (1.2 KB, 2026-09-23 11:27:18)
+│               │   ├── 📄 **CaseContext.java**  (18.8 KB, 2026-09-19 21:06:35)
 │               │   ├── 📄 **ContextSnapshot.java**  (3.8 KB, 2026-08-29 10:13:19)
 │               │   ├── 📄 **DecisionResult.java**  (1.7 KB, 2026-08-29 10:13:12)
 │               │   ├── 📄 **DerivationRule.java**  (460.0 B, 2026-09-07 15:29:21)
 │               │   ├── 📄 **DerivationsConfig.java**  (171.0 B, 2026-09-07 15:29:13)
 │               │   ├── 📄 **DrugEnum.java**  (7.0 KB, 2026-09-09 13:39:17)
-│               │   ├── 📄 **Drugs.java**  (9.8 KB, 2026-09-14 12:23:13)
+│               │   ├── 📄 **Drugs.java**  (10.2 KB, 2026-09-23 13:31:54)
+│               │   ├── 📄 **EvolutionRule.java**  (4.8 KB, 2026-09-23 21:27:36)
 │               │   ├── 📄 **ExecutionResult.java**  (3.9 KB, 2026-09-01 15:48:21)
 │               │   ├── 📄 **IntentCommand.java**  (9.9 KB, 2026-09-17 10:35:26)
 │               │   ├── 📄 **MedicationCategory.java**  (936.0 B, 2026-09-08 21:07:17)
-│               │   ├── 📄 **OperationEffect.java**  (385.0 B, 2026-09-08 17:54:27)
+│               │   ├── 📄 **OperationEffect.java**  (886.0 B, 2026-09-23 13:18:06)
 │               │   ├── 📄 **PhaseCheckResult.java**  (4.8 KB, 2026-09-16 11:00:57)
 │               │   ├── 📄 **PhaseDefinition.java**  (8.0 KB, 2026-09-16 21:13:01)
 │               │   ├── 📄 **PhaseLockConfig.java**  (289.0 B, 2026-09-16 10:53:06)
 │               │   ├── 📄 **PhaseRuntime.java**  (3.1 KB, 2026-09-16 10:58:36)
-│               │   ├── 📄 **PhysiologyConfig.java**  (386.0 B, 2026-09-06 20:16:47)
+│               │   ├── 📄 **PhysiologyConfig.java**  (899.0 B, 2026-09-21 12:19:11)
 │               │   ├── 📄 **RuleDefinition.java**  (363.0 B, 2026-09-05 10:20:11)
 │               │   ├── 📄 **ScoringRules.java**  (227.0 B, 2026-08-29 07:56:45)
-│               │   ├── 📄 **StatePhysiology.java**  (1.0 KB, 2026-09-09 12:11:49)
+│               │   ├── 📄 **StatePhysiology.java**  (1.7 KB, 2026-09-21 13:27:42)
 │               │   └── 📄 **VariableMeta.java**  (5.8 KB, 2026-09-14 10:56:46)
 │               ├── 📁 **effect**
-│               │   └── 📄 **EffectManager.java**  (7.8 KB, 2026-09-14 13:00:21)
+│               │   ├── 📄 **DrugIndicationEvaluator.java**  (3.8 KB, 2026-09-23 13:25:17)
+│               │   ├── 📄 **EffectBranch.java**  (1.5 KB, 2026-09-23 21:33:18)
+│               │   ├── 📄 **EffectManager.java**  (15.2 KB, 2026-09-23 21:33:22)
+│               │   └── 📄 **EvolutionRuleEvaluator.java**  (14.3 KB, 2026-09-23 22:07:34)
 │               ├── 📁 **engine**
 │               │   ├── 📁 **extraction**
 │               │   │   ├── 📄 **ProcessTranscriptor.java**  (17.5 KB, 2026-09-18 16:26:43)
@@ -191,7 +205,8 @@
 │               │   ├── 📄 **RedisStatePersister.java**  (5.6 KB, 2026-09-02 13:07:39)
 │               │   ├── 📄 **RuleMatcher.java**  (6.2 KB, 2026-08-30 20:22:42)
 │               │   ├── 📄 **StateMachineBuilderFactory.java**  (12.6 KB, 2026-09-13 11:18:56)
-│               │   ├── 📄 **StateMachineFacade.java**  (45.1 KB, 2026-09-19 16:28:27)
+│               │   ├── 📄 **StateMachineFacade.java**  (50.2 KB, 2026-09-23 17:54:29)
+│               │   ├── 📄 **StateTransitionResult.java**  (1.8 KB, 2026-09-23 17:54:17)
 │               │   └── 📄 **TutorBlockedException.java**  (1.2 KB, 2026-09-19 16:08:38)
 │               ├── 📁 **event**
 │               │   ├── 📄 **CaseEvent.java**  (9.6 KB, 2026-08-29 10:18:19)
@@ -203,7 +218,7 @@
 │               │   └── 📄 **TaskStartedEvent.java**  (660.0 B, 2026-09-01 17:58:01)
 │               ├── 📁 **exception**
 │               │   ├── 📄 **ConfigurationException.java**  (388.0 B, 2026-08-29 10:13:57)
-│               │   ├── 📄 **ExceptionEngine.java**  (6.1 KB, 2026-09-18 09:14:52)
+│               │   ├── 📄 **ExceptionEngine.java**  (6.0 KB, 2026-09-21 13:43:32)
 │               │   ├── 📄 **VariableAccessDeniedException.java**  (1.7 KB, 2026-08-29 10:14:11)
 │               │   └── 📄 **VariableValidationException.java**  (5.9 KB, 2026-08-30 20:44:19)
 │               ├── 📁 **executor**
@@ -224,15 +239,15 @@
 │               │   │   ├── 📄 **FallbackClassifier.java**  (5.9 KB, 2026-09-12 09:25:08)
 │               │   │   ├── 📄 **IntentClassifier.java**  (635.0 B, 2026-09-04 21:40:30)
 │               │   │   ├── 📄 **KeywordIntentClassifier.java**  (11.4 KB, 2026-09-17 12:26:04)
-│               │   │   ├── 📄 **NormalizerClassifier.java**  (3.0 KB, 2026-09-12 19:35:28)
+│               │   │   ├── 📄 **NormalizerClassifier.java**  (5.5 KB, 2026-09-22 21:48:51)
 │               │   │   ├── 📄 **OneStageClassifier.java**  (5.5 KB, 2026-09-04 21:51:55)
 │               │   │   ├── 📄 **PragmaticClassifier.java**  (243.0 B, 2026-09-10 21:29:01)
 │               │   │   ├── 📄 **RouteIntentClassifier.java**  (9.1 KB, 2026-09-11 19:28:02)
 │               │   │   ├── 📄 **RuleBasedPragmaticClassifier.java**  (8.3 KB, 2026-09-17 14:04:59)
 │               │   │   ├── 📄 **SentencePragmaticAnalyzer.java**  (7.0 KB, 2026-09-17 17:33:05)
-│               │   │   ├── 📄 **TwoStageClassifier.java**  (17.4 KB, 2026-09-12 17:38:08)
+│               │   │   ├── 📄 **TwoStageClassifier.java**  (19.5 KB, 2026-09-22 21:18:50)
 │               │   │   ├── 📄 **UnmatchedAsrRecorder.java**  (9.5 KB, 2026-09-12 10:06:49)
-│               │   │   └── 📄 **VectorIntentClassifier.java**  (18.6 KB, 2026-09-04 21:42:41)
+│               │   │   └── 📄 **VectorIntentClassifier.java**  (21.5 KB, 2026-09-22 21:57:19)
 │               │   ├── 📁 **client**
 │               │   │   └── 📄 **OllamaClient.java**  (6.9 KB, 2026-09-12 17:26:22)
 │               │   ├── 📁 **config**
@@ -274,15 +289,18 @@
 │               │   │   └── 📄 **Trg.java**  (451.0 B, 2026-09-12 17:50:14)
 │               │   ├── 📁 **parser**
 │               │   │   ├── 📄 **AnticoagulantParser.java**  (1.2 KB, 2026-09-09 10:47:32)
-│               │   │   ├── 📄 **CardioversionParser.java**  (1.9 KB, 2026-09-09 10:46:00)
+│               │   │   ├── 📄 **CardioversionParser.java**  (3.0 KB, 2026-09-23 16:08:30)
+│               │   │   ├── 📄 **ClearanceParser.java**  (1.2 KB, 2026-09-23 16:07:58)
 │               │   │   ├── 📄 **DeteriorationParser.java**  (1.7 KB, 2026-09-09 10:46:22)
+│               │   │   ├── 📄 **DeviceParser.java**  (2.9 KB, 2026-09-23 16:07:42)
 │               │   │   ├── 📄 **DrugDoseParser.java**  (5.5 KB, 2026-09-09 14:02:39)
 │               │   │   ├── 📄 **ErrorInterceptorParser.java**  (1.3 KB, 2026-09-09 10:46:47)
 │               │   │   ├── 📄 **ErrorParser.java**  (2.5 KB, 2026-09-09 10:46:34)
 │               │   │   ├── 📄 **NegationAwareSymptomParser.java**  (6.1 KB, 2026-09-18 12:23:16)
 │               │   │   ├── 📄 **OperationStatusParser.java**  (503.0 B, 2026-09-09 10:37:13)
-│               │   │   ├── 📄 **ResultParser.java**  (1.3 KB, 2026-09-18 19:44:52)
-│               │   │   ├── 📄 **RhythmParser.java**  (1.4 KB, 2026-09-09 10:45:27)
+│               │   │   ├── 📄 **ResultParser.java**  (2.7 KB, 2026-09-23 16:08:59)
+│               │   │   ├── 📄 **RhythmParser.java**  (2.3 KB, 2026-09-23 16:08:45)
+│               │   │   ├── 📄 **SedationParser.java**  (2.6 KB, 2026-09-23 16:18:18)
 │               │   │   ├── 📄 **SymptomParser.java**  (1.7 KB, 2026-09-09 10:37:02)
 │               │   │   ├── 📄 **ThresholdParser.java**  (1.2 KB, 2026-09-09 10:36:43)
 │               │   │   ├── 📄 **VagalParser.java**  (740.0 B, 2026-09-09 10:45:45)
@@ -295,13 +313,14 @@
 │               │   └── 📁 **utils**
 │               │       ├── 📄 **DrugAliasRegistry.java**  (1.1 KB, 2026-09-09 10:10:20)
 │               │       ├── 📄 **IntentDescriptionProvider.java**  (1.5 KB, 2026-08-30 21:20:34)
-│               │       ├── 📄 **ParameterExtractor.java**  (43.3 KB, 2026-09-18 20:21:06)
+│               │       ├── 📄 **ParameterExtractor.java**  (44.5 KB, 2026-09-23 16:10:36)
 │               │       ├── 📄 **SentenceSplitter.java**  (4.5 KB, 2026-09-12 15:20:46)
 │               │       ├── 📄 **TextCleaner.java**  (17.4 KB, 2026-09-04 21:08:28)
 │               │       ├── 📄 **UnitAwareNumericExtractor.java**  (2.1 KB, 2026-09-09 10:50:52)
 │               │       └── 📄 **VariableDescriptionProvider.java**  (6.3 KB, 2026-09-11 20:09:36)
 │               ├── 📁 **listener**
 │               ├── 📁 **mapper**
+│               │   ├── 📄 **AttemptLogMapper.java**  (259.0 B, 2026-09-23 11:27:45)
 │               │   ├── 📄 **EmsAgentEvaluationMapper.java**  (1.0 KB, 2026-08-23 09:19:56)
 │               │   ├── 📄 **EmsEvaluationMapper.java**  (302.0 B, 2026-08-23 07:57:30)
 │               │   ├── 📄 **EmsScenarioMapper.java**  (296.0 B, 2026-08-23 07:57:03)
@@ -312,7 +331,7 @@
 │               │   ├── 📄 **IVrClientService.java**  (769.0 B, 2026-09-08 08:47:30)
 │               │   ├── 📄 **MemberSlot.java**  (501.0 B, 2026-09-08 08:37:13)
 │               │   ├── 📄 **NpcEventBridge.java**  (1.6 KB, 2026-09-19 15:52:50)
-│               │   ├── 📄 **NpcSpeakerResolver.java**  (3.0 KB, 2026-09-18 21:44:47)
+│               │   ├── 📄 **NpcSpeakerResolver.java**  (6.3 KB, 2026-09-23 12:11:42)
 │               │   ├── 📄 **NpcUnityBridgeService.java**  (4.9 KB, 2026-09-15 21:57:35)
 │               │   ├── 📄 **Status.java**  (351.0 B, 2026-09-09 07:08:12)
 │               │   ├── 📄 **TeamManager.java**  (14.3 KB, 2026-09-16 08:55:16)
@@ -338,7 +357,7 @@
 │               ├── 📁 **room**
 │               │   ├── 📁 **dto**
 │               │   │   ├── 📄 **ApiResponse.java**  (811.0 B, 2026-09-15 09:41:25)
-│               │   │   ├── 📄 **CaseConfigDto.java**  (2.7 KB, 2026-09-15 11:43:29)
+│               │   │   ├── 📄 **CaseConfigDto.java**  (3.0 KB, 2026-09-21 12:07:15)
 │               │   │   ├── 📄 **CreateRoomRequest.java**  (661.0 B, 2026-09-15 09:49:10)
 │               │   │   ├── 📄 **CreateRoomResponse.java**  (380.0 B, 2026-09-15 09:49:11)
 │               │   │   ├── 📄 **JoinRequest.java**  (222.0 B, 2026-09-15 09:42:08)
@@ -359,29 +378,65 @@
 │               │   │   ├── 📄 **PhysiologyVariableCache.java**  (4.8 KB, 2026-09-15 10:52:53)
 │               │   │   ├── 📄 **Role.java**  (1.1 KB, 2026-09-15 09:35:47)
 │               │   │   ├── 📄 **RoomState.java**  (507.0 B, 2026-09-15 09:36:07)
-│               │   │   └── 📄 **SessionRoom.java**  (12.4 KB, 2026-09-18 19:01:54)
+│               │   │   └── 📄 **SessionRoom.java**  (17.0 KB, 2026-09-23 10:48:52)
+│               │   ├── 📁 **protocol**
+│               │   │   ├── 📁 **dto**
+│               │   │   │   ├── 📄 **AssessmentInterruption.java**  (814.0 B, 2026-09-23 09:23:30)
+│               │   │   │   ├── 📄 **ClinicalState.java**  (493.0 B, 2026-09-23 09:07:11)
+│               │   │   │   ├── 📄 **CmdMessage.java**  (1.2 KB, 2026-09-23 10:36:59)
+│               │   │   │   ├── 📄 **CmdResultMessage.java**  (1.4 KB, 2026-09-23 10:37:19)
+│               │   │   │   ├── 📄 **CommandResultMessage.java**  (977.0 B, 2026-09-23 09:21:27)
+│               │   │   │   ├── 📄 **Decision.java**  (128.0 B, 2026-09-23 09:23:04)
+│               │   │   │   ├── 📄 **ErrorMessage.java**  (656.0 B, 2026-09-23 09:21:11)
+│               │   │   │   ├── 📄 **KV.java**  (278.0 B, 2026-09-23 09:21:05)
+│               │   │   │   ├── 📄 **MessageTypes.java**  (620.0 B, 2026-09-23 09:23:13)
+│               │   │   │   ├── 📄 **MonitorPresentation.java**  (555.0 B, 2026-09-23 09:07:49)
+│               │   │   │   ├── 📄 **OverrideMessage.java**  (703.0 B, 2026-09-23 09:23:40)
+│               │   │   │   ├── 📄 **OverrideResultMessage.java**  (1.0 KB, 2026-09-23 11:04:07)
+│               │   │   │   ├── 📄 **ProposedEffect.java**  (306.0 B, 2026-09-23 09:23:45)
+│               │   │   │   ├── 📄 **ProtocolState.java**  (419.0 B, 2026-09-23 09:06:16)
+│               │   │   │   ├── 📄 **SnapshotEvent.java**  (476.0 B, 2026-09-23 09:08:32)
+│               │   │   │   ├── 📄 **SnapshotMessage.java**  (1019.0 B, 2026-09-23 09:32:18)
+│               │   │   │   ├── 📄 **SystemStatus.java**  (367.0 B, 2026-09-23 09:08:37)
+│               │   │   │   └── 📄 **WsErrorCode.java**  (251.0 B, 2026-09-23 09:23:13)
+│               │   │   ├── 📁 **effect**
+│               │   │   │   ├── 📁 **impl**
+│               │   │   │   │   ├── 📄 **ForceSyncModeEffect.java**  (2.3 KB, 2026-09-23 11:25:18)
+│               │   │   │   │   └── 📄 **PauseClockEffect.java**  (1.5 KB, 2026-09-23 11:22:16)
+│               │   │   │   ├── 📄 **ControlledEffect.java**  (1.0 KB, 2026-09-23 10:59:09)
+│               │   │   │   ├── 📄 **ControlledEffectRegistry.java**  (2.2 KB, 2026-09-23 11:00:25)
+│               │   │   │   ├── 📄 **EffectContext.java**  (869.0 B, 2026-09-23 11:05:21)
+│               │   │   │   └── 📄 **EffectResult.java**  (441.0 B, 2026-09-23 10:59:40)
+│               │   │   ├── 📄 **AttemptSequencer.java**  (762.0 B, 2026-09-23 09:27:49)
+│               │   │   ├── 📄 **AttemptSnapshotService.java**  (6.1 KB, 2026-09-23 10:22:30)
+│               │   │   ├── 📄 **CmdMessageAdapter.java**  (1.7 KB, 2026-09-23 10:37:46)
+│               │   │   ├── 📄 **ErrorCode.java**  (941.0 B, 2026-09-23 10:36:43)
+│               │   │   ├── 📄 **IdempotencyCache.java**  (1.8 KB, 2026-09-23 10:37:32)
+│               │   │   └── 📄 **ProtocolBridgeService.java**  (4.0 KB, 2026-09-23 09:31:09)
 │               │   ├── 📁 **registry**
 │               │   │   └── 📄 **RoomRegistry.java**  (4.9 KB, 2026-09-15 16:12:26)
 │               │   ├── 📁 **service**
 │               │   │   ├── 📄 **RoomIdGenerator.java**  (973.0 B, 2026-09-15 09:49:11)
-│               │   │   ├── 📄 **RoomService.java**  (9.6 KB, 2026-09-15 16:09:07)
+│               │   │   ├── 📄 **RoomService.java**  (14.4 KB, 2026-09-22 19:15:49)
 │               │   │   └── 📄 **VariableWritebackService.java**  (2.8 KB, 2026-09-15 10:45:56)
 │               │   ├── 📁 **token**
 │               │   │   └── 📄 **WsTokenService.java**  (2.0 KB, 2026-09-15 09:37:51)
 │               │   ├── 📁 **web**
 │               │   │   └── 📄 **RoomExceptionHandler.java**  (1.4 KB, 2026-09-15 09:45:00)
 │               │   ├── 📁 **ws**
-│               │   │   ├── 📄 **EngineSessionControlHandler.java**  (6.4 KB, 2026-09-18 14:36:39)
+│               │   │   ├── 📄 **CmdMessageHandler.java**  (15.0 KB, 2026-09-23 10:54:37)
+│               │   │   ├── 📄 **EngineSessionControlHandler.java**  (12.2 KB, 2026-09-23 10:21:56)
 │               │   │   ├── 📄 **EngineUplinkHandler.java**  (10.5 KB, 2026-09-18 13:37:00)
 │               │   │   ├── 📄 **NpcCompletionHandler.java**  (5.0 KB, 2026-09-15 10:53:22)
+│               │   │   ├── 📄 **OverrideHandler.java**  (13.2 KB, 2026-09-23 11:38:16)
 │               │   │   ├── 📄 **RoomBroadcaster.java**  (6.8 KB, 2026-09-15 21:58:26)
-│               │   │   ├── 📄 **SessionWebSocketHandler.java**  (11.9 KB, 2026-09-15 20:18:57)
-│               │   │   ├── 📄 **StartCaseHandler.java**  (5.9 KB, 2026-09-18 19:01:21)
-│               │   │   ├── 📄 **WsHandshake.java**  (958.0 B, 2026-09-15 09:53:51)
+│               │   │   ├── 📄 **SessionWebSocketHandler.java**  (12.8 KB, 2026-09-23 10:04:45)
+│               │   │   ├── 📄 **StartCaseHandler.java**  (6.6 KB, 2026-09-22 19:29:53)
+│               │   │   ├── 📄 **WsHandshake.java**  (1.0 KB, 2026-09-23 09:35:35)
 │               │   │   ├── 📄 **WsMessageContext.java**  (524.0 B, 2026-09-15 09:56:01)
 │               │   │   ├── 📄 **WsMessageRouter.java**  (2.6 KB, 2026-09-15 09:55:39)
-│               │   │   └── 📄 **WsSessionRegistry.java**  (2.4 KB, 2026-09-15 09:58:32)
-│               │   ├── 📄 **CaseConfigAssembler.java**  (5.2 KB, 2026-09-15 12:21:17)
+│               │   │   └── 📄 **WsSessionRegistry.java**  (5.6 KB, 2026-09-22 19:38:04)
+│               │   ├── 📄 **CaseConfigAssembler.java**  (6.6 KB, 2026-09-21 18:59:41)
 │               │   └── 📄 **PendingRequestManager.java**  (7.9 KB, 2026-09-15 10:49:37)
 │               ├── 📁 **rule**
 │               │   └── 📄 **IRuleEvaluator.java**  (2.3 KB, 2026-09-07 17:19:08)
@@ -391,7 +446,7 @@
 │               │   ├── 📄 **EventLogTimeDeriver.java**  (6.0 KB, 2026-09-14 09:42:52)
 │               │   ├── 📄 **ReportService.java**  (5.3 KB, 2026-09-02 13:07:38)
 │               │   ├── 📄 **ScenarioService.java**  (1.5 KB, 2026-08-30 16:49:14)
-│               │   ├── 📄 **SessionService.java**  (55.6 KB, 2026-09-19 16:16:11)
+│               │   ├── 📄 **SessionService.java**  (55.9 KB, 2026-09-23 12:08:48)
 │               │   └── 📄 **SnapshotProvider.java**  (3.6 KB, 2026-08-30 17:01:13)
 │               ├── 📁 **spel**
 │               │   ├── 📄 **DynamicVariableMap.java**  (2.1 KB, 2026-09-14 10:56:09)
@@ -400,18 +455,32 @@
 │               │   └── 📄 **SpELUtils.java**  (2.1 KB, 2026-08-29 10:15:52)
 │               ├── 📁 **spi**
 │               │   ├── 📁 **dto**
+│               │   │   ├── 📄 **AttemptEventContext.java**  (1.5 KB, 2026-09-22 16:39:27)
+│               │   │   ├── 📄 **BeatSelectionView.java**  (895.0 B, 2026-09-22 17:17:51)
 │               │   │   ├── 📄 **ClinicalEvent.java**  (488.0 B, 2026-09-19 13:26:07)
 │               │   │   ├── 📄 **ClinicalRuleContext.java**  (576.0 B, 2026-09-19 13:25:56)
+│               │   │   ├── 📄 **EffectSpec.java**  (1.5 KB, 2026-09-19 17:58:46)
 │               │   │   ├── 📄 **ExecutionStrategy.java**  (186.0 B, 2026-09-19 13:25:29)
+│               │   │   ├── 📄 **OutcomeBranchRequest.java**  (644.0 B, 2026-09-22 17:26:11)
+│               │   │   ├── 📄 **OutcomeBranchResult.java**  (428.0 B, 2026-09-22 17:26:34)
 │               │   │   ├── 📄 **TransitionContext.java**  (510.0 B, 2026-09-19 13:26:18)
-│               │   │   └── 📄 **ValidationResult.java**  (865.0 B, 2026-09-19 16:27:11)
+│               │   │   └── 📄 **ValidationResult.java**  (1.2 KB, 2026-09-19 17:58:42)
+│               │   ├── 📄 **AssessmentQueryService.java**  (625.0 B, 2026-09-22 17:18:55)
+│               │   ├── 📄 **AttemptEventSink.java**  (795.0 B, 2026-09-22 16:39:31)
 │               │   ├── 📄 **ClinicalRuleService.java**  (471.0 B, 2026-09-19 13:30:06)
+│               │   ├── 📄 **DefaultOutcomeBranchExecutor.java**  (5.1 KB, 2026-09-23 17:57:44)
+│               │   ├── 📄 **ExceptionTickProcessor.java**  (466.0 B, 2026-09-21 16:59:18)
 │               │   ├── 📄 **IntelligentCommandProcessor.java**  (572.0 B, 2026-09-06 07:36:14)
+│               │   ├── 📄 **NoOpAssessmentQueryService.java**  (644.0 B, 2026-09-22 17:18:03)
+│               │   ├── 📄 **NoOpAttemptEventSink.java**  (748.0 B, 2026-09-22 16:39:49)
 │               │   ├── 📄 **NoOpClinicalRuleService.java**  (352.0 B, 2026-09-19 13:26:40)
+│               │   ├── 📄 **NoOpOutcomeBranchExecutor.java**  (699.0 B, 2026-09-22 17:26:51)
 │               │   ├── 📄 **NoOpStateTransitionHook.java**  (318.0 B, 2026-09-19 13:27:08)
 │               │   ├── 📄 **NoOpTemporalEventSink.java**  (434.0 B, 2026-09-19 13:26:52)
-│               │   ├── 📄 **SpiAutoConfiguration.java**  (1.4 KB, 2026-09-19 13:27:25)
+│               │   ├── 📄 **OutcomeBranchExecutor.java**  (542.0 B, 2026-09-22 17:26:38)
+│               │   ├── 📄 **SpiAutoConfiguration.java**  (2.2 KB, 2026-09-22 17:27:22)
 │               │   ├── 📄 **StateTransitionHook.java**  (362.0 B, 2026-09-19 13:30:19)
+│               │   ├── 📄 **StudentResponseBranchProvider.java**  (867.0 B, 2026-09-23 21:29:05)
 │               │   └── 📄 **TemporalEventSink.java**  (490.0 B, 2026-09-19 13:30:13)
 │               ├── 📁 **tts**
 │               │   └── 📄 **KokoroTtsClient.java**  (12.9 KB, 2026-09-15 08:40:51)
@@ -422,7 +491,7 @@
 │                   ├── 📄 **TeamStatusWebSocketListener.java**  (2.0 KB, 2026-09-03 19:27:10)
 │                   ├── 📄 **WebSocketConfig.java**  (528.0 B, 2026-08-27 09:09:00)
 │                   ├── 📄 **WebSocketEventListener.java**  (1.2 KB, 2026-09-06 07:28:57)
-│                   ├── 📄 **WebSocketMessageSender.java**  (2.3 KB, 2026-09-18 09:25:12)
+│                   ├── 📄 **WebSocketMessageSender.java**  (9.5 KB, 2026-09-23 12:07:19)
 │                   └── 📄 **WebSocketSessionManager.java**  (817.0 B, 2026-09-06 07:26:11)
 └── 📁 **resources**
     ├── 📁 **config**
@@ -512,8 +581,9 @@
     │   │   │   ├── 📄 **rebuild_centroids.py**  (7.8 KB, 2026-09-17 13:31:10)
     │   │   │   ├── 📄 **requirements.txt**  (56.0 B, 2026-09-04 09:41:36)
     │   │   │   ├── 📄 **ruoyi-ai-ems.md**  (49.3 KB, 2026-09-16 10:36:35)
-    │   │   │   ├── 📄 **ruyi-acls-engine.md**  (11.3 KB, 2026-09-19 17:33:32)
-    │   │   │   ├── 📄 **ruyi-ai-ems.md**  (31.8 KB, 2026-09-19 17:33:40)
+    │   │   │   ├── 📄 **ruyi-acls-engine.md**  (12.3 KB, 2026-09-24 08:18:48)
+    │   │   │   ├── 📄 **ruyi-acls-tutor.md**  (6.2 KB, 2026-09-23 17:21:32)
+    │   │   │   ├── 📄 **ruyi-ai-ems.md**  (39.7 KB, 2026-09-24 08:18:50)
     │   │   │   ├── 📄 **simulate_classifier.py**  (17.0 KB, 2026-09-04 10:50:56)
     │   │   │   ├── 📄 **simulate_classifier_plain.py**  (11.0 KB, 2026-09-04 11:02:17)
     │   │   │   ├── 📄 **test_intent_similarity.py**  (16.7 KB, 2026-09-10 14:31:34)
@@ -523,6 +593,9 @@
     │   │   ├── 📁 **arrest**
     │   │   │   └── 📄 **_shared_variables.json**  (0.0 B, 2026-08-29 11:14:29)
     │   │   ├── 📁 **cases**
+    │   │   │   ├── 📁 **_shared**
+    │   │   │   │   └── 📁 **tachycardia**
+    │   │   │   │       └── 📄 **_derivations.yaml**  (619.0 B, 2026-09-23 17:45:02)
     │   │   │   ├── 📁 **bradycardia**
     │   │   │   │   └── 📁 **symptomatic**
     │   │   │   ├── 📁 **cardiac_arrest**
@@ -537,14 +610,20 @@
     │   │   │   │   │   ├── 📄 **val.jsonl**  (3.8 KB, 2026-09-04 12:41:31)
     │   │   │   │   │   └── 📄 **version.txt**  (182.0 B, 2026-09-04 12:41:31)
     │   │   │   │   ├── 📄 **_derivations.yaml**  (11.5 KB, 2026-09-14 11:27:42)
-    │   │   │   │   ├── 📄 **_exceptions.yaml**  (4.4 KB, 2026-09-18 18:58:21)
-    │   │   │   │   ├── 📄 **_flow.yaml**  (27.0 KB, 2026-09-18 20:42:34)
-    │   │   │   │   ├── 📄 **_intents.json**  (77.0 KB, 2026-09-18 20:06:07)
-    │   │   │   │   ├── 📄 **_physiology.yaml**  (6.3 KB, 2026-09-08 11:46:33)
+    │   │   │   │   ├── 📄 **_exceptions.yaml**  (9.0 KB, 2026-09-22 18:05:16)
+    │   │   │   │   ├── 📄 **_flow.yaml**  (27.2 KB, 2026-09-21 19:55:43)
+    │   │   │   │   ├── 📄 **_intents.json**  (77.2 KB, 2026-09-23 19:21:59)
     │   │   │   │   ├── 📄 **_rules.yaml**  (260.0 B, 2026-09-05 11:02:37)
-    │   │   │   │   ├── 📄 **_variables.json**  (7.5 KB, 2026-09-18 20:08:56)
-    │   │   │   │   ├── 📄 **case-back.yaml**  (32.8 KB, 2026-09-07 08:56:03)
+    │   │   │   │   ├── 📄 **_variables.json**  (8.0 KB, 2026-09-23 17:49:51)
     │   │   │   │   └── 📄 **case.yaml**  (32.8 KB, 2026-09-07 09:06:51)
+    │   │   │   ├── 📁 **unstable_narrow_svt**
+    │   │   │   │   ├── 📄 **_derivations.yaml**  (7.3 KB, 2026-09-23 20:21:02)
+    │   │   │   │   ├── 📄 **_exceptions.yaml**  (11.3 KB, 2026-09-22 18:05:28)
+    │   │   │   │   ├── 📄 **_flow.yaml**  (21.6 KB, 2026-09-24 07:42:01)
+    │   │   │   │   ├── 📄 **_intents.json**  (41.2 KB, 2026-09-23 16:18:31)
+    │   │   │   │   ├── 📄 **_rules.yaml**  (1.3 KB, 2026-09-21 08:58:53)
+    │   │   │   │   ├── 📄 **_variables.json**  (6.6 KB, 2026-09-23 20:18:07)
+    │   │   │   │   └── 📄 **case.yaml**  (852.0 B, 2026-09-21 09:02:51)
     │   │   │   └── 📁 **unstable_wide**
     │   │   ├── 📁 **dict**
     │   │   │   ├── 📄 **inverted_intents.json**  (73.9 KB, 2026-09-17 13:15:35)
@@ -558,14 +637,12 @@
     │   │       │   ├── 📄 **train.jsonl**  (5.1 KB, 2026-09-04 12:41:29)
     │   │       │   ├── 📄 **val.jsonl**  (1.6 KB, 2026-09-04 12:41:29)
     │   │       │   └── 📄 **version.txt**  (179.0 B, 2026-09-04 12:41:29)
-    │   │       ├── 📄 **_derivations.yaml**  (707.0 B, 2026-09-13 16:24:47)
+    │   │       ├── 📄 **_derivations.yaml**  (10.1 KB, 2026-09-21 08:38:39)
     │   │       ├── 📄 **_event_log_derivations.json**  (3.1 KB, 2026-09-14 10:43:00)
-    │   │       ├── 📄 **_flow.yaml**  (15.1 KB, 2026-09-18 20:50:17)
+    │   │       ├── 📄 **_flow.yaml**  (17.0 KB, 2026-09-23 12:50:54)
     │   │       ├── 📄 **_general-rules.yaml**  (622.0 B, 2026-09-08 11:49:56)
     │   │       ├── 📄 **_intents.json**  (164.1 KB, 2026-09-18 11:46:56)
-    │   │       ├── 📄 **_intents_old.json**  (135.4 KB, 2026-09-11 19:34:34)
-    │   │       ├── 📄 **_physiology.yaml**  (11.6 KB, 2026-09-08 11:50:43)
-    │   │       ├── 📄 **_variables.json**  (128.7 KB, 2026-09-18 16:59:17)
+    │   │       ├── 📄 **_variables.json**  (128.5 KB, 2026-09-23 20:29:32)
     │   │       ├── 📄 **dict_v1.3.0.json**  (135.4 KB, 2026-09-17 13:17:22)
     │   │       ├── 📄 **dict_v1.3.0_with_examples.json**  (298.2 KB, 2026-09-17 13:17:34)
     │   │       ├── 📄 **examples_by_intent.json**  (23.0 KB, 2026-09-17 13:14:26)
@@ -583,6 +660,16 @@
     │   └── 📁 **vits-piper-zh_CN-huayan-medium**
     │       ├── 📄 **zh_CN-huayan-medium.onnx**  (60.3 MB, 2026-09-03 08:22:24)
     │       └── 📄 **zh_CN-huayan-medium.onnx.json**  (4.7 KB, 2026-09-03 11:04:39)
+    ├── 📁 **physiology**
+    │   ├── 📁 **_default**
+    │   │   └── 📄 **default.yml**  (5.1 KB, 2026-09-21 13:29:51)
+    │   ├── 📁 **_shared**
+    │   │   └── 📄 **drug_indications.yml**  (3.1 KB, 2026-09-23 13:32:19)
+    │   ├── 📁 **stable_narrow**
+    │   │   └── 📄 **default.yml**  (4.5 KB, 2026-09-24 08:14:01)
+    │   └── 📁 **unstable_narrow_svt**
+    │       ├── 📄 **default.yml**  (13.1 KB, 2026-09-24 08:14:05)
+    │       └── 📄 **drug_indications.yml**  (1.2 KB, 2026-09-23 13:32:31)
     ├── 📁 **prompts**
     │   ├── 📄 **agent_planner_system.txt**  (1.5 KB, 2026-09-01 16:14:52)
     │   ├── 📄 **context_section.txt**  (143.0 B, 2026-08-31 13:36:01)

@@ -377,6 +377,8 @@ kokoro:
 ems:
   unmatched-asr:
     file: logs/unmatched-asr.jsonl
+  audit:
+    dir: ./data/audit
 acls:
   tutor:
     # 默认关闭：未审核规则不误拦

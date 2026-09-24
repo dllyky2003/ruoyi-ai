@@ -66,7 +66,7 @@ public class EmergencyLibraryItemVersionBo extends BaseEntity {
 
     @NotBlank(message = "definitionHash不能为空", groups = {AddGroup.class, EditGroup.class})
     private String definitionHash;
-
+    private String caseType;
     // 可选字段
     private String sourceGuideline;
     private String sourceVersion;

@@ -1,6 +1,6 @@
 {
   "dict_version": "1.0.0",
-  "last_updated": "2026-09-21",
+  "last_updated": "2026-09-23",
   "description": "窄QRS不稳定/SVT案例专属意图层（S类）。聚焦不稳定窄QRS心动过速的快速识别、紧急同步电复律全流程、复律后评估及安全警示。target_params 已与 unstable_narrow_svt 案例变量定义对齐。",
   "layers": [
     {
@@ -91,7 +91,12 @@
                   "不稳定吗", "血压多少", "血压低吗", "意识清楚吗",
                   "有没有休克", "有无脉搏", "胸痛吗", "低血压",
                   "意识改变", "休克", "缺血性胸痛", "急性心衰",
-                  "肺水肿", "皮肤湿冷", "末梢循环"
+                  "肺水肿", "皮肤湿冷", "末梢循环",
+                  "患者.{0,4}不稳定",
+                  "不稳定.{0,6}电复律",
+                  "准备.{0,4}同步电复律",
+                  "准备.*电复律",
+                  "同步电复律"
                 ],
                 "negative_regex": ["血压稳定"],
                 "slots": {},
@@ -146,11 +151,19 @@
                 "有无低血压、意识改变、休克征象",
                 "患者不稳定，血压骤降",
                 "出现了意识改变",
+                "患者不稳定，准备同步电复律",
+                "患者不稳定准备电复律",
+                "患者不稳定，要同步复律",
+                "患者血压低，准备电复律",
                 "【负例】血压稳定"
               ],
               "standard_script": "患者有没有低血压（SBP<90）、意识改变、缺血性胸痛、气促/肺水肿或休克征象？",
               "extraction": {
                 "target_params": ["process.hemodynamicsAssessed", "assert.stable"],
+                "outputs": {
+                  "process.hemodynamicsAssessed": "process.hemodynamicsAssessed",
+                  "assert.stable": "assert.stable"
+                },
                 "rules": { "processor": "#{symptomParser.extractSymptoms(#ctx)}" }
               }
             }
@@ -219,6 +232,7 @@
               "standard_script": "调除颤仪至SYNC同步模式，确认屏幕上出现同步标记。",
               "extraction": {
                 "target_params": ["device.defibSyncMode"],
+                "outputs": { "defibSyncMode": "device.defibSyncMode" },
                 "rules": { "processor": "#{deviceParser.parseSync(#ctx)}" }
               }
             },
@@ -282,6 +296,7 @@
               "standard_script": "窄QRS规则心动过速选择50-100J双相波；房颤双相至少200J；房扑可50-100J。",
               "extraction": {
                 "target_params": ["device.defibEnergy"],
+                "outputs": { "defibEnergy": "device.defibEnergy" },
                 "rules": { "processor": "#{deviceParser.parseEnergy(#ctx)}" }
               }
             },
@@ -347,7 +362,8 @@
                 "outputs": {
                   "sedationGiven": "intervention.sedation.given",
                   "sedationDrug": "intervention.sedation.drug",
-                  "sedationDose": "intervention.sedation.dose"
+                  "sedationDose": "intervention.sedation.dose",
+                  "sedationAssessed": "process.sedationAssessed"
                 },
                 "rules": { "processor": "#{sedationParser.parse(#ctx)}" }
               }
@@ -407,6 +423,7 @@
               "standard_script": "按下充电按钮，等待充电完成指示。",
               "extraction": {
                 "target_params": ["device.defibCharged"],
+                "outputs": { "defibCharged": "device.defibCharged" },
                 "rules": { "processor": "#{deviceParser.parseCharged(#ctx)}" }
               }
             },
@@ -468,6 +485,7 @@
               "standard_script": "喊出『大家离开！』，确认无人接触患者及床沿，然后放电。",
               "extraction": {
                 "target_params": ["process.allClearForShock"],
+                "outputs": { "allClearForShock": "process.allClearForShock" },
                 "rules": { "processor": "#{clearanceParser.parse(#ctx)}" }
               }
             },
@@ -529,6 +547,10 @@
                   "intervention.cardioversion.count",
                   "process.emergencyCardioversionPerformed"
                 ],
+                "outputs": {
+                  "cardioversionCount": "intervention.cardioversion.count",
+                  "emergencyCardioversionPerformed": "process.emergencyCardioversionPerformed"
+                },
                 "rules": { "processor": "#{cardioversionParser.parseDischarge(#ctx)}" }
               }
             },
@@ -543,7 +565,9 @@
               "trg": {
                 "regex": [
                   "看看心律", "转了吗", "复律成功吗", "心律怎么样",
-                  "再次评估心律", "复律后心律", "现在什么心律"
+                  "再次评估心律", "复律后心律", "现在什么心律",
+                  "复律后评估心律", "复律后评估", "评估心律", "复律后.*心律",
+                  "复律后.*评估", "复律后.*怎么样", "放电后.*心律", "放电后.*评估"
                 ],
                 "negative_regex": ["准备放电"],
                 "slots": {},
@@ -578,18 +602,20 @@
                 },
                 "confusion_pairs": []
               },
-              "keywords": ["看看心律", "转了吗", "复律成功吗"],
-              "pattern_hints": ["再次评估心律", "现在什么心律"],
+              "keywords": ["看看心律", "转了吗", "复律成功吗", "复律后评估"],
+              "pattern_hints": ["再次评估心律", "现在什么心律", "复律后.*心律"],
               "examples": [
                 "看看心律转了吗",
                 "复律成功了吗",
                 "现在什么心律",
                 "再次评估心律",
+                "复律后评估心律",
                 "【负例】准备放电"
               ],
               "standard_script": "评估放电后心律：是否转复为窦性？血压是否稳定？",
               "extraction": {
                 "target_params": ["process.rhythmPostCardioversion"],
+                "outputs": { "rhythmPostCardioversion": "process.rhythmPostCardioversion" },
                 "rules": { "processor": "#{rhythmParser.parsePostShock(#ctx)}" }
               }
             },
@@ -653,6 +679,10 @@
               "standard_script": "心律已转复为窦性，血压稳定，继续监测；若未转复，考虑提高能量再次电复律或加用抗心律失常药物。",
               "extraction": {
                 "target_params": ["intervention.rhythmConverted", "process.cardioversionWithoutSedation"],
+                "outputs": {
+                  "rhythmConverted": "intervention.rhythmConverted",
+                  "cardioversionWithoutSedation": "process.cardioversionWithoutSedation"
+                },
                 "rules": { "processor": "#{resultParser.parseCardioversion(#ctx)}" }
               }
             }
@@ -723,6 +753,7 @@
               "standard_script": "对不稳定窄QRS心动过速患者不应做迷走神经刺激，应立即同步电复律。",
               "extraction": {
                 "target_params": ["intervention.vagal.attempted"],
+                "outputs": { "attempted": "intervention.vagal.attempted" },
                 "rules": { "processor": "#{vagalParser.parseAttempted(#ctx)}" }
               }
             },
@@ -784,7 +815,8 @@
               "standard_script": "对不稳定窄QRS心动过速患者不应给腺苷，应立即同步电复律。",
               "extraction": {
                 "target_params": ["intervention.adenosine.status"],
-                "rules": { "processor": "#{adenosineParser.parse(#ctx)}" }
+                "outputs": { "status": "intervention.adenosine.status" },
+                "rules": { "processor": "#{drugParser.parse(#ctx)}" }
               }
             },
             {
@@ -845,7 +877,8 @@
               "standard_script": "患者有脉搏、有灌注，不需要胸外按压。应专注同步电复律。",
               "extraction": {
                 "target_params": ["intervention.cprStartedOnPulsePatient"],
-                "rules": { "processor": "#{cprParser.parseOnPulsePatient(#ctx)}" }
+                "outputs": { "cprStartedOnPulsePatient": "intervention.cprStartedOnPulsePatient" },
+                "rules": { "processor": "#{errorInterceptorParser.parse(#ctx)}" }
               }
             }
           ]

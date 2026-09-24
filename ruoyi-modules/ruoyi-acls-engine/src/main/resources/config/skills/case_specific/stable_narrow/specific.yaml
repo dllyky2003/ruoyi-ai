@@ -70,14 +70,8 @@ skills:
       successVar: intervention.vagalManeuverPerformed
       successSpeech: "迷走神经刺激已完成。"
 
-  - id: drug_push_adenosine
-    duty: IV_MED
-    type: standard
-    params:
-      vrActionCode: "ADENOSINE_PUSH"
-      durationSeconds: 2
-      successVar: intervention.adenosineGiven
-      successSpeech: "腺苷推注已完成。"
+  # drug_push_adenosine 由 shared/tachycardia/drug_adenosine.yaml 声明
+  # （type: complex → adenosinePushSkill Bean），case_specific 层禁止再声明。
 
   # ============================================================
   # 警示 / 宣告型技能（generic）
