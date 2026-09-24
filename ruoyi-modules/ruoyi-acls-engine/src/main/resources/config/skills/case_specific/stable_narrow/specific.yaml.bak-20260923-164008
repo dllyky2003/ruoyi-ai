@@ -1,0 +1,156 @@
+# ============================================================================
+# stable_narrow/specific.yaml - 窄QRS稳定心动过速专属技能
+#
+# 字段契约（来自 YamlSkillLoader）：
+#   generic_assert: assertExpression / targetVar / successSpeech / valueMap
+#                   / prerequisites / sourceVar / sourceVars / unavailableValue
+#   standard:       vrActionCode / successVar / successSpeech / durationSeconds
+#   generic:        vrActionCode / durationSeconds / successSpeech
+#                   / outputs(List[{var,value}]) / prerequisites / varMapping
+#                   / waitForCompletion / timeoutSeconds
+#                   / sourceVar / sourceVars / targetVar / unavailableValue / valueMap
+# ============================================================================
+
+skills:
+  # -------- 专属判读技能（generic_assert） --------
+  - id: assert_qrs_width
+    duty: MONITOR_DEFIB
+    type: generic_assert
+    params:
+      sourceVar: phys.qrsDuration
+      assertExpression: "#phys.qrsDuration != null && #phys.qrsDuration <= 0.12 ? 'narrow' : 'wide'"
+      targetVar: assert.qrsWidth
+      successSpeech: "QRS宽度 {value}。"
+      valueMap:
+        unknown: "待判读"
+        narrow: "窄QRS"
+        wide: "宽QRS"
+      prerequisites:
+        - variable: process.ecgRecorded
+          expected: true
+          message: "请先完成 12导联心电图记录！"
+
+  - id: assert_rhythm_regular
+    duty: MONITOR_DEFIB
+    type: generic_assert
+    params:
+      sourceVar: phys.rrIntervalJitter
+      assertExpression: "#phys.rrIntervalJitter != null && #phys.rrIntervalJitter < 0.12"
+      targetVar: assert.rhythmRegular
+      successSpeech: "节律 {value}。"
+      valueMap:
+        unknown: "待判读"
+        true: "规则"
+        false: "不规则"
+      prerequisites:
+        - variable: process.ecgRecorded
+          expected: true
+          message: "请先完成 12导联心电图记录！"
+
+  - id: assert_hemodynamics
+    duty: ASSESS
+    type: generic_assert
+    params:
+      sourceVars: [phys.systolicBp, phys.consciousness, phys.respiratoryRate]
+      assertExpression: "#phys.systolicBp >= 90 && #phys.consciousness == 'alert' && #phys.respiratoryRate >= 10 && #phys.respiratoryRate <= 30"
+      targetVar: assert.stable
+      successSpeech: "血流动力学 {value}。"
+      valueMap:
+        unknown: "待判读"
+        true: "稳定"
+        false: "不稳定"
+
+  # -------- 专属标准操作（standard） --------
+  - id: vagal_maneuver
+    duty: ASSESS
+    type: standard
+    params:
+      vrActionCode: "VAGAL_MANEUVER"
+      durationSeconds: 5
+      successVar: intervention.vagalManeuverPerformed
+      successSpeech: "迷走神经刺激已完成。"
+
+  # drug_push_adenosine 由 shared/tachycardia/drug_adenosine.yaml 声明
+  # （type: complex → adenosinePushSkill Bean），case_specific 层禁止再声明。
+
+  # ============================================================
+  # 警示 / 宣告型技能（generic）
+  # 修正：id / params 嵌套 / durationSeconds / outputs List
+  # ============================================================
+
+  - id: wpw_warning
+    duty: ASSESS
+    type: generic
+    params:
+      vrActionCode: WPW_ALERT
+      durationSeconds: 1
+      successSpeech: "⚠️ 预激综合征警示：禁用腺苷、CCB、β受体阻滞剂、地高辛；预激合并窄QRS（顺向型AVRT）时腺苷可谨慎使用。"
+      outputs:
+        - var: process.wpwAlertTriggered
+          value: true
+
+  - id: alert_drug_induced_vf
+    duty: ASSESS
+    type: generic
+    params:
+      vrActionCode: DRUG_INDUCED_VF_ALERT
+      durationSeconds: 1
+      successSpeech: "⚠️ 药物诱发室颤，立即启动 ACLS。"
+      outputs:
+        - var: process.drugInducedVfAlertShown
+          value: true
+
+  - id: alert_unsync_shock_vf
+    duty: ASSESS
+    type: generic
+    params:
+      vrActionCode: UNSYNC_SHOCK_VF_ALERT
+      durationSeconds: 1
+      successSpeech: "⚠️ 非同步电击致室颤，立即除颤。"
+      outputs:
+        - var: process.unsynchronizedShockVfAlertShown
+          value: true
+
+  - id: alert_pea_asystole
+    duty: ASSESS
+    type: generic
+    params:
+      vrActionCode: PEA_ASYSTOLE_ALERT
+      durationSeconds: 1
+      successSpeech: "⚠️ PEA/停搏，立即开始 CPR。"
+      outputs:
+        - var: process.peaAsystoleAlertShown
+          value: true
+
+  - id: block_forbidden_action
+    duty: ASSESS
+    type: generic
+    params:
+      vrActionCode: FORBIDDEN_ACTION_BLOCK
+      durationSeconds: 1
+      successSpeech: "⛔ 稳定窄QRS禁忌操作，已拦截。"
+      outputs:
+        - var: process.contraindicationBlockTriggered
+          value: true
+
+  - id: report_treatment_result
+    duty: ASSESS
+    type: generic
+    params:
+      vrActionCode: TREATMENT_RESULT_REPORT
+      durationSeconds: 1
+      successSpeech: "治疗结果已记录。"
+      outputs:
+        - var: process.treatmentResultReported
+          value: true
+
+  - id: alert_hemodynamic_deterioration
+    duty: ASSESS
+    type: generic
+    params:
+      vrActionCode: HEMODYNAMIC_DETERIORATION_ALERT
+      durationSeconds: 1
+      successSpeech: "⚠️ 血流动力学恶化，准备紧急电复律。"
+      outputs:
+        - var: process.hemodynamicDeteriorationAlert
+          value: true
