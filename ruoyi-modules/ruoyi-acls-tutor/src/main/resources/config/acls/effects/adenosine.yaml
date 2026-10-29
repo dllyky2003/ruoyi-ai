@@ -1,0 +1,229 @@
+# 效应映射表 — adenosine（腺苷）
+# 目标路径（部署后）：ruyi-acls-tutor/src/main/resources/config/acls/effects/adenosine.yaml
+# schema: ../schema/effect_mapping_schema.json
+#
+# 本文件是设计契约 ACLS-TUTOR-DESIGN-VIRTUAL-PATIENT-V0.1 第五节的结构化落地版本。
+# ★ 导师只需维护 preconditionCn / effectCn / sideEffects / riskFlag / timing / notes。
+# ★ preconditions（结构化条件）供未来的效应解释器读取，非导师必填项，
+#   但改动 preconditionCn 时应尽量保持两者语义一致，避免"表格说的"和"引擎做的"脱节。
+
+drug: adenosine
+version: "0.1"
+designRef: ACLS-TUTOR-DESIGN-VIRTUAL-PATIENT-V0.1
+reviewStatus: pending
+reviewedBy: null
+reviewedAt: null
+
+openQuestions:
+  - "模型是确定性还是概率性？腺苷首剂成功率（6mg约52%，12mg约83%）是否按概率分支？"
+  - "副作用是否应独立成表，而非在每个场景内并行书写？"
+  - "首剂12mg（超指南剂量）是否仍应生效，是否符合「病人永远诚实」原则？"
+  - "时序参数是否需要调整：起效8s、停搏中位1240ms、WPW诱发VF 3s"
+  - "State 字段缺失情况：isWpw / adenosine.lastRoute / adenosine.totalDose 是否已在 _variables.json 声明？"
+
+scenarios:
+  - id: A
+    nameCn: 规则窄QRS心动过速（SVT）
+    mappings:
+      - id: ADN-SVT-01
+        preconditionCn: "心律为 SVT / AVNRT / AVRT，QRS 窄且规则，既往未使用过腺苷"
+        preconditions:
+          - { field: rhythm, op: in, value: [SVT, AVNRT, AVRT] }
+          - { field: qrsWidth, op: eq, value: narrow }
+          - { field: regularity, op: eq, value: regular }
+          - { field: adenosine.count, op: eq, value: 0 }
+        resolutionMode: scripted
+        effectCn: "转复为窦性心律（成功）或心律不变（无效）；心率恢复正常；伴随短暂窦性停搏（中位约1240ms）；血压短暂下降后恢复"
+        rhythmOutcome: { to: Sinus, alternate: unchanged }
+        transientEffects:
+          - { type: sinus_pause, medianMs: 1240, label: "短暂窦性停搏" }
+          - { type: bp_transient_drop, label: "血压短暂下降后恢复" }
+        sideEffects: [潮红, 胸痛, 头痛, 呼吸困难, 低血压]
+        riskFlag: none
+        timing: { type: delayed, seconds: 8 }
+        notes: ""
+
+      - id: ADN-SVT-02
+        preconditionCn: "同 ADN-SVT-01 前置条件，且既往已使用过腺苷、距上次给药不足60秒"
+        preconditions:
+          - { field: rhythm, op: in, value: [SVT, AVNRT, AVRT] }
+          - { field: qrsWidth, op: eq, value: narrow }
+          - { field: regularity, op: eq, value: regular }
+          - { field: adenosine.count, op: gte, value: 1 }
+          - { field: adenosine.secondsSinceLast, op: lt, value: 60 }
+        resolutionMode: scripted
+        effectCn: "心律不变；给药计数+1；副作用仍会出现"
+        rhythmOutcome: { to: unchanged }
+        sideEffects: [潮红, 胸痛, 头痛, 呼吸困难, 低血压]
+        riskFlag: none
+        timing: { type: immediate }
+        notes: ""
+
+      - id: ADN-SVT-03
+        preconditionCn: "同 ADN-SVT-01 前置条件，且给药计数=1、距上次给药≥60秒"
+        preconditions:
+          - { field: rhythm, op: in, value: [SVT, AVNRT, AVRT] }
+          - { field: qrsWidth, op: eq, value: narrow }
+          - { field: regularity, op: eq, value: regular }
+          - { field: adenosine.count, op: eq, value: 1 }
+          - { field: adenosine.secondsSinceLast, op: gte, value: 60 }
+        resolutionMode: scripted
+        effectCn: "同 ADN-SVT-01（视为重新计时的首次有效给药）"
+        rhythmOutcome: { to: Sinus, alternate: unchanged }
+        transientEffects:
+          - { type: sinus_pause, medianMs: 1240 }
+          - { type: bp_transient_drop }
+        sideEffects: [潮红, 胸痛, 头痛, 呼吸困难, 低血压]
+        riskFlag: none
+        timing: { type: delayed, seconds: 8 }
+        notes: ""
+
+  - id: B
+    nameCn: WPW预激综合征
+    mappings:
+      - id: ADN-WPW-01
+        preconditionCn: "存在WPW预激传导，心律为房颤（AFib）"
+        preconditions:
+          - { field: isWpw, op: eq, value: true }
+          - { field: rhythm, op: eq, value: AFib }
+        resolutionMode: scripted
+        effectCn: "心律转为室颤（VF）；血压急剧下降；可能诱发预激性房颤转室颤"
+        rhythmOutcome: { to: VF }
+        riskFlag: fatal
+        timing: { type: delayed, seconds: 3 }
+        notes: "高风险场景，需临床双人确认"
+
+      - id: ADN-WPW-02
+        preconditionCn: "存在WPW预激传导，心律为SVT（顺向性AVRT）"
+        preconditions:
+          - { field: isWpw, op: eq, value: true }
+          - { field: rhythm, op: eq, value: SVT }
+        resolutionMode: scripted
+        effectCn: "可能终止AVRT，但风险远高于普通SVT，需标记为致命风险"
+        rhythmOutcome: { to: Sinus, alternate: unchanged }
+        riskFlag: fatal
+        timing: { type: delayed, seconds: 8 }
+        notes: ""
+
+  - id: C
+    nameCn: 宽QRS心动过速
+    mappings:
+      - id: ADN-WCT-01
+        preconditionCn: "QRS宽、规则，非室速（如SVT伴差异性传导）"
+        preconditions:
+          - { field: qrsWidth, op: eq, value: wide }
+          - { field: regularity, op: eq, value: regular }
+          - { field: rhythm, op: neq, value: VT }
+        resolutionMode: scripted
+        effectCn: "可能终止心动过速，或揭示房性活动"
+        rhythmOutcome: { to: Sinus, alternate: unchanged }
+        riskFlag: none
+        timing: { type: delayed, seconds: 8 }
+        notes: ""
+
+      - id: ADN-WCT-02
+        preconditionCn: "QRS宽、规则，心律为室速（VT）"
+        preconditions:
+          - { field: qrsWidth, op: eq, value: wide }
+          - { field: regularity, op: eq, value: regular }
+          - { field: rhythm, op: eq, value: VT }
+        resolutionMode: scripted
+        effectCn: "心律不变；出现短暂房室分离，具有诊断意义"
+        rhythmOutcome: { to: unchanged }
+        riskFlag: none
+        timing: { type: delayed, seconds: 3 }
+        notes: ""
+
+      - id: ADN-WCT-03
+        preconditionCn: "QRS宽、不规则"
+        preconditions:
+          - { field: qrsWidth, op: eq, value: wide }
+          - { field: regularity, op: eq, value: irregular }
+        resolutionMode: scripted
+        effectCn: "可能加速心室率，导致临床不稳定"
+        rhythmOutcome: { to: unchanged }
+        riskFlag: caution
+        timing: { type: immediate }
+        notes: ""
+
+  - id: D
+    nameCn: 不规则窄QRS心动过速
+    mappings:
+      - id: ADN-IRR-01
+        preconditionCn: "心律为房颤 / 房扑 / 多源性房速，且不规则"
+        preconditions:
+          - { field: rhythm, op: in, value: [AFib, AFlutter, MAT] }
+          - { field: regularity, op: eq, value: irregular }
+        resolutionMode: scripted
+        effectCn: "心律不转复；心室率短暂减慢；可能揭示房性活动"
+        rhythmOutcome: { to: unchanged }
+        riskFlag: none
+        timing: { type: delayed, seconds: 3 }
+        notes: ""
+
+  - id: E
+    nameCn: 无效情形
+    mappings:
+      - id: ADN-NULL-01
+        preconditionCn: "心律为窦性"
+        preconditions:
+          - { field: rhythm, op: eq, value: Sinus }
+        resolutionMode: scripted
+        effectCn: "心律不变；可能出现短暂窦性心动过缓"
+        rhythmOutcome: { to: unchanged }
+        riskFlag: none
+        timing: { type: immediate }
+        notes: ""
+
+      - id: ADN-NULL-02
+        preconditionCn: "心律为室颤 / 室速 / 心搏停止 / 无脉性电活动"
+        preconditions:
+          - { field: rhythm, op: in, value: [VF, VT, Asystole, PEA] }
+        resolutionMode: scripted
+        effectCn: "心律不变；无效应"
+        rhythmOutcome: { to: unchanged }
+        riskFlag: none
+        timing: { type: immediate }
+        notes: ""
+
+      - id: ADN-NULL-03
+        preconditionCn: "未被以上场景覆盖的其他心律（默认兜底，对应设计原则4：未建模操作默认无效，不是报错）"
+        preconditions: []
+        resolutionMode: scripted
+        effectCn: "默认：心律不变，无效应"
+        rhythmOutcome: { to: unchanged }
+        riskFlag: none
+        timing: { type: immediate }
+        isDefaultFallback: true
+        notes: "结构化条件留空，表示「未匹配以上任何规则时」的兜底分支，由解释器实现为默认分支而非条件表达式"
+
+  - id: F
+    nameCn: 剂量方向性
+    mappings:
+      - id: ADN-DOSE-01
+        preconditionCn: "首剂给药，剂量为12mg（错误剂量，AHA指南首剂应为6mg）"
+        preconditions:
+          - { field: adenosine.count, op: eq, value: 0 }
+          - { field: adenosine.lastDose, op: eq, value: 12 }
+        resolutionMode: probabilistic
+        outcomes:
+          - probability: null   # 待补充：12mg 首剂转复成功率（设计文档提及约83%，需临床确认）
+            rhythmOutcome: { to: Sinus }
+          - probability: null
+            rhythmOutcome: { to: unchanged }
+        effectCn: "生理上仍可能转复；副作用比6mg更明显"
+        riskFlag: caution
+        timing: { type: delayed, seconds: 8 }
+        notes: "待决策项：是否符合「病人永远诚实」原则，还是对超指南剂量另行处理"
+
+      - id: ADN-DOSE-02
+        preconditionCn: "距上次给药不足60秒，再次推药（无论剂量）"
+        preconditions:
+          - { field: adenosine.count, op: gte, value: 1 }
+          - { field: adenosine.secondsSinceLast, op: lt, value: 60 }
+        resolutionMode: scripted
+        effectCn: "无治疗效应；给药计数+1；副作用叠加"
+        rhythmOutcome: { to: unchanged }
+        riskFlag: none
+        timing: { type: immediate }
+        notes: ""

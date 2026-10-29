@@ -1,0 +1,159 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "effect_mapping_schema.json",
+  "title": "效应映射表 Schema（导师视图）",
+  "description": "定义单个药物/操作在虚拟病人模型中的效应映射表。仅使用临床/领域语言，不涉及状态机状态ID或SpEL表达式。对应设计契约 ACLS-TUTOR-DESIGN-VIRTUAL-PATIENT-V0.1 第五节。preconditionCn / effectCn 是导师维护的主字段；preconditions 是供未来效应解释器使用的结构化字段，二者应保持同步。",
+  "type": "object",
+  "required": ["drug", "version", "reviewStatus", "scenarios"],
+  "properties": {
+    "drug": {
+      "type": "string",
+      "description": "药物或操作标识，如 adenosine、cardioversion，对应 config/acls/effects/{drug}.yaml 的文件名"
+    },
+    "version": { "type": "string" },
+    "designRef": {
+      "type": "string",
+      "description": "关联的设计契约编号，如 ACLS-TUTOR-DESIGN-VIRTUAL-PATIENT-V0.1"
+    },
+    "reviewStatus": {
+      "type": "string",
+      "enum": ["pending", "approved"],
+      "description": "审阅状态。approved 前，本表不作为最终依据"
+    },
+    "reviewedBy": { "type": ["string", "null"] },
+    "reviewedAt": { "type": ["string", "null"], "format": "date" },
+    "openQuestions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "尚未决策的临床/设计问题。审阅通过（reviewStatus=approved）前，此列表应为空或每项都已转化为具体设计决定"
+    },
+    "scenarios": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/scenario" }
+    }
+  },
+  "definitions": {
+    "scenario": {
+      "type": "object",
+      "required": ["id", "nameCn", "mappings"],
+      "properties": {
+        "id": { "type": "string", "description": "场景标识，如 A、B、C（对应设计文档的场景分组）" },
+        "nameCn": { "type": "string", "description": "场景的临床名称，如「规则窄QRS心动过速（SVT）」" },
+        "mappings": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/mapping" }
+        }
+      }
+    },
+    "mapping": {
+      "type": "object",
+      "required": ["id", "preconditionCn", "preconditions", "resolutionMode", "effectCn", "timing"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Z]+-[A-Z]+-[0-9]+$",
+          "description": "映射ID，如 ADN-SVT-01"
+        },
+        "preconditionCn": {
+          "type": "string",
+          "minLength": 1,
+          "description": "★ 导师维护字段：人类可读的前置条件描述"
+        },
+        "preconditions": {
+          "type": "array",
+          "description": "结构化前置条件，供效应解释器读取。改动后应同步更新 preconditionCn",
+          "items": { "$ref": "#/definitions/condition" }
+        },
+        "resolutionMode": {
+          "type": "string",
+          "enum": ["scripted", "probabilistic"],
+          "description": "scripted：结果由病例脚本/当前分支决定（当前默认）。probabilistic：结果按 outcomes 中的概率分支。是否采用概率模型是设计契约中的待决策项，此字段允许两种模式并存而不强制现在决策"
+        },
+        "outcomes": {
+          "type": "array",
+          "description": "resolutionMode=probabilistic 时必填，否则忽略",
+          "items": { "$ref": "#/definitions/outcome" }
+        },
+        "rhythmOutcome": { "$ref": "#/definitions/rhythmOutcome" },
+        "effectCn": {
+          "type": "string",
+          "minLength": 1,
+          "description": "★ 导师维护字段：人类可读的效应描述"
+        },
+        "transientEffects": {
+          "type": "array",
+          "description": "伴随的一过性生理效应，如短暂窦性停搏、血压短暂下降",
+          "items": {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+              "type": { "type": "string" },
+              "medianMs": { "type": "number" },
+              "label": { "type": "string" }
+            }
+          }
+        },
+        "sideEffects": {
+          "type": "array",
+          "description": "与治疗效应并行出现的副作用，如潮红、胸痛、头痛",
+          "items": { "type": "string" }
+        },
+        "riskFlag": {
+          "type": "string",
+          "enum": ["none", "caution", "fatal"],
+          "default": "none",
+          "description": "fatal 标记的场景应在报告中被单独提示，建议双人审阅"
+        },
+        "timing": { "$ref": "#/definitions/timing" },
+        "notes": { "type": "string" },
+        "isDefaultFallback": {
+          "type": "boolean",
+          "default": false,
+          "description": "标记本条为「未建模操作」的兜底行为（原则4：默认无效，不是报错）"
+        }
+      }
+    },
+    "condition": {
+      "type": "object",
+      "required": ["field", "op", "value"],
+      "properties": {
+        "field": { "type": "string", "description": "State 字段名，如 rhythm、adenosine.count" },
+        "op": {
+          "type": "string",
+          "enum": ["eq", "neq", "in", "notIn", "gte", "lte", "gt", "lt"]
+        },
+        "value": {}
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "required": ["probability"],
+      "properties": {
+        "probability": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "null 表示临床数据尚未提供，报告生成器会将其列为待办"
+        },
+        "rhythmOutcome": { "$ref": "#/definitions/rhythmOutcome" }
+      }
+    },
+    "rhythmOutcome": {
+      "type": "object",
+      "properties": {
+        "to": { "type": "string" },
+        "alternate": { "type": "string", "description": "备选结局，如「成功转复」失败时的心律" }
+      }
+    },
+    "timing": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string", "enum": ["immediate", "delayed"] },
+        "seconds": { "type": "number", "description": "type=delayed 时必填" }
+      }
+    }
+  }
+}
