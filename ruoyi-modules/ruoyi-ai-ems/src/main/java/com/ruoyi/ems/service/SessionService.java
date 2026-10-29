@@ -15,9 +15,12 @@ import com.ruoyi.ems.config.loader.VariableMetaLoader;
 import com.ruoyi.ems.domain.*;
 import com.ruoyi.ems.domain.TeachingMode.TeachingMode;
 import com.ruoyi.ems.domain.dto.CommandTask;
+import com.ruoyi.ems.domain.dto.ExecutionOutcome;
+import com.ruoyi.ems.domain.dto.LogicFlowDefinitionDTO;
 import com.ruoyi.ems.domain.dto.TeamPerformance;
 import com.ruoyi.ems.domain.entity.EmsSession;
 import com.ruoyi.ems.domain.entity.EmsScenario;
+import com.ruoyi.ems.engine.AttemptOutcome;
 import com.ruoyi.ems.engine.PhaseManager;
 import com.ruoyi.ems.engine.StateMachineFacade;
 import com.ruoyi.ems.engine.extraction.ProcessTranscriptor;
@@ -31,6 +34,7 @@ import com.ruoyi.ems.npc.TeamManager;
 
 import com.ruoyi.ems.npc.TeamSize;
 import com.ruoyi.ems.spi.IntelligentCommandProcessor;
+import com.ruoyi.ems.spi.dto.ValidationResult;
 import com.ruoyi.ems.tts.KokoroTtsClient;
 import com.ruoyi.ems.websocket.WebSocketMessageSender;
 import jakarta.websocket.Session;
@@ -52,6 +56,10 @@ import java.util.stream.Collectors;
 
 /**
  * 会话服务核心类，负责整个 EMS 演练的会话生命周期管理。
+ *
+ * <p>★ 批 1（螺旋 2 / 阶段 2.1）新增：{@link #executeCommandSyncStructured}，
+ * 保留 tutor 决策（ValidationResult）与失败类别（failureKind），
+ * 供 {@code CmdMessageHandler} 组装 CMD_RESULT。</p>
  */
 @Slf4j
 @Service
@@ -425,7 +433,42 @@ public class SessionService {
     public String getCaseMermaid(String caseType,boolean isfull) {
         return configLoader.generateMermaid(caseType,isfull);
     }
+    /**
+     * 获取指定案例的 LogicFlow 状态机定义。
+     *
+     * 用于工作流设计器加载现有 YAML 状态机。
+     *
+     * @param caseId 案例 ID
+     * @param full 是否包含继承内容
+     *             false：仅返回子案例自身定义
+     *             true：返回继承合并后的完整定义
+     * @return LogicFlow 状态机定义
+     */
+    public LogicFlowDefinitionDTO getCaseLogicFlow(
+        String caseId,
+        boolean full) {
 
+        if (caseId == null || caseId.isBlank()) {
+            throw new IllegalArgumentException("案例 ID 不能为空");
+        }
+
+        log.info(
+            "获取案例 LogicFlow 状态机: caseId={}, full={}",
+            caseId,
+            full
+        );
+
+        LogicFlowDefinitionDTO definition =
+            configLoader.getLogicFlowDefinition(caseId, full);
+
+        if (definition == null) {
+            throw new IllegalArgumentException(
+                "未找到案例状态机配置: " + caseId
+            );
+        }
+
+        return definition;
+    }
     public Map<String, Object> getDefaultVariables(String caseType) {
         Map<String, VariableMeta> varMetaMap = variableMetaManager.getVariablesForCase(caseType);
         if (varMetaMap == null) {
@@ -457,22 +500,26 @@ public class SessionService {
         return ctx.getModifiedVariablesAsMap();
     }
 
+    // ============================================================
+    // ★ 批 1：结构化执行入口
+    // ============================================================
+
     /**
-     * 同步执行用户指令。
+     * ★ 批 1 新增：结构化执行入口。保留 tutor 决策与失败类别。
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public String executeCommandSync(CommandTask task) {
+    public ExecutionOutcome executeCommandSyncStructured(CommandTask task) {
         String sessionId = task.getSessionId();
         String transcript = task.getTranscript();
         Session webSocketSession = task.getWebSocketSession();
 
-        log.info("🧠 [执行同步] 会话 {} 开始处理指令: {}", sessionId, transcript);
-        // ★ 修改：改用 emsSessionId 走 RoomBroadcaster 新通道（旧 Session 通道 Unity 收不到）
+        log.info("🧠 [执行同步-结构化] 会话 {} 开始处理指令: {}", sessionId, transcript);
         messageSender.sendTranscript(sessionId,
             String.format("会话 %s 开始处理指令: %s", sessionId, transcript), true);
 
         if (Thread.interrupted()) {
-            return "TASK_INTERRUPTED";
+            return ExecutionOutcome.failure(
+                AttemptOutcome.FailureKind.EXCEPTION.name(), "TASK_INTERRUPTED", null);
         }
 
         String caseId = (String) redisTemplate.opsForHash()
@@ -483,56 +530,113 @@ public class SessionService {
             commands = processTranscriptService.processTranscriptMulti(sessionId, transcript, caseId);
         } catch (Exception e) {
             log.error("❌ 分句分类失败", e);
-            return "CLASSIFY_ERROR: " + e.getMessage();
+            return ExecutionOutcome.failure(
+                AttemptOutcome.FailureKind.EXCEPTION.name(),
+                "CLASSIFY_ERROR: " + e.getMessage(), null);
         }
 
         if (commands == null || commands.isEmpty()) {
-            return "UNKNOWN_INTENT: 无有效分句";
+            return ExecutionOutcome.failure(
+                AttemptOutcome.FailureKind.NO_MATCH.name(),
+                "UNKNOWN_INTENT: 无有效分句", null);
         }
 
-        List<String> results = new ArrayList<>(commands.size());
+        List<ExecutionOutcome> outcomes = new ArrayList<>(commands.size());
         for (int i = 0; i < commands.size(); i++) {
             if (Thread.interrupted()) {
-                results.add("INTERRUPTED_AT_" + i);
+                outcomes.add(ExecutionOutcome.failure(
+                    AttemptOutcome.FailureKind.EXCEPTION.name(),
+                    "INTERRUPTED_AT_" + i, null));
                 break;
             }
             IntentCommand cmd = commands.get(i);
             if (cmd == null) {
-                results.add("NULL_AT_" + i);
+                outcomes.add(ExecutionOutcome.failure(
+                    AttemptOutcome.FailureKind.EXCEPTION.name(),
+                    "NULL_AT_" + i, null));
                 continue;
             }
             try {
-                String r = executeSingleCommand(sessionId, webSocketSession, cmd, i, commands.size());
-                results.add(r);
+                ExecutionOutcome r = executeSingleCommandStructured(
+                    sessionId, webSocketSession, cmd, i, commands.size());
+                outcomes.add(r);
             } catch (Exception e) {
                 log.error("❌ 第 {} 条指令处理失败", i, e);
-                results.add("ERROR_AT_" + i + ": " + e.getMessage());
+                outcomes.add(ExecutionOutcome.failure(
+                    AttemptOutcome.FailureKind.EXCEPTION.name(),
+                    "ERROR_AT_" + i + ": " + e.getMessage(), null));
             }
         }
 
-        return String.join(" | ", results);
+        return mergeOutcomes(outcomes);
     }
 
-    // ==================== ★ 单条指令执行（含元语用分派） ====================
+    /**
+     * 汇总多条指令结果：任一条失败算失败；validation 取最后一条。
+     */
+    private ExecutionOutcome mergeOutcomes(List<ExecutionOutcome> list) {
+        if (list == null || list.isEmpty()) {
+            return ExecutionOutcome.failure(
+                AttemptOutcome.FailureKind.EXCEPTION.name(), "无结果", null);
+        }
+        boolean anyFailure = list.stream().anyMatch(o -> !o.isSuccess());
+        ExecutionOutcome last = list.get(list.size() - 1);
+
+        ExecutionOutcome merged = new ExecutionOutcome();
+        merged.setSuccess(!anyFailure);
+        merged.setValidation(last.getValidation());
+        merged.setFailureKind(last.getFailureKind());
+        merged.setErrorMessage(last.getErrorMessage());
+
+        StringBuilder sb = new StringBuilder();
+        for (ExecutionOutcome o : list) {
+            String t = o.isSuccess() ? o.getResponseText() : o.getErrorMessage();
+            if (t != null && !t.isBlank()) {
+                if (sb.length() > 0) sb.append(" | ");
+                sb.append(t);
+            }
+        }
+        if (merged.isSuccess()) {
+            merged.setResponseText(sb.toString());
+        } else {
+            merged.setErrorMessage(sb.length() > 0 ? sb.toString() : "执行失败");
+        }
+        return merged;
+    }
 
     /**
-     * 单条指令执行：
+     * ★ 批 1：兼容旧调用方。返回 String。
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public String executeCommandSync(CommandTask task) {
+        ExecutionOutcome o = executeCommandSyncStructured(task);
+        if (o.getResponseText() != null && !o.getResponseText().isBlank()) {
+            return o.getResponseText();
+        }
+        return o.getErrorMessage() != null ? o.getErrorMessage() : "";
+    }
+
+    // ==================== ★ 单条指令执行（结构化，含元语用分派） ====================
+
+    /**
+     * 单条指令执行（结构化）：
      * <ul>
-     *   <li>META_* → 元语用分派（VETO / CLOSED_LOOP / STRATEGY_CORRECTION）</li>
-     *   <li>其余 → 常规意图处理（走 IntelligentCommandProcessor）</li>
+     *   <li>META_* → 元语用分派，包装成 ExecutionOutcome</li>
+     *   <li>其余 → 常规意图处理，从 processor 结果提取 validation / failureKind</li>
      * </ul>
      */
-    private String executeSingleCommand(String sessionId,
-                                        Session webSocketSession,
-                                        IntentCommand command,
-                                        int index,
-                                        int total) {
+    private ExecutionOutcome executeSingleCommandStructured(String sessionId,
+                                                            Session webSocketSession,
+                                                            IntentCommand command,
+                                                            int index,
+                                                            int total) {
 
         if (!command.isValid()) {
             String msg = String.format("未识别意图: %s", command.getErrorMessage());
-            // ★ 修改
             messageSender.sendTranscript(sessionId, msg, true);
-            return "UNKNOWN_INTENT: " + command.getErrorMessage();
+            return ExecutionOutcome.failure(
+                AttemptOutcome.FailureKind.NO_MATCH.name(),
+                "UNKNOWN_INTENT: " + command.getErrorMessage(), null);
         }
 
         String intentCode = command.getIntentCode();
@@ -543,7 +647,7 @@ public class SessionService {
             log.info("💬 元语用分派: session={}, intent={}, actType={}",
                 sessionId, intentCode, actType);
 
-            return switch (actType == null ? "" : actType) {
+            String result = switch (actType == null ? "" : actType) {
                 case "VETO" ->
                     handleVeto(sessionId, webSocketSession, command);
                 case "CLOSED_LOOP" ->
@@ -551,11 +655,11 @@ public class SessionService {
                 case "STRATEGY_CORRECTION" ->
                     handleStrategyCorrection(sessionId, webSocketSession, command, index, total);
                 default -> {
-                    // ★ 修改
                     messageSender.sendTranscript(sessionId, "收到。", true);
                     yield "SUCCESS: 收到";
                 }
             };
+            return ExecutionOutcome.success(result, null);
         }
 
         // ==================== 常规意图处理 ====================
@@ -566,13 +670,13 @@ public class SessionService {
         String prefix = total > 1 ? String.format("[%d/%d] ", index + 1, total) : "";
         String info = String.format("%s🔍 意图: intent=%s, actType=%s, classifyMode=%s",
             prefix, matchedName, command.getActType(), command.getClassifyMode());
-        // ★ 修改
         messageSender.sendTranscript(sessionId, info, true);
 
         boolean success = false;
         String resultText = "";
+        ValidationResult validation = null;
+        String failureKind = null;
 
-        // ★ 新增：处理器明确拒绝（带反馈）时记录，区别于"无处理器支持"
         String rejectedFeedback = null;
         String rejectedReturnCode = null;
 
@@ -588,8 +692,17 @@ public class SessionService {
 
                 boolean ok = Boolean.TRUE.equals(result.get("success"));
 
+                // ★ 提取 validation / failureKind（成功和失败都提取）
+                Object vrObj = result.get("validation");
+                if (vrObj instanceof ValidationResult vr) {
+                    validation = vr;
+                }
+                Object fkObj = result.get("failureKind");
+                if (fkObj instanceof String s && !s.isBlank()) {
+                    failureKind = s;
+                }
+
                 if (!ok) {
-                    // ★ 明确拒绝：取 errorMessage（兼容 errorMsg / msg / reason 几种常见 key）
                     String errMsg = firstNonBlank(
                         result.get("errorMessage"),
                         result.get("errorMsg"),
@@ -604,7 +717,6 @@ public class SessionService {
                         rejectedReturnCode = (String) result.getOrDefault("returnCode", "BLOCKED");
                         break;
                     }
-                    // 无反馈文本 → 视作"不支持"，继续试下一个
                     continue;
                 }
 
@@ -621,17 +733,18 @@ public class SessionService {
                 break;
             }
 
-            // 只有"没有任何处理器支持该意图"才打 WARN
             if (!success && rejectedFeedback == null) {
                 log.warn("⚠️ 没有处理器支持意图: {}, 已尝试处理器数: {}",
                     intentCode, processors.size());
             }
         } catch (Exception e) {
             log.error("❌ 执行异常: intent={}", intentCode, e);
-            return "LLM_ERROR: " + e.getMessage();
+            return ExecutionOutcome.failure(
+                AttemptOutcome.FailureKind.EXCEPTION.name(),
+                "LLM_ERROR: " + e.getMessage(), null);
         }
 
-        // ==================== ★ 处理器明确拒绝：走统一反馈路径 ====================
+        // ==================== 处理器明确拒绝 ====================
         if (!success && rejectedFeedback != null) {
             String reply = "🚫 " + rejectedFeedback;
             try {
@@ -640,32 +753,34 @@ public class SessionService {
                 log.warn("拒绝反馈 TTS 失败（不影响前端下发）: session={}, err={}",
                     sessionId, ttsEx.getMessage());
             }
-            // ★ 修改
             messageSender.sendTranscript(sessionId, reply, true);
 
             log.info("📤 拒绝反馈已下发: session={}, intent={}, feedback={}",
                 sessionId, intentCode, rejectedFeedback);
 
-            return (rejectedReturnCode != null ? rejectedReturnCode : "BLOCKED")
-                + ": " + rejectedFeedback;
+            String returnKind = failureKind != null
+                ? failureKind : AttemptOutcome.FailureKind.NO_MATCH.name();
+            return ExecutionOutcome.failure(returnKind, rejectedFeedback, validation);
         }
 
         // ==================== 成功路径 ====================
         if (success) {
             ttsClient.synthesizeAndSend(sessionId, resultText, "zf_005", 1.2f);
-            // ★ 修改
             messageSender.sendTranscript(sessionId, resultText, true);
-            // ★ 记录最后一次成功意图，供 VETO / CLOSED_LOOP 回查
             recordLastIntent(sessionId, command);
-            return "SUCCESS: " + resultText;
+
+            ExecutionOutcome o = ExecutionOutcome.success(resultText, validation);
+            o.setFailureKind(failureKind != null ? failureKind : "NONE");
+            return o;
         }
 
-        return "PROCESSING_FAILED: " + intentCode;
+        return ExecutionOutcome.failure(
+            failureKind != null ? failureKind : AttemptOutcome.FailureKind.NO_MATCH.name(),
+            "PROCESSING_FAILED: " + intentCode, validation);
     }
 
     /**
-     * ★ 新增工具方法：从若干候选中返回第一个非空非 blank 的字符串。
-     * 兼容不同适配器可能使用的 key（errorMessage / errorMsg / msg / reason）。
+     * ★ 工具方法：从若干候选中返回第一个非空非 blank 的字符串。
      */
     private static String firstNonBlank(Object... candidates) {
         if (candidates == null) return null;
@@ -704,9 +819,6 @@ public class SessionService {
 
     // ==================== 元语用处理 ====================
 
-    /**
-     * VETO：否决上一个动作。
-     */
     private String handleVeto(String sessionId, Session ws, IntentCommand cmd) {
         CaseContext ctx = contextManager.getSnapshot(sessionId);
         IntentCommand lastIntent = ctx != null ? ctx.getLastIntentResult() : null;
@@ -743,14 +855,10 @@ public class SessionService {
             }
         }
 
-        // ★ 修改
         messageSender.sendTranscript(sessionId, "🛑 " + msg, true);
         return "SUCCESS: " + msg;
     }
 
-    /**
-     * CLOSED_LOOP：确认上一个动作已完成。
-     */
     private String handleClosedLoop(String sessionId, Session ws, IntentCommand cmd) {
         CaseContext ctx = contextManager.getSnapshot(sessionId);
         IntentCommand lastIntent = ctx != null ? ctx.getLastIntentResult() : null;
@@ -767,14 +875,10 @@ public class SessionService {
         }
 
         log.info("✅ [CLOSED_LOOP] session={}, target={}", sessionId, targetCode);
-        // ★ 修改
         messageSender.sendTranscript(sessionId, "✅ " + msg, true);
         return "SUCCESS: " + msg;
     }
 
-    /**
-     * STRATEGY_CORRECTION：策略纠偏。
-     */
     private String handleStrategyCorrection(String sessionId,
                                             Session ws,
                                             IntentCommand cmd,
@@ -783,85 +887,12 @@ public class SessionService {
         log.info("🔄 [STRATEGY_CORRECTION] session={}, intent={}, raw='{}'",
             sessionId, cmd.getIntentCode(), cmd.getRawText());
 
-        // ★ 修改
         messageSender.sendTranscript(sessionId, "🔄 收到，已按新策略调整。", true);
         return "SUCCESS: 策略纠偏已记录";
     }
 
-    // ==================== 常规意图处理（独立方法，语义同 executeSingleCommand 常规路径） ====================
+    // ==================== 记录最后一次成功意图 ====================
 
-    private String executeIntent(String sessionId,
-                                 Session webSocketSession,
-                                 IntentCommand command,
-                                 int index,
-                                 int total) {
-
-        String intentCode = command.getIntentCode();
-        String matchedName = command.getMatchedDefinition() != null
-            ? command.getMatchedDefinition().getNameCn()
-            : "(未绑定定义: " + intentCode + ")";
-
-        String prefix = total > 1 ? String.format("[%d/%d] ", index + 1, total) : "";
-        String info = String.format("%s🔍 意图: intent=%s, actType=%s, classifyMode=%s",
-            prefix, matchedName, command.getActType(), command.getClassifyMode());
-        // ★ 修改
-        messageSender.sendTranscript(sessionId, info, true);
-
-        boolean success = false;
-        String resultText = "";
-
-        try {
-            List<IntelligentCommandProcessor> processors =
-                intelligentProcessorProvider.stream().toList();
-
-            for (IntelligentCommandProcessor processor : processors) {
-                if (!processor.supports(intentCode)) continue;
-
-                Map<String, Object> result = processor.processCommand(sessionId, command);
-                if (result == null || !Boolean.TRUE.equals(result.get("success"))) continue;
-
-                success = true;
-                resultText = (String) result.getOrDefault("responseText", "指令已处理");
-
-                @SuppressWarnings("unchecked")
-                Map<String, Object> contextUpdates =
-                    (Map<String, Object>) result.get("contextUpdates");
-                if (contextUpdates != null && !contextUpdates.isEmpty()) {
-                    applyContextUpdates(sessionId, contextUpdates);
-                }
-                break;
-            }
-
-            if (!success) {
-                log.warn("⚠️ 没有处理器支持意图: {}, 已尝试处理器数: {}",
-                    intentCode, processors.size());
-            }
-        } catch (Exception e) {
-            log.error("❌ 执行异常: intent={}", intentCode, e);
-            if (e instanceof InterruptedException) {
-                return "LLM_INTERRUPTED";
-            }
-            return "LLM_ERROR: " + e.getMessage();
-        }
-
-        if (success) {
-            ttsClient.synthesizeAndSend(sessionId, resultText, "zf_005", 1.2f);
-            // ★ 修改
-            messageSender.sendTranscript(sessionId, resultText, true);
-            // ★ 记录最后一次成功意图
-            recordLastIntent(sessionId, command);
-            return "SUCCESS: " + resultText;
-        }
-
-        return "PROCESSING_FAILED: " + intentCode;
-    }
-
-    // ==================== ★ 记录最后一次成功意图 ====================
-
-    /**
-     * 记录最后一次成功执行的意图，供 VETO / CLOSED_LOOP 等元语用回查。
-     * <p>走 updateConversationState，不再直接改 CaseContext 字段。</p>
-     */
     private void recordLastIntent(String sessionId, IntentCommand command) {
         try {
             contextManager.updateConversationState(sessionId, command, null, null);
@@ -909,9 +940,6 @@ public class SessionService {
         return (TeamPerformance) redisTemplate.opsForHash().get(SESSION_CONTEXT_PREFIX + sessionId, "performance");
     }
 
-    /**
-     * ★ 获取当前状态：走 batchSetVarsWithVersion，不再直接改字段 + update(...)
-     */
     public String getCurrentState(String sessionId) {
         StateMachine<String, String> sm = stateMachineCache.get(sessionId);
         if (sm != null && sm.getState() != null) {
@@ -954,7 +982,6 @@ public class SessionService {
         session.setEndTime(LocalDateTime.now());
         sessionMapper.updateById(session);
 
-        // ★ 断开 ASR 连接
         try {
             asrClient.stopRealtimeRecognition("asr-task-" + sessionId);
             log.info("✅ ASR 连接已在 endSession 断开: {}", sessionId);
@@ -1036,10 +1063,7 @@ public class SessionService {
     }
 
     // ==================== 8. 统一状态信息接口 ====================
-    /**
-     * 从 primaryPhase 递归向上找到顶层 phase id。
-     * 若 primaryPhase 本身就是顶层，直接返回；若找不到，兜底返回 primaryPhase。
-     */
+
     private String resolveTopPhaseId(ResolvedCaseTypeConfig config, String primaryPhase) {
         if (config == null || primaryPhase == null) {
             return primaryPhase;
@@ -1119,16 +1143,14 @@ public class SessionService {
         snapshot.put("history", history != null ? history : Collections.emptyList());
         snapshot.put("mermaid", liveMermaid);
 
-        // ★ Phase SM：把主阶段加入快照（若已启用）
         if (ctx.getPhaseRuntime() != null) {
-            // ★ 改动：解析顶层 phase，用于主图高亮（子阶段时回到其顶层祖先）
             ResolvedCaseTypeConfig config = configLoader.getConfig(caseId);
             String primaryPhase = ctx.getPrimaryPhase();
             String primaryTopPhase = resolveTopPhaseId(config, primaryPhase);
 
             Map<String, Object> phaseInfo = new LinkedHashMap<>();
             phaseInfo.put("primaryPhase", primaryPhase);
-            phaseInfo.put("primaryTopPhase", primaryTopPhase); // ★ 改动：新增字段，前端主图高亮用
+            phaseInfo.put("primaryTopPhase", primaryTopPhase);
             phaseInfo.put("activePhases", new ArrayList<>(ctx.getPhaseRuntime().getActivePhases()));
             phaseInfo.put("lockedPhase", ctx.getPhaseRuntime().getLockedPhase());
             phaseInfo.put("lockUntil", ctx.getPhaseRuntime().getLockUntil());
@@ -1164,7 +1186,6 @@ public class SessionService {
         result.put("mode", "design");
         result.put("caseType", caseType);
         result.put("initialState", initialState);
-        // ★ Phase SM：设计态附上 initialPhase 与 phases 概要
         result.put("initialPhase", config.getInitialPhase());
         result.put("phaseCount", config.getPhaseCount());
         result.put("mermaid", staticMermaid != null ? staticMermaid : "");
@@ -1188,7 +1209,6 @@ public class SessionService {
             stateMachineInfo.put("initialState", config.getInitialState() != null ? config.getInitialState() : "SCENE_START");
             definitions.put("stateMachine", stateMachineInfo);
 
-            // ★ Phase SM：暴露 phases 定义供前端审校
             if (config.hasPhases()) {
                 definitions.put("phases", config.getPhases());
             }
@@ -1196,22 +1216,7 @@ public class SessionService {
 
         return definitions;
     }
-    /**
-     * ★ Phase SM：生成某个阶段的内部状态机 mermaid。
-     *
-     * <p>供前端点击阶段框（subgraph）时弹出子状态机使用。</p>
-     *
-     * <p>解析优先级：</p>
-     * <ol>
-     *   <li>若提供 sessionId，从上下文取 caseType</li>
-     *   <li>否则使用传入的 caseType</li>
-     * </ol>
-     *
-     * @param sessionId 会话 ID（可选）
-     * @param caseType  案例类型（可选，sessionId 为空时使用）
-     * @param phaseId   阶段 ID（必填）
-     * @return mermaid 代码；无配置时返回空串
-     */
+
     public String getPhaseSubgraphMermaid(String sessionId, String caseType, String phaseId) {
         if (phaseId == null || phaseId.isEmpty()) {
             throw new IllegalArgumentException("phaseId 不能为空");
@@ -1219,7 +1224,6 @@ public class SessionService {
 
         String effectiveCaseType = caseType;
 
-        // 优先从 sessionId 解析 caseType
         if (sessionId != null && !sessionId.isEmpty()) {
             CaseContext ctx = contextManager.getSnapshot(sessionId);
             if (ctx != null && ctx.getCaseType() != null && !ctx.getCaseType().isEmpty()) {

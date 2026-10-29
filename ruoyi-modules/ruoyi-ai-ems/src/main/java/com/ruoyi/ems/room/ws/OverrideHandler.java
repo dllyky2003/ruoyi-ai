@@ -25,10 +25,12 @@ import java.util.Set;
  * <p><b>已完成：</b></p>
  * <ul>
  *   <li>OVR-1：注册 {@code type=OVR}；attemptId 校验；overrideId 白名单；
- *       reason 强制；{@code expectedStateRevision} 校验</li>
+ *       reason 强制；{@code expectedStateRevision} 校验；
+ *       <b>attempt_status 校验（2026-09-25 新增）</b></li>
  *   <li>OVR-2a：映射到 {@link ControlledEffectRegistry} 中已注册的受控效果，
  *       未注册效果拒绝（§7.2 "不能直接写 ClinicalState"）</li>
- *   <li>OVR-2b：{@code pause_clock} 真实生效；{@code force_sync_mode} 占位</li>
+ *   <li>OVR-2b：{@code pause_clock} 走 {@code ClockService.pause} 真实生效；
+ *       {@code force_sync_mode} 写 {@code system.deterministicDemo} 真实生效</li>
  *   <li>OVR-3：审计写入（JSONL，弱一致，失败不影响 OVR 结果）</li>
  * </ul>
  *
@@ -36,6 +38,7 @@ import java.util.Set;
  * <ul>
  *   <li>OVR-4：评分中断（assessment_interruption）</li>
  *   <li>OVR-5：暂停语义接入（§10.3 systemStatus.paused）</li>
+ *   <li>螺旋 2：yaml 权威重构、OVR 幂等缓存</li>
  * </ul>
  */
 @Slf4j
@@ -126,6 +129,27 @@ public class OverrideHandler implements WsMessageRouter.WsMessageHandler {
                 roomSessionId, overrideId);
             broadcast(roomSessionId, buildError(ovr, roomAttemptId,
                 ErrorCode.INVALID_PARAMETER, "reason 必填"));
+            return;
+        }
+
+        // ===== 4.5 attempt_status 校验（yaml allowed_when.attempt_status） =====
+        //
+        // 语义：attempt 必须处于 RUNNING 状态（start_session 之后、未暂停、未结束），
+        // 否则拒绝 OVR。对应 yaml 的 allowed_when.attempt_status: RUNNING。
+        //
+        // 使用 SessionRoom.isRunning()：
+        //   started && !paused && !isTerminal()
+        // 与契约"attempt_status: RUNNING"一一对应。
+        //
+        // ★ 2026-09-25 阶段 1.2 新增。
+        if (!room.isRunning()) {
+            log.warn("[OVR] attempt 未处于 RUNNING: room={}, overrideId={}, " +
+                    "state={}, started={}, paused={}, terminal={}",
+                roomSessionId, overrideId,
+                room.getState(), room.isStarted(), room.isPaused(), room.isTerminal());
+            broadcast(roomSessionId, buildError(ovr, roomAttemptId,
+                ErrorCode.ATTEMPT_NOT_RUNNING,
+                "attempt 未处于 RUNNING 状态，拒绝 OVR"));
             return;
         }
 

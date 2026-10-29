@@ -19,6 +19,7 @@ import com.ruoyi.ems.domain.IntentCommand;
 import com.ruoyi.ems.domain.PhaseCheckResult;
 
 import com.ruoyi.ems.domain.TeachingMode.TeachingMode;
+import com.ruoyi.ems.engine.AttemptOutcome;
 import com.ruoyi.ems.engine.PhaseManager;
 import com.ruoyi.ems.engine.StateMachineFacade;
 import com.ruoyi.ems.engine.StateTransitionResult;
@@ -66,6 +67,23 @@ import java.util.concurrent.ConcurrentHashMap;
  *       {@link EmsContextManager#batchSetVarsWithVersion}。</li>
  *   <li>P0-3：executeAction 成功且变量持久化后，重新拉取最新 CaseContext，
  *       再驱动状态机，避免 Guard 读到旧值。</li>
+ * </ul>
+ *
+ * <p>★ 方案 A 修复（技能完成事件同步驱动状态机导致的 branch 污染）：
+ * <ul>
+ *   <li>技能完成事件（{@code TaskCompletedEvent}）在 {@code executeAction} 内同步发布，
+ *       监听器 {@code SkillCompletionStateDriver} 可能已经完成状态转移。</li>
+ *   <li>若已转移，本引擎不应再用旧 {@code currentState} 走 {@code selectAndTransition}，
+ *       否则会误判为"无匹配转移"，并把 {@code responseResolver} 污染成 ERROR。</li>
+ *   <li>新增：freshContext 状态 ≠ currentState 时，直接返回成功，跳过重复驱动。</li>
+ * </ul>
+ *
+ * <p>★ 批 1（螺旋 2 / 阶段 2.1）：
+ * <ul>
+ *   <li>第 8 节改用 {@link StateMachineFacade#selectAndTransitionWithOutcome}，
+ *       保留 {@link AttemptOutcome} 的 {@code validation} / {@code failureKind}。</li>
+ *   <li>TUTOR_BLOCK / NO_MATCH / 成功三条路径的 {@link CommandResult}
+ *       都携带 {@code validation} / {@code failureKind}，供 CMD_RESULT 组装。</li>
  * </ul>
  */
 @Slf4j
@@ -121,9 +139,6 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
     /**
      * 处理学员指令
      */
-    /**
-     * 处理学员指令
-     */
     public CommandResult processCommand(IntentCommand command, String sessionId) {
         String intentId = command.getIntentCode();
         String actType = command.getActType();
@@ -157,7 +172,6 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
             }
 
             // ★ 新增：context 已失效（被 endSession 清了 caseType）→ 拒绝处理
-            // 避免下游 getConfig(null) 抛 NPE
             String caseType = caseContext.getCaseType();
             if (caseType == null || caseType.isBlank()) {
                 log.warn("⚠️ 会话上下文已失效（可能已 endSession），拒绝处理指令: session={}, intent={}",
@@ -213,12 +227,6 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
                 log.info("⚠️ Phase 软警告: session={}, intent={}, phase={}, active={}, msg={}",
                     sessionId, intentId, phaseCheck.getPrimaryPhase(),
                     phaseCheck.getActivePhasesView(), warnMsg);
-                // ★ Phase 软警告只记日志，不播 TTS。
-                //   原因：ttsService.speak() → speakStream，
-                //   conn.getResponseCode() / line.write() / line.drain() 全同步阻塞，
-                //   单条指令耗时 10-15s，25 条累计约 4 分钟。
-                //   Phase 软警告属提示性反馈，非关键路径，不播报不影响业务流程。
-                //   后续如恢复播报，改用异步方案（需先给 KokoroTtsClient 加 per-session 队列）。
             }
 
             // ========== 4. 前置验证（OperationArbiter） ==========
@@ -234,9 +242,6 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
             CommandContext context = buildCommandContext(sessionId, caseContext, command);
 
             // ========== 6.5 ★ 异常层评估（先于 skill 执行） ==========
-            // 禁忌/拦截类意图必须在这里被捕获，不能落到 executeAction。
-            // 传 caseContext（不是 freshContext，后者在 7.6 才生成）；
-            // 异常层需要的 derived.stable、phys.hasPulse 在 caseContext 里都有。
             String currentPhase = phaseCheck.getPrimaryPhase();
             CommandResult exceptionResult = tryHandleExceptions(
                 sessionId, caseType, intentId, currentPhase, caseContext, config);
@@ -255,22 +260,68 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
                     "处理器拒绝: " + result.getErrorMessage());
                 return result;
             }
-// ========== 7.2 ★ P2-15：ANNOUNCEMENT 短路，不进状态机 ==========
-            if ("ANNOUNCEMENT".equalsIgnoreCase(actType)) {
-                log.info("💭 [ANNOUNCEMENT] {} 已处理，跳过状态机: session={}", intentId, sessionId);
-                responseResolver.record(sessionId, StudentResponseBranch.NORMAL, intentId,
-                    "ANNOUNCEMENT 纯认知操作，豁免状态机");
 
+            // ========== 7.2 ★ 修复：ANNOUNCEMENT 不豁免"变量驱动重评估" ==========
+            // 背景：ANNOUNCEMENT 是"不动状态机的意图"（纯认知操作）。
+            //   但它写下的变量（如 intervention.rhythmConverted）可能触发纯条件出边。
+            //   原实现直接在写完变量后 return，从不触发状态机评估 → 下游死锁。
+            // 修复：写完变量后调用一次 reEvaluateOnContextChange。
+            //   若命中纯条件出边则推进状态机；否则维持原状。
+            // 语义：ANNOUNCEMENT 豁免"意图驱动"，不豁免"变量驱动"。
+            if ("ANNOUNCEMENT".equalsIgnoreCase(actType)) {
+                log.info("💭 [ANNOUNCEMENT] {} 已处理，尝试变量驱动: session={}", intentId, sessionId);
+
+                // 1. 持久化本次 action 返回的 updates（保持原逻辑）
                 if (result.getContextUpdates() != null && !result.getContextUpdates().isEmpty()) {
                     persistUpdates(sessionId, result.getContextUpdates(), caseContext,
-                        "ANNOUNCEMENT_SKIP");
+                        "ANNOUNCEMENT_UPDATES");
+                }
+
+                // 2. 拉最新快照后触发一次变量驱动重评估
+                String annoNewState = caseContext.getCurrentState();
+                try {
+                    StateTransitionResult annoTransition =
+                        stateMachineFacade.reEvaluateOnContextChange(sessionId, intentId);
+
+                    if (annoTransition != null && annoTransition.isSuccess()) {
+                        String targetState = annoTransition.getToState();
+                        if (targetState != null && !targetState.equals(caseContext.getCurrentState())) {
+                            annoNewState = targetState;
+                            log.info("🔁 [ANNOUNCEMENT] 变量驱动推进成功: {} -> {} (intent={})",
+                                caseContext.getCurrentState(), annoNewState, intentId);
+
+                            try {
+                                phaseManager.updateAfterTransition(
+                                    sessionId, config, annoNewState, intentId);
+                            } catch (Exception e) {
+                                log.warn("Phase 更新失败: session={}, err={}", sessionId, e.getMessage());
+                            }
+
+                            responseResolver.record(sessionId, StudentResponseBranch.NORMAL, intentId,
+                                "ANNOUNCEMENT 变量驱动转移成功");
+                        } else {
+                            log.debug("🔁 [ANNOUNCEMENT] 变量驱动未产生状态变化: state={}", annoNewState);
+                            responseResolver.record(sessionId, StudentResponseBranch.NORMAL, intentId,
+                                "ANNOUNCEMENT 无纯条件出边命中");
+                        }
+                    } else {
+                        log.debug("🔁 [ANNOUNCEMENT] 变量驱动无命中: reason={}",
+                            annoTransition != null ? annoTransition.getReason() : "null");
+                        responseResolver.record(sessionId, StudentResponseBranch.NORMAL, intentId,
+                            "ANNOUNCEMENT 纯认知操作，豁免状态机");
+                    }
+                } catch (Exception e) {
+                    log.warn("🔁 [ANNOUNCEMENT] 变量驱动重评估异常: session={}, err={}",
+                        sessionId, e.getMessage());
+                    responseResolver.record(sessionId, StudentResponseBranch.NORMAL, intentId,
+                        "ANNOUNCEMENT 纯认知操作，豁免状态机");
                 }
 
                 Map<String, Object> annoUpdates = new HashMap<>();
                 if (result.getContextUpdates() != null) {
                     annoUpdates.putAll(result.getContextUpdates());
                 }
-                annoUpdates.put("currentState", caseContext.getCurrentState());
+                annoUpdates.put("currentState", annoNewState);
 
                 return CommandResult.builder()
                     .success(true)
@@ -279,6 +330,7 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
                     .animations(result.getAnimations())
                     .build();
             }
+
             // ========== 7.5 ★ P0-2：持久化技能返回的 contextUpdates ==========
             if (result.getContextUpdates() != null && !result.getContextUpdates().isEmpty()) {
                 persistUpdates(sessionId, result.getContextUpdates(), caseContext,
@@ -297,33 +349,71 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
             log.debug("🔄 执行动作后刷新上下文: session={}, version={}",
                 sessionId, freshContext.getVersion());
 
-            // （原 7.7 步「异常层评估」已前置到 6.5，此处删除）
+            // ★ 方案 A 修复（修正版）：检查【状态机本身】是否已被技能完成事件同步驱动
+            String smState = stateMachineFacade.getCurrentState(sessionId, config);
+            if (smState != null && !smState.equals(currentState)) {
+                log.info("✅ 技能完成事件已驱动状态机: {} -> {}，跳过 AclsCommandEngine 的重复驱动",
+                    currentState, smState);
 
-            // ========== 8. ★ 根据执行结果驱动状态机（使用最新快照） ==========
-            String newState;
-            try {
-                newState = stateMachineFacade.selectAndTransition(
-                    sessionId, config, intentId, freshContext
-                );
-            } catch (TutorBlockedException e) {
-                log.warn("⛔ tutor 阻断: session={}, intent={}, state={}, ruleId={}, severity={}, feedback={}",
-                    sessionId, intentId, currentState, e.getRuleId(), e.getSeverity(),
-                    e.getFeedbackMessage());
-                responseResolver.record(sessionId, StudentResponseBranch.ERROR, intentId,
-                    "Tutor 阻断: " + e.getRuleId());
+                responseResolver.record(sessionId, StudentResponseBranch.NORMAL, intentId,
+                    "技能完成事件已驱动状态机");
+
+                try {
+                    phaseManager.updateAfterTransition(sessionId, config, smState, intentId);
+                } catch (Exception e) {
+                    log.warn("Phase 主阶段更新失败: session={}, intent={}, err={}",
+                        sessionId, intentId, e.getMessage());
+                }
+
+                Map<String, Object> updates = new HashMap<>();
+                if (result.getContextUpdates() != null) {
+                    updates.putAll(result.getContextUpdates());
+                }
+                updates.put("currentState", smState);
+
                 return CommandResult.builder()
-                    .success(false)
-                    .errorMessage(e.getFeedbackMessage())
+                    .success(true)
+                    .responseText(result.getResponseText())
+                    .contextUpdates(updates)
+                    .animations(result.getAnimations())
                     .build();
             }
 
+            // ============================================================
+            // ========== 8. ★ 批 1：结构化状态机驱动 ==========
+            // ============================================================
+            //
+            // 改用 selectAndTransitionWithOutcome：
+            //   - TUTOR_BLOCK → 直接失败，不走变量驱动兜底
+            //   - NO_MATCH   → 先走变量驱动兜底，兜不住再失败
+            //   - NONE       → 成功
+            AttemptOutcome outcome = stateMachineFacade.selectAndTransitionWithOutcome(
+                sessionId, config, intentId, freshContext);
+            String newState = outcome.getNewState();
+
+            // ----- TUTOR_BLOCK：直接失败 -----
+            if (outcome.getFailureKind() == AttemptOutcome.FailureKind.TUTOR_BLOCK) {
+                String ruleId = outcome.getValidation() != null
+                    ? outcome.getValidation().getPrimaryRuleId() : null;
+                String severity = outcome.getValidation() != null
+                    ? outcome.getValidation().getSeverity() : null;
+                log.warn("⛔ tutor 阻断: session={}, intent={}, state={}, ruleId={}, severity={}, feedback={}",
+                    sessionId, intentId, currentState, ruleId, severity, outcome.getFailureReason());
+                responseResolver.record(sessionId, StudentResponseBranch.ERROR, intentId,
+                    "Tutor 阻断: " + (ruleId != null ? ruleId : "unknown"));
+                return CommandResult.builder()
+                    .success(false)
+                    .errorMessage(outcome.getFailureReason())
+                    .validation(outcome.getValidation())
+                    .failureKind(AttemptOutcome.FailureKind.TUTOR_BLOCK.name())
+                    .build();
+            }
+
+            // ----- NO_MATCH：先走变量驱动兜底 -----
             if (newState == null) {
                 log.info("学员意图 {} 无匹配转移，尝试变量驱动重评估: session={}, state={}",
                     intentId, sessionId, currentState);
 
-                // ★ 2026-09-23 修改：reEvaluateOnContextChange 返回 StateTransitionResult，
-                //   仅在 success=true 时取其 toState；未成功时 newState 保持 null，
-                //   交由下方"无匹配转移"分支处理，避免误把当前状态当新状态。
                 StateTransitionResult transition =
                     stateMachineFacade.reEvaluateOnContextChange(sessionId, intentId);
 
@@ -336,6 +426,7 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
                         transition != null ? transition.getReason() : "null");
                 }
             }
+
             if (newState == null) {
                 log.warn("⛔ 状态机无匹配转移: session={}, intent={}, state={}",
                     sessionId, intentId, currentState);
@@ -344,6 +435,8 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
                 return CommandResult.builder()
                     .success(false)
                     .errorMessage("当前临床流程不允许此操作")
+                    .validation(outcome.getValidation())
+                    .failureKind(AttemptOutcome.FailureKind.NO_MATCH.name())
                     .build();
             }
 
@@ -373,7 +466,7 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
                 caseContext = contextManager.getSnapshot(sessionId);
             }
 
-            // ========== 11. 构建返回结果 ==========
+            // ========== 11. 构建返回结果（成功路径带 validation） ==========
             Map<String, Object> updates = new HashMap<>();
             if (result.getContextUpdates() != null) {
                 updates.putAll(result.getContextUpdates());
@@ -385,6 +478,8 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
                 .responseText(result.getResponseText())
                 .contextUpdates(updates)
                 .animations(result.getAnimations())
+                .validation(outcome.getValidation())
+                .failureKind(AttemptOutcome.FailureKind.NONE.name())
                 .build();
 
         } catch (Exception e) {
@@ -392,17 +487,33 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
             return CommandResult.failure("处理指令异常: " + e.getMessage());
         }
     }
+
     /**
      * ★ 定时异常评估入口。
      *
-     * <p>由 {@link  com.ruoyi.ems.engine  ClockService} 每秒调用一次。
-     * 只评估"无 triggerIntent 声明"的延时类规则（triggerIntent 为空）。
+     * <p>执行顺序（分层）：</p>
+     * <ol>
+     *   <li><b>第一级：异常规则</b>——命中即接管（成功/失败都返回），不再往下走。</li>
+     *   <li><b>第二级：状态机纯条件出边</b>——异常未命中时，驱动一次变量重评估，
+     *       让依赖时间变量的纯条件出边（如 {@code process.timeElapsedSinceLastIntervention > 30}）
+     *       能够按时触发。</li>
+     * </ol>
      *
-     * <p>去重策略：同一规则在 {@link #SCHEDULED_TRIGGER_COOLDOWN_MS} 内不重复触发。
+     * <p><b>背景</b>：纯条件出边（intentCode=null）不会自己产生事件。
+     * 由 {@code process.timeElapsed*} 等时间变量驱动的出边，必须由定时 tick
+     * 主动调用 {@link StateMachineFacade#reEvaluateOnContextChange(String, String)} 才会被评估。
+     * 修复前本方法只跑异常层，导致诸如
+     * {@code F_101_DO_SECOND_LINE_DRUG → F_101_EXIT_TO_PARENT} 的 30s 窗口形同虚设，
+     * 状态机在二线药物执行后卡死，直到被异常规则 forceTransition 强制接管。</p>
      *
-     * <p>不在暂停期间执行——调用方（ClockService）已经检查 clockRunning。
-     *
-     * @param sessionId 会话 id
+     * <p><b>安全性</b>：</p>
+     * <ul>
+     *   <li>{@code reEvaluateOnContextChange} 内部先检查当前状态是否有纯条件出边，
+     *       没有则立即返回 noChange，开销极小；</li>
+     *   <li>内部持有 {@code sm-lock:<sessionId>}，与 processCommand 串行，不会并发冲突；</li>
+     *   <li>自循环递归有 depth 保护，不会无限循环；</li>
+     *   <li>Guard 未通过时不会推进，不会误转移。</li>
+     * </ul>
      */
     @Override
     public void tickExceptionsForSession(String sessionId) {
@@ -418,25 +529,67 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
             ResolvedCaseTypeConfig config = stateMachineLoader.getConfig(caseType);
             if (config == null) return;
 
-            // 定时评估：intentId 传 null，只匹配无 triggerIntent 声明的规则
-            String currentPhase = null;   // 不限阶段；如需阶段限定，从 phaseManager 拿
+            String currentPhase = null;
 
+            // ========== 第一级：异常规则（最高优先级） ==========
             CommandResult result = tryHandleExceptions(
                 sessionId,
                 caseType,
-                null,               // ★ intentId 为 null
+                null,
                 currentPhase,
                 ctx,
                 config
             );
 
-            if (result != null && result.isSuccess()) {
-                log.info("⏰ [定时评估] 命中延时规则: session={}", sessionId);
+            if (result != null) {
+                // 异常层已接管（成功或失败），不再驱动纯条件出边
+                if (result.isSuccess()) {
+                    log.info("⏰ [定时评估] 命中延时规则: session={}", sessionId);
+                } else {
+                    log.warn("⏰ [定时评估] 异常命中但处理失败: session={}, msg={}",
+                        sessionId, result.getErrorMessage());
+                }
+                return;
             }
+
+            // ========== 第二级：状态机纯条件出边 ==========
+            // 异常未命中。检查当前状态是否有依赖时间变量的纯条件出边，
+            // 命中则推进状态机。
+            String currentState = ctx.getCurrentState();
+            try {
+                StateTransitionResult transition =
+                    stateMachineFacade.reEvaluateOnContextChange(sessionId, null);
+
+                if (transition != null && transition.isSuccess()) {
+                    String newState = transition.getToState();
+                    log.info("⏰ [定时评估] 纯条件出边驱动成功: session={}, {} -> {}",
+                        sessionId, currentState, newState);
+
+                    try {
+                        phaseManager.updateAfterTransition(
+                            sessionId, config, newState, null);
+                    } catch (Exception e) {
+                        log.warn("⏰ [定时评估] Phase 更新失败: session={}, err={}",
+                            sessionId, e.getMessage());
+                    }
+                } else {
+                    // 常见情况：当前状态无纯条件出边（内部已短路，开销极小）
+                    if (log.isDebugEnabled()) {
+                        log.debug("⏰ [定时评估] 无纯条件出边命中: session={}, state={}, reason={}",
+                            sessionId, currentState,
+                            transition != null ? transition.getReason() : "null");
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("⏰ [定时评估] 纯条件出边驱动异常: session={}, err={}",
+                    sessionId, e.getMessage());
+            }
+
         } catch (Exception e) {
             log.warn("定时异常评估失败: session={}, err={}", sessionId, e.getMessage());
         }
     }
+
     // ==================== 私有方法 ====================
 
     // ====================================================================
@@ -445,21 +598,12 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
 
     private static final String ERROR_CHAIN_KEY = "evaluation.errorChain";
 
-    /**
-     * 异常层评估与执行。
-     *
-     * <p>未命中 → 返回 null，调用方继续正常流程。
-     * <p>命中 → 执行 effects 全写 + errorChain 记录 + 按模式反馈
-     *          + 下发 Unity state_change + forceTransition + Phase 更新，
-     *          返回 CommandResult。
-     */
     private CommandResult tryHandleExceptions(String sessionId,
                                               String caseType,
                                               String intentId,
                                               String currentPhase,
                                               CaseContext freshContext,
                                               ResolvedCaseTypeConfig config) {
-        // ... 1. 评估
         List<ExceptionRule> hits;
         try {
             hits = exceptionEngine.evaluate(caseType, intentId, currentPhase, freshContext);
@@ -471,8 +615,6 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
             return null;
         }
 
-        // ★ 新增：定时评估去重
-        // 定时路径 intentId == null，学员路径 intentId != null 不做去重
         if (intentId == null || intentId.isBlank()) {
             hits = filterByCooldown(sessionId, hits);
             if (hits.isEmpty()) {
@@ -483,7 +625,6 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
         log.warn("⚡ 异常命中: session={}, intent={}, phase={}, count={}, top={} [{}]",
             sessionId, intentId, currentPhase, hits.size(), top.getId(), top.getSeverity());
 
-        // ★ 螺旋 3：定时路径 → DELAYED；学员路径 → ERROR
         if (intentId == null || intentId.isBlank()) {
             responseResolver.record(sessionId, StudentResponseBranch.DELAYED, null,
                 "异常命中: " + top.getId());
@@ -491,7 +632,7 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
             responseResolver.record(sessionId, StudentResponseBranch.ERROR, intentId,
                 "异常命中: " + top.getId());
         }
-        // 2. 所有命中的 effects 全写（不取最高，全写）
+
         Map<String, Object> allEffects = new LinkedHashMap<>();
         for (ExceptionRule rule : hits) {
             if (rule.getEffects() == null) continue;
@@ -505,39 +646,31 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
             persistUpdates(sessionId, allEffects, freshContext, "EXCEPTION_EFFECTS");
         }
 
-        // 3. errorChain 记录（含 patientSnapshot + 扣分衰减）
         appendErrorChain(sessionId, hits, freshContext);
 
-        // 4. 按模式发 TTS
         TeachingMode mode = sessionService.getMode(sessionId);
-        if (mode == null) mode = TeachingMode.EXAM;   // 保守默认
+        if (mode == null) mode = TeachingMode.EXAM;
         publishExceptionFeedback(sessionId, top, mode);
 
-        // 5. 判断 keepCurrent / 取 jumpTo
         boolean keepCurrent = Boolean.TRUE.equals(top.getKeepCurrent());
         String jumpTo = top.getJumpTo();
 
-// 6. 先发 Unity 生理状态切换（keepCurrent 也发——keepCurrent 只影响状态机，不影响生理）
         sendUnityStateChange(sessionId, top.getUnityStateName());
 
         if (keepCurrent) {
-            // 6a. 拦截类：不跳转状态机，不更新 Phase
             log.info("⚡ 异常命中（拦截类，不跳转）: session={}, rule={}, intent={}",
                 sessionId, top.getId(), intentId);
         } else {
-            // 6b. 跳转类：必须 jumpTo
             if (jumpTo == null || jumpTo.isBlank()) {
                 log.error("异常规则 jumpTo 为空且非 keepCurrent: rule={}", top.getId());
                 return null;
             }
-            // ★ P2-17：记录恶化前状态作为返回锚点
             String previousState = (freshContext != null) ? freshContext.getCurrentState() : null;
             if (previousState != null && !previousState.isBlank()) {
                 Map<String, Object> anchor = new LinkedHashMap<>();
                 anchor.put("process.deteriorationFrom", previousState);
                 persistUpdates(sessionId, anchor, freshContext, "EXCEPTION_DETERIORATION");
             }
-            // 7. forceTransition（服务器乐观先行）
             boolean jumped = stateMachineFacade.forceTransition(sessionId, jumpTo, top.getId());
             if (!jumped) {
                 log.error("异常 forceTransition 失败: session={}, target={}, rule={}",
@@ -545,7 +678,6 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
                 return CommandResult.failure("异常跳转失败");
             }
 
-            // 8. Phase 更新
             try {
                 phaseManager.updateAfterTransition(sessionId, config, jumpTo, intentId);
             } catch (Exception e) {
@@ -553,7 +685,6 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
             }
         }
 
-// 9. 构建返回
         String responseText = buildExceptionResponse(top, mode);
         Map<String, Object> updates = new LinkedHashMap<>(allEffects);
         if (!keepCurrent) {
@@ -566,9 +697,7 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
             .animations(java.util.Collections.emptyList())
             .build();
     }
-    /**
-     * ★ 过滤冷却窗口内的规则，并刷新命中规则的触发时间。
-     */
+
     private List<ExceptionRule> filterByCooldown(String sessionId, List<ExceptionRule> hits) {
         long now = System.currentTimeMillis();
         Map<String, Long> sessionHistory =
@@ -587,56 +716,11 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
         }
         return filtered;
     }
-    /**
-     * 向 Unity 下发生理状态切换指令。
-     *
-     * <p>执行时序（交接文档 3.7）：
-     * <ol>
-     *   <li>effects 写入 EmsContextManager（tryHandleExceptions 第 2 步已完成）</li>
-     *   <li><b>本方法</b>：发 state_change(stateName) 给 Unity</li>
-     *   <li>forceTransition(jumpTo)</li>
-     *   <li>返回"操作已收到"</li>
-     * </ol>
-     *
-     * <p>服务器乐观先行：不等 Unity 2.5s 过渡，立即返回。Unity 的 vitals_update
-     * 到达后，由 vitals 对比服务自行校验一致性。
-     *
-     * @param sessionId      会话 id
-     * @param unityStateName Unity 有效状态名（来自 ExceptionRule.unityStateName）
-     */
-    /**
-     * 向 Unity 下发生理状态切换指令。
-     *
-     * <p>★ 通道修正：消息通过 RoomBroadcaster 走 {@code /ws/session/{roomSessionId}} 通道，
-     * 不再走 {@code WebSocketMessageSender}（那是 ASR 语音通道，Unity 收不到）。</p>
-     *
-     * <p>★ 结构修正：改为 {@code {type, data: {stateName}, timestamp}} 嵌套结构，
-     * 与 Unity 侧 EngineJson.ParseEnvelope 的解析逻辑对齐。</p>
-     *
-     * @param emsSessionId   业务会话 id（AclsCommandEngine 上下文的 sessionId）
-     * @param unityStateName Unity 有效状态名（中文 stateName，如 "室上速(SVT)"）
-     */
-    /**
-     * 2 参重载：兼容旧调用点，operationId 传 null。
-     */
+
     private void sendUnityStateChange(String emsSessionId, String unityStateName) {
         sendUnityStateChange(emsSessionId, unityStateName, null);
     }
 
-    /**
-     * 3 参版本：向 Unity 下发生理状态切换指令。
-     *
-     * <p>消息通过 RoomBroadcaster 走 {@code /ws/session/{roomSessionId}} 通道，
-     * 结构为 {@code {type, data: {stateName, operationId}, timestamp}}。</p>
-     *
-     * <p>服务器乐观先行：不等 Unity 2.5s 过渡，立即返回。Unity 的 vitals_update
-     * 到达后，由 vitals 对比服务自行校验一致性。</p>
-     *
-     * @param emsSessionId   业务会话 id
-     * @param unityStateName Unity 有效状态名（中文 stateName，如 "室上速(SVT)"）
-     * @param operationId    可选的 operationId，Unity 用来查本地缓存的 operationEffects；
-     *                       传 null 表示不需要查（只切心律）
-     */
     private void sendUnityStateChange(String emsSessionId,
                                       String unityStateName,
                                       String operationId) {
@@ -646,7 +730,6 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
         }
 
         try {
-            // 1. 反查房间（emsSessionId → roomSessionId）
             SessionRoom room = roomRegistry.getByEmsSessionId(emsSessionId).orElse(null);
             if (room == null) {
                 log.warn("sendUnityStateChange: 找不到房间映射 emsSessionId={}", emsSessionId);
@@ -654,7 +737,6 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
             }
             String roomSessionId = room.getSessionId();
 
-            // 2. 嵌套 data 结构
             Map<String, Object> data = new LinkedHashMap<>();
             data.put("stateName", unityStateName);
             if (operationId != null && !operationId.isBlank()) {
@@ -664,7 +746,6 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
             Map<String, Object> envelope =
                 RoomBroadcaster.envelope("physiology_state_change", data);
 
-            // 3. 定向发给 Unity（ENGINE 角色）
             roomBroadcaster.sendToRoles(
                 roomSessionId,
                 java.util.Set.of(Role.ENGINE),
@@ -674,15 +755,11 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
             log.info("📤 Unity 生理状态切换已下发: room={}, ems={}, stateName={}, op={}",
                 roomSessionId, emsSessionId, unityStateName, operationId);
         } catch (Exception e) {
-            // 下发失败不阻断异常处理
             log.error("Unity 生理状态切换下发失败: ems={}, stateName={}, op={}",
                 emsSessionId, unityStateName, operationId, e);
         }
     }
 
-    /**
-     * effect 取值：value 优先，valueExpression 次之。
-     */
     private Object resolveEffectValue(ExceptionRule.EffectRule eff, CaseContext ctx) {
         if (eff.getValue() != null) {
             return eff.getValue();
@@ -699,12 +776,6 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
         return null;
     }
 
-    /**
-     * errorChain 追加记录。
-     * 结构：List<Map>，每条含 ruleId / severity / score / decayFactor /
-     *       patientSnapshot / timestamp。
-     * 扣分衰减：同 ruleId 已出现 n 次 → 系数 1/2^n。
-     */
     @SuppressWarnings("unchecked")
     private void appendErrorChain(String sessionId,
                                   List<ExceptionRule> hits,
@@ -743,11 +814,8 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
         updates.put(ERROR_CHAIN_KEY, chain);
         persistUpdates(sessionId, updates, ctx, "EXCEPTION_ERROR_CHAIN");
 
-
-        // ★ 临时验证日志（验证完删掉）
         log.info("🔗 errorChain 现长 {} 条，本轮新增 {} 条，最后一条: {}",
             chain.size(), hits.size(), chain.get(chain.size() - 1));
-
     }
 
     private int severityScore(String severity) {
@@ -776,10 +844,6 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
         return snap;
     }
 
-    /**
-     * 按模式发 TTS。仅发 severity 最高的规则的 feedback
-     * （多规则命中时，TTS 只播一条，避免叠加打架）。
-     */
     private void publishExceptionFeedback(String sessionId,
                                           ExceptionRule top,
                                           TeachingMode mode) {
@@ -788,7 +852,6 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
             return;
         }
         try {
-            // TODO: KokoroTtsClient 若支持打断，则按 mf.getInterruptCurrentTts() 处理
             ttsService.speak(sessionId, mf.getTts());
             log.debug("异常反馈 TTS: session={}, mode={}, interrupt={}",
                 sessionId, mode, mf.getInterruptCurrentTts());
@@ -799,7 +862,7 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
 
     private String buildExceptionResponse(ExceptionRule top, TeachingMode mode) {
         if (mode == TeachingMode.EXAM) {
-            return "指令已记录";   // 考核静默
+            return "指令已记录";
         }
         ExceptionRule.Feedback.ModeFeedback mf = pickModeFeedback(top, mode);
         if (mf != null && mf.getTts() != null && !mf.getTts().isBlank()) {
@@ -819,9 +882,6 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
         };
     }
 
-    /**
-     * 构建执行上下文
-     */
     private CommandContext buildCommandContext(String sessionId, CaseContext caseContext,
                                                IntentCommand command) {
         CommandContext context = new CommandContext(
@@ -835,17 +895,10 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
 
         context.setVariable("actType", command.getActType());
         context.setVariable("confidence", command.getConfidence());
+        context.setVariable("intentCode", command.getIntentCode());
         return context;
     }
 
-    /**
-     * ★ 执行动作（状态机之前）
-     *
-     * <p>根据 actType 分流到不同的执行路径。
-     *
-     * <p>★ P0-2 修复：STATE_UPDATE / OVERRIDE_JUMP 不再直接写 caseContext 副本，
-     * 而是通过 {@link #persistUpdates} 写入 EmsContextManager。
-     */
     private CommandResult executeAction(IntentCommand command,
                                         CommandContext context,
                                         CaseContext caseContext) {
@@ -853,7 +906,6 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
         String intentId = command.getIntentCode();
         Map<String, Object> slots = command.getSlots();
 
-        // ===== 1. 语用分流 =====
         RouteDecision decision = actTypeRouter.route(command, caseContext);
 
         switch (decision.getActionType()) {
@@ -900,17 +952,6 @@ public class AclsCommandEngine implements ExceptionTickProcessor {
         }
     }
 
-    /**
-     * ★ P0-2：统一变量写入入口。
-     *
-     * <p>带版本冲突重试：若第一次写入因乐观锁版本过期失败，
-     * 重新拉取最新快照后再试一次。
-     *
-     * @param sessionId   会话 ID
-     * @param updates     待写入变量（支持 vars.xxx、process.xxx、device.xxx 等）
-     * @param snapshot    写入前的上下文快照（用于取版本号）
-     * @param source      来源标记，用于日志与审计（ACTION / STATE_UPDATE / SKILL_RESULT 等）
-     */
     private void persistUpdates(String sessionId,
                                 Map<String, Object> updates,
                                 CaseContext snapshot,

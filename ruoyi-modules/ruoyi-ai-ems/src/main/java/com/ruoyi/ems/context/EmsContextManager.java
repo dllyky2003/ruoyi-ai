@@ -34,6 +34,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * 后续第一次向 Unity 推送 currentState 时可能带上上一局的脏值
  * （日志中观测到 F_101_UNSTABLE_CARDIOVERSION 被推给新局的 Unity），
  * 导致 Unity 侧状态显示错误。</p>
+ *
+ * <p>★ 2026-09-25 改造点（派生刷新不 bump stateRevision）：</p>
+ * <ul>
+ *   <li>{@link #doUpdateWithVersion} 对 {@code caller="SYSTEM_DERIVED"} 不再 bump version；</li>
+ *   <li>{@link #doRefreshDerivedLocked} 派生变量变化通过 {@code batch_variable_update} 单独广播。</li>
+ * </ul>
  */
 @Component
 @Slf4j
@@ -93,8 +99,10 @@ public class EmsContextManager {
     @Autowired
     @Lazy
     private DerivationService derivationService;
+
     @Autowired
     private com.ruoyi.ems.room.ws.WsSessionRegistry wsRegistry;
+
     /**
      * 过滤出可广播的变量。返回 null 表示"无可广播内容"。
      *
@@ -271,10 +279,24 @@ public class EmsContextManager {
     }
 
     /**
-     * ★ 修复要点：
-     * 1. 派生刷新 (refreshDerivedLocked) 从 synchronized(cache) 内部移出到锁外执行，
-     *    避免长时间持锁 + 让 DERIVATION_DEPTH 深度保护能在独立栈帧中生效。
-     * 2. 具体写入逻辑（版本校验、字段更新、cache.put）依旧在锁内完成，保证原子性。
+     * ★ 核心写入：乐观锁 + 权限校验 + derived 自动刷新。
+     *
+     * <p><b>修复 A（2026-09-25）</b>：派生刷新（caller="SYSTEM_DERIVED"）不再 bump stateRevision。</p>
+     *
+     * <p>背景：derived.* 变量（如 derived.timeElapsedSinceLastIntervention、
+     * derived.stable 等）会随定时心跳每秒变化。此前每次派生刷新都执行
+     * {@code version + 1}，导致：</p>
+     * <ul>
+     *   <li>stateRevision 每秒 +1，所有外部 CMD 立即 STALE_REVISION</li>
+     *   <li>触发 SNAPSHOT 推送风暴（若后续接了推送）</li>
+     * </ul>
+     *
+     * <p>派生变量本身不属于"权威状态变更"，不应占用 stateRevision。
+     * 派生变量的变化通过 {@code batch_variable_update} 单独广播
+     * （见 {@link #doRefreshDerivedLocked}）。</p>
+     *
+     * <p><b>其他 caller</b>（STATE_MACHINE / PARAM_EXTRACTOR / PhaseManager /
+     * SYSTEM / 手动写入等）仍然正常 bump version。</p>
      */
     private boolean doUpdateWithVersion(String sessionId, Map<String, Object> updates,
                                         long expectedVersion, String caller,
@@ -404,16 +426,31 @@ public class EmsContextManager {
             }
 
             draft.setLastUpdateTime(LocalDateTime.now());
-            long newVersion = current.getVersion() + 1;
-            draft.setVersion(newVersion);
+
+            // ★ 修复 A（2026-09-25）：派生刷新不 bump stateRevision
+            //
+            // 派生变量（derived.*）随定时心跳每秒变化，若每次刷新都 bump，
+            // 会导致 stateRevision 每秒 +1，所有外部 CMD 立即 STALE_REVISION。
+            // 派生变量不属于"权威状态变更"，其变化通过 batch_variable_update
+            // 单独广播给 Unity（见 doRefreshDerivedLocked）。
+            boolean isSystemDerived = "SYSTEM_DERIVED".equals(caller);
+            if (isSystemDerived) {
+                log.debug("[updateWithVersion] 派生刷新不 bump version: sessionId={}, " +
+                        "version={}, changedKeys={}",
+                    sessionId, current.getVersion(), localChangedKeys);
+                // draft.version 保持与 current 一致，不递增
+            } else {
+                long newVersion = current.getVersion() + 1;
+                draft.setVersion(newVersion);
+            }
+
             cache.put(sessionId, draft);
 
             newCtx = draft;
             changedKeys = localChangedKeys;
 
-
-            log.debug("上下文更新成功: sessionId={}, caller={}, newVersion={}, changedKeys={}",
-                sessionId, caller, newVersion, changedKeys);
+            log.debug("上下文更新成功: sessionId={}, caller={}, version={}, changedKeys={}",
+                sessionId, caller, draft.getVersion(), changedKeys);
         }
 
         // ★ 锁外执行派生刷新：缩短持锁时间 + 让 DERIVATION_DEPTH 独立栈帧生效
@@ -469,9 +506,12 @@ public class EmsContextManager {
     /**
      * ★ 派生刷新实际实现。
      *
-     * 改动点：
-     * 1. 加栈深度探针，便于诊断深层调用
-     * 2. 写回时使用 allowDerivation=false 截断该路径的递归（已有逻辑保留）
+     * <p><b>修复 B-2（2026-09-25）</b>：派生变量写回后，通过
+     * {@code batch_variable_update} 单独广播给 Unity。</p>
+     *
+     * <p>背景：修复 A 让派生刷新不再 bump stateRevision，因此不会触发
+     * SNAPSHOT 推送。若不广播，Unity 端的 {@code derived.timeElapsed*}
+     * 等变量会卡住不动。</p>
      */
     private void doRefreshDerivedLocked(String sessionId, CaseContext ctx) {
         if (ctx == null) return;
@@ -515,8 +555,29 @@ public class EmsContextManager {
         // ★ allowDerivation=false：截断由派生写回引发的递归
         boolean ok = doUpdateWithVersion(
             sessionId, updates, ctx.getVersion(), "SYSTEM_DERIVED", false);
+
         if (ok) {
             log.debug("♻️ 派生变量已刷新: sessionId={}, changes={}", sessionId, changes);
+
+            // ★ 修复 B-2（2026-09-25）：派生变量变更广播给 Unity
+            //
+            // 修复 A 后派生刷新不 bump version，不会触发 SNAPSHOT；
+            // 需要单独广播 batch_variable_update，让 Unity 端能感知
+            // derived.timeElapsedSinceLastIntervention 等变量的变化。
+            Map<String, Object> broadcastVars = filterBroadcastVars(changes);
+            if (broadcastVars != null
+                && wsRegistry.resolveToRoomSessionId(sessionId) != null) {
+
+                Map<String, Object> payload = Map.of(
+                    "type", "batch_variable_update",
+                    "data", Map.of("changes", broadcastVars),
+                    "timestamp", System.currentTimeMillis()
+                );
+                messageSender.send(sessionId, payload);
+
+                log.debug("📤 派生变量已广播: sessionId={}, keys={}",
+                    sessionId, broadcastVars.keySet());
+            }
         } else {
             log.warn("派生变量写回失败（版本冲突）: sessionId={}", sessionId);
         }
@@ -541,22 +602,6 @@ public class EmsContextManager {
     // 6. 语义化写入入口
     // =========================================================
 
-    /**
-     * 单变量写入。
-     *
-     * <p>★ 若目标变量属于 {@link AclsInternalVars} 白名单，
-     * 只写 Context，不广播给 WebSocket 客户端。</p>
-     */
-    /**
-     * 单变量写入。
-     *
-     * <p>★ 跳过 {@code derived.*} 和 {@link AclsInternalVars} 白名单内部变量的权限校验：
-     * 前者由系统计算，后者是心跳/评分链内部数据；两者都不走 {@code VariableMetaLoader}，
-     * 避免触发"变量未定义，允许写入"的 WARN 刷屏。</p>
-     *
-     * <p>★ 广播前判断：若目标变量属于 {@link AclsInternalVars} 白名单，
-     * 只写 Context，不广播给 WebSocket 客户端。</p>
-     */
     /**
      * 单变量写入。
      *
@@ -615,22 +660,6 @@ public class EmsContextManager {
         return success;
     }
 
-    /**
-     * 批量变量写入。
-     *
-     * <p>★ 广播前用 {@link #filterBroadcastVars} 过滤内部变量。
-     * 过滤后为空则不发送任何 WebSocket 消息。</p>
-     */
-    /**
-     * 批量变量写入。
-     *
-     * <p>★ 跳过 {@code derived.*} 和 {@link AclsInternalVars} 白名单内部变量的权限校验：
-     * 前者由系统计算，后者是心跳/评分链内部数据；两者都不走 {@code VariableMetaLoader}，
-     * 避免触发"变量未定义，允许写入"的 WARN 刷屏。</p>
-     *
-     * <p>★ 广播前用 {@link #filterBroadcastVars} 过滤内部变量。
-     * 过滤后为空则不发送任何 WebSocket 消息。</p>
-     */
     /**
      * 批量变量写入。
      *
@@ -748,10 +777,62 @@ public class EmsContextManager {
         CaseContext ctx = getSnapshot(sessionId);
         return ctx != null ? ctx.getCurrentPhysiology() : null;
     }
+    // =========================================================
+    // 6.6 ★ 修复 1.1.B（2026-09-25）：事件序列推进
+    // =========================================================
+
+    /**
+     * ★ 修复 1.1.B（2026-09-25）：推进 eventSequence 并写回。
+     *
+     * <p><b>背景</b>：原 {@code AttemptEventProcessor.process(CaseContext, SelectionInput)}
+     * 接收的是 {@code getSnapshot(...)} 返回的深拷贝副本。副本上调用
+     * {@code advanceEventSequence()} 只改副本，不写回 cache，导致：</p>
+     * <ul>
+     *   <li>{@code CaseContext.eventSequence} 永远停在 0；</li>
+     *   <li>AttemptManifest 冻结锚点失效（P0-9）；</li>
+     *   <li>日志中 {@code eventSequence=-1}。</li>
+     * </ul>
+     *
+     * <p><b>语义</b>：与 {@link #advanceClock(String)}、
+     * {@link #setInternalVarNoVersion(String, String, Object)} 一致：</p>
+     * <ul>
+     *   <li>只推进 {@code eventSequence}，不改 {@code version}；</li>
+     *   <li>不触发派生刷新；</li>
+     *   <li>每事件无条件递增，只增不减。</li>
+     * </ul>
+     *
+     * <p>{@code version} 与 {@code eventSequence} 严格分离：前者用于乐观锁与权威状态版本，
+     * 后者用于事件溯源与 AttemptManifest 冻结锚点。</p>
+     *
+     * @param sessionId 会话 ID
+     * @return 推进后的新 eventSequence；上下文不存在或 sessionId 为 null 时返回 -1
+     */
+    public long advanceEventSequence(String sessionId) {
+        if (sessionId == null) {
+            return -1L;
+        }
+
+        synchronized (cache) {
+            CaseContext current = cache.get(sessionId);
+            if (current == null) {
+                log.warn("[EmsContextManager] advanceEventSequence 失败：上下文不存在, sessionId={}",
+                    sessionId);
+                return -1L;
+            }
+
+            long seq = current.advanceEventSequence();
+            // 直接 put 回，不需要 copy：advanceEventSequence 内部已改 lastUpdateTime
+            cache.put(sessionId, current);
+
+            log.debug("[EmsContextManager] eventSequence 推进: sessionId={}, seq={}",
+                sessionId, seq);
+            return seq;
+        }
+    }
     /**
      * ★ 写入内部变量，不递增版本号。
      *
-     * <p>用途：{@code process.clockTickAt} 等心跳/计时类变量。它们：
+     * <p>用途：{@code process.clockTickAt} 等心跳/计时类变量。它们：</p>
      * <ul>
      *   <li>只改 CaseContext.variables 里的对应字段</li>
      *   <li>不递增版本号（避免每秒无意义的乐观锁更新）</li>
@@ -797,6 +878,7 @@ public class EmsContextManager {
 
         return true;
     }
+
     // =========================================================
     // 6.5 ★ Phase SM：PhaseRuntime 读写入口
     // =========================================================

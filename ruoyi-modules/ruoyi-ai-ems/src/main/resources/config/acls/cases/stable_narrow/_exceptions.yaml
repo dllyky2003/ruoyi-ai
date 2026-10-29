@@ -99,7 +99,7 @@ exceptions:
   #      导致整个 condition 永远不成立。
   #      process.timeElapsedSinceLastIntervention 已覆盖语义：
   #      每次有效技能执行后会重置为 0，> 120 即代表"已过 120 秒无干预"。
-  #   3. 阈值 120 秒 = 2 分钟（验证期临时值，正式版可改回 300）。
+  #   3. 阈值 300 秒 = 5 分钟。
   #
   # ★ 修复要点（2026-09-22）：
   #   4. jumpTo 修正为下划线：F-101-UNSTABLE_CARDIOVERSION →
@@ -108,18 +108,18 @@ exceptions:
   #      并让状态机进入未配置状态。
   #   5. condition 增加 #process.timeoutOccurred != true。
   #      本规则 effects 会写入 process.timeoutOccurred=true；
-  #      若不判断它，则后续每一条指令（timeElapsed 仍 > 120）都会再次命中，
+  #      若不判断它，则后续每一条指令（timeElapsed 仍 >300）都会再次命中，
   #      导致"异常层命中，跳过正常 skill"刷屏，正常状态机完全走不动。
   #      注意：变量未写入时为 null，null != true 求值为 true，
   #      所以首次触发不会被短路。
   # ============================================================
   - id: "DELAYED_FIRST_INTERVENTION"
-    description: "超过 2 分钟仍未对稳定窄QRS心动过速进行干预。AHA 2025：稳定心动过速应及时评估并推进治疗流程，延误将导致病情恶化。"
+    description: "超过 5 分钟仍未对稳定窄QRS心动过速进行干预。AHA 2025：稳定心动过速应及时评估并推进治疗流程，延误将导致病情恶化。"
     # ★ FIX 2026-09-22：加 timeoutOccurred 短路，避免每轮指令反复命中
     condition: |
       #process.timeoutOccurred != true &&
       #process.timeElapsedSinceLastIntervention != null &&
-      #process.timeElapsedSinceLastIntervention > 120
+      #process.timeElapsedSinceLastIntervention > 300
     severity: "TIMING"
     keepCurrent: false
     # ★ FIX 2026-09-22：短横线 → 下划线

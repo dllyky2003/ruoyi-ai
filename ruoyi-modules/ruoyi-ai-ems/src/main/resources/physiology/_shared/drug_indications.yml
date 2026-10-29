@@ -11,6 +11,11 @@
 # 表达式用 SpEL：
 #   #var == value / #var > N / && / ||
 # 可用变量前缀：phys / derived / intervention / device / clinical / process
+#
+# ★ 注意：评估器看到的 intervention.<drug>.count 是「本次推注之后」的值。
+#   - 首次推注后 count = 1
+#   - 第二次推注后 count = 2
+#   因此「重复给药」类条件必须写 count >= 2，不能用 count > 0。
 # ================================================================
 
 drug_indications:
@@ -27,9 +32,11 @@ drug_indications:
       - "#clinical.isWpw == false"
     minor_when:
       # 重复给药间隔不足（<60s）
-      - "#intervention.adenosine.count != null && #intervention.adenosine.count > 0 && #process.timeElapsedSinceLastIntervention < 60"
+      # 必须 count >= 2：首次推注后 count=1，不算"重复给药"
+      - "#intervention.adenosine.count != null && #intervention.adenosine.count >= 2 && #process.timeElapsedSinceLastIntervention < 60"
       # 首剂 12mg 偏离指南（应 6mg 起始）
-      - "#intervention.adenosine.count != null && #intervention.adenosine.count == 0 && #intervention.adenosine.lastDose != null && #intervention.adenosine.lastDose != '6mg'"
+      # 首次推注后 count=1，用 count == 1 && lastDose != '6mg' 判定
+      - "#intervention.adenosine.count == 1 && #intervention.adenosine.lastDose != null && #intervention.adenosine.lastDose != '6mg'"
     critical_when:
       # 血流动力学不稳定
       - "#derived.stable == false"

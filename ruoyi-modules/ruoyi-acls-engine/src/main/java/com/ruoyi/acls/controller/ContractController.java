@@ -1,8 +1,11 @@
 package com.ruoyi.acls.controller;
 
+import cn.dev33.satoken.annotation.SaIgnore;
 import com.ruoyi.acls.contract.CaseConfigLoader;
 import com.ruoyi.acls.contract.CaseConfigReportService;
 import com.ruoyi.acls.contract.CaseContractRegistry;
+import com.ruoyi.acls.contract.diagnose.BlockingDiagnoser;
+import com.ruoyi.acls.contract.diagnose.DiagnosticReport;
 import com.ruoyi.acls.contract.models.CaseContract;
 import com.ruoyi.acls.contract.models.ContractDiagnostics;
 import com.ruoyi.acls.contract.models.DerivedVarContract;
@@ -10,8 +13,11 @@ import com.ruoyi.acls.contract.models.IntentContract;
 import com.ruoyi.acls.contract.models.StateContract;
 import com.ruoyi.acls.contract.models.TransitionContract;
 import com.ruoyi.acls.contract.models.VariableContract;
+import com.ruoyi.acls.contract.util.CrossModuleReferenceScanner;
+import com.ruoyi.acls.contract.util.DanglingRefChecker;
 import com.ruoyi.ems.config.loader.YamlStateMachineLoader;
 
+import com.ruoyi.ems.domain.dto.LogicFlowDefinitionDTO;
 import com.ruoyi.ems.service.SessionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -26,10 +32,12 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.awt.datatransfer.SystemFlavorMap;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
-
+import com.ruoyi.acls.contract.util.CrossModuleReferenceScanner;
+import com.ruoyi.acls.contract.util.CrossModuleReferenceScanner.VariableBlood;
 /**
  * 契约维护控制器
  * <p>
@@ -40,6 +48,7 @@ import java.util.stream.Collectors;
  * @author system
  * @since 1.0.0
  */
+@SaIgnore
 @Slf4j
 @RestController
 @RequestMapping("/ems/contract")
@@ -51,8 +60,73 @@ public class ContractController {
     private final YamlStateMachineLoader stateMachineLoader;
     private final CaseConfigReportService caseConfigReportService;
     private final SessionService sessionService;
+    private final CrossModuleReferenceScanner crossModuleReferenceScanner;
+    private final BlockingDiagnoser blockingDiagnoser;
+    private final DanglingRefChecker danglingRefChecker;
     // ==================== 案例列表与概览 ====================
+    /**
+     * 获取案例状态机的 LogicFlow 图形数据。
+     *
+     * @param caseId 案例ID
+     * @param full 是否包含继承的 GLOBAL 状态机
+     * @return LogicFlow 图形定义
+     */
+    @Operation(
+        summary = "获取案例 LogicFlow 状态机",
+        description = "根据案例ID获取状态机图形数据，支持查看案例自身配置或包含继承关系的完整配置"
+    )
+    @GetMapping("/{caseId}/definition")
+    public R<LogicFlowDefinitionDTO> getDefinition(
+        @Parameter(description = "案例ID", required = true)
+        @PathVariable("caseId") String caseId,
 
+        @Parameter(description = "是否包含继承的状态机")
+        @RequestParam(defaultValue = "false") boolean full) {
+
+        try {
+            log.info(
+                "[LogicFlow] 开始获取案例状态机: caseId={}, full={}",
+                caseId,
+                full
+            );
+
+            LogicFlowDefinitionDTO definition =
+                sessionService.getCaseLogicFlow(caseId, full);
+
+            if (definition == null) {
+                return R.fail("未找到案例状态机配置: " + caseId);
+            }
+
+            log.info(
+                "[LogicFlow] 案例状态机获取成功: caseId={}, full={}",
+                caseId,
+                full
+            );
+
+            return R.ok(definition);
+
+        } catch (IllegalArgumentException e) {
+
+            log.warn(
+                "[LogicFlow] 请求参数错误: caseId={}, message={}",
+                caseId,
+                e.getMessage()
+            );
+
+            return R.fail(e.getMessage());
+
+        } catch (Exception e) {
+
+            log.error(
+                "[LogicFlow] 获取案例状态机失败: caseId={}, full={}",
+                caseId,
+                full,
+                e
+            );
+
+            return R.fail("获取案例状态机失败: " + e.getMessage());
+        }
+    }
     @Operation(summary = "列出所有案例", description = "返回已构建契约的所有案例 ID 列表")
     @GetMapping("/cases")
     public R<List<String>> listCases() {
@@ -533,6 +607,72 @@ public class ContractController {
         } catch (Exception e) {
             log.error("契约单案例热重载失败: caseId={}", caseId, e);
             return R.fail("热重载失败: " + e.getMessage());
+        }
+    }
+
+
+
+    /**
+     * 列出该案例所有跨模块变量（出现在 ≥2 个模块的血缘图节点）。
+     * 对应快照 §6.1 的 GET /ems/contract/variables/crossModule
+     */
+    @GetMapping("/variables/crossModule")
+    public R<List<VariableBlood>> listCrossModuleVariables(@RequestParam String caseId) {
+        try {
+            return R.ok(crossModuleReferenceScanner.listCrossModuleVariables(caseId));
+        } catch (Exception e) {
+            log.error("扫描跨模块血缘失败: caseId={}", caseId, e);
+            return R.fail("扫描失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 单个变量的完整血缘：所有 writers / readers / files。
+     * 对应快照 §6.1 的 GET /ems/contract/variable/crossModule
+     */
+    @GetMapping("/variable/crossModule")
+    public R<CrossModuleReferenceScanner.VariableBlood> scanVariable(@RequestParam String caseId,
+                                                                     @RequestParam String varName) {
+        try {
+            CrossModuleReferenceScanner.VariableBlood vb = crossModuleReferenceScanner.scanVariable(caseId, varName);
+            if (vb == null) return R.fail("变量不存在或未被任何文件引用: " + varName);
+            return R.ok(vb);
+        } catch (Exception e) {
+            log.error("扫描单变量血缘失败: caseId={}, varName={}", caseId, varName, e);
+            return R.fail("扫描失败: " + e.getMessage());
+        }
+    }
+
+
+    /**
+     * 一步诊断：从被拒现象反查根因。
+     *
+     * 示例：
+     *   GET /ems/contract/diagnose?caseId=stable_narrow
+     *   GET /ems/contract/diagnose?caseId=stable_narrow&stateId=F_101_CHECK_RHYTHM&intentId=IA_053_attach_defib_pads
+     */
+    @GetMapping("/diagnose")
+    public R<DiagnosticReport> diagnose(
+        @RequestParam String caseId,
+        @RequestParam(required = false) String sessionId,
+        @RequestParam(required = false) String stateId,
+        @RequestParam(required = false) String intentId) {
+        try {
+            return R.ok(blockingDiagnoser.diagnose(caseId, sessionId, stateId, intentId));
+        } catch (Exception e) {
+            log.error("诊断失败", e);
+            return R.fail("诊断失败: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/danglingRefs")
+    public R<DanglingRefChecker.DanglingReport> danglingRefs(@RequestParam String caseId) {
+        try {
+
+            return R.ok(danglingRefChecker.check(caseId));
+        } catch (Exception e) {
+            log.error("悬空引用检查失败: caseId={}", caseId, e);
+            return R.fail("检查失败: " + e.getMessage());
         }
     }
 }

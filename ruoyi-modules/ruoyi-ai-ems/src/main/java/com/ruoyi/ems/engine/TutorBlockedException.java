@@ -1,39 +1,38 @@
 package com.ruoyi.ems.engine;
 
-/**
- * tutor 层 BLOCK 时抛出的异常。
- *
- * <p>用于区分 {@link StateMachineFacade#selectAndTransition} 返回 null 的两种语义：
- * <ul>
- *   <li>正常的"无匹配规则" → 返回 null，调用方可以 fallback</li>
- *   <li>被 tutor 明确阻断 → 抛本异常，调用方不应 fallback</li>
- * </ul>
- *
- * <p>调用方（AclsCommandEngine）必须单独捕获本异常，并直接返回失败结果，
- * 不得走"变量驱动重评估"兜底路径。
- */
+import com.ruoyi.ems.spi.dto.ValidationResult;
+
 public class TutorBlockedException extends RuntimeException {
 
     private final String ruleId;
     private final String severity;
     private final String feedbackMessage;
+    /** ★ 批 1 新增：携带完整 ValidationResult，供 CMD_RESULT 组装 */
+    private final ValidationResult validation;
 
+    /** ★ 批 1 新增：推荐构造（带完整 vr） */
+    public TutorBlockedException(ValidationResult vr, String feedbackMessage) {
+        super("tutor blocked: ruleId="
+            + (vr != null ? vr.getPrimaryRuleId() : null)
+            + ", severity="
+            + (vr != null ? vr.getSeverity() : null));
+        this.validation = vr;
+        this.ruleId = vr != null ? vr.getPrimaryRuleId() : null;
+        this.severity = vr != null ? vr.getSeverity() : null;
+        this.feedbackMessage = feedbackMessage;
+    }
+
+    /** 老构造保留（向后兼容） */
     public TutorBlockedException(String ruleId, String severity, String feedbackMessage) {
         super("tutor blocked: ruleId=" + ruleId + ", severity=" + severity);
         this.ruleId = ruleId;
         this.severity = severity;
         this.feedbackMessage = feedbackMessage;
+        this.validation = null;
     }
 
-    public String getRuleId() {
-        return ruleId;
-    }
-
-    public String getSeverity() {
-        return severity;
-    }
-
-    public String getFeedbackMessage() {
-        return feedbackMessage;
-    }
+    public String getRuleId() { return ruleId; }
+    public String getSeverity() { return severity; }
+    public String getFeedbackMessage() { return feedbackMessage; }
+    public ValidationResult getValidation() { return validation; }
 }

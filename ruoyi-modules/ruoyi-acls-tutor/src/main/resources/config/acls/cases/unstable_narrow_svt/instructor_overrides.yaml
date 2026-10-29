@@ -9,7 +9,7 @@ instructor_overrides:
     action:
       type: clock_control
       operation: pause
-    requires_reason: false
+    requires_reason: true
     audit_required: true
     affects_formative_score: false
     review:

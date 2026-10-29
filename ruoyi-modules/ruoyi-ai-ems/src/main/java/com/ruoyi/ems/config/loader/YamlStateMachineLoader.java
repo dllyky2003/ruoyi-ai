@@ -4,6 +4,9 @@ import com.ruoyi.ems.config.ResolvedCaseTypeConfig;
 import com.ruoyi.ems.config.StateMachineConfig;
 import com.ruoyi.ems.config.StateMachineDefinition;
 import com.ruoyi.ems.config.TransitionRule;
+
+import com.ruoyi.ems.domain.dto.LogicFlowDefinitionDTO;
+import com.ruoyi.ems.service.StateMachineLogicFlowConverter;
 import com.ruoyi.ems.domain.PhaseDefinition;
 import com.ruoyi.ems.exception.ConfigurationException;
 import lombok.extern.slf4j.Slf4j;
@@ -23,14 +26,24 @@ public class YamlStateMachineLoader {
 
     private final ResourcePatternResolver resourceResolver;
     private final VariableMetaLoader variableMetaManager;
+    private final StateMachineLogicFlowConverter logicFlowConverter;
 
     public YamlStateMachineLoader(ResourcePatternResolver resourceResolver,
-                                  VariableMetaLoader variableMetaManager) {
+                                  VariableMetaLoader variableMetaManager,
+                                  StateMachineLogicFlowConverter logicFlowConverter) {
         this.resourceResolver = resourceResolver;
         this.variableMetaManager = variableMetaManager;
+        this.logicFlowConverter = logicFlowConverter;
     }
 
+    // ====================================================================
+    // ★ 分离缓存：own（子案例自身）/ full（子案例 + 父级通用，合并后）
+    // ====================================================================
+    /** 子案例自身状态机（不含父级继承） */
+    private final Map<String, ResolvedCaseTypeConfig> ownConfigCache = new ConcurrentHashMap<>();
+    /** 完整状态机（子案例 + 通用/父案例，合并后） */
     private final Map<String, ResolvedCaseTypeConfig> configCache = new ConcurrentHashMap<>();
+
     private final Map<String, String> parentMap = new ConcurrentHashMap<>();
     private final Map<String, List<String>> inheritanceChainCache = new ConcurrentHashMap<>();
 
@@ -64,6 +77,7 @@ public class YamlStateMachineLoader {
     public synchronized void reloadAll() {
         log.info("🔄 全量重载状态机配置...");
         configCache.clear();
+        ownConfigCache.clear();
         parentMap.clear();
         inheritanceChainCache.clear();
         loaded = false;
@@ -129,6 +143,7 @@ public class YamlStateMachineLoader {
             return;
         }
 
+        // 登记 parent 关系
         for (StateMachineConfig config : rawConfigs.values()) {
             StateMachineDefinition sm = config.getStateMachine();
             String parent = config.getParent();
@@ -142,23 +157,29 @@ public class YamlStateMachineLoader {
             }
         }
 
+        // ============ 第一遍：构建每个案例的自身配置（own） ============
+        for (StateMachineConfig raw : rawConfigs.values()) {
+            ownConfigCache.put(raw.getCaseId(), buildOwnConfig(raw));
+        }
+
+        // ============ 第二遍：按拓扑序合并父级，得到完整配置（full） ============
         List<String> sortedCaseIds = topologicalSort(rawConfigs.keySet());
 
         for (String caseId : sortedCaseIds) {
-            ResolvedCaseTypeConfig resolved = resolveConfig(caseId, rawConfigs);
-            variableMetaManager.validateStateMachine(caseId, resolved);
-            configCache.put(caseId, resolved);
+            ResolvedCaseTypeConfig full = buildFullConfig(caseId);
+            variableMetaManager.validateStateMachine(caseId, full);
+            configCache.put(caseId, full);
             inheritanceChainCache.put(caseId, buildInheritanceChain(caseId));
 
             log.info("✅ 合并完成: {} (父级: {}, 状态数: {}, 转移数: {}, 常驻意图数: {}, 顶层阶段数: {}, 叶子阶段数: {}, 深度: {})",
                 caseId,
-                resolved.getParent() != null ? resolved.getParent() : "无",
-                resolved.getStates().size(),
-                resolved.getTransitions().size(),
-                resolved.getAlwaysAllowedIntents() != null
-                    ? resolved.getAlwaysAllowedIntents().size() : 0,
-                resolved.getPhases() != null ? resolved.getPhases().size() : 0,
-                resolved.getLeafPhases().size(),
+                full.getParent() != null ? full.getParent() : "无",
+                full.getStates().size(),
+                full.getTransitions().size(),
+                full.getAlwaysAllowedIntents() != null
+                    ? full.getAlwaysAllowedIntents().size() : 0,
+                full.getPhases() != null ? full.getPhases().size() : 0,
+                full.getLeafPhases().size(),
                 inheritanceChainCache.get(caseId).size() - 1
             );
         }
@@ -169,150 +190,161 @@ public class YamlStateMachineLoader {
     }
 
     // ====================================================================
-    // 配置解析与合并
+    // 配置构建：own / full
     // ====================================================================
 
-    private ResolvedCaseTypeConfig resolveConfig(String caseId,
-                                                 Map<String, StateMachineConfig> allConfigs) {
-        StateMachineConfig current = allConfigs.get(caseId);
-        if (current == null) {
-            throw new ConfigurationException("未找到案例配置: " + caseId);
-        }
-
-        ResolvedCaseTypeConfig resolved = new ResolvedCaseTypeConfig();
-        resolved.setCode(caseId);
-        resolved.setCaseName(current.getCaseName());
-        resolved.setVersion(current.getVersion());
-        resolved.setParent(current.getParent());
-
+    /**
+     * 仅构建当前案例 YAML 自身的配置，不做任何父级合并。
+     */
+    private ResolvedCaseTypeConfig buildOwnConfig(StateMachineConfig current) {
         StateMachineDefinition sm = current.getStateMachine();
         if (sm == null) {
-            throw new ConfigurationException("案例 " + caseId + " 缺少 stateMachine 节点");
+            throw new ConfigurationException("案例 " + current.getCaseId() + " 缺少 stateMachine 节点");
         }
 
-        // --- 如果有父级，先继承父级配置 ---
-        if (current.getParent() != null && !current.getParent().isEmpty()
-            && allConfigs.containsKey(current.getParent())) {
+        ResolvedCaseTypeConfig own = new ResolvedCaseTypeConfig();
+        own.setCode(current.getCaseId());
+        own.setCaseName(current.getCaseName());
+        own.setVersion(current.getVersion());
+        own.setParent(current.getParent());
 
-            ResolvedCaseTypeConfig parentResolved = resolveConfig(current.getParent(), allConfigs);
+        own.setStates(sm.getStates() != null ? new ArrayList<>(sm.getStates()) : new ArrayList<>());
+        own.setEndStates(sm.getEndStates() != null ? new ArrayList<>(sm.getEndStates()) : new ArrayList<>());
+        own.setTransitions(sm.getTransitions() != null ? new ArrayList<>(sm.getTransitions()) : new ArrayList<>());
+        own.setIntentToStateMapping(sm.getIntentToStateMapping() != null
+            ? new LinkedHashMap<>(sm.getIntentToStateMapping()) : new LinkedHashMap<>());
+        own.setGlobalEventIntents(sm.getGlobalEventIntents() != null
+            ? new LinkedHashSet<>(sm.getGlobalEventIntents()) : new LinkedHashSet<>());
+        own.setAlwaysAllowedIntents(sm.getAlwaysAllowedIntents() != null
+            ? new LinkedHashSet<>(sm.getAlwaysAllowedIntents()) : new LinkedHashSet<>());
+        own.setInitialState(sm.getInitial());
+        own.setAllowUnlistedTransitions(sm.isAllowUnlistedTransitions());
+        own.setDefaultTransitionAction(sm.getDefaultTransitionAction());
 
-            resolved.setStates(new ArrayList<>(parentResolved.getStates()));
-            resolved.setEndStates(new ArrayList<>(parentResolved.getEndStates()));
-            resolved.setTransitions(new ArrayList<>(parentResolved.getTransitions()));
-            resolved.setIntentToStateMapping(new LinkedHashMap<>(parentResolved.getIntentToStateMapping()));
-            resolved.setGlobalEventIntents(new LinkedHashSet<>(parentResolved.getGlobalEventIntents()));
-            resolved.setAlwaysAllowedIntents(new LinkedHashSet<>(parentResolved.getAlwaysAllowedIntents()));
-            resolved.setInitialState(parentResolved.getInitialState());
-            resolved.setAllowUnlistedTransitions(parentResolved.isAllowUnlistedTransitions());
-            resolved.setDefaultTransitionAction(parentResolved.getDefaultTransitionAction());
+        own.setStateDescriptions(current.getStateDescriptions() != null
+            ? new LinkedHashMap<>(current.getStateDescriptions()) : new LinkedHashMap<>());
+        own.setResetVarsOnArrival(current.getResetVarsOnArrival() != null
+            ? new ArrayList<>(current.getResetVarsOnArrival()) : new ArrayList<>());
+        own.setOnEnterRules(current.getOnEnterRules() != null
+            ? new LinkedHashMap<>(current.getOnEnterRules()) : new LinkedHashMap<>());
 
-            if (parentResolved.getStateDescriptions() != null) {
-                resolved.setStateDescriptions(new LinkedHashMap<>(parentResolved.getStateDescriptions()));
+        own.setPhases(sm.getPhases() != null ? new ArrayList<>(sm.getPhases()) : new ArrayList<>());
+        own.setInitialPhase(sm.getInitialPhase());
+        own.setOverviewExcludeStates(sm.getOverviewExcludeStates() != null
+            ? new LinkedHashSet<>(sm.getOverviewExcludeStates()) : new LinkedHashSet<>());
+
+        own.rebuildStateToPhaseIndex();
+        return own;
+    }
+
+    /**
+     * 用 own + 父级的 full 合成当前案例的完整状态机。
+     * 依赖 topologicalSort 保证父级已先进入 configCache。
+     */
+    private ResolvedCaseTypeConfig buildFullConfig(String caseId) {
+        ResolvedCaseTypeConfig own = ownConfigCache.get(caseId);
+        if (own == null) {
+            throw new ConfigurationException("未找到案例自身配置: " + caseId);
+        }
+        String parentId = own.getParent();
+        if (parentId != null && !parentId.isEmpty() && configCache.containsKey(parentId)) {
+            return mergeParentWithOwn(configCache.get(parentId), own);
+        }
+        return cloneConfig(own);
+    }
+
+    /**
+     * 父级 full + own → 当前案例 full。
+     */
+    private ResolvedCaseTypeConfig mergeParentWithOwn(ResolvedCaseTypeConfig parentFull,
+                                                      ResolvedCaseTypeConfig own) {
+        ResolvedCaseTypeConfig r = new ResolvedCaseTypeConfig();
+        r.setCode(own.getCode());
+        r.setCaseName(own.getCaseName());
+        r.setVersion(own.getVersion());
+        r.setParent(own.getParent());
+
+        // ---------- 1. 继承父级 ----------
+        r.setStates(new ArrayList<>(parentFull.getStates()));
+        r.setEndStates(new ArrayList<>(parentFull.getEndStates()));
+        r.setTransitions(new ArrayList<>(parentFull.getTransitions()));
+        r.setIntentToStateMapping(new LinkedHashMap<>(parentFull.getIntentToStateMapping()));
+        r.setGlobalEventIntents(new LinkedHashSet<>(parentFull.getGlobalEventIntents()));
+        r.setAlwaysAllowedIntents(new LinkedHashSet<>(parentFull.getAlwaysAllowedIntents()));
+        r.setInitialState(parentFull.getInitialState());
+        r.setAllowUnlistedTransitions(parentFull.isAllowUnlistedTransitions());
+        r.setDefaultTransitionAction(parentFull.getDefaultTransitionAction());
+        r.setStateDescriptions(parentFull.getStateDescriptions() != null
+            ? new LinkedHashMap<>(parentFull.getStateDescriptions()) : new LinkedHashMap<>());
+        r.setResetVarsOnArrival(parentFull.getResetVarsOnArrival() != null
+            ? new ArrayList<>(parentFull.getResetVarsOnArrival()) : new ArrayList<>());
+        r.setOnEnterRules(parentFull.getOnEnterRules() != null
+            ? new LinkedHashMap<>(parentFull.getOnEnterRules()) : new LinkedHashMap<>());
+        r.setPhases(parentFull.getPhases() != null
+            ? new ArrayList<>(parentFull.getPhases()) : new ArrayList<>());
+        r.setInitialPhase(parentFull.getInitialPhase());
+        r.setOverviewExcludeStates(parentFull.getOverviewExcludeStates() != null
+            ? new LinkedHashSet<>(parentFull.getOverviewExcludeStates()) : new LinkedHashSet<>());
+
+        // ---------- 2. 应用 own ----------
+        if (own.getStates() != null && !own.getStates().isEmpty()) {
+            Set<String> stateSet = new LinkedHashSet<>(r.getStates());
+            stateSet.addAll(own.getStates());
+            r.setStates(new ArrayList<>(stateSet));
+        }
+
+        if (own.getEndStates() != null && !own.getEndStates().isEmpty()) {
+            Set<String> endSet = new LinkedHashSet<>(r.getEndStates());
+            endSet.addAll(own.getEndStates());
+            r.setEndStates(new ArrayList<>(endSet));
+        }
+
+        if (own.getInitialState() != null && !own.getInitialState().isEmpty()) {
+            r.setInitialState(own.getInitialState());
+        }
+
+        if (own.getTransitions() != null && !own.getTransitions().isEmpty()) {
+            r.getTransitions().addAll(own.getTransitions());
+        }
+
+        if (own.getIntentToStateMapping() != null && !own.getIntentToStateMapping().isEmpty()) {
+            r.getIntentToStateMapping().putAll(own.getIntentToStateMapping());
+        }
+
+        if (own.getGlobalEventIntents() != null && !own.getGlobalEventIntents().isEmpty()) {
+            r.getGlobalEventIntents().addAll(own.getGlobalEventIntents());
+        }
+
+        if (own.getAlwaysAllowedIntents() != null && !own.getAlwaysAllowedIntents().isEmpty()) {
+            r.setAlwaysAllowedIntents(new LinkedHashSet<>(own.getAlwaysAllowedIntents()));
+        }
+
+        if (own.isAllowUnlistedTransitions()) {
+            r.setAllowUnlistedTransitions(true);
+        }
+        if (own.getDefaultTransitionAction() != null && !own.getDefaultTransitionAction().isEmpty()) {
+            r.setDefaultTransitionAction(own.getDefaultTransitionAction());
+        }
+
+        if (own.getStateDescriptions() != null && !own.getStateDescriptions().isEmpty()) {
+            Map<String, String> descs = r.getStateDescriptions();
+            if (descs == null) {
+                descs = new LinkedHashMap<>();
+                r.setStateDescriptions(descs);
             }
-
-            if (parentResolved.getResetVarsOnArrival() != null) {
-                resolved.setResetVarsOnArrival(new ArrayList<>(parentResolved.getResetVarsOnArrival()));
-            } else {
-                resolved.setResetVarsOnArrival(new ArrayList<>());
-            }
-
-            // 继承父级 onEnterRules
-            if (parentResolved.getOnEnterRules() != null) {
-                resolved.setOnEnterRules(new LinkedHashMap<>(parentResolved.getOnEnterRules()));
-            } else {
-                resolved.setOnEnterRules(new LinkedHashMap<>());
-            }
-
-            // ★ Phase SM：继承父级 phases 与 initialPhase
-            resolved.setPhases(parentResolved.getPhases() != null
-                ? new ArrayList<>(parentResolved.getPhases())
-                : new ArrayList<>());
-            resolved.setInitialPhase(parentResolved.getInitialPhase());
-
-            // ★ 继承父级 overviewExcludeStates
-            resolved.setOverviewExcludeStates(parentResolved.getOverviewExcludeStates() != null
-                ? new LinkedHashSet<>(parentResolved.getOverviewExcludeStates())
-                : new LinkedHashSet<>());
-
-        } else {
-            // 无父级，初始化空集合
-            resolved.setStates(new ArrayList<>());
-            resolved.setEndStates(new ArrayList<>());
-            resolved.setTransitions(new ArrayList<>());
-            resolved.setIntentToStateMapping(new LinkedHashMap<>());
-            resolved.setGlobalEventIntents(new LinkedHashSet<>());
-            resolved.setAlwaysAllowedIntents(new LinkedHashSet<>());
-            resolved.setAllowUnlistedTransitions(false);
-            resolved.setStateDescriptions(new LinkedHashMap<>());
-            resolved.setResetVarsOnArrival(new ArrayList<>());
-            resolved.setOnEnterRules(new LinkedHashMap<>());
-            // ★ Phase SM：空集合
-            resolved.setPhases(new ArrayList<>());
-            resolved.setInitialPhase(null);
-            // ★ overviewExcludeStates 空集合
-            resolved.setOverviewExcludeStates(new LinkedHashSet<>());
+            descs.putAll(own.getStateDescriptions());
         }
 
-        // --- 应用当前配置 ---
-        if (sm.getStates() != null && !sm.getStates().isEmpty()) {
-            Set<String> stateSet = new LinkedHashSet<>(resolved.getStates());
-            stateSet.addAll(sm.getStates());
-            resolved.setStates(new ArrayList<>(stateSet));
+        if (own.getResetVarsOnArrival() != null && !own.getResetVarsOnArrival().isEmpty()) {
+            r.setResetVarsOnArrival(new ArrayList<>(own.getResetVarsOnArrival()));
         }
 
-        if (sm.getEndStates() != null && !sm.getEndStates().isEmpty()) {
-            Set<String> endSet = new LinkedHashSet<>(resolved.getEndStates());
-            endSet.addAll(sm.getEndStates());
-            resolved.setEndStates(new ArrayList<>(endSet));
-        }
-
-        if (sm.getInitial() != null && !sm.getInitial().isEmpty()) {
-            resolved.setInitialState(sm.getInitial());
-        }
-
-        if (sm.getTransitions() != null && !sm.getTransitions().isEmpty()) {
-            resolved.getTransitions().addAll(sm.getTransitions());
-        }
-
-        if (sm.getIntentToStateMapping() != null && !sm.getIntentToStateMapping().isEmpty()) {
-            resolved.getIntentToStateMapping().putAll(sm.getIntentToStateMapping());
-        }
-
-        if (sm.getGlobalEventIntents() != null && !sm.getGlobalEventIntents().isEmpty()) {
-            resolved.getGlobalEventIntents().addAll(sm.getGlobalEventIntents());
-        }
-
-        if (sm.getAlwaysAllowedIntents() != null && !sm.getAlwaysAllowedIntents().isEmpty()) {
-            resolved.setAlwaysAllowedIntents(new LinkedHashSet<>(sm.getAlwaysAllowedIntents()));
-        }
-
-        if (sm.isAllowUnlistedTransitions()) {
-            resolved.setAllowUnlistedTransitions(sm.isAllowUnlistedTransitions());
-        }
-        if (sm.getDefaultTransitionAction() != null && !sm.getDefaultTransitionAction().isEmpty()) {
-            resolved.setDefaultTransitionAction(sm.getDefaultTransitionAction());
-        }
-
-        if (current.getStateDescriptions() != null && !current.getStateDescriptions().isEmpty()) {
-            Map<String, String> currentDescs = resolved.getStateDescriptions();
-            if (currentDescs == null) {
-                currentDescs = new LinkedHashMap<>();
-                resolved.setStateDescriptions(currentDescs);
-            }
-            currentDescs.putAll(current.getStateDescriptions());
-        }
-
-        if (current.getResetVarsOnArrival() != null && !current.getResetVarsOnArrival().isEmpty()) {
-            resolved.setResetVarsOnArrival(new ArrayList<>(current.getResetVarsOnArrival()));
-        }
-
-        // 合并当前配置的 onEnterRules（子级规则追加到父级之后）
-        if (current.getOnEnterRules() != null) {
-            Map<String, List<String>> currentOnEnter = current.getOnEnterRules();
-            for (Map.Entry<String, List<String>> entry : currentOnEnter.entrySet()) {
+        // onEnterRules：父级 + 子级追加
+        if (own.getOnEnterRules() != null) {
+            for (Map.Entry<String, List<String>> entry : own.getOnEnterRules().entrySet()) {
                 String state = entry.getKey();
                 List<String> rules = entry.getValue();
-                resolved.getOnEnterRules().compute(state, (k, v) -> {
+                r.getOnEnterRules().compute(state, (k, v) -> {
                     if (v == null) v = new ArrayList<>();
                     v.addAll(rules);
                     return v;
@@ -320,46 +352,73 @@ public class YamlStateMachineLoader {
             }
         }
 
-        // ============================================================
-        // ★ Phase SM：合并 phases（按 id 覆盖，保留 YAML 声明顺序）
-        // ============================================================
-        if (sm.getPhases() != null && !sm.getPhases().isEmpty()) {
+        // phases：按 id 覆盖，保留 YAML 顺序
+        if (own.getPhases() != null && !own.getPhases().isEmpty()) {
             Map<String, PhaseDefinition> merged = new LinkedHashMap<>();
-            if (resolved.getPhases() != null) {
-                for (PhaseDefinition p : resolved.getPhases()) {
+            if (r.getPhases() != null) {
+                for (PhaseDefinition p : r.getPhases()) {
                     if (p != null && p.getId() != null) {
                         merged.put(p.getId(), p);
                     }
                 }
             }
-            for (PhaseDefinition p : sm.getPhases()) {
+            for (PhaseDefinition p : own.getPhases()) {
                 if (p != null && p.getId() != null) {
                     merged.put(p.getId(), p);
                 }
             }
-            resolved.setPhases(new ArrayList<>(merged.values()));
+            r.setPhases(new ArrayList<>(merged.values()));
         }
 
-        // ★ Phase SM：initialPhase 子级显式覆盖父级
-        if (sm.getInitialPhase() != null && !sm.getInitialPhase().isEmpty()) {
-            resolved.setInitialPhase(sm.getInitialPhase());
+        if (own.getInitialPhase() != null && !own.getInitialPhase().isEmpty()) {
+            r.setInitialPhase(own.getInitialPhase());
         }
 
-        // ★ overviewExcludeStates 子级追加到父级
-        if (sm.getOverviewExcludeStates() != null && !sm.getOverviewExcludeStates().isEmpty()) {
-            Set<String> mergedExclude = resolved.getOverviewExcludeStates() != null
-                ? new LinkedHashSet<>(resolved.getOverviewExcludeStates())
+        if (own.getOverviewExcludeStates() != null && !own.getOverviewExcludeStates().isEmpty()) {
+            Set<String> mergedExclude = r.getOverviewExcludeStates() != null
+                ? new LinkedHashSet<>(r.getOverviewExcludeStates())
                 : new LinkedHashSet<>();
-            mergedExclude.addAll(sm.getOverviewExcludeStates());
-            resolved.setOverviewExcludeStates(mergedExclude);
+            mergedExclude.addAll(own.getOverviewExcludeStates());
+            r.setOverviewExcludeStates(mergedExclude);
         }
 
-        // ============================================================
-        // ★ Phase SM：构建 stateToPhase 反查表
-        // ============================================================
-        resolved.rebuildStateToPhaseIndex();
+        r.rebuildStateToPhaseIndex();
+        return r;
+    }
 
-        return resolved;
+    /**
+     * 深拷贝一份 ResolvedCaseTypeConfig（无父级场景下 own 即 full）。
+     */
+    private ResolvedCaseTypeConfig cloneConfig(ResolvedCaseTypeConfig src) {
+        ResolvedCaseTypeConfig t = new ResolvedCaseTypeConfig();
+        t.setCode(src.getCode());
+        t.setCaseName(src.getCaseName());
+        t.setVersion(src.getVersion());
+        t.setParent(src.getParent());
+        t.setStates(src.getStates() != null ? new ArrayList<>(src.getStates()) : new ArrayList<>());
+        t.setEndStates(src.getEndStates() != null ? new ArrayList<>(src.getEndStates()) : new ArrayList<>());
+        t.setTransitions(src.getTransitions() != null ? new ArrayList<>(src.getTransitions()) : new ArrayList<>());
+        t.setIntentToStateMapping(src.getIntentToStateMapping() != null
+            ? new LinkedHashMap<>(src.getIntentToStateMapping()) : new LinkedHashMap<>());
+        t.setGlobalEventIntents(src.getGlobalEventIntents() != null
+            ? new LinkedHashSet<>(src.getGlobalEventIntents()) : new LinkedHashSet<>());
+        t.setAlwaysAllowedIntents(src.getAlwaysAllowedIntents() != null
+            ? new LinkedHashSet<>(src.getAlwaysAllowedIntents()) : new LinkedHashSet<>());
+        t.setInitialState(src.getInitialState());
+        t.setAllowUnlistedTransitions(src.isAllowUnlistedTransitions());
+        t.setDefaultTransitionAction(src.getDefaultTransitionAction());
+        t.setStateDescriptions(src.getStateDescriptions() != null
+            ? new LinkedHashMap<>(src.getStateDescriptions()) : new LinkedHashMap<>());
+        t.setResetVarsOnArrival(src.getResetVarsOnArrival() != null
+            ? new ArrayList<>(src.getResetVarsOnArrival()) : new ArrayList<>());
+        t.setOnEnterRules(src.getOnEnterRules() != null
+            ? new LinkedHashMap<>(src.getOnEnterRules()) : new LinkedHashMap<>());
+        t.setPhases(src.getPhases() != null ? new ArrayList<>(src.getPhases()) : new ArrayList<>());
+        t.setInitialPhase(src.getInitialPhase());
+        t.setOverviewExcludeStates(src.getOverviewExcludeStates() != null
+            ? new LinkedHashSet<>(src.getOverviewExcludeStates()) : new LinkedHashSet<>());
+        t.rebuildStateToPhaseIndex();
+        return t;
     }
 
     private List<String> topologicalSort(Set<String> caseIds) {
@@ -409,11 +468,130 @@ public class YamlStateMachineLoader {
     }
 
     // ====================================================================
-    // 原有查询接口
+    // ★ 查询接口：own 为默认，full 显式提供
     // ====================================================================
 
+    /** 默认：返回子案例自身的状态机（不含父级继承） */
     public ResolvedCaseTypeConfig getConfig(String caseType) {
+        return ownConfigCache.get(caseType);
+    }
+
+    /** 显式：返回子案例自身状态机（等价 getConfig） */
+    public ResolvedCaseTypeConfig getOwnConfig(String caseType) {
+        return ownConfigCache.get(caseType);
+    }
+
+    /** 显式：返回子案例 + 通用（父）案例合并后的完整状态机 */
+    public ResolvedCaseTypeConfig getFullConfig(String caseType) {
         return configCache.get(caseType);
+    }
+
+    /**
+     * 获取供 LogicFlow 展示的状态机定义。
+     *
+     * @param caseId 案例 ID
+     * @param full false: 仅当前子案例自身配置；true: 父级继承合并后的完整配置
+     * @return 图形与业务配置定义
+     */
+    public LogicFlowDefinitionDTO getLogicFlowDefinition(
+        String caseId,
+        boolean full) {
+
+        log.info(
+            "[LogicFlow-1] 开始获取状态机: caseId={}, full={}",
+            caseId,
+            full
+        );
+
+        if (caseId == null || caseId.isBlank()) {
+            throw new IllegalArgumentException("caseId 不能为空");
+        }
+
+        // 第一步：获取状态机配置
+        ResolvedCaseTypeConfig config = full
+            ? getFullConfig(caseId)
+            : getOwnConfig(caseId);
+
+        if (config == null) {
+            log.error(
+                "[LogicFlow-2] 状态机配置不存在: caseId={}, full={}",
+                caseId,
+                full
+            );
+
+            throw new IllegalArgumentException(
+                "状态机配置不存在: " + caseId
+            );
+        }
+
+        log.info(
+            "[LogicFlow-2] 状态机配置获取成功: caseId={}, full={}",
+            caseId,
+            full
+        );
+
+        // 第二步：获取继承关系
+        var inheritanceChain = getInheritanceChain(caseId);
+
+        log.info(
+            "[LogicFlow-3] 继承关系获取成功: caseId={}, chain={}",
+            caseId,
+            inheritanceChain
+        );
+
+        // 第三步：转换 LogicFlow 数据
+        try {
+
+            log.info(
+                "[LogicFlow-4] 开始转换 LogicFlow 图数据"
+            );
+
+            LogicFlowDefinitionDTO definition =
+                logicFlowConverter.convert(
+                    config,
+                    full,
+                    inheritanceChain
+                );
+
+            if (definition == null) {
+                log.error(
+                    "[LogicFlow-5] 转换结果为空: caseId={}",
+                    caseId
+                );
+
+                throw new IllegalStateException(
+                    "LogicFlow 转换结果为空: " + caseId
+                );
+            }
+
+            log.info(
+                "[LogicFlow-5] LogicFlow 转换成功: caseId={}",
+                caseId
+            );
+
+            return definition;
+
+        } catch (Exception e) {
+
+            log.error(
+                "[LogicFlow-ERROR] 状态机转换失败: caseId={}, full={}",
+                caseId,
+                full,
+                e
+            );
+
+            throw e;
+        }
+    }
+
+    /** 获取子案例自身定义（不含父级继承配置）。 */
+    public LogicFlowDefinitionDTO getLogicFlowOwnDefinition(String caseId) {
+        return getLogicFlowDefinition(caseId, false);
+    }
+
+    /** 获取父子案例合并后的完整定义。 */
+    public LogicFlowDefinitionDTO getLogicFlowFullDefinition(String caseId) {
+        return getLogicFlowDefinition(caseId, true);
     }
 
     public List<String> getInheritanceChain(String caseType) {
@@ -426,9 +604,12 @@ public class YamlStateMachineLoader {
     }
 
     public boolean exists(String caseType) {
-        return configCache.containsKey(caseType);
+        return ownConfigCache.containsKey(caseType);
     }
 
+    /**
+     * 配置汇总（基于完整合并后的配置，便于运维查看整体规模）。
+     */
     public Map<String, String> getConfigSummary() {
         Map<String, String> summary = new LinkedHashMap<>();
         for (Map.Entry<String, ResolvedCaseTypeConfig> entry : configCache.entrySet()) {
@@ -445,6 +626,9 @@ public class YamlStateMachineLoader {
         return summary;
     }
 
+    /**
+     * 全部完整配置（用于引擎/画图等需要完整状态机的场景）。
+     */
     public Map<String, ResolvedCaseTypeConfig> getConfigs() {
         return new HashMap<>(configCache);
     }
@@ -902,7 +1086,7 @@ public class YamlStateMachineLoader {
     }
 
     // ====================================================================
-    // 契约构建专用查询接口
+    // 契约构建专用查询接口（保持走 full，与引擎行为一致）
     // ====================================================================
 
     public List<TransitionRule> getTransitionsFromState(String caseType, String state) {

@@ -1,19 +1,24 @@
 package com.ruoyi.ems.room.ws;
 
 import com.ruoyi.ems.asr.AsrUnavailableException;
+import com.ruoyi.ems.audit.AttemptLogService;                        // ★ 新增
 import com.ruoyi.ems.clock.ClockService;
 import com.ruoyi.ems.dispatcher.SessionCommandDispatcher;
 import com.ruoyi.ems.domain.dto.CommandTask;
 import com.ruoyi.ems.domain.entity.EmsSession;
+import com.ruoyi.ems.room.event.AttemptStartedEvent;
 import com.ruoyi.ems.room.model.Role;
 import com.ruoyi.ems.room.model.SessionRoom;
+import com.ruoyi.ems.room.protocol.AttemptReportService;            // ★ 新增
 import com.ruoyi.ems.room.protocol.AttemptSnapshotService;
 import com.ruoyi.ems.room.protocol.ProtocolBridgeService;
+import com.ruoyi.ems.room.protocol.dto.AttemptReport;               // ★ 新增
 import com.ruoyi.ems.room.protocol.dto.SnapshotMessage;
 import com.ruoyi.ems.room.registry.RoomRegistry;
 import com.ruoyi.ems.service.SessionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -26,7 +31,7 @@ import java.util.Set;
  * <ul>
  *   <li>{@code asr_transcript} —— 学员语音识别文本，转 {@link CommandTask} 走调度器</li>
  *   <li>{@code start_session}  —— 案例正式开始边界，触发时钟启动 + {@link SessionService#startSession}</li>
- *   <li>{@code end_session}    —— 触发时钟停止 + {@link SessionService#endSession}</li>
+ *   <li>{@code end_session}    —— 触发时钟停止 + {@link SessionService#endSession} + 评价报告生成</li>
  * </ul>
  *
  * <p><b>案例开始契约：</b>只有收到客户端 {@code start_session} 才是案例正式开始。
@@ -37,6 +42,12 @@ import java.util.Set;
  * <ul>
  *   <li>收到 {@code start_session} 时，调用 {@code room.markStartSessionConsumed()}，
  *       标记该房间已被消费。后续 {@code RoomService.create} 的复用判断会拒绝复用。</li>
+ * </ul>
+ *
+ * <p>★ 阶段 3 评价报告（2026-09-25）：</p>
+ * <ul>
+ *   <li>{@code end_session} 内按顺序：stop 时钟 → 生成报告 → 落盘 + 下发 → endSession。</li>
+ *   <li>报告生成失败不阻断 end_session。</li>
  * </ul>
  */
 @Slf4j
@@ -50,6 +61,11 @@ public class EngineSessionControlHandler implements WsMessageRouter.WsMessageHan
     private final ClockService clockService;
     private final AttemptSnapshotService snapshotService;
     private final ProtocolBridgeService protocolBridge;
+    private final ApplicationEventPublisher eventPublisher;
+    private final AttemptReportService attemptReportService;    // ★ 新增
+    private final AttemptLogService attemptLogService;          // ★ 新增
+
+
     private static final Set<String> SUPPORTED = Set.of(
         "asr_transcript",
         "start_session",
@@ -90,7 +106,6 @@ public class EngineSessionControlHandler implements WsMessageRouter.WsMessageHan
             return;
         }
 
-        // 非 final 结果直接丢弃（减少无谓处理）
         Object isFinalObj = data.get("isFinal");
         boolean isFinal = !(isFinalObj instanceof Boolean) || (Boolean) isFinalObj;
         if (!isFinal) {
@@ -131,25 +146,6 @@ public class EngineSessionControlHandler implements WsMessageRouter.WsMessageHan
 
     // ==================== start_session ====================
 
-    /**
-     * 案例正式开始。
-     *
-     * <p>执行顺序（关键）：</p>
-     * <ol>
-     *   <li>校验 session 存在、room 未启动</li>
-     *   <li><b>先启动时钟</b>——初始化 {@code process.lastInterventionTime}、
-     *       记录评估真实时间锚点。失败则直接返回，room 保持未开始，允许客户端重试。</li>
-     *   <li><b>再 markStarted + markStartSessionConsumed</b>——此时时钟已就绪，进入"已开始"状态。</li>
-     *   <li><b>最后启动 ASR 会话</b>——ASR 不可用时降级，不阻塞案例开始，不回滚。</li>
-     * </ol>
-     *
-     * <p>为什么时钟必须在 markStarted 之前：若先标记 started 再启动时钟，
-     * 时钟启动失败会导致 room 状态为"已开始"但时钟未运行，客户端重发 start_session
-     * 被幂等拒绝，会话卡死。</p>
-     *
-     * <p>★ 为什么同时要 markStartSessionConsumed：RoomService.create 在复用判断时，
-     * 只认 startSessionConsumed 标志。必须在同一时刻一起打上，避免中间态被复用。</p>
-     */
     /**
      * 案例正式开始。
      *
@@ -215,7 +211,7 @@ public class EngineSessionControlHandler implements WsMessageRouter.WsMessageHan
 
         // ===== 步骤 4：契约 V1.0.0 —— 主动推一次全量 SNAPSHOT =====
         try {
-            String attemptId = room.getAttemptId();   // ← 从已拿到的 room 取
+            String attemptId = room.getAttemptId();
             if (attemptId == null || attemptId.isBlank()) {
                 log.warn("⚠️ 房间缺少 attemptId，跳过快照推送: room={}, ems={}",
                     roomSessionId, emsSessionId);
@@ -234,6 +230,27 @@ public class EngineSessionControlHandler implements WsMessageRouter.WsMessageHan
             log.warn("start_session 后推送快照失败: ems={}, err={}",
                 emsSessionId, e.getMessage());
         }
+
+        // ===== 步骤 5：发布 AttemptStartedEvent（触发 tutor 侧冻结 Manifest） =====
+        try {
+            String attemptIdForEvt = room.getAttemptId();
+            String caseId = session.getScenarioId();
+            if (attemptIdForEvt == null || attemptIdForEvt.isBlank()) {
+                log.warn("⚠️ 房间缺少 attemptId，跳过 Manifest 事件: room={}, ems={}",
+                    roomSessionId, emsSessionId);
+            } else if (caseId == null || caseId.isBlank()) {
+                log.warn("⚠️ session 缺少 scenarioId，跳过 Manifest 事件: ems={}", emsSessionId);
+            } else {
+                eventPublisher.publishEvent(new AttemptStartedEvent(
+                    this, emsSessionId, roomSessionId, attemptIdForEvt, caseId));
+                log.info("📨 AttemptStartedEvent 已发布: ems={}, attemptId={}, caseId={}",
+                    emsSessionId, attemptIdForEvt, caseId);
+            }
+        } catch (Exception e) {
+            log.warn("AttemptStartedEvent 发布失败（不阻断 start_session）: ems={}, err={}",
+                emsSessionId, e.getMessage());
+        }
+
         log.info("🚀 案例正式开始: room={}, ems={}", roomSessionId, emsSessionId);
     }
 
@@ -242,9 +259,15 @@ public class EngineSessionControlHandler implements WsMessageRouter.WsMessageHan
     /**
      * 案例结束。
      *
-     * <p>先停时钟（冻结评估真实时间、停止 tick），再结束业务会话。
-     * 停时钟失败不阻塞 end_session——即使时钟短暂继续跑，会话结束后
-     * {@code ClockService.tick} 因 {@code CaseContext} 失效也会自然跳过。</p>
+     * <p>执行顺序（关键）：</p>
+     * <ol>
+     *   <li><b>先停时钟</b>——冻结 {@code assessmentRealElapsedSeconds}，
+     *       停止每秒 tick。失败不阻塞，继续后续步骤。</li>
+     *   <li><b>生成并下发评价报告</b>——必须在 {@code endSession} 之前，
+     *       因为 {@code endSession} 会清理 CaseContext；报告依赖它读
+     *       {@code evaluation.*} 与 {@code case.eventLog}。失败不阻断。</li>
+     *   <li><b>最后 endSession</b>——结束业务会话，释放资源。</li>
+     * </ol>
      */
     private void handleEndSession(WsMessageContext ctx, Map<String, Object> data) {
         String roomSessionId = ctx.sessionId();
@@ -254,7 +277,7 @@ public class EngineSessionControlHandler implements WsMessageRouter.WsMessageHan
             return;
         }
 
-        // 先停时钟：冻结 assessmentRealElapsedSeconds，停止每秒 tick
+        // ===== 步骤 1：先停时钟（冻结 assessmentRealElapsedSeconds） =====
         try {
             clockService.stop(emsSessionId);
         } catch (Exception e) {
@@ -262,6 +285,40 @@ public class EngineSessionControlHandler implements WsMessageRouter.WsMessageHan
                 emsSessionId, e.getMessage());
         }
 
+        // ===== 步骤 2：生成并下发评价报告（必须在 endSession 之前） =====
+        try {
+            SessionRoom room = roomRegistry.get(roomSessionId).orElse(null);
+            String attemptId = room != null ? room.getAttemptId() : null;
+            if (attemptId == null || attemptId.isBlank()) {
+                log.warn("⚠️ 房间缺少 attemptId，跳过报告生成: room={}, ems={}",
+                    roomSessionId, emsSessionId);
+            } else {
+                AttemptReport report = attemptReportService.buildReport(
+                    emsSessionId, roomSessionId, attemptId);
+                if (report != null) {
+                    // 结束原因（如 Unity 端携带）
+                    Object reason = data != null ? data.get("reason") : null;
+                    if (reason != null) {
+                        report.setTerminationReason(String.valueOf(reason));
+                    }
+                    // 落盘（覆盖式 JSON）
+                    attemptLogService.writeReport(attemptId, report);
+                    // 下发（不占 serverSequence）
+                    protocolBridge.pushReport(emsSessionId, report);
+                    log.info("📋 评价报告已生成并下发: ems={}, attemptId={}, rev={}, events={}",
+                        emsSessionId, attemptId,
+                        report.getFinalStateRevision(),
+                        report.getKeyEvents() != null ? report.getKeyEvents().size() : 0);
+                } else {
+                    log.warn("⚠️ 报告构建返回 null: ems={}", emsSessionId);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("评价报告生成/下发失败（不阻断 end_session）: ems={}, err={}",
+                emsSessionId, e.getMessage(), e);
+        }
+
+        // ===== 步骤 3：结束业务会话 =====
         try {
             sessionService.endSession(emsSessionId);
             log.info("✅ Unity 触发 endSession: ems={}, room={}",

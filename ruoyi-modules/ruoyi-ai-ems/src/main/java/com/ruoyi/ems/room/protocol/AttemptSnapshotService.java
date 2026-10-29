@@ -1,7 +1,5 @@
 package com.ruoyi.ems.room.protocol;
 
-
-
 import com.ruoyi.ems.context.EmsContextManager;
 import com.ruoyi.ems.domain.CaseContext;
 import com.ruoyi.ems.room.protocol.dto.*;
@@ -41,7 +39,7 @@ public class AttemptSnapshotService {
 
         return SnapshotMessage.builder()
             .protocolVersion(PROTOCOL_VERSION)
-            .attemptId(attemptId)                                  // ← 修复点
+            .attemptId(attemptId)
             .stateRevision(ctx.getVersion())
             .eventSequence(ctx.getEventSequence())
             .isFullSnapshot(true)
@@ -65,6 +63,16 @@ public class AttemptSnapshotService {
         snapshot.setFullSnapshot(false);
         snapshot.setEvents(events != null ? events : new ArrayList<>());
         return snapshot;
+    }
+
+    /**
+     * ★ 修复 B-1（2026-09-25）：无 events 的增量快照便捷重载。
+     *
+     * <p>供状态转移后自动推送使用。此时没有显式事件列表，
+     * 增量快照的主体仍是当前 CaseContext 的状态快照。</p>
+     */
+    public SnapshotMessage buildIncrementalSnapshot(String emsSessionId, String attemptId) {
+        return buildIncrementalSnapshot(emsSessionId, attemptId, new ArrayList<>());
     }
 
     // ========== 抽取器 ==========

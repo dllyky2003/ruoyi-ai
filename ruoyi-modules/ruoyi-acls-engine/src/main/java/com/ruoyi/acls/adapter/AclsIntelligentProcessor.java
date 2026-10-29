@@ -5,6 +5,7 @@ import com.ruoyi.acls.engine.CommandResult;
 import com.ruoyi.acls.router.SemanticRouter;
 import com.ruoyi.acls.skill.registery.SkillRegistry;
 import com.ruoyi.ems.domain.IntentCommand;
+import com.ruoyi.ems.engine.AttemptOutcome;
 import com.ruoyi.ems.spi.IntelligentCommandProcessor;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,10 @@ import java.util.Map;
 /**
  * ACLS 新引擎适配器 —— 实现旧模块定义的策略接口
  * 这是新旧模块之间的唯一桥梁
+ *
+ * <p>★ 批 1（螺旋 2 / 阶段 2.1）新增：把 {@link CommandResult} 的
+ * {@code validation} 与 {@code failureKind} 透传到 response Map，
+ * 供上层 {@code SessionService} / {@code CmdMessageHandler} 组装 CMD_RESULT。</p>
  */
 @Slf4j
 @Component
@@ -67,6 +72,12 @@ public class AclsIntelligentProcessor implements IntelligentCommandProcessor {
             response.put("animations", result.getAnimations() != null ? result.getAnimations() : List.of());
             response.put("contextUpdates", result.getContextUpdates() != null ? result.getContextUpdates() : Map.of());
 
+            // ★ 批 1 新增：透传 tutor 决策与失败类别
+            response.put("validation", result.getValidation());
+            response.put("failureKind", result.getFailureKind() != null
+                ? result.getFailureKind()
+                : AttemptOutcome.FailureKind.NONE.name());
+
             String responseText;
             if (result.isSuccess()) {
                 responseText = result.getResponseText();
@@ -75,7 +86,7 @@ public class AclsIntelligentProcessor implements IntelligentCommandProcessor {
                 }
             } else {
                 responseText = result.getErrorMessage() != null ? result.getErrorMessage() : "指令执行失败";
-                // ★ 新增：显式映射错误消息，供 SessionService 识别"处理器明确拒绝"
+                // ★ 显式映射错误消息，供 SessionService 识别"处理器明确拒绝"
                 if (result.getErrorMessage() != null && !result.getErrorMessage().isBlank()) {
                     response.put("errorMessage", result.getErrorMessage());
                 }
@@ -90,10 +101,13 @@ public class AclsIntelligentProcessor implements IntelligentCommandProcessor {
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("responseText", "操作失败: " + e.getMessage());
-            // ★ 新增：与主失败路径保持一致的字段映射
+            // ★ 与主失败路径保持一致的字段映射
             response.put("errorMessage", e.getMessage());
             response.put("animations", List.of());
             response.put("contextUpdates", Map.of());
+            // ★ 批 1 新增：业务失败归为 EXCEPTION，validation 为 null
+            response.put("validation", null);
+            response.put("failureKind", AttemptOutcome.FailureKind.EXCEPTION.name());
             return response;
         } catch (Exception e) {
             log.error("新引擎系统异常，将抛出异常让调用方降级", e);

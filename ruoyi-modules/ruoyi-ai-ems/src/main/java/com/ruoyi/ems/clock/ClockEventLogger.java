@@ -36,12 +36,12 @@ public class ClockEventLogger {
     }
 
     private void onEvent(ClockEvent e) {
-        log.info("🧪 [ClockEvent] type={} session={} clock={} event={} elapsed={}s payload={}",
-            e.type(),
-            e.sessionId(),
-            e.clockId(),
-            e.eventType(),
-            String.format("%.1f", e.elapsedSeconds()),
-            e.payload());
+//        log.info("🧪 [ClockEvent] type={} session={} clock={} event={} elapsed={}s payload={}",
+//            e.type(),
+//            e.sessionId(),
+//            e.clockId(),
+//            e.eventType(),
+//            String.format("%.1f", e.elapsedSeconds()),
+//            e.payload());
     }
 }

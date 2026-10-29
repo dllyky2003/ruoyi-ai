@@ -1,6 +1,6 @@
 # ============================================================
 # 子级流程：unstable_narrow_svt（不稳定窄QRS心动过速 / 紧急同步电复律）
-# 案例编号：102  |  父级：GLOBAL  |  版本：1.1.1
+# 案例编号：102  |  父级：GLOBAL  |  版本：1.1.4
 # 参考：2025 AHA 心动过速伴脉搏算法
 # 修订：1.1.0（★ 修复 ROSC 衔接：在 F-102-MONITOR_SINUS_RHYTHM 增加直连
 #                F-000-ROSC_MANAGEMENT 的转移，并显式置位 clinical.rosc /
@@ -21,10 +21,21 @@
 # 修订：1.1.3（★ P2-17：F-102-DETERIORATION 增加意图出边，
 #                避免恶化后所有学员操作被"无匹配转移"全部拒绝形成死胡同。
 #                原条件边（intentCode=null, priority=10）保留不动。）
+# 修订：1.1.4（★ 修复 F-102-CONFIRM_UNSTABLE 死锁：
+#                F-102-CONFIRM_UNSTABLE → F-102-PREP_CARDIOVERSION 与
+#                F-102-CONFIRM_UNSTABLE → F-102-EXIT_TO_PARENT 两条出边
+#                由 intentCode="S-102-1-2" 改为 intentCode=null（纯条件出边）。
+#                原因：S-102-1-2 的典型语句"患者不稳定，准备同步电复律"
+#                被句类分析判为 ANNOUNCEMENT，引擎对 ANNOUNCEMENT 的规则是
+#                "纯认知操作，豁免状态机"。原 intentCode 出边永远无法被
+#                S-102-1-2 直接触发 → 学员后续任何操作（S-102-2-1~S-102-2-8）
+#                在 F-102-CONFIRM_UNSTABLE 都无意图出边 → 全部被拒 → 死锁。
+#                改为纯条件出边后，任何学员意图进入状态机评估时若意图无匹配，
+#                引擎会走"变量驱动重评估"路径命中纯条件出边并推进。
 # ============================================================
 caseId: "unstable_narrow_svt"
 caseName: "不稳定窄QRS心动过速（紧急同步电复律）"
-version: "1.1.1"
+version: "1.1.4"
 parent: "GLOBAL"
 description: "不稳定窄QRS规则节律心动过速 → 同步电复律全流程"
 
@@ -139,30 +150,34 @@ stateMachine:
     # ==========================================================
     # 2. 确认不稳定
     # ==========================================================
+    # ★ 1.1.4 修改：intentCode "S-102-1-2" → null（纯条件出边）
+    #    让变量驱动重评估能触发本出边。
+    #    原因：S-102-1-2 被句类分析判为 ANNOUNCEMENT，豁免状态机，
+    #          原 intentCode 出边永远无法被 S-102-1-2 触发；
+    #          改为纯条件出边后，任何学员意图（如 S-102-2-1）触发
+    #          状态机评估时若意图无匹配，引擎走"变量驱动重评估"路径，
+    #          命中此出边并推进到 F-102-PREP_CARDIOVERSION。
     - source: "F-102-CONFIRM_UNSTABLE"
       target: "F-102-PREP_CARDIOVERSION"
-      intentCode: "S-102-1-2"
+      intentCode: null
       condition: "#derived.unstable == true"
       priority: 10
       exitReason: null
       effects:
         - var: "process.instabilityTriggered"
           value: true
-      description: "确认不稳定 → 进入电复律准备"
+      description: "不稳定确认（自动推进）→ 进入电复律准备"
 
+    # ★ 1.1.4 修改：同样改为纯条件出边，保持两条出边一致。
     - source: "F-102-CONFIRM_UNSTABLE"
       target: "F-102-EXIT_TO_PARENT"
-      intentCode: "S-102-1-2"
+      intentCode: null
       condition: "#derived.stable == true"
       priority: 100
       exitReason: "STABLE_REASSESS"
       effects: []
-      description: "实际稳定 → 退出父级走稳定路径"
+      description: "实际稳定（自动推进）→ 退出父级走稳定路径"
 
-    # ==========================================================
-    # 3. 电复律准备（SYNC → 能量 → 镇静 → 充电 → 清场）
-    # 每个子步骤在同一状态自循环，累积设备状态
-    # ==========================================================
     # ==========================================================
     # 3. 电复律准备（SYNC → 能量 → 镇静 → 充电 → 清场）
     #    Guard 判"步骤标记变量"——恢复事前语义：

@@ -11,6 +11,12 @@
 # 修订：2.4.0（★ 修复 ROSC 卡死兜底：新增 F-000-ROSC_MANAGEMENT 自循环转移，
 #                在 roscStabilized == false 时由任一学员意图自动确认稳定，
 #                避免子级遗漏 effects 时状态机永久卡死）
+# 修订：2.5.0（★ 修复父级 4 处状态死锁：ERROR_HANDLING / POST_ROSC_CARE /
+#                TERMINATE_RESUSCITATION / TIMEOUT_HANDLING，
+#                统一采用 ROSC 2.4.0 的自循环兜底模式，
+#                避免 Guard 依赖的"完成标记"变量无写入方导致永久卡死。
+#                注：F-000-TIMEOUT_HANDLING 当前无入口（孤岛），
+#                    本次只加自循环不补入口，等未来接入超时检测机制时再定）
 # ============================================================
 caseId: "GLOBAL"
 caseName: "ACLS全局父级编排"
@@ -408,6 +414,27 @@ stateMachine:
       priority: 10
       description: "ROSC稳定 → 进入复苏后护理"
 
+    # ==========================================================
+    # 7b. POST_ROSC_CARE —— 兜底自循环（★ 2.5.0 新增）
+    # ----------------------------------------------------------
+    # 目的：原出边依赖 clinical.postRoscComplete == true，
+    #       但全 YAML 无任何写入方，导致进入此状态后永久卡死。
+    #       stable_narrow 09:27:50~09:27:55 日志已确认此死锁。
+    #
+    # 语义：POST_ROSC_CARE 阶段任一意图即视为"复苏后护理完成"。
+    # 效果：置位 clinical.postRoscComplete = true，
+    #       自循环重评估后由下方 priority=10 出边推进到 TERMINAL_END。
+    # ==========================================================
+    - source: "F-000-POST_ROSC_CARE"
+      target: "F-000-POST_ROSC_CARE"
+      intentCode: null
+      condition: "#clinical.postRoscComplete == false || #clinical.postRoscComplete == null"
+      priority: 50
+      description: "复苏后护理阶段任一意图 → 自动确认完成（兜底）"
+      effects:
+        - var: "clinical.postRoscComplete"
+          value: true
+
     - source: "F-000-POST_ROSC_CARE"
       target: "F-000-TERMINAL_END"
       condition: "#clinical.postRoscComplete == true"
@@ -425,6 +452,24 @@ stateMachine:
       priority: 100
       description: "初始设置阶段决定终止复苏"
 
+    # ==========================================================
+    # 8b. TERMINATE_RESUSCITATION —— 兜底自循环（★ 2.5.0 新增）
+    # ----------------------------------------------------------
+    # 目的：原出边依赖 process.terminationDocumented == true，
+    #       但全 YAML 无任何写入方，导致进入此状态后永久卡死。
+    # 效果：任一意图 → 置位 terminationDocumented = true，
+    #       自循环重评估后推进到 TERMINAL_END。
+    # ==========================================================
+    - source: "F-000-TERMINATE_RESUSCITATION"
+      target: "F-000-TERMINATE_RESUSCITATION"
+      intentCode: null
+      condition: "#process.terminationDocumented == false || #process.terminationDocumented == null"
+      priority: 50
+      description: "终止复苏阶段任一意图 → 自动确认已记录（兜底）"
+      effects:
+        - var: "process.terminationDocumented"
+          value: true
+
     - source: "F-000-TERMINATE_RESUSCITATION"
       target: "F-000-TERMINAL_END"
       condition: "#process.terminationDocumented == true"
@@ -434,11 +479,49 @@ stateMachine:
     # ==========================================================
     # 9. 错误/超时恢复
     # ==========================================================
+
+    # ==========================================================
+    # 9a. ERROR_HANDLING —— 兜底自循环（★ 2.5.0 新增）
+    # ----------------------------------------------------------
+    # 目的：原出边依赖 process.errorFixed == true，
+    #       但全 YAML 无任何写入方，导致进入此状态后永久卡死。
+    #       stable_narrow 09:17:10~09:17:23 日志已确认此死锁。
+    # 效果：任一意图 → 置位 errorFixed = true，
+    #       自循环重评估后推进到 F-000-INITIAL_SETUP。
+    # ==========================================================
+    - source: "F-000-ERROR_HANDLING"
+      target: "F-000-ERROR_HANDLING"
+      intentCode: null
+      condition: "#process.errorFixed == false || #process.errorFixed == null"
+      priority: 50
+      description: "错误处理阶段任一意图 → 自动确认已修复（兜底）"
+      effects:
+        - var: "process.errorFixed"
+          value: true
+
     - source: "F-000-ERROR_HANDLING"
       target: "F-000-INITIAL_SETUP"
       condition: "#process.errorFixed == true"
       priority: 10
       description: "错误已修复 → 返回初始设置"
+
+    # ==========================================================
+    # 9b. TIMEOUT_HANDLING —— 兜底自循环（★ 2.5.0 新增）
+    # ----------------------------------------------------------
+    # 目的：原出边依赖 process.timeoutResolved == true，
+    #       但全 YAML 无任何写入方。
+    # 注：本状态当前无入口（孤岛），本次只加自循环不补入口，
+    #     自循环暂不会被触发，等未来接入超时检测机制时再定入口。
+    # ==========================================================
+    - source: "F-000-TIMEOUT_HANDLING"
+      target: "F-000-TIMEOUT_HANDLING"
+      intentCode: null
+      condition: "#process.timeoutResolved == false || #process.timeoutResolved == null"
+      priority: 50
+      description: "超时处理阶段任一意图 → 自动确认已处理（兜底）"
+      effects:
+        - var: "process.timeoutResolved"
+          value: true
 
     - source: "F-000-TIMEOUT_HANDLING"
       target: "F-000-INITIAL_SETUP"

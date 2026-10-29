@@ -9,7 +9,23 @@ instructor_overrides:
     action:
       type: clock_control
       operation: pause
-    requires_reason: false
+    requires_reason: true
+    audit_required: true
+    affects_formative_score: false
+    review:
+      review_status: approved
+      reviewer_id: test_architect
+      reviewer_role: architect
+      review_date: "2026-09-20"
+
+  - override_id: IO_FORCE_SYNC_MODE
+    name: "导师强制同步模式"
+    allowed_when:
+      attempt_status: RUNNING
+    action:
+      type: sync_mode
+      operation: force_on
+    requires_reason: true
     audit_required: true
     affects_formative_score: false
     review:

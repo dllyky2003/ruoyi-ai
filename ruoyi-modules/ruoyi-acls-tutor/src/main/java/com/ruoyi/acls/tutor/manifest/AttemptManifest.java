@@ -1,5 +1,5 @@
 package com.ruoyi.acls.tutor.manifest;
-
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
 /**
  * 尝试清单：一次 ACLS 训练尝试的版本冻结与可追溯锚点。
  *
@@ -58,7 +57,21 @@ public class AttemptManifest {
      */
     @Builder.Default
     private Map<String, String> reviewStatus = new LinkedHashMap<>();
+    /**
+     * Schema 文件 -> sha256。
+     * 键为纯文件名（如 clinical_rules_schema.json），
+     * 与 fileHashes 的"相对路径"键空间分离。
+     * 由 ManifestService 在冻结后填充。
+     */
+    @Builder.Default
+    private Map<String, String> schemaHashes = new LinkedHashMap<>();
 
+    /**
+     * Manifest 总指纹：fileHashes + schemaHashes 的确定性 SHA-256。
+     * 用于"报告与 Manifest 冻结一致"的对照。
+     * 由 ManifestService 在冻结后填充。
+     */
+    private String manifestHash;
     /**
      * 权威状态版本：仅状态机迁移、生理权威变化等权威变更时递增。
      * 与 CaseContext.version 的变量版本语义分离，不要混用。
@@ -83,8 +96,8 @@ public class AttemptManifest {
      */
     private double assessmentRealElapsedSeconds;
 
-    /** 冻结时刻。 */
-    private LocalDateTime frozenAt;
+
+    private String  frozenAt;
 
     /** 冻结人/系统，例如 SYSTEM / INSTRUCTOR。 */
     private String frozenBy;
@@ -108,6 +121,9 @@ public class AttemptManifest {
             && planVersion != null
             && schemaVersion != null
             && fileHashes != null
-            && !fileHashes.isEmpty();
+            && !fileHashes.isEmpty()
+            && schemaHashes != null
+            && !schemaHashes.isEmpty()
+            && manifestHash != null;
     }
 }

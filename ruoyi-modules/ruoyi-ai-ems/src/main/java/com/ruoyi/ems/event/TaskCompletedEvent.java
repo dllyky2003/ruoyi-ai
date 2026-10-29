@@ -4,30 +4,31 @@ import com.ruoyi.ems.npc.TeamMember;
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
 
-/**
- * 团队成员任务完成事件
- * 当虚拟团队成员完成任务或超时时发布
- */
 @Getter
 public class TaskCompletedEvent extends ApplicationEvent {
 
-    /** 会话ID */
     private final String sessionId;
-
-    /** 完成任务/超时的成员 */
     private final TeamMember member;
-
-    /** 是否成功完成 */
     private final boolean success;
-
-    /** 汇报文本 */
     private final String report;
 
-    public TaskCompletedEvent(String sessionId, TeamMember member, boolean success, String report) {
+    /** ★ 方案 A：触发本次任务的意图编码（如 S-101-2-2） */
+    private final String intentCode;
+
+    /** 兼容旧调用点：不带 intentCode。 */
+    public TaskCompletedEvent(String sessionId, TeamMember member,
+                              boolean success, String report) {
+        this(sessionId, member, success, report, null);
+    }
+
+    /** 新签名：带 intentCode。 */
+    public TaskCompletedEvent(String sessionId, TeamMember member,
+                              boolean success, String report, String intentCode) {
         super(member);
         this.sessionId = sessionId;
         this.member = member;
         this.success = success;
         this.report = report;
+        this.intentCode = intentCode;
     }
 }

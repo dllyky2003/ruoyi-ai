@@ -6,6 +6,7 @@ import java.util.List;
 /**
  * 契约 V1.0.0 §5.2 命令响应结构。
  */
+@Deprecated
 @Data
 public class CmdResultMessage {
 

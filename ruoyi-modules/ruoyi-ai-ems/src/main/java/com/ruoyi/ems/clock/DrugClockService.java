@@ -84,8 +84,8 @@ public class DrugClockService {
         String sessionId = e.sessionId();
         Long lastTime = getAdenosineLastTime(sessionId);
 
-        log.info("💊 DrugClockService 收到 DRUG/TICK: session={}, adenosineLastTime={}",
-            sessionId, lastTime);
+//        log.info("💊 DrugClockService 收到 DRUG/TICK: session={}, adenosineLastTime={}",
+//            sessionId, lastTime);
 
         if (lastTime == null) {
             expiredForAdenosineAtMap.remove(sessionId);

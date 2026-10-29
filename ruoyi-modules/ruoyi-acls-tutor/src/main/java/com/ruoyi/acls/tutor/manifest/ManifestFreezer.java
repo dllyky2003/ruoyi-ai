@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -108,7 +109,7 @@ public class ManifestFreezer {
             .eventSequence(eventSequence)
             .simulatedElapsedSeconds(simulated)
             .assessmentRealElapsedSeconds(assessmentReal)
-            .frozenAt(LocalDateTime.now())
+            .frozenAt(LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
             .frozenBy(frozenBy != null ? frozenBy : "SYSTEM")
             .frozen(true)
             .build();

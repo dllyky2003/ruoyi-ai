@@ -56,8 +56,9 @@ public class TutorAttemptEventSink implements AttemptEventSink {
                 ? context.getAllowedEffects()
                 : new ArrayList<>();
 
+            // ★ 修复 1.1.B（2026-09-25）：传入 sessionId，避免下游 sessionId=null / eventSequence=-1
             ScenarioBeatEvaluator.SelectionResult result =
-                attemptEventProcessor.process(null, input);
+                attemptEventProcessor.process(context.getSessionId(), input);
 
             if (result == null) {
                 log.warn("[Tutor][AttemptEventSink] beat 评估返回 null");

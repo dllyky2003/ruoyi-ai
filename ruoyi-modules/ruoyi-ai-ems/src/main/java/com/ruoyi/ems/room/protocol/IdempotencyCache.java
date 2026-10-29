@@ -1,6 +1,6 @@
 package com.ruoyi.ems.room.protocol;
 
-import com.ruoyi.ems.room.protocol.dto.CmdResultMessage;
+import com.ruoyi.ems.room.protocol.dto.CommandResultMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -15,7 +15,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>同一 attemptId + idempotencyKey 的第二次到达直接返回原结果，
  * 不重复执行状态机。按 attemptId 分桶，避免跨会话污染。</p>
  *
- * <p>内存版实现，仅供阶段 5 验收。生产版应落 Redis。</p>
+ * <p>★ 批 2（螺旋 2 / 阶段 2.1）：泛型从 {@code CmdResultMessage} 改为
+ * {@code CommandResultMessage}（单一 DTO 合并）。</p>
  */
 @Slf4j
 @Component
@@ -27,7 +28,7 @@ public class IdempotencyCache {
     /** attemptId -> (idempotencyKey -> entry) */
     private final Map<String, Map<String, Entry>> store = new ConcurrentHashMap<>();
 
-    public CmdResultMessage get(String attemptId, String idempotencyKey) {
+    public CommandResultMessage get(String attemptId, String idempotencyKey) {
         Map<String, Entry> bucket = store.get(attemptId);
         if (bucket == null) return null;
         Entry e = bucket.get(idempotencyKey);
@@ -39,7 +40,7 @@ public class IdempotencyCache {
         return e.result;
     }
 
-    public void put(String attemptId, String idempotencyKey, CmdResultMessage result) {
+    public void put(String attemptId, String idempotencyKey, CommandResultMessage result) {
         store.computeIfAbsent(attemptId, k -> new ConcurrentHashMap<>())
             .put(idempotencyKey, new Entry(result, Instant.now().plus(TTL)));
     }
@@ -49,5 +50,5 @@ public class IdempotencyCache {
         store.remove(attemptId);
     }
 
-    private record Entry(CmdResultMessage result, Instant expireAt) {}
+    private record Entry(CommandResultMessage result, Instant expireAt) {}
 }

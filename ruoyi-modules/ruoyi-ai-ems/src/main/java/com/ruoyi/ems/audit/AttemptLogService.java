@@ -28,6 +28,10 @@ import java.util.concurrent.ConcurrentHashMap;
  *   <li>不需要建表，开发阶段零依赖</li>
  *   <li>后续迁 DB 只需读 JSONL 批量 insert</li>
  * </ul>
+ *
+ * <p><b>阶段 3 评价报告（2026-09-25）</b>：新增 {@link #writeReport}，
+ * 报告为覆盖式 JSON 文件 {@code {audit.dir}/{attemptId}.report.json}，
+ * 与 JSONL 事件流分离。</p>
  */
 @Slf4j
 @Service
@@ -82,6 +86,36 @@ public class AttemptLogService {
         row.put("detail", detail);
 
         append(attemptId, row);
+    }
+
+    /**
+     * ★ 阶段 3 新增：写最终评价报告（覆盖式）。
+     *
+     * <p>与 JSONL 事件流分离，落在同目录。路径：{@code {audit.dir}/{attemptId}.report.json}。
+     * 覆盖而非追加，因为一个 attempt 只有一份最终报告。</p>
+     */
+    public void writeReport(String attemptId, Object report) {
+        if (attemptId == null || attemptId.isBlank() || report == null) return;
+        Path file = auditDir.resolve(attemptId + ".report.json");
+        Object lock = locks.computeIfAbsent(attemptId, k -> new Object());
+
+        synchronized (lock) {
+            try {
+                String json = objectMapper.writerWithDefaultPrettyPrinter()
+                    .writeValueAsString(report);
+                Files.writeString(
+                    file,
+                    json,
+                    StandardCharsets.UTF_8,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING
+                );
+                log.info("📋 [Report] 报告落盘: file={}, bytes={}",
+                    file.getFileName(), json.length());
+            } catch (IOException e) {
+                log.error("🚨 [Report] 报告写入失败: attemptId={}", attemptId, e);
+            }
+        }
     }
 
     private void append(String attemptId, Map<String, Object> row) {

@@ -5,7 +5,7 @@ import java.util.Set;
 /**
  * ACLS 内部变量白名单。
  *
- * <p>这些变量只用于服务端内部机制（时钟心跳、计时基准、评分链），
+ * <p>这些变量只用于服务端内部机制（时钟心跳、计时基准、评分链、导师覆盖），
  * <b>不下发</b>到 WebSocket 客户端，也<b>不进入</b> case_config 的 initialVitals。</p>
  *
  * <p>引用点：</p>
@@ -23,7 +23,9 @@ public final class AclsInternalVars {
     public static final Set<String> NAMES = Set.of(
         "process.clockTickAt",
         "process.lastInterventionTime",
-        "evaluation.errorChain"
+        "evaluation.errorChain",
+        // ★ 阶段 1.2：OVR-2b 受控效果写入的内部标记
+        "system.deterministicDemo"
     );
 
     /** 判断变量名是否属于内部变量。 */

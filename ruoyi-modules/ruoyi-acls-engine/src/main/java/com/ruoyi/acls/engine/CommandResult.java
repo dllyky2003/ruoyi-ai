@@ -19,7 +19,11 @@ public class CommandResult {
     private Map<String, Object> contextUpdates; // 上下文变量更新
     private String errorMessage;
     private long elapsedMillis;
-
+// ===== ★ 批 1 新增 =====
+    /** tutor 决策（可 null，PRE_STATE_MACHINE 失败时为 null） */
+    private com.ruoyi.ems.spi.dto.ValidationResult validation;
+    /** 失败类别，AttemptOutcome.FailureKind.name() */
+    private String failureKind;
     // ==================== 工厂方法 ====================
 
     public static CommandResult success() {
